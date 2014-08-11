@@ -1,0 +1,22 @@
+{
+    "physics": {
+        "src": ["src/open.js",
+                "src/core/measures.js",
+                "src/core/world.js",
+                "src/core/gravitational.js",
+                "src/core/velocity.js",
+                "src/utils/class.js",
+                "src/close.js"],
+        "dest": "d3-physics.js"
+    },
+    "tests": {
+        "src": ["tests/open.js",
+                "tests/boot.js",
+                "tests/class.js",
+                "tests/app.js",
+                "tests/google.js",
+                "tests/close.js"],
+        "dest": "tests.js",
+        "minify": false
+    }
+}

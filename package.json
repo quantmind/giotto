@@ -1,0 +1,28 @@
+{
+    "licenses": [
+        {
+            "type": "BSD"
+        }
+    ],
+    "homepage": "https://github.com/quantmind/d3-physics",
+    "devDependencies": {
+        "grunt": "",
+        "grunt-contrib-uglify": "",
+        "grunt-contrib-concat": "",
+        "grunt-contrib-jshint": ""
+    },
+    "name": "d3-physics",
+    "contributors": [],
+    "author": {
+        "name": "Luca Sbardella",
+        "email": "luca.sbardella@gmail.com"
+    },
+    "version": "0.1.0",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/quantmind/d3-physics"
+    },
+    "description": "Physics engine for D3",
+    "title": "D3 Physics",
+    "keywords": []
+}
