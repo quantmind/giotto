@@ -2,34 +2,51 @@
     //  VELOCITY FIELD
     //  -------------------
 
-    // Handle velocity fields
+    //  Add e velocity field to ther world
     //
-    var velocity;
+    //  A velocity field can be a twe element array or afunction accepting
+    //  the world and a node as input parameter and returning a two-element
+    //  array
+    d3physics.velocityField = function (world, velocity) {
 
-    // Add a velocity field, can be a function or a two element array
-    physics.velocityField = function (x) {
-        if (!arguments.length) return velocity;
-        velocity = x;
-        return physics;
-    };
-
-    ontick.push(function (e) {
-        if (velocity) {
-            var nodes = physics.nodes(),
+        world.onstart.push(function (e) {
+            var nodes = world.nodes(),
                 n = nodes.length,
                 i;
+
             if (typeof velocity === 'function') {
                 var vel;
                 for (i = 0; i < n; ++i) {
-                    vel = velocity.call(physics, nodes[i]);
-                    nodes[i].px += vel[0]*dt;
-                    nodes[i].py += vel[1]*dt;
+                    vel = velocity.call(world, nodes[i]);
+                    nodes[i].vx += vel[0];
+                    nodes[i].vy += vel[1];
                 }
-            } else
+            } else (velocity) {
                 for (i = 0; i < n; ++i) {
-                    nodes[i].px += velocity[0]*dt;
-                    nodes[i].px += velocity[1]*dt;
+                    nodes[i].vx += velocity[0];
+                    nodes[i].vy += velocity[1];
                 }
-        }
-    });
-    //
+            }
+        });
+
+        world.ontick.push(function (e) {
+            if (velocity) {
+                var nodes = physics.nodes(),
+                    n = nodes.length,
+                    i;
+                if (typeof velocity === 'function') {
+                    var vel;
+                    for (i = 0; i < n; ++i) {
+                        vel = velocity.call(physics, nodes[i]);
+                        nodes[i].px += vel[0]*dt;
+                        nodes[i].py += vel[1]*dt;
+                    }
+                } else
+                    for (i = 0; i < n; ++i) {
+                        nodes[i].px += velocity[0]*dt;
+                        nodes[i].px += velocity[1]*dt;
+                    }
+            }
+        });
+
+    };

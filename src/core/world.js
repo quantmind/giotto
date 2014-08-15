@@ -77,16 +77,11 @@
             return quad;
         }
 
-        // Set the dt for each frame
-        physics.dtime = function (x) {
-            if (!arguments.length) return dtime;
-            dtime = +x > 0 ? +x : 0;
-            return physics;
-        };
-
         physics.dim = function (x) {
             if (!arguments.length) return dim;
             dim = +x > 0 ? +x : 1.0;
             return physics;
         };
+
+        return d3.rebind(physics, event, "on");
     };
