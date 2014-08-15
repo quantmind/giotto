@@ -9,9 +9,10 @@
         // Initialise the vizualization with a DOM element, an object of attributes
         // and the (optional) $lux service
         init: function (element, attrs, $lux) {
+            attrs = extend({}, this.defaults, attrs);
             element = $(element);
             this.element = element;
-            this.attrs = attrs || (attrs = {});
+            this.attrs = attrs;
             this.$lux = $lux;
             this.elwidth = null;
             this.elheight = null;
@@ -56,8 +57,6 @@
                     self.resize();
                 });
             }
-            //
-            this.build();
         },
         //
         // Resize the vizualization
@@ -104,7 +103,7 @@
         // Build the visualisation
         build: function (options) {
             if (options)
-                this.attrs = $.extend(this.attrs, options);
+                this.attrs = extend(this.attrs, options);
             //
             if (!this.d3) {
                 var self = this;
@@ -146,7 +145,8 @@
                 restrict: 'AE',
                 //
                 link: function (scope, element, attrs) {
-                    new VizClass(element, attrs);
+                    var v = new VizClass(element, attrs);
+                    v.build();
                 }
             };
         }];

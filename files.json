@@ -1,6 +1,7 @@
 {
     "d3ext": {
         "src": ["src/open.js",
+                "src/utils/extend.js",
                 "src/utils/class.js",
                 "src/viz/viz.js",
                 "src/viz/sunburst.js",

@@ -1,7 +1,7 @@
 /*
 ------------------------------------------------------------------
 ------------------------------------------------------------------
-Created by lux 2014-08-15 14:49:50 in 0.0 seconds.
+Created by lux 2014-08-15 19:07:23 in 0.0 seconds.
 ------------------------------------------------------------------
 ------------------------------------------------------------------ */
 
@@ -38,38 +38,42 @@ Created by lux 2014-08-15 14:49:50 in 0.0 seconds.
 
 @media all and (min-width:768px) {
     .admin-nav {
-        margin-top: 51px;
-        position: absolute;
-        width: 250px;
         z-index: 1;
+        margin-top: 51px;
+        width: 250px;
+        position: absolute;
     }
 
 }
 @media all and (max-height:600px) and (max-width:767px) {
     .sidebar-collapse {
-        max-height: 300px;
         overflow-y: scroll;
+        max-height: 300px;
     }
 
 }
 @media all and (max-height:400px) and (max-width:767px) {
     .sidebar-collapse {
-        max-height: 200px;
         overflow-y: scroll;
+        max-height: 200px;
     }
 
 }
 .dir-entry-image {
-    max-height: 90px;
     overflow: hidden;
+    max-height: 90px;
 }
 
 .dir-entry-image img {
-    width: 120px;
     height: auto;
+    width: 120px;
+}
+
+.sunburst text {
+    z-index: 9999;
 }
 
 .sunburst path {
-    stroke: #fff;
     fill-rule: evenodd;
+    stroke: #fff;
 }
