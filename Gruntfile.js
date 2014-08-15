@@ -6,7 +6,7 @@ module.exports = function (grunt) {
     var docco_output = '../docs/lux/html/docco',
         //docco_output = 'docs/build/html/docco',
         // All libraries
-        libs = grunt.file.readJSON('libs.json');
+        libs = grunt.file.readJSON('files.json');
     //
     function for_each(obj, callback) {
         for(var p in obj) {

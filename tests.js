@@ -1,6 +1,5 @@
-require(['../../lux/media/lux/lux.js', 'angular-mocks'], function (lux) {
+require(['dist/d3ext.js', 'angular', 'angular-mocks'], function (d3ext) {
     "use strict";
-    lux.add_ready_callback(function () {
     //
     //
     function luxInjector () {
@@ -67,8 +66,8 @@ require(['../../lux/media/lux/lux.js', 'angular-mocks'], function (lux) {
     }
 
     //
-    describe("Test lux class", function() {
-        var Class = lux.Class;
+    describe("Test Class", function() {
+        var Class = d3ext.Class;
 
         it("Check basic properties", function() {
             expect(typeof(Class)).toBe('function');
@@ -133,52 +132,6 @@ require(['../../lux/media/lux/lux.js', 'angular-mocks'], function (lux) {
         });
     });
 
-    describe("Test lux angular app", function() {
-        var $ = lux.$;
-
-        it("Check $lux service", function() {
-            var $injector = luxInjector();
-            expect($injector.has('$lux')).toBe(true);
-            var $lux = $injector.get('$lux');
-            expect($lux).not.toBe(null);
-            expect($lux.http).not.toBe(null);
-            expect($lux.location).not.toBe(null);
-            expect($lux.log).not.toBe(null);
-            expect($.isFunction($lux.api)).toBe(true);
-        });
-    });
-
-
-    describe("Test google spreadsheet api", function() {
-        var $injector = luxInjector(),
-            $httpBackend = $injector.get('$httpBackend'),
-            $lux = $injector.get('$lux');
-
-        $lux.http = function (options) {
-            var d = $httpBackend.expect(options.method, options.url, options.data);
-            d.success = function () {return this;};
-            d.error = function () {return this;};
-            return d;
-        };
-
-        beforeEach(function () {
-            $httpBackend.when("GET").respond([{}, {}, {}]);
-        });
-        //
-        it("contains spec with an expectation", function() {
-            var api = $lux.api({
-                name: 'googlesheets',
-                url: '19_Sy0WAiwvvfDXBxrbWtXHEYhgI44RPnrLlUUJMOImE'
-            });
-            expect(api instanceof lux.ApiClient).toBe(true);
-            expect(api.name).toBe('googlesheets');
-            expect(api._url).toBe('19_Sy0WAiwvvfDXBxrbWtXHEYhgI44RPnrLlUUJMOImE');
-            //
-            var d = api.getMany();
-        });
-    });
-
-
 
     //Expose the interface for adding custom equality testers.
     jasmine.addCustomEqualityTester = function(tester) {
@@ -240,7 +193,4 @@ require(['../../lux/media/lux/lux.js', 'angular-mocks'], function (lux) {
     // Run all the loaded test specs.
     htmlReporter.initialize();
     env.execute();
-});
-
-lux.bootstrap();
 });

@@ -1,3 +1,6 @@
 node_modules
 .project
+.pydevproject
+*.log
+__pycache__
 .DS_Store

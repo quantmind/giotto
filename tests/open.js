@@ -1,6 +1,5 @@
-require(['../../lux/media/lux/lux.js', 'angular-mocks'], function (lux) {
+require(['dist/d3ext.js', 'angular', 'angular-mocks'], function (d3ext) {
     "use strict";
-    lux.add_ready_callback(function () {
     //
     //
     function luxInjector () {
