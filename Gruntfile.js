@@ -90,11 +90,11 @@ module.exports = function (grunt) {
         pkg: grunt.file.readJSON('package.json'),
         concat: libs,
         uglify: uglify_libs(),
-        jshint: jshint_libs(),
-        docco: docco_libs(),
-        qunit: {
-            files: "test/index.html"
-        }
+        jshint: jshint_libs()
+        //docco: docco_libs(),
+        //qunit: {
+        //   files: "test/index.html"
+        //}
     });
     //
     // These plugins provide necessary tasks.
@@ -103,12 +103,12 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-contrib-concat');
     //grunt.loadNpmTasks('grunt-contrib-nodeunit');
     //grunt.loadNpmTasks('grunt-contrib-watch');
-    grunt.loadNpmTasks('grunt-docco');
+    //grunt.loadNpmTasks('grunt-docco');
     //
     grunt.registerTask('gruntfile', 'jshint Gruntfile.js',
             ['jshint:gruntfile']);
     grunt.registerTask('all', 'Compile and lint all Lux libraries',
-            ['concat', 'jshint', 'uglify', 'docco']);
+            ['concat', 'jshint', 'uglify']);
     grunt.registerTask('default', ['all']);
     //
     for_each(libs, function (name) {

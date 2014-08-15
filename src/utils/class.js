@@ -32,7 +32,7 @@
 
     //  A Type is a factory of Classes. This is the correspondent of
     //  python metaclasses.
-    Type = lux.Type = (function (t) {
+    Type = d3ext.Type = (function (t) {
 
         t.new_class = function (Caller, attrs) {
             var type = this,
@@ -93,7 +93,7 @@
 
     //  Lux base class.
     //  The `extend` method is the most important function of this object.
-    Class = lux.Class = (function (c) {
+    Class = d3ext.Class = (function (c) {
         c.__class__ = Type;
         //
         c.extend = function (attrs) {

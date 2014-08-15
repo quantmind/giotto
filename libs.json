@@ -1,13 +1,11 @@
 {
-    "physics": {
+    "d3ext": {
         "src": ["src/open.js",
-                "src/core/measures.js",
-                "src/core/world.js",
-                "src/core/gravitational.js",
-                "src/core/velocity.js",
                 "src/utils/class.js",
+                "src/viz/viz.js",
+                "src/viz/sunburst.js",
                 "src/close.js"],
-        "dest": "d3-physics.js"
+        "dest": "dist/d3ext.js"
     },
     "tests": {
         "src": ["tests/open.js",
