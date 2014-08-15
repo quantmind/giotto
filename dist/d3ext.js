@@ -232,6 +232,20 @@
         // This is the actual method to implement
         d3build: function () {
 
+        },
+        //
+        // Load data
+        loadData: function (callback) {
+            var self = this,
+                src = this.attrs.src;
+            if (src && this.d3) {
+                return this.d3.json(src, function(error, json) {
+                    if (!error) {
+                        self.attrs.data = json || {};
+                        callback();
+                    }
+                });
+            }
         }
     });
 
@@ -254,28 +268,30 @@
     d3ext.SunBurst = Viz.extend({
         //
         d3build: function () {
+            var self = this;
             //
             // Load data if not already available
-            if (!this.root) {
-                var self = this;
-                return d3.json(this.attrs.target, function(error, root) {
-                    if (!error) {
-                        self.root = root || {};
-                        self.d3build();
-                    }
+            if (!this.attrs.data) {
+                return this.loadData(function () {
+                    self.d3build();
                 });
             }
             //
             var d3 = this.d3,
                 size = this.size(),
-                root = this.root,
-                width = size[0],
-                height = size[1],
+                root = this.attrs.data,
+                padding = this.attrs.padding ? +this.attrs.padding : 10,
+                width = size[0]/2,
+                height = size[1]/2,
+                radius = Math.min(width, height)-padding,
                 svg = this.svg().append("g")
-                          .attr("transform", "translate(" + width / 2 + "," + (height / 2 + 10) + ")");
+                          .attr('class', 'sunburst')
+                          .attr("transform", "translate(" + width + "," + height + ")"),
                 color = d3.scale.category20c(),
                 partition = d3.layout.partition()
-                    .value(function(d) { return d.size; });
+                    .value(function(d) { return d.size; }),
+                x = d3.scale.linear().range([0, 2 * Math.PI]),
+                y = d3.scale.sqrt().range([0, radius]);
 
             var arc = d3.svg.arc()
                     .startAngle(function(d) { return Math.max(0, Math.min(2 * Math.PI, x(d.x))); })

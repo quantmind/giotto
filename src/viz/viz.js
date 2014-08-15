@@ -120,6 +120,20 @@
         // This is the actual method to implement
         d3build: function () {
 
+        },
+        //
+        // Load data
+        loadData: function (callback) {
+            var self = this,
+                src = this.attrs.src;
+            if (src && this.d3) {
+                return this.d3.json(src, function(error, json) {
+                    if (!error) {
+                        self.attrs.data = json || {};
+                        callback();
+                    }
+                });
+            }
         }
     });
 

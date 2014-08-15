@@ -5,23 +5,14 @@ from lux.extensions.static import HtmlContent
 
 
 HTML_TITLE = 'd3ext test runner'
-
-FAVICON = 'http://cdnjs.cloudflare.com/ajax/libs/jasmine/2.0.0/jasmine_favicon.png'
-
-HTML_LINKS = ['http:////cdnjs.cloudflare.com/ajax/libs/jasmine/2.0.0/jasmine.css']
-
-JASMINE = [
-    'http://cdnjs.cloudflare.com/ajax/libs/jasmine/2.0.0/jasmine.js',
-    'http://cdnjs.cloudflare.com/ajax/libs/jasmine/2.0.0/jasmine-html.js',
-    'tests.js']
-
-MEDIA_URL = ''
-STATIC_LOCATION = path.dirname(path.abspath('__file__'))
+STATIC_LOCATION = path.join(path.dirname(path.abspath('__file__')), 'dist')
 CONTEXT_LOCATION = None
+MEDIA_URL = ''
 STATIC_API = None
 STATIC_MEDIA = False
 MINIFIED_MEDIA = False
 EXTENSIONS = ['lux.extensions.base',
+              'lux.extensions.ui',
               'lux.extensions.html5',
               'lux.extensions.static']
 
@@ -31,5 +22,15 @@ class Extension(lux.Extension):
     def middleware(self, app):
         return [HtmlContent('/', drafts=False, dir='tests/html')]
 
-    def on_html_document(self, app, request, doc):
-        doc.head.scripts.extend(JASMINE)
+
+def add_css(all):
+    css = all.css
+    media = all.media
+    d3 = all.variables.d3
+
+    d3.sunburst_stroke = '#fff'
+
+    css('.sunburst',
+        css(' path',
+            stroke=d3.sunburst_stroke,
+            fill_rule='evenodd'))

@@ -8,13 +8,17 @@
         "dest": "dist/d3ext.js"
     },
     "tests": {
-        "src": ["tests/open.js",
-                "tests/boot.js",
-                "tests/class.js",
-                "tests/app.js",
-                "tests/google.js",
-                "tests/close.js"],
-        "dest": "tests.js",
+        "src": ["tests/unit/open.js",
+                "tests/unit/boot.js",
+                "tests/unit/class.js",
+                "tests/unit/close.js"],
+        "dest": "dist/tests.js",
+        "minify": false
+    },
+    "examples": {
+        "src": ["tests/examples/open.js",
+                "tests/examples/close.js"],
+        "dest": "dist/examples.js",
         "minify": false
     }
 }

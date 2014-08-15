@@ -1,4 +1,4 @@
-require(['dist/d3ext.js', 'angular', 'angular-mocks'], function (d3ext) {
+require(['d3ext.js', 'angular', 'angular-mocks'], function (d3ext) {
     "use strict";
     //
     //

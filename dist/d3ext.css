@@ -1,0 +1,75 @@
+/*
+------------------------------------------------------------------
+------------------------------------------------------------------
+Created by lux 2014-08-15 14:49:50 in 0.0 seconds.
+------------------------------------------------------------------
+------------------------------------------------------------------ */
+
+.push-bottom {
+    margin-bottom: 20px !important;
+}
+
+[ng\:cloak],
+[ng-cloak],
+[data-ng-cloak],
+[x-ng-cloak],
+.ng-cloak,
+.x-ng-cloak {
+    display: none !important;
+}
+
+.form-group .help-block {
+    display: none;
+}
+
+.form-group.has-error .help-block.active {
+    display: block;
+}
+
+.nav-second-level li a {
+    padding-left: 37px;
+}
+
+.absolute-full {
+    bottom: 0;
+    position: absolute;
+    top: 0;
+}
+
+@media all and (min-width:768px) {
+    .admin-nav {
+        margin-top: 51px;
+        position: absolute;
+        width: 250px;
+        z-index: 1;
+    }
+
+}
+@media all and (max-height:600px) and (max-width:767px) {
+    .sidebar-collapse {
+        max-height: 300px;
+        overflow-y: scroll;
+    }
+
+}
+@media all and (max-height:400px) and (max-width:767px) {
+    .sidebar-collapse {
+        max-height: 200px;
+        overflow-y: scroll;
+    }
+
+}
+.dir-entry-image {
+    max-height: 90px;
+    overflow: hidden;
+}
+
+.dir-entry-image img {
+    width: 120px;
+    height: auto;
+}
+
+.sunburst path {
+    stroke: #fff;
+    fill-rule: evenodd;
+}
