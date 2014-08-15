@@ -1,7 +1,7 @@
 /*
 ------------------------------------------------------------------
 ------------------------------------------------------------------
-Created by lux 2014-08-15 19:07:23 in 0.0 seconds.
+Created by lux 2014-08-15 19:49:02 in 0.0 seconds.
 ------------------------------------------------------------------
 ------------------------------------------------------------------ */
 
@@ -31,37 +31,37 @@ Created by lux 2014-08-15 19:07:23 in 0.0 seconds.
 }
 
 .absolute-full {
-    bottom: 0;
     position: absolute;
     top: 0;
+    bottom: 0;
 }
 
 @media all and (min-width:768px) {
     .admin-nav {
-        z-index: 1;
         margin-top: 51px;
-        width: 250px;
         position: absolute;
+        z-index: 1;
+        width: 250px;
     }
 
 }
-@media all and (max-height:600px) and (max-width:767px) {
+@media all and (max-width:767px) and (max-height:600px) {
     .sidebar-collapse {
-        overflow-y: scroll;
         max-height: 300px;
+        overflow-y: scroll;
     }
 
 }
-@media all and (max-height:400px) and (max-width:767px) {
+@media all and (max-width:767px) and (max-height:400px) {
     .sidebar-collapse {
-        overflow-y: scroll;
         max-height: 200px;
+        overflow-y: scroll;
     }
 
 }
 .dir-entry-image {
-    overflow: hidden;
     max-height: 90px;
+    overflow: hidden;
 }
 
 .dir-entry-image img {
@@ -74,6 +74,6 @@ Created by lux 2014-08-15 19:07:23 in 0.0 seconds.
 }
 
 .sunburst path {
-    fill-rule: evenodd;
     stroke: #fff;
+    fill-rule: evenodd;
 }

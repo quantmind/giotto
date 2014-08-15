@@ -33,7 +33,8 @@
                 radius = Math.min(width, height)-padding,
                 // Create the partition layout
                 partition = d3.layout.partition()
-                    .value(function(d) { return d.size; }),
+                    .value(function(d) { return d.size; })
+                    .sort(function (d) { return d.order === undefined ? d.size : d.order;}),
                 svg = this.svg().append('g')
                           .attr("transform", "translate(" + width + "," + height + ")"),
                 g = svg.selectAll("g")
@@ -56,7 +57,12 @@
                         .on("click", click);
 
             if (this.attrs.labels) {
-                text = alignText(g.append("text").text(function(d) { return d.name; }));
+                text = alignText(g.append("text").text(function(d) {
+                    if (attrs.addorder !== undefined && d.order !== undefined)
+                        return d.order + ' - ' + d.name;
+                    else
+                        return d.name;
+                }));
             }
 
             function scale (radius) {
