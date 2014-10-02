@@ -1,26 +1,35 @@
+'''
+Lux application for displaying d3ext
+'''
 from os import path
 
 import lux
-from lux.extensions.static import HtmlContent
+from lux.extensions.static import HtmlContent, MediaBuilder
+from lux.extensions.ui import CssInclude
 
 
-HTML_TITLE = 'd3ext test runner'
-STATIC_LOCATION = path.join(path.dirname(path.abspath('__file__')), 'dist')
+HTML_TITLE = 'd3ext examples'
+STATIC_LOCATION = path.join(path.dirname(path.dirname(
+    path.abspath('__file__'))), 'docs', 'd3ext')
 CONTEXT_LOCATION = None
 MEDIA_URL = ''
 STATIC_API = None
-STATIC_MEDIA = False
+#STATIC_MEDIA = False
 MINIFIED_MEDIA = False
 EXTENSIONS = ['lux.extensions.base',
               'lux.extensions.ui',
-              'lux.extensions.html5',
+              'lux.extensions.code',
+              'lux.extensions.angular',
               'lux.extensions.static']
+HTML_LINKS = ['d3ext/d3ext.css', 'd3ext/examples.css']
 
 
 class Extension(lux.Extension):
 
     def middleware(self, app):
-        return [HtmlContent('/', drafts=False, dir='tests/html')]
+        media = MediaBuilder('d3ext', 'dist', lux=False)
+        examples = HtmlContent('/', drafts=False, dir='tests')
+        return [media, examples]
 
 
 def add_css(all):
@@ -29,6 +38,9 @@ def add_css(all):
     css = all.css
     media = all.media
     d3 = all.variables.d3
+
+    css('body',
+        CssInclude('http://cdnjs.cloudflare.com/ajax/libs/c3/0.3.0/c3.css'))
 
     d3.sunburst_stroke = '#fff'
 

@@ -1,6 +1,70 @@
 (function () {
     "use strict";
-    var d3ext = {version: "0.1.0"};
+    var d3ext = {
+        version: "0.1.0"
+    };
+
+    function noop () {}
+
+    var log = function (debug) {
+
+        function formatError(arg) {
+            if (arg instanceof Error) {
+                if (arg.stack) {
+                    arg = (arg.message && arg.stack.indexOf(arg.message) === -1
+                        ) ? 'Error: ' + arg.message + '\n' + arg.stack : arg.stack;
+                } else if (arg.sourceURL) {
+                    arg = arg.message + '\n' + arg.sourceURL + ':' + arg.line;
+                }
+            }
+            return arg;
+        }
+
+        function consoleLog(type) {
+            var console = window.console || {},
+                logFn = console[type] || console.log || noop,
+                hasApply = false;
+
+              // Note: reading logFn.apply throws an error in IE11 in IE8 document mode.
+              // The reason behind this is that console.log has type "object" in IE8...
+              try {
+                    hasApply = !!logFn.apply;
+              } catch (e) {}
+
+              if (hasApply) {
+                    return function() {
+                        var args = [];
+                            forEach(arguments, function(arg) {
+                                args.push(formatError(arg));
+                        });
+                        return logFn.apply(console, args);
+                    };
+            }
+
+            // we are IE which either doesn't have window.console => this is noop and we do nothing,
+            // or we are IE where console.log doesn't have apply so we log at least first 2 args
+            return function(arg1, arg2) {
+                logFn(arg1, arg2 === null ? '' : arg2);
+            };
+        }
+
+        return {
+            log: consoleLog('log'),
+            info: consoleLog('info'),
+            warn: consoleLog('warn'),
+            error: consoleLog('error'),
+            debug: (function () {
+                var fn = consoleLog('debug');
+
+                return function() {
+                    if (debug) {
+                        fn.apply(self, arguments);
+                    }
+                };
+            }()),
+
+        };
+    };
     //  Simple extend function
     //
     var extend = d3ext.extend = function () {
@@ -142,13 +206,14 @@
     var Viz = d3ext.Viz = Class.extend({
         //
         // Initialise the vizualization with a DOM element, an object of attributes
-        // and the (optional) $lux service
-        init: function (element, attrs, $lux) {
+        // and the (optional) angular $service
+        init: function (element, attrs, $service) {
             attrs = extend({}, this.defaults, attrs);
             element = $(element);
             this.element = element;
             this.attrs = attrs;
-            this.$lux = $lux;
+            this.$service = $service;
+            this.log = log(attrs.debug);
             this.elwidth = null;
             this.elheight = null;
             this.d3 = null;
@@ -271,20 +336,8 @@
         }
     });
 
-    //  Factory of Angular JS directives for a Viz class
-    d3ext.vizDirectiveFactory = function (VizClass) {
-        return [function () {
-            return {
-                //
-                // Create via element tag or attribute
-                restrict: 'AE',
-                //
-                link: function (scope, element, attrs) {
-                    var v = new VizClass(element, attrs);
-                    v.build();
-                }
-            };
-        }];
+    d3ext.isviz = function (o) {
+        return o !== Viz && o.prototype && o.prototype instanceof Viz;
     };
 
     //
@@ -441,6 +494,132 @@
         }
     });
 
+
+    d3ext.C3 = Viz.extend({
+        //
+        d3build: function () {
+            var self = this;
+            if (!this.c3) {
+                return require(['c3'], function (c3) {
+                    self.c3 = c3;
+                    self.d3build();
+                });
+            }
+            //
+            //
+            // Load data if not already available
+            if (!this.attrs.data) {
+                return this.loadData(function () {
+                    self.d3build();
+                });
+            }
+            //
+            var series = this.attrs.data;
+            if (series.series) series = series.series;
+            var options = extend({
+                bindto: this.element[0],
+                data: {
+                    x: series[0][0],
+                    columns: series
+                }
+            }, this.attrs.c3);
+            var chart = this.c3.generate(options);
+        }
+    });
+
+    //
+    //
+    // Force layout example
+    d3ext.Force = Viz.extend({
+        //
+        d3build: function () {
+            var d2 = this.d3,
+                svg = this.svg(),
+                attrs = this.attrs,
+                nNodes = attrs.nodes || 100,
+                minRadius = attrs.minRadius || 4,
+                maxRadius = attrs.maxRadius || 16,
+                gravity = attrs.gravity || 0.05,
+                charge = attrs.charge || -2000,
+                dr = maxRadius > minRadius ? maxRadius - minRadius : 0,
+                nodes = d3.range(nNodes).map(function() { return {radius: Math.random() * dr + minRadius}; }),
+                color = d3.scale.category10();
+
+            var force = d3.layout.force()
+                .gravity(gravity)
+                .charge(function(d, i) {
+                    return i ? 0 : charge;
+                })
+                .nodes(nodes)
+                .size(this.size());
+
+            var root = nodes[0];
+            root.radius = 0;
+            root.fixed = true;
+
+            force.start();
+
+            svg.selectAll("circle")
+                .data(nodes.slice(1))
+                .enter().append("svg:circle")
+                .attr("r", function(d) { return d.radius - 2; })
+                .style("fill", function(d, i) { return color(i % 3); });
+
+            force.on("tick", function(e) {
+                var q = d3.geom.quadtree(nodes),
+                    i = 0,
+                    n = nodes.length;
+
+                while (++i < n) {
+                    q.visit(collide(nodes[i]));
+                }
+
+                svg.selectAll("circle")
+                    .attr("cx", function(d) { return d.x; })
+                    .attr("cy", function(d) { return d.y; });
+            });
+
+            svg.on("mousemove", function() {
+                var p1 = d3.mouse(this);
+                root.px = p1[0];
+                root.py = p1[1];
+                force.resume();
+            }).on("touchmove", function() {
+                var p1 = d3.touches(this);
+                root.px = p1[0];
+                root.py = p1[1];
+                force.resume();
+            });
+
+            function collide (node) {
+                var r = node.radius + 16,
+                    nx1 = node.x - r,
+                    nx2 = node.x + r,
+                    ny1 = node.y - r,
+                    ny2 = node.y + r;
+
+                return function(quad, x1, y1, x2, y2) {
+                    if (quad.point && (quad.point !== node)) {
+                        var x = node.x - quad.point.x,
+                            y = node.y - quad.point.y,
+                            l = Math.sqrt(x * x + y * y),
+                            r = node.radius + quad.point.radius;
+                        if (l < r) {
+                            l = (l - r) / l * 0.5;
+                            node.x -= x *= l;
+                            node.y -= y *= l;
+                            quad.point.x += x;
+                            quad.point.y += y;
+                        }
+                    }
+                    return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
+                };
+            }
+        },
+        //
+        //  handle node charge
+
+    });
 
     if (typeof define === "function" && define.amd)
         define(d3ext);

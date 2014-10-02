@@ -34,21 +34,6 @@ module.exports = function (grunt) {
         return result;
     }
     //
-    function docco_libs () {
-        var src = [];
-        for_each(libs, function (name) {
-            src.push(this.dest);
-        });
-        return {
-            docs: {
-                'src': src,
-                options: {
-                    output: docco_output
-                }
-            }
-        };
-    }
-    //
     // js hint all libraries
     function jshint_libs () {
         var result = {
@@ -90,26 +75,30 @@ module.exports = function (grunt) {
         pkg: grunt.file.readJSON('package.json'),
         concat: libs,
         uglify: uglify_libs(),
-        jshint: jshint_libs()
-        //docco: docco_libs(),
-        //qunit: {
-        //   files: "test/index.html"
-        //}
+        jshint: jshint_libs(),
+        jasmine: {
+            src : 'dist/d3ext.min.js',
+            options : {
+                specs : 'tests/unit/*.js'
+            }
+        }
     });
     //
     // These plugins provide necessary tasks.
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-contrib-concat');
+    grunt.loadNpmTasks('grunt-contrib-jasmine');
     //grunt.loadNpmTasks('grunt-contrib-nodeunit');
     //grunt.loadNpmTasks('grunt-contrib-watch');
     //grunt.loadNpmTasks('grunt-docco');
     //
     grunt.registerTask('gruntfile', 'jshint Gruntfile.js',
             ['jshint:gruntfile']);
-    grunt.registerTask('all', 'Compile and lint all Lux libraries',
+    grunt.registerTask('library', 'Compile and lint all Lux libraries',
             ['concat', 'jshint', 'uglify']);
-    grunt.registerTask('default', ['all']);
+    grunt.registerTask('default', ['library']);
+    grunt.registerTask('test', ['library', 'jasmine']);
     //
     for_each(libs, function (name) {
         var tasks = ['concat:' + name, 'jshint:' + name];

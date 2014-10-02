@@ -1,17 +1,5 @@
 {
-    "licenses": [
-        {
-            "type": "BSD"
-        }
-    ],
-    "homepage": "https://github.com/quantmind/d3-physics",
-    "devDependencies": {
-        "grunt": "",
-        "grunt-contrib-uglify": "",
-        "grunt-contrib-concat": "",
-        "grunt-contrib-jshint": ""
-    },
-    "name": "d3-physics",
+    "name": "d3ext",
     "contributors": [],
     "author": {
         "name": "Luca Sbardella",
@@ -20,9 +8,28 @@
     "version": "0.1.0",
     "repository": {
         "type": "git",
-        "url": "https://github.com/quantmind/d3-physics"
+        "url": "https://github.com/quantmind/d3ext"
     },
-    "description": "Physics engine for D3",
-    "title": "D3 Physics",
-    "keywords": []
+    "description": "D3 extensions",
+    "title": "D3 extensions",
+    "keywords": ["visualization"],
+    "licenses": [
+        {
+            "type": "BSD"
+        }
+    ],
+    "homepage": "https://github.com/quantmind/d3ext",
+    "dependencies": {
+        "d3": ""
+    },
+    "devDependencies": {
+        "grunt": "",
+        "grunt-contrib-uglify": "",
+        "grunt-contrib-concat": "",
+        "grunt-contrib-jshint": "",
+        "grunt-contrib-jasmine": ""
+    },
+    "scripts": {
+        "test": "grunt jasmine"
+    }
 }

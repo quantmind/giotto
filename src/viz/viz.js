@@ -7,13 +7,14 @@
     var Viz = d3ext.Viz = Class.extend({
         //
         // Initialise the vizualization with a DOM element, an object of attributes
-        // and the (optional) $lux service
-        init: function (element, attrs, $lux) {
+        // and the (optional) angular $service
+        init: function (element, attrs, $service) {
             attrs = extend({}, this.defaults, attrs);
             element = $(element);
             this.element = element;
             this.attrs = attrs;
-            this.$lux = $lux;
+            this.$service = $service;
+            this.log = log(attrs.debug);
             this.elwidth = null;
             this.elheight = null;
             this.d3 = null;
@@ -136,18 +137,6 @@
         }
     });
 
-    //  Factory of Angular JS directives for a Viz class
-    d3ext.vizDirectiveFactory = function (VizClass) {
-        return [function () {
-            return {
-                //
-                // Create via element tag or attribute
-                restrict: 'AE',
-                //
-                link: function (scope, element, attrs) {
-                    var v = new VizClass(element, attrs);
-                    v.build();
-                }
-            };
-        }];
+    d3ext.isviz = function (o) {
+        return o !== Viz && o.prototype && o.prototype instanceof Viz;
     };

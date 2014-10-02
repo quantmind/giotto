@@ -1,6 +1,7 @@
 node_modules
 .project
 .pydevproject
+.grunt
 *.log
 __pycache__
 .DS_Store
