@@ -203,6 +203,16 @@
     //
     //  Utility for building visualization using d3
     //  The only method to implement is ``d3build``
+    //
+    //  ``attrs`` is an object containing optional parameters/callbacks for
+    //  the visulaization. For all visualizations the following parameters
+    //  are supported
+    //
+    //  * ``processData``: a function to invoke once data has been loaded
+    //  * ``width``: The width of the visualization, if not provided it will be evaluated
+    //    from the element of its parent
+    //  * ``height``: The height of the visualization, if not provided it will be evaluated
+    //    from the element of its parent
     var Viz = d3ext.Viz = Class.extend({
         //
         // Initialise the vizualization with a DOM element, an object of attributes
@@ -328,17 +338,26 @@
             if (src && this.d3) {
                 return this.d3.json(src, function(error, json) {
                     if (!error) {
-                        self.attrs.data = json || {};
-                        callback();
+                        self.setData(json);
                     }
                 });
             }
+        },
+        //
+        // Set new data for the visualization
+        setData: function (data, callback) {
+            if (this.attrs.processData)
+                data = this.attrs.processData(data);
+            this.attrs.data = data;
+            if (callback)
+                callback();
         }
     });
 
     d3ext.isviz = function (o) {
         return o !== Viz && o.prototype && o.prototype instanceof Viz;
     };
+
 
     //
     //  Sunburst visualization
@@ -498,7 +517,8 @@
     d3ext.C3 = Viz.extend({
         //
         d3build: function () {
-            var self = this;
+            var self = this,
+                opts = this.attrs;
             if (!this.c3) {
                 return require(['c3'], function (c3) {
                     self.c3 = c3;
@@ -508,22 +528,17 @@
             //
             //
             // Load data if not already available
-            if (!this.attrs.data) {
+            if (!opts.data) {
                 return this.loadData(function () {
                     self.d3build();
                 });
             }
             //
-            var series = this.attrs.data;
-            if (series.series) series = series.series;
-            var options = extend({
-                bindto: this.element[0],
-                data: {
-                    x: series[0][0],
-                    columns: series
-                }
-            }, this.attrs.c3);
-            var chart = this.c3.generate(options);
+            var config = extend({
+                    bindto: this.element[0]
+                },
+                this.attrs.data),
+                chart = this.c3.generate(config);
         }
     });
 

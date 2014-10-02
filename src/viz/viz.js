@@ -4,6 +4,16 @@
     //
     //  Utility for building visualization using d3
     //  The only method to implement is ``d3build``
+    //
+    //  ``attrs`` is an object containing optional parameters/callbacks for
+    //  the visulaization. For all visualizations the following parameters
+    //  are supported
+    //
+    //  * ``processData``: a function to invoke once data has been loaded
+    //  * ``width``: The width of the visualization, if not provided it will be evaluated
+    //    from the element of its parent
+    //  * ``height``: The height of the visualization, if not provided it will be evaluated
+    //    from the element of its parent
     var Viz = d3ext.Viz = Class.extend({
         //
         // Initialise the vizualization with a DOM element, an object of attributes
@@ -129,14 +139,23 @@
             if (src && this.d3) {
                 return this.d3.json(src, function(error, json) {
                     if (!error) {
-                        self.attrs.data = json || {};
-                        callback();
+                        self.setData(json);
                     }
                 });
             }
+        },
+        //
+        // Set new data for the visualization
+        setData: function (data, callback) {
+            if (this.attrs.processData)
+                data = this.attrs.processData(data);
+            this.attrs.data = data;
+            if (callback)
+                callback();
         }
     });
 
     d3ext.isviz = function (o) {
         return o !== Viz && o.prototype && o.prototype instanceof Viz;
     };
+
