@@ -16,11 +16,11 @@
     //    from the element of its parent
     var Viz = d3ext.Viz = Class.extend({
         //
-        // Initialise the vizualization with a DOM element, an object of attributes
-        // and the (optional) angular $service
-        init: function (element, attrs, $service) {
+        // Initialise the vizualization with a DOM element and
+        //  an object of attributes
+        init: function (element, attrs) {
             attrs = extend({}, this.defaults, attrs);
-            element = $(element);
+            element = d3.select(element);
             this.element = element;
             this.attrs = attrs;
             this.$service = $service;
@@ -29,7 +29,7 @@
             this.elheight = null;
             this.d3 = null;
 
-            var parent = this.element.parent();
+            var parent = element.parent();
 
             if (!attrs.width) {
                 attrs.width = element.width();

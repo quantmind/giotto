@@ -42,9 +42,6 @@ module.exports = function (grunt) {
                     browser: true,
                     expr: true,
                     globals: {
-                        jQuery: true,
-                        $: true,
-                        lux: true,
                         requirejs: true,
                         require: true,
                         exports: true,
@@ -79,7 +76,15 @@ module.exports = function (grunt) {
         jasmine: {
             src : 'dist/d3ext.min.js',
             options : {
-                specs : 'tests/unit/*.js'
+                specs : 'src/tests/*.js',
+                template: require('grunt-template-jasmine-requirejs'),
+                templateOptions: {
+                    requireConfig: {
+                        paths: {
+                            d3: "node_modules/d3/d3.min"
+                        }
+                    }
+                }
             }
         }
     });
@@ -89,16 +94,14 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-contrib-jasmine');
-    //grunt.loadNpmTasks('grunt-contrib-nodeunit');
-    //grunt.loadNpmTasks('grunt-contrib-watch');
-    //grunt.loadNpmTasks('grunt-docco');
     //
     grunt.registerTask('gruntfile', 'jshint Gruntfile.js',
             ['jshint:gruntfile']);
-    grunt.registerTask('library', 'Compile and lint all Lux libraries',
+    grunt.registerTask('library', 'Compile and lint all libraries',
             ['concat', 'jshint', 'uglify']);
-    grunt.registerTask('default', ['library']);
-    grunt.registerTask('test', ['library', 'jasmine']);
+    grunt.registerTask('all', 'Compile lint and test all libraries',
+            ['gruntfile', 'library', 'jasmine']);
+    grunt.registerTask('default', ['all']);
     //
     for_each(libs, function (name) {
         var tasks = ['concat:' + name, 'jshint:' + name];

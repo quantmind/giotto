@@ -1,21 +1,14 @@
 {
     "d3ext": {
         "src": ["src/open.js",
-                "src/utils/log.js",
-                "src/utils/extend.js",
-                "src/utils/class.js",
-                "src/viz/viz.js",
-                "src/viz/sunburst.js",
-                "src/viz/c3.js",
-                "src/viz/force.js",
+                "src/utils/*.js",
+                "src/viz.js",
+                "src/viz/*.js",
                 "src/close.js"],
         "dest": "dist/d3ext.js"
     },
     "tests": {
-        "src": ["tests/unit/open.js",
-                "tests/unit/boot.js",
-                "tests/unit/class.js",
-                "tests/unit/close.js"],
+        "src": ["src/tests/*.js"],
         "dest": "dist/tests.js",
         "minify": false
     }

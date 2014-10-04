@@ -28,7 +28,7 @@ class Extension(lux.Extension):
 
     def middleware(self, app):
         media = MediaBuilder('d3ext', 'dist', lux=False)
-        examples = HtmlContent('/', drafts=False, dir='tests')
+        examples = HtmlContent('/', drafts=False, dir='tests/html')
         return [media, examples]
 
 

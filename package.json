@@ -27,7 +27,8 @@
         "grunt-contrib-uglify": "",
         "grunt-contrib-concat": "",
         "grunt-contrib-jshint": "",
-        "grunt-contrib-jasmine": ""
+        "grunt-contrib-jasmine": "",
+        "grunt-template-jasmine-requirejs": ""
     },
     "scripts": {
         "test": "grunt jasmine"

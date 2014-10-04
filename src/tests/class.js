@@ -1,6 +1,6 @@
     //
     describe("Test Class", function() {
-        var Class = d3ext.Class;
+        var Class = d3.ext.Class;
 
         it("Check basic properties", function() {
             expect(typeof(Class)).toBe('function');
