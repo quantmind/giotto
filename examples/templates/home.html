@@ -6,8 +6,8 @@
     </div>
 </div>
 <script type="text/javascript">
-require(['lux', 'd3ext/d3ext.js'], function (lux, d3ext) {
-    lux.addD3ext(d3ext);
+require(['lux', 'dist/d3ext'], function (lux, d3) {
+    lux.addD3ext(d3.ext);
     lux.bootstrap('d3extensions', ['d3viz', 'lux.blog']);
 });
 </script>
