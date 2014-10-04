@@ -97,10 +97,10 @@ module.exports = function (grunt) {
     //
     grunt.registerTask('gruntfile', 'jshint Gruntfile.js',
             ['jshint:gruntfile']);
-    grunt.registerTask('library', 'Compile and lint all libraries',
-            ['concat', 'jshint', 'uglify']);
+    grunt.registerTask('build', 'Compile and lint all libraries',
+            ['gruntfile', 'concat', 'jshint', 'uglify']);
     grunt.registerTask('all', 'Compile lint and test all libraries',
-            ['gruntfile', 'library', 'jasmine']);
+            ['build', 'jasmine']);
     grunt.registerTask('default', ['all']);
     //
     for_each(libs, function (name) {
