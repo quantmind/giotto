@@ -414,7 +414,7 @@ function(d3, root) {
             }
             //
             var config = extend({
-                    bindto: this.element
+                    bindto: this.element.node()
                 },
                 this.attrs.data),
                 chart = this.c3.generate(config);
