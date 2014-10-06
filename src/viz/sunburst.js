@@ -22,8 +22,7 @@
                 });
             }
             //
-            var d3 = this.d3,
-                size = this.size(),
+            var size = this.size(),
                 attrs = this.attrs,
                 root = attrs.data,
                 padding = +attrs.padding,

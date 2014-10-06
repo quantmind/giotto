@@ -4,7 +4,7 @@ Lux application for building the example page
 from os import path
 
 import lux
-from lux.extensions.static import HtmlContent, MediaBuilder
+from lux.extensions.static import HtmlContent
 from lux.extensions.ui import CssInclude
 
 
@@ -29,9 +29,7 @@ HTML_LINKS = ['dist/d3ext.css',
 class Extension(lux.Extension):
 
     def middleware(self, app):
-        #media = MediaBuilder('d3ext', 'dist', lux=False)
         examples = HtmlContent('/', drafts=False, dir='examples/html')
-        #return [media, examples]
         return [examples]
 
 

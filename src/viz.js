@@ -19,54 +19,39 @@
         // Initialise the vizualization with a DOM element and
         //  an object of attributes
         init: function (element, attrs) {
+            if (!attrs && Object(element) === element) {
+                attrs = element;
+                element = null;
+            }
+            if (!element)
+                element = document.createElement('div');
             attrs = extend({}, this.defaults, attrs);
             element = d3.select(element);
             this.element = element;
             this.attrs = attrs;
-            this.$service = $service;
             this.log = log(attrs.debug);
             this.elwidth = null;
             this.elheight = null;
-            this.d3 = null;
 
-            var parent = element.parent();
-
-            if (!attrs.width) {
-                attrs.width = element.width();
-                if (attrs.width)
-                    this.elwidth = element;
-                else {
-                    attrs.width = parent.width();
-                    if (attrs.width)
-                        this.elwidth = parent;
-                    else
-                        attrs.width = 400;
-                }
-            } else {
-                attrs.width = +attrs.width;
-            }
-            //
-            if (!attrs.height) {
-                attrs.height = element.height();
-                if (attrs.height)
-                    this.elheight = element;
-                else {
-                    attrs.height = parent.height();
-                    if (attrs.height)
-                        this.elheight = parent;
-                    else
-                        attrs.height = 400;
-                }
-            } else if (attrs.height.indexOf('%') === attrs.height.length-1) {
+            if (!attrs.width)
+                attrs.width = getWidth(element, true) || 400;
+            if (!attrs.height)
+                attrs.width = getHeight(element, true) || 400;
+            else if (attrs.height.indexOf('%') === attrs.height.length-1) {
                 attrs.height_percentage = 0.01*parseFloat(attrs.height);
                 attrs.height = attrs.height_percentage*attrs.width;
             }
             //
             if (attrs.resize) {
                 var self = this;
-                $(window).resize(function () {
-                    self.resize();
-                });
+                if (window.onresize === null) {
+                    window.onresize = generateResize();
+                }
+                if (window.onresize.add) {
+                    window.onresize.add(function () {
+                        self.resize();
+                    });
+                }
             }
         },
         //
@@ -92,8 +77,8 @@
         //
         // Return a new d3 svg element insite the element without any children
         svg: function () {
-            this.element.empty();
-            return this.d3.select(this.element[0]).append("svg")
+            this.element.html('');
+            return this.element.append("svg")
                 .attr("width", this.attrs.width)
                 .attr("height", this.attrs.height);
         },
@@ -115,16 +100,7 @@
         build: function (options) {
             if (options)
                 this.attrs = extend(this.attrs, options);
-            //
-            if (!this.d3) {
-                var self = this;
-                require(['d3'], function (d3) {
-                    self.d3 = d3;
-                    self.d3build();
-                });
-            } else {
-                this.d3build();
-            }
+            this.d3build();
         },
         //
         // This is the actual method to implement
@@ -136,8 +112,8 @@
         loadData: function (callback) {
             var self = this,
                 src = this.attrs.src;
-            if (src && this.d3) {
-                return this.d3.json(src, function(error, json) {
+            if (src) {
+                return d3.json(src, function(error, json) {
                     if (!error) {
                         self.setData(json);
                     }

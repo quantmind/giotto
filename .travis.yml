@@ -8,3 +8,6 @@ before_install:
 install: npm install
 
 before_script: grunt build
+
+notifications:
+  email: false

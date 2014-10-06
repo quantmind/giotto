@@ -20,7 +20,7 @@
             }
             //
             var config = extend({
-                    bindto: this.element[0]
+                    bindto: this.element
                 },
                 this.attrs.data),
                 chart = this.c3.generate(config);

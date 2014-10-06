@@ -11,11 +11,11 @@
 <link href='dist/d3ext.css' rel='stylesheet' type='text/css'>
 <link href='dist/examples.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var luxContext = {"page": {"content_type": "text/html", "slug": "index", "name": "index", "modified": "2014-10-02T19:02:42"}, "url": "", "lux_version": "0.1.0-alpha.1", "dateFormat": "d MMM y", "ngModules": [], "year": 2014, "navbarCollapseWidth": 768, "name": "Lux", "python_version": "3.4.1", "datetimeFormat": "d MMM y, h:mm:ss a", "media": "", "date": "2014-10-04T19-04-42"};</script>
+var luxContext = {"name": "Lux", "date": "2014-10-06T14-17-19", "navbarCollapseWidth": 768, "page": {"name": "index", "slug": "index", "content_type": "text/html", "modified": "2014-10-02T19:02:42"}, "url": "", "datetimeFormat": "d MMM y, h:mm:ss a", "lux_version": "0.1.0-alpha.1", "ngModules": [], "media": "", "dateFormat": "d MMM y", "year": 2014, "python_version": "3.4.1"};</script>
 <script type="text/javascript">
-var require = {"waitSeconds": 200, "baseUrl": "", "minify": false, "deps": []};
+var require = {"waitSeconds": 200, "deps": [], "minify": false, "baseUrl": ""};
 </script>
-<script src='http://quantmind.github.io/jslibs/libs.js' type='application/javascript'></script>
+<script src='http://quantmind.github.io/require-config-js/require.config.js' type='application/javascript'></script>
 <script src='http://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.js' type='application/javascript'></script>
 </head>
 <body data-ng-controller='Page' data-ng-model='page'>
@@ -108,7 +108,7 @@ var d3examples = {
 </div>
 <script type="text/javascript">
 require(['lux', 'dist/d3ext'], function (lux, d3) {
-    lux.addD3ext(d3.ext);
+    lux.addD3ext(d3);
     lux.bootstrap('d3extensions', ['d3viz', 'lux.blog']);
 });
 </script>

@@ -1,6 +1,6 @@
 //      Lux Library - v0.1.0
 
-//      Compiled 2014-10-04.
+//      Compiled 2014-10-06.
 //      Copyright (c) 2014 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -182,39 +182,6 @@ function(angular, root) {
         return c;
     }(function() {}));
     //
-    // Bootstrap the document
-    lux.bootstrap = function (name, modules) {
-        //
-        // actual bootstrapping function
-        function _bootstrap() {
-            //
-            // Resolve modules to load
-            if (!isArray(modules))
-                modules = [];
-            modules.push('lux');
-            // Add all modules from context
-            forEach(lux.context.ngModules, function (module) {
-                modules.push(module);
-            });
-            luxAppModule(name, modules);
-            angular.bootstrap(document, [name]);
-            //
-            forEach(ready_callbacks, function (callback) {
-                callback();
-            });
-            ready_callbacks = true;
-        }
-
-        if (!angular_bootstrapped) {
-            angular_bootstrapped = true;
-            //
-            $(document).ready(function() {
-                _bootstrap();
-            });
-        }
-    };
-
-    //
     // Object containing apis by name
     var ApiTypes = lux.ApiTypes = {};
     //
@@ -232,7 +199,7 @@ function(angular, root) {
     //  Lux Api service factory for angular
     //  ---------------------------------------
     angular.module('lux.services', [])
-        .service('$lux', function ($location, $q, $http, $log) {
+        .service('$lux', ['$location', '$q', '$http', '$log', function ($location, $q, $http, $log) {
             var $lux = this;
 
             this.location = $location;
@@ -293,7 +260,7 @@ function(angular, root) {
                 } else
                     $lux.log.warning('Cannot scroll, target not found');
             };
-        });
+        }]);
     //
     function wrapPromise (promise) {
         promise.success = function(fn) {
@@ -848,15 +815,6 @@ function(angular, root) {
         }]);
 
     //
-    //  Lux Application Module
-    //  ==========================
-    function luxAppModule (name, modules) {
-        var module = angular.module(name, modules);
-        if (lux.context.html5mode)
-            configRouter(module);
-        return module;
-    }
-    //
     //  UI-Routing
     //
     //  Configure ui-Router using lux routing objects
@@ -936,6 +894,41 @@ function(angular, root) {
         }]);
 
     }
+
+    //
+    // Bootstrap the document
+    lux.bootstrap = function (name, modules) {
+        //
+        // actual bootstrapping function
+        function _bootstrap() {
+            //
+            // Resolve modules to load
+            if (!isArray(modules))
+                modules = [];
+            modules.push('lux');
+            // Add all modules from context
+            forEach(lux.context.ngModules, function (module) {
+                modules.push(module);
+            });
+            angular.module(name, modules);
+            if (lux.context.html5mode && configRouter)
+                configRouter(module);
+            angular.bootstrap(document, [name]);
+            //
+            forEach(ready_callbacks, function (callback) {
+                callback();
+            });
+            ready_callbacks = true;
+        }
+
+        if (!angular_bootstrapped) {
+            angular_bootstrapped = true;
+            //
+            $(document).ready(function() {
+                _bootstrap();
+            });
+        }
+    };
 
 angular.module('templates-blog', ['lux/blog/header.tpl.html', 'lux/blog/pagination.tpl.html']);
 
@@ -1261,7 +1254,7 @@ angular.module("lux/blog/pagination.tpl.html", []).run(["$templateCache", functi
     // Load d3 extensions into angular 'd3viz' module
     //  d3ext is the d3 extension object
     //  name is the optional module name for angular (default to d3viz)
-    lux.addD3ext = function (d3ext, name) {
+    lux.addD3ext = function (d3, name) {
 
         function loadData ($lux) {
 
@@ -1279,7 +1272,7 @@ angular.module("lux/blog/pagination.tpl.html", []).run(["$templateCache", functi
                         });
                     }
                 } else if (src) {
-                    this.d3.json(src, function(error, json) {
+                    d3.json(src, function(error, json) {
                         if (!error) {
                             self.setData(json, callback);
                             return self.attrs.data;
@@ -1309,9 +1302,9 @@ angular.module("lux/blog/pagination.tpl.html", []).run(["$templateCache", functi
         name = name || 'd3viz';
         var app = angular.module(name, ['lux.services']);
 
-        angular.forEach(d3ext, function (VizClass, name) {
+        angular.forEach(d3.ext, function (VizClass, name) {
 
-            if (d3ext.isviz(VizClass)) {
+            if (d3.ext.isviz(VizClass)) {
                 var dname = 'viz' + name.substring(0,1).toUpperCase() + name.substring(1);
 
                 app.directive(dname, ['$lux', function ($lux) {
@@ -1321,12 +1314,10 @@ angular.module("lux/blog/pagination.tpl.html", []).run(["$templateCache", functi
                             restrict: 'AE',
                             //
                             link: function (scope, element, attrs) {
-                                require(['d3'], function (d3) {
-                                    var options = getOptions(d3, attrs);
-                                    var viz = new VizClass(element, options);
-                                    viz.loadData = loadData($lux);
-                                    viz.build();
-                                });
+                                var options = getOptions(d3, attrs);
+                                var viz = new VizClass(element[0], options);
+                                viz.loadData = loadData($lux);
+                                viz.build();
                             }
                         };
                 }]);
