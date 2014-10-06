@@ -8,7 +8,7 @@ head_title: D3 Extensions
     <div class='col-sm-12'>
         <h5>Sqrt Scale <small>default</small></h5>
         <data-viz-sun-burst data-src="https://gist.githubusercontent.com/lsbardel/f3d21f35a685a96706bf/raw"
-        data-resize=1 data-height='50%' data-addorder></sun-burst>
+        data-resize=1 data-height='50%' data-addorder data-padding=60></sun-burst>
     </div>
 </div>
 
@@ -42,7 +42,7 @@ var d3examples = {
     bitcoin: function (d3) {
         var years = 1;
         return {
-            src: 'http://www.quandl.com/api/v1/datasets/BAVERAGE/USD.json?rows=' + 365*years,
+            src: 'http://www.quandl.com/api/v1/datasets/BAVERAGE/USD.json?auth_token=-kdL9rjDHgBsx1VcDkrC&rows=' + 365*years,
             processData: function (raw) {
                 var cols = d3.transpose(raw.data);
                     dates = cols[0],

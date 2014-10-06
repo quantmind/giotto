@@ -5,18 +5,18 @@
 <meta charset='utf-8'>
 <meta content='IE=edge' http-equiv='X-UA-Compatible'>
 <meta content='width=device-width, initial-scale=1' name='viewport'>
-<meta content='2014-10-02T19:02:42' name='og:modified_time'>
-<link href='http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css' rel='stylesheet' type='text/css'>
-<link href='http://netdna.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css' rel='stylesheet' type='text/css'>
+<meta content='2014-10-06T20:16:13' name='og:modified_time'>
+<link href='http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.css' rel='stylesheet' type='text/css'>
+<link href='http://netdna.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.css' rel='stylesheet' type='text/css'>
 <link href='dist/d3ext.css' rel='stylesheet' type='text/css'>
 <link href='dist/examples.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var luxContext = {"name": "Lux", "ngModules": [], "python_version": "3.4.1", "year": 2014, "date": "2014-10-06T15-51-13", "media": "", "datetimeFormat": "d MMM y, h:mm:ss a", "dateFormat": "d MMM y", "page": {"name": "index", "slug": "index", "content_type": "text/html", "modified": "2014-10-02T19:02:42"}, "navbarCollapseWidth": 768, "url": "", "lux_version": "0.1.0-alpha.1"};</script>
+var luxContext = {"name": "Lux", "year": 2014, "ngModules": [], "dateFormat": "d MMM y", "navbarCollapseWidth": 768, "url": "", "lux_version": "0.1.0-alpha.1", "date": "2014-10-06T20-16-17", "python_version": "3.4.1", "media": "", "datetimeFormat": "d MMM y, h:mm:ss a", "page": {"slug": "index", "name": "index", "content_type": "text/html", "modified": "2014-10-06T20:16:13"}};</script>
 <script type="text/javascript">
-var require = {"waitSeconds": 200, "deps": [], "minify": true, "baseUrl": ""};
+var require = {"waitSeconds": 200, "deps": [], "baseUrl": "", "minify": false};
 </script>
-<script src='http://quantmind.github.io/require-config-js/require.config.min.js' type='application/javascript'></script>
-<script src='http://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js' type='application/javascript'></script>
+<script src='http://quantmind.github.io/require-config-js/require.config.js' type='application/javascript'></script>
+<script src='http://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.js' type='application/javascript'></script>
 </head>
 <body data-ng-controller='Page' data-ng-model='page'>
 <div class='container'>
@@ -34,7 +34,7 @@ var require = {"waitSeconds": 200, "deps": [], "minify": true, "baseUrl": ""};
     <div class='col-sm-12'>
         <h5>Sqrt Scale <small>default</small></h5>
         <data-viz-sun-burst data-src="https://gist.githubusercontent.com/lsbardel/f3d21f35a685a96706bf/raw"
-        data-resize=1 data-height='50%' data-addorder></sun-burst>
+        data-resize=1 data-height='50%' data-addorder data-padding=60></sun-burst>
     </div>
 </div>
 
@@ -65,7 +65,7 @@ var d3examples = {
     bitcoin: function (d3) {
         var years = 1;
         return {
-            src: 'http://www.quandl.com/api/v1/datasets/BAVERAGE/USD.json?rows=' + 365*years,
+            src: 'http://www.quandl.com/api/v1/datasets/BAVERAGE/USD.json?auth_token=-kdL9rjDHgBsx1VcDkrC&rows=' + 365*years,
             processData: function (raw) {
                 var cols = d3.transpose(raw.data);
                     dates = cols[0],
