@@ -1,6 +1,7 @@
     //
     describe("Test Sunburst", function() {
-        var SunBurst = d3.ext.SunBurst;
+        var SunBurst = d3.ext.SunBurst,
+            src = "https://gist.githubusercontent.com/lsbardel/f3d21f35a685a96706bf/raw";
 
         it("Check basic properties", function() {
             var sunb = new SunBurst();
@@ -10,14 +11,28 @@
             expect(sunb.attrs.padding).toBe(10);
         });
 
-        it("Check agile development", function() {
-            var src = "https://gist.githubusercontent.com/lsbardel/f3d21f35a685a96706bf/raw",
-                sunb = new SunBurst({
+        it("Check agile development src", function() {
+            var sunb = new SunBurst({
                     padding: '30',
                     src: src
                 });
             expect(sunb.attrs.padding).toBe('30');
             expect(sunb.attrs.src).toBe(src);
+            expect(sunb.attrs.resize).toBe(false);
+        });
+
+        it("Check agile development build", function(done) {
+            var sunb = new SunBurst({
+                    padding: '30',
+                    src: src
+                }),
+                check = function (o) {
+                    expect(o).toBe(sunb);
+                    //expect(typeof(o.attrs.data)).toBe('object');
+                    done();
+                };
+            sunb.on('build', check);
+            sunb.build();
         });
 
     });

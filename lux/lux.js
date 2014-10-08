@@ -95,6 +95,10 @@ function(angular, root) {
         }
     };
 
+    var windowHeight = lux.windowHeight = function () {
+        return window.innerHeight > 0 ? window.innerHeight : screen.availHeight;
+    };
+
     var isAbsolute = new RegExp('^([a-z]+://|//)');
 
     var isTag = function (element, tag) {
@@ -856,8 +860,21 @@ function(angular, root) {
             templateUrl: "lux/page/navbar2.tpl.html",
             restrict: 'AE'
         };
+    })
+    //
+    // Directive for the main page in the sidebar2 template
+    .directive('navbar2Page', function () {
+        return {
+            compile: function () {
+                return {
+                    pre: function (scope, element, attrs) {
+                        element.addClass('navbar2-page');
+                        attrs.$set('style', 'min-height: ' + windowHeight() + 'px');
+                    }
+                };
+            }
+        };
     });
-
 angular.module('templates-page', ['lux/page/navbar2.tpl.html']);
 
 angular.module("lux/page/navbar2.tpl.html", []).run(["$templateCache", function($templateCache) {
@@ -878,7 +895,7 @@ angular.module("lux/page/navbar2.tpl.html", []).run(["$templateCache", function(
     "            <i ng-if=\"item.icon\" class=\"{{item.icon}}\"></i>{{item.value}}</a>\n" +
     "        </li>\n" +
     "    </ul>\n" +
-    "    <div class=\"navbar-{{navbar.theme2 || navbar.theme}} sidebar\" role=\"navigation\" ng-cloak>\n" +
+    "    <div class=\"navbar sidebar\" role=\"navigation\">\n" +
     "        <div class=\"sidebar-collapse\" bs-collapse-target>\n" +
     "            <ul id=\"side-menu\" class=\"nav nav-side\">\n" +
     "                <li ng-if=\"navbar.search\" class=\"sidebar-search\">\n" +
@@ -948,10 +965,6 @@ angular.module("lux/page/navbar2.tpl.html", []).run(["$templateCache", function(
             if (typeof page === 'string')
                 page = $scope.pages ? $scope.pages[page] : null;
             $scope.page = addPageInfo(page || {}, $scope, dateFilter, $lux);
-            //
-            $scope.windowHeight = function () {
-                return root.window.innerHeight > 0 ? root.window.innerHeight : root.screen.availHeight;
-            };
             //
             // logout via post method
             $scope.logout = function(e, url) {

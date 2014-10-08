@@ -5,25 +5,25 @@
 <meta charset='utf-8'>
 <meta content='IE=edge' http-equiv='X-UA-Compatible'>
 <meta content='width=device-width, initial-scale=1' name='viewport'>
-<meta content='2014-10-08T14:23:47' name='og:modified_time'>
+<meta content='2014-10-08T22:07:38' name='og:modified_time'>
 <link href='http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.css' rel='stylesheet' type='text/css'>
 <link href='http://netdna.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.css' rel='stylesheet' type='text/css'>
 <link href='/dist/d3ext.css' rel='stylesheet' type='text/css'>
 <link href='/dist/examples.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var luxContext = {"lux_version": "0.1.0-alpha.1", "python_version": "3.4.1", "url": "", "datetimeFormat": "d MMM y, h:mm:ss a", "page": {"modified": "2014-10-08T14:23:47", "content_type": "text/html", "title": "Time Series", "slug": "examples/c3", "name": "examples_c3"}, "ngModules": [], "name": "Lux", "year": 2014, "media": "", "date": "2014-10-08T20-11-53", "dateFormat": "d MMM y"};</script>
+var luxContext = {"datetimeFormat": "d MMM y, h:mm:ss a", "page": {"slug": "examples/c3", "name": "examples_c3", "content_type": "text/html", "title": "Time Series", "modified": "2014-10-08T22:07:38"}, "year": 2014, "url": "", "media": "", "lux_version": "0.1.0-alpha.1", "date": "2014-10-08T22-07-41", "name": "Lux", "python_version": "3.4.1", "ngModules": [], "dateFormat": "d MMM y"};</script>
 <script type="text/javascript">
-var require = {"paths": {}, "waitSeconds": 200, "baseUrl": "/", "deps": [], "minify": false};
+var require = {"waitSeconds": 200, "baseUrl": "/", "deps": [], "paths": {}, "minify": false};
 </script>
 <script src='http://quantmind.github.io/require-config-js/require.config.js' type='application/javascript'></script>
 <script src='http://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.js' type='application/javascript'></script>
 </head>
 <body data-ng-controller='Page' data-ng-model='page'>
-<div class="navbar2-wrapper navbar-{{navbar.theme}}" ng-controller="Navigation">
+<div class="navbar2-wrapper navbar-{{navbar.theme}}" ng-controller="Navigation" ng-cloak>
     <navbar2></navbar2>
-    <div class='navbar2-page'>
+    <div navbar2-page>
         <div class='row'>
-            <div class='col-sm-12' data-highlight data-toc data-ng-cloak>
+            <div class='col-sm-12' data-highlight data-toc>
                 <h2 id="time-series">Time Series</h2>
 <div class='row'>
     <div class='col-sm-12'>
@@ -40,6 +40,8 @@ var d3examples = {
         var years = 1;
         return {
             src: 'http://www.quandl.com/api/v1/datasets/BAVERAGE/USD.json?auth_token=-kdL9rjDHgBsx1VcDkrC&rows=' + 365*years,
+            height: '50%',
+            //resize: true,
             processData: function (raw) {
                 var cols = d3.transpose(raw.data);
                     dates = cols[0],
@@ -107,7 +109,7 @@ require(['lux', 'dist/d3ext', 'angular-ui-router', 'angular-strap'], function (l
         }
     })
     .addD3ext(d3)
-    .bootstrap('d3extensions', ['d3viz', 'lux.blog', 'lux.nav', 'ui.router']);
+    .bootstrap('d3extensions', ['lux.nav', 'ui.router', 'lux.blog', 'd3viz']);
 });
 </script>
 </body>

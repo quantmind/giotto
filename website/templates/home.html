@@ -1,8 +1,8 @@
-<div class="navbar2-wrapper navbar-{{navbar.theme}}" ng-controller="Navigation">
+<div class="navbar2-wrapper navbar-{{navbar.theme}}" ng-controller="Navigation" ng-cloak>
     <navbar2></navbar2>
-    <div class='navbar2-page'>
+    <div navbar2-page>
         <div class='row'>
-            <div class='col-sm-12' data-highlight data-toc data-ng-cloak>
+            <div class='col-sm-12' data-highlight data-toc>
                 $html_main
             </div>
         </div>
@@ -34,6 +34,6 @@ require(['lux', 'dist/d3ext', 'angular-ui-router', 'angular-strap'], function (l
         }
     })
     .addD3ext(d3)
-    .bootstrap('d3extensions', ['d3viz', 'lux.blog', 'lux.nav', 'ui.router']);
+    .bootstrap('d3extensions', ['lux.nav', 'ui.router', 'lux.blog', 'd3viz']);
 });
 </script>

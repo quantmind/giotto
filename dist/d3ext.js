@@ -254,6 +254,8 @@ function(d3, root) {
 
 
     d3ext.VizDefaults = {
+        // Add resizing on window resize
+        resize: false,
         // milliseconds to delay the resizing of a visualization
         resizeDelay: 200,
         // Option callback after initialisation
@@ -420,9 +422,18 @@ function(d3, root) {
         setData: function (data, callback) {
             if (this.attrs.processData)
                 data = this.attrs.processData(data);
-            this.attrs.data = data;
+            if (Object(data) === data && data.data)
+                this.attrs = extend(this.attrs, data);
+            else
+                this.attrs.data = data;
             if (callback)
                 callback();
+        },
+        //
+        // Shortcut for this.dispatch.on(...) but chainable
+        on: function (event, callback) {
+            this.dispatch.on(event, callback);
+            return this;
         }
     });
 

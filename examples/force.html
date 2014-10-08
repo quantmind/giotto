@@ -11,19 +11,19 @@
 <link href='/dist/d3ext.css' rel='stylesheet' type='text/css'>
 <link href='/dist/examples.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var luxContext = {"lux_version": "0.1.0-alpha.1", "python_version": "3.4.1", "url": "", "datetimeFormat": "d MMM y, h:mm:ss a", "page": {"modified": "2014-10-08T14:24:07", "content_type": "text/html", "slug": "examples/force", "name": "examples_force"}, "ngModules": [], "name": "Lux", "year": 2014, "media": "", "date": "2014-10-08T20-11-53", "dateFormat": "d MMM y"};</script>
+var luxContext = {"datetimeFormat": "d MMM y, h:mm:ss a", "page": {"slug": "examples/force", "name": "examples_force", "content_type": "text/html", "modified": "2014-10-08T14:24:07"}, "year": 2014, "url": "", "media": "", "lux_version": "0.1.0-alpha.1", "date": "2014-10-08T22-07-41", "name": "Lux", "python_version": "3.4.1", "ngModules": [], "dateFormat": "d MMM y"};</script>
 <script type="text/javascript">
-var require = {"paths": {}, "waitSeconds": 200, "baseUrl": "/", "deps": [], "minify": false};
+var require = {"waitSeconds": 200, "baseUrl": "/", "deps": [], "paths": {}, "minify": false};
 </script>
 <script src='http://quantmind.github.io/require-config-js/require.config.js' type='application/javascript'></script>
 <script src='http://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.js' type='application/javascript'></script>
 </head>
 <body data-ng-controller='Page' data-ng-model='page'>
-<div class="navbar2-wrapper navbar-{{navbar.theme}}" ng-controller="Navigation">
+<div class="navbar2-wrapper navbar-{{navbar.theme}}" ng-controller="Navigation" ng-cloak>
     <navbar2></navbar2>
-    <div class='navbar2-page'>
+    <div navbar2-page>
         <div class='row'>
-            <div class='col-sm-12' data-highlight data-toc data-ng-cloak>
+            <div class='col-sm-12' data-highlight data-toc>
                 <h2 id="force-layout">Force Layout</h2>
 <div class='row'>
     <div class='col-sm-12'>
@@ -66,7 +66,7 @@ require(['lux', 'dist/d3ext', 'angular-ui-router', 'angular-strap'], function (l
         }
     })
     .addD3ext(d3)
-    .bootstrap('d3extensions', ['d3viz', 'lux.blog', 'lux.nav', 'ui.router']);
+    .bootstrap('d3extensions', ['lux.nav', 'ui.router', 'lux.blog', 'd3viz']);
 });
 </script>
 </body>
