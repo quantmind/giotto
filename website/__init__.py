@@ -7,9 +7,8 @@ import lux
 from lux.extensions.static import HtmlContent
 
 
+SITE_URL = 'http://quantmind.github.io/d3ext'
 HTML_TITLE = 'd3ext examples'
-#STATIC_LOCATION = path.join(path.dirname(path.dirname(
-#    path.abspath('__file__'))), 'docs', 'd3ext')
 STATIC_LOCATION = ''
 CONTEXT_LOCATION = None
 MEDIA_URL = '/'
