@@ -5,15 +5,15 @@
 <meta charset='utf-8'>
 <meta content='IE=edge' http-equiv='X-UA-Compatible'>
 <meta content='width=device-width, initial-scale=1' name='viewport'>
-<meta content='2014-10-08T22:07:38' name='og:modified_time'>
+<meta content='2014-10-08T22:09:37' name='og:modified_time'>
 <link href='http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.css' rel='stylesheet' type='text/css'>
 <link href='http://netdna.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.css' rel='stylesheet' type='text/css'>
 <link href='/dist/d3ext.css' rel='stylesheet' type='text/css'>
 <link href='/dist/examples.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var luxContext = {"datetimeFormat": "d MMM y, h:mm:ss a", "page": {"slug": "examples/c3", "name": "examples_c3", "content_type": "text/html", "title": "Time Series", "modified": "2014-10-08T22:07:38"}, "year": 2014, "url": "", "media": "", "lux_version": "0.1.0-alpha.1", "date": "2014-10-08T22-07-41", "name": "Lux", "python_version": "3.4.1", "ngModules": [], "dateFormat": "d MMM y"};</script>
+var luxContext = {"name": "Lux", "dateFormat": "d MMM y", "year": 2014, "date": "2014-10-08T22-27-16", "media": "", "page": {"slug": "examples/c3", "content_type": "text/html", "name": "examples_c3", "modified": "2014-10-08T22:09:37", "title": "Time Series"}, "lux_version": "0.1.0-alpha.1", "ngModules": [], "python_version": "3.4.1", "url": "", "datetimeFormat": "d MMM y, h:mm:ss a"};</script>
 <script type="text/javascript">
-var require = {"waitSeconds": 200, "baseUrl": "/", "deps": [], "paths": {}, "minify": false};
+var require = {"minify": false, "waitSeconds": 200, "deps": [], "baseUrl": "/", "paths": {}};
 </script>
 <script src='http://quantmind.github.io/require-config-js/require.config.js' type='application/javascript'></script>
 <script src='http://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.js' type='application/javascript'></script>
@@ -41,7 +41,7 @@ var d3examples = {
         return {
             src: 'http://www.quandl.com/api/v1/datasets/BAVERAGE/USD.json?auth_token=-kdL9rjDHgBsx1VcDkrC&rows=' + 365*years,
             height: '50%',
-            //resize: true,
+            resize: true,
             processData: function (raw) {
                 var cols = d3.transpose(raw.data);
                     dates = cols[0],
