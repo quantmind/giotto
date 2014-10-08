@@ -95,9 +95,20 @@
                 if (text) text.transition().attr("opacity", 0);
                 depth = d.depth;
                 //
+                function visible (e) {
+                    return e.x >= d.x && e.x < (d.x + d.dx);
+                }
+                //
                 path.transition()
                     .duration(transition)
-                    .attrTween("d", arcTween(d));
+                    .attrTween("d", arcTween(d))
+                    .each('end', function (e, i) {
+                        if (e.depth === depth && visible(e)) {
+                            self.current = e;
+                            if (self.dispatch.change)
+                                self.dispatch.change(self);
+                        }
+                    });
 
                 if (text) {
                     positions = [];
@@ -106,7 +117,7 @@
                         .attrTween("d", arcTween(d))
                         .each('end', function (e, i) {
                             // check if the animated element's data lies within the visible angle span given in d
-                            if (e.depth >= depth && (e.x >= d.x && e.x < (d.x + d.dx))) {
+                            if (e.depth >= depth && visible(e)) {
                                 // fade in the text element and recalculate positions
                                 alignText(d3.select(this.parentNode)
                                             .select("text")

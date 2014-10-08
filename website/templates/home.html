@@ -1,0 +1,39 @@
+<div class="navbar2-wrapper navbar-{{navbar.theme}}" ng-controller="Navigation">
+    <navbar2></navbar2>
+    <div class='navbar2-page'>
+        <div class='row'>
+            <div class='col-sm-12' data-highlight data-toc data-ng-cloak>
+                $html_main
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+require(['lux', 'dist/d3ext', 'angular-ui-router', 'angular-strap'], function (lux, d3) {
+    var sitemap = function () {
+        var s = ['sunburst', 'force', {href: 'c3', name: 'time series'}]
+            all = [];
+        s.forEach(function (v) {
+            if (typeof(v) === 'string')
+                v = {href: v, name: v};
+            v.href = lux.context.url + '/examples/' + v.href;
+            all.push(v);
+        })
+        return all;
+    };
+    //
+    lux.extend({
+        navbar: {
+            brand: 'd3ext',
+            theme: 'default',
+            items: [{href: 'https://github.com/quantmind/d3ext',
+                     icon: 'fa fa-github fa-2x',
+                     name: 'bla'}],
+            items2: sitemap()
+        }
+    })
+    .addD3ext(d3)
+    .bootstrap('d3extensions', ['d3viz', 'lux.blog', 'lux.nav', 'ui.router']);
+});
+</script>

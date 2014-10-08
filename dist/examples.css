@@ -1,7 +1,7 @@
 /*
 ------------------------------------------------------------------
 ------------------------------------------------------------------
-Created by lux 2014-10-06 20:16:17 in 0.05 seconds.
+Created by lux 2014-10-08 20:11:53 in 0.05 seconds.
 ------------------------------------------------------------------
 ------------------------------------------------------------------ */
 
@@ -11,11 +11,12 @@ Created by lux 2014-10-06 20:16:17 in 0.05 seconds.
 
 .hljs-comment,.hljs-title{color:#8e908c}.hljs-variable,.hljs-attribute,.hljs-tag,.hljs-regexp,.ruby .hljs-constant,.xml .hljs-tag .hljs-title,.xml .hljs-pi,.xml .hljs-doctype,.html .hljs-doctype,.css .hljs-id,.css .hljs-class,.css .hljs-pseudo{color:#c82829}.hljs-number,.hljs-preprocessor,.hljs-pragma,.hljs-built_in,.hljs-literal,.hljs-params,.hljs-constant{color:#f5871f}.ruby .hljs-class .hljs-title,.css .hljs-rules .hljs-attribute{color:#eab700}.hljs-string,.hljs-value,.hljs-inheritance,.hljs-header,.ruby .hljs-symbol,.xml .hljs-cdata{color:#718c00}.css .hljs-hexcolor{color:#3e999f}.hljs-function,.python .hljs-decorator,.python .hljs-title,.ruby .hljs-function .hljs-title,.ruby .hljs-title .hljs-keyword,.perl .hljs-sub,.javascript .hljs-title,.coffeescript .hljs-title{color:#4271ae}.hljs-keyword,.javascript .hljs-function{color:#8959a8}.hljs{display:block;overflow-x:auto;background:white;color:#4d4d4c;padding:.5em;-webkit-text-size-adjust:none}.coffeescript .javascript,.javascript .xml,.tex .hljs-formula,.xml .javascript,.xml .vbscript,.xml .css,.xml .hljs-cdata{opacity:.5}
 body {
+    line-height: 1.42857;
     font-size: 14px;
-    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+    background: #fff;
     color: #333;
     font-style: normal;
-    line-height: 1.42857;
+    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
 }
 
 [ng\:cloak],
@@ -40,42 +41,48 @@ body {
 }
 
 .absolute-full {
-    bottom: 0;
     position: absolute;
     top: 0;
+    bottom: 0;
 }
 
 code.hljs.inline {
-    display: inline;
     padding: 2px 4px;
+    display: inline;
+}
+
+.navbar2-wrapper {
+    min-height: 100%;
+    width: 100%;
+}
+
+.navbar2-page {
+    padding: 70px 15px 0;
+    background: #fff;
 }
 
 @media all and (min-width:768px) {
-    .admin-nav {
-        margin-top: 51px;
+    .navbar2-page {
+        margin: 0 0 0 200px;
+    }
+
+    .navbar2-wrapper.navbar-default .navbar2-page {
+        border-left: 1px solid #e7e7e7;
+    }
+
+}
+@media all and (min-width:768px) {
+    .sidebar {
         position: absolute;
-        width: 250px;
         z-index: 1;
-    }
-
-}
-@media all and (max-width:767px) and (max-height:600px) {
-    .sidebar-collapse {
-        max-height: 300px;
-        overflow-y: scroll;
-    }
-
-}
-@media all and (max-width:767px) and (max-height:400px) {
-    .sidebar-collapse {
-        max-height: 200px;
-        overflow-y: scroll;
+        margin-top: 51px;
+        width: 200px;
     }
 
 }
 .dir-entry-image {
-    max-height: 120px;
     overflow: hidden;
+    max-height: 120px;
 }
 
 .dir-entry-image img {
@@ -94,10 +101,10 @@ dt:hover > a.headerlink {
 }
 
 a.headerlink {
-    visibility: hidden;
     text-decoration: none;
-    color: #eee;
+    visibility: hidden;
     padding: 0 4px;
+    color: #eee;
 }
 
 a.headerlink:hover {
@@ -109,6 +116,6 @@ a.headerlink:hover {
 }
 
 div.viewcode-block:target {
-    padding: 0 10px;
     margin: -1px -10px;
+    padding: 0 10px;
 }

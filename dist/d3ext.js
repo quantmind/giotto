@@ -187,9 +187,8 @@ function(d3, root) {
               if (hasApply) {
                     return function() {
                         var args = [];
-                            forEach(arguments, function(arg) {
-                                args.push(formatError(arg));
-                        });
+                        for(var i=0; i<arguments.length; ++i)
+                            args.push(formatError(arguments[i]));
                         return logFn.apply(console, args);
                     };
             }
@@ -254,6 +253,14 @@ function(d3, root) {
     }
 
 
+    d3ext.VizDefaults = {
+        // milliseconds to delay the resizing of a visualization
+        resizeDelay: 200,
+        // Option callback after initialisation
+        onInit: null,
+        // Events dispatched by the visualization
+        events: ['build', 'change']
+    };
     //
     //  Vizualization Class
     //  -------------------------------
@@ -281,19 +288,30 @@ function(d3, root) {
             }
             if (!element)
                 element = document.createElement('div');
-            attrs = extend({}, this.defaults, attrs);
+            attrs = extend({}, d3ext.VizDefaults, this.defaults, attrs);
             element = d3.select(element);
             this.element = element;
             this.attrs = attrs;
             this.log = log(attrs.debug);
             this.elwidth = null;
             this.elheight = null;
+            this.dispatch = d3.dispatch.apply(d3, attrs.events);
 
-            if (!attrs.width)
-                attrs.width = getWidth(element, true) || 400;
-            if (!attrs.height)
-                attrs.width = getHeight(element, true) || 400;
-            else if (attrs.height.indexOf('%') === attrs.height.length-1) {
+            if (!attrs.width) {
+                attrs.width = getWidth(element);
+                if (attrs.width)
+                    this.elwidth = true;
+                else
+                    attrs.width = 400;
+            }
+            if (!attrs.height) {
+                attrs.height = getHeight(element);
+                if (attrs.height)
+                    this.elheight = true;
+                else
+                    attrs.height = 400;
+            }
+            else if (typeof(attrs.height) === "string" && attrs.height.indexOf('%') === attrs.height.length-1) {
                 attrs.height_percentage = 0.01*parseFloat(attrs.height);
                 attrs.height = attrs.height_percentage*attrs.width;
             }
@@ -305,30 +323,49 @@ function(d3, root) {
                 }
                 if (window.onresize.add) {
                     window.onresize.add(function () {
-                        self.resize();
+                        self._resize();
                     });
+                }
+            }
+            //
+            if (attrs.onInit)
+                attrs.onInit.call(this);
+        },
+        //
+        // Resize the vizualization
+        _resize: function () {
+            var w = this.elwidth ? getWidth(this.element) : this.attrs.width,
+                h;
+            if (this.attrs.height_percentage)
+                h = w*this.attrs.height_percentage;
+            else
+                h = this.elheight ? getHeight(this.element) : this.attrs.height;
+            if (this.attrs.width !== w || this.attrs.height !== h) {
+                this.attrs.width = w;
+                this.attrs.height = h;
+                if (!this._resizing) {
+                    if (this.attrs.resizeDelay) {
+                        var self = this;
+                        this._resizing = true;
+                        setTimeout(function () {
+                            self.log.info('Resizing visualization');
+                            self.resize();
+                            self._resizing = false;
+                        }, this.attrs.resizeDelay);
+                    } else {
+                        this.resize();
+                    }
                 }
             }
         },
         //
         // Resize the vizualization
         resize: function (size) {
-            var w, h;
             if (size) {
-                w = size[0];
-                h = size[1];
-            } else {
-                w = this.elwidth ? this.elwidth.width() : this.attrs.width;
-                if (this.attrs.height_percentage)
-                    h = w*this.attrs.height_percentage;
-                else
-                    h = this.elheight ? this.elheight.height() : this.attrs.height;
+                this.attrs.width = size[0];
+                this.attrs.height = size[1];
             }
-            if (this.attrs.width !== w || this.attrs.height !== h) {
-                this.attrs.width = w;
-                this.attrs.height = h;
-                this.build();
-            }
+            this.build();
         },
         //
         // Return a new d3 svg element insite the element without any children
@@ -357,6 +394,8 @@ function(d3, root) {
             if (options)
                 this.attrs = extend(this.attrs, options);
             this.d3build();
+            if (this.dispatch.build)
+                this.dispatch.build(this);
         },
         //
         // This is the actual method to implement
@@ -371,7 +410,7 @@ function(d3, root) {
             if (src) {
                 return d3.json(src, function(error, json) {
                     if (!error) {
-                        self.setData(json);
+                        self.setData(json, callback);
                     }
                 });
             }
@@ -394,6 +433,8 @@ function(d3, root) {
 
 
     d3ext.C3 = Viz.extend({
+        c3opts: ['data', 'axis', 'grid', 'region', 'legend', 'tooltip',
+                 'subchart', 'zoom', 'point', 'line', 'bar', 'pie', 'donut'],
         //
         d3build: function () {
             var self = this,
@@ -413,11 +454,18 @@ function(d3, root) {
                 });
             }
             //
-            var config = extend({
-                    bindto: this.element.node()
-                },
-                this.attrs.data),
-                chart = this.c3.generate(config);
+            var config = {
+                    bindto: this.element.node(),
+                    size: {
+                        width: opts.width,
+                        height: opts.height
+                    }
+                };
+            self.c3opts.forEach(function (name) {
+                if (opts[name])
+                    config[name] = opts[name];
+            });
+            var chart = this.c3.generate(config);
         }
     });
 
@@ -638,9 +686,20 @@ function(d3, root) {
                 if (text) text.transition().attr("opacity", 0);
                 depth = d.depth;
                 //
+                function visible (e) {
+                    return e.x >= d.x && e.x < (d.x + d.dx);
+                }
+                //
                 path.transition()
                     .duration(transition)
-                    .attrTween("d", arcTween(d));
+                    .attrTween("d", arcTween(d))
+                    .each('end', function (e, i) {
+                        if (e.depth === depth && visible(e)) {
+                            self.current = e;
+                            if (self.dispatch.change)
+                                self.dispatch.change(self);
+                        }
+                    });
 
                 if (text) {
                     positions = [];
@@ -649,7 +708,7 @@ function(d3, root) {
                         .attrTween("d", arcTween(d))
                         .each('end', function (e, i) {
                             // check if the animated element's data lies within the visible angle span given in d
-                            if (e.depth >= depth && (e.x >= d.x && e.x < (d.x + d.dx))) {
+                            if (e.depth >= depth && visible(e)) {
                                 // fade in the text element and recalculate positions
                                 alignText(d3.select(this.parentNode)
                                             .select("text")

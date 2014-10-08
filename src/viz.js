@@ -1,3 +1,11 @@
+    d3ext.VizDefaults = {
+        // milliseconds to delay the resizing of a visualization
+        resizeDelay: 200,
+        // Option callback after initialisation
+        onInit: null,
+        // Events dispatched by the visualization
+        events: ['build', 'change']
+    };
     //
     //  Vizualization Class
     //  -------------------------------
@@ -25,19 +33,30 @@
             }
             if (!element)
                 element = document.createElement('div');
-            attrs = extend({}, this.defaults, attrs);
+            attrs = extend({}, d3ext.VizDefaults, this.defaults, attrs);
             element = d3.select(element);
             this.element = element;
             this.attrs = attrs;
             this.log = log(attrs.debug);
             this.elwidth = null;
             this.elheight = null;
+            this.dispatch = d3.dispatch.apply(d3, attrs.events);
 
-            if (!attrs.width)
-                attrs.width = getWidth(element, true) || 400;
-            if (!attrs.height)
-                attrs.width = getHeight(element, true) || 400;
-            else if (attrs.height.indexOf('%') === attrs.height.length-1) {
+            if (!attrs.width) {
+                attrs.width = getWidth(element);
+                if (attrs.width)
+                    this.elwidth = true;
+                else
+                    attrs.width = 400;
+            }
+            if (!attrs.height) {
+                attrs.height = getHeight(element);
+                if (attrs.height)
+                    this.elheight = true;
+                else
+                    attrs.height = 400;
+            }
+            else if (typeof(attrs.height) === "string" && attrs.height.indexOf('%') === attrs.height.length-1) {
                 attrs.height_percentage = 0.01*parseFloat(attrs.height);
                 attrs.height = attrs.height_percentage*attrs.width;
             }
@@ -49,30 +68,49 @@
                 }
                 if (window.onresize.add) {
                     window.onresize.add(function () {
-                        self.resize();
+                        self._resize();
                     });
+                }
+            }
+            //
+            if (attrs.onInit)
+                attrs.onInit.call(this);
+        },
+        //
+        // Resize the vizualization
+        _resize: function () {
+            var w = this.elwidth ? getWidth(this.element) : this.attrs.width,
+                h;
+            if (this.attrs.height_percentage)
+                h = w*this.attrs.height_percentage;
+            else
+                h = this.elheight ? getHeight(this.element) : this.attrs.height;
+            if (this.attrs.width !== w || this.attrs.height !== h) {
+                this.attrs.width = w;
+                this.attrs.height = h;
+                if (!this._resizing) {
+                    if (this.attrs.resizeDelay) {
+                        var self = this;
+                        this._resizing = true;
+                        setTimeout(function () {
+                            self.log.info('Resizing visualization');
+                            self.resize();
+                            self._resizing = false;
+                        }, this.attrs.resizeDelay);
+                    } else {
+                        this.resize();
+                    }
                 }
             }
         },
         //
         // Resize the vizualization
         resize: function (size) {
-            var w, h;
             if (size) {
-                w = size[0];
-                h = size[1];
-            } else {
-                w = this.elwidth ? this.elwidth.width() : this.attrs.width;
-                if (this.attrs.height_percentage)
-                    h = w*this.attrs.height_percentage;
-                else
-                    h = this.elheight ? this.elheight.height() : this.attrs.height;
+                this.attrs.width = size[0];
+                this.attrs.height = size[1];
             }
-            if (this.attrs.width !== w || this.attrs.height !== h) {
-                this.attrs.width = w;
-                this.attrs.height = h;
-                this.build();
-            }
+            this.build();
         },
         //
         // Return a new d3 svg element insite the element without any children
@@ -101,6 +139,8 @@
             if (options)
                 this.attrs = extend(this.attrs, options);
             this.d3build();
+            if (this.dispatch.build)
+                this.dispatch.build(this);
         },
         //
         // This is the actual method to implement
@@ -115,7 +155,7 @@
             if (src) {
                 return d3.json(src, function(error, json) {
                     if (!error) {
-                        self.setData(json);
+                        self.setData(json, callback);
                     }
                 });
             }

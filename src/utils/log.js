@@ -28,9 +28,8 @@
               if (hasApply) {
                     return function() {
                         var args = [];
-                            forEach(arguments, function(arg) {
-                                args.push(formatError(arg));
-                        });
+                        for(var i=0; i<arguments.length; ++i)
+                            args.push(formatError(arguments[i]));
                         return logFn.apply(console, args);
                     };
             }

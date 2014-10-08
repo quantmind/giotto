@@ -1,17 +1,17 @@
 <!DOCTYPE html>
 <html data-debug='false' lang='en'>
 <head>
-<title>D3 Extensions</title>
+<title>d3ext examples</title>
 <meta charset='utf-8'>
 <meta content='IE=edge' http-equiv='X-UA-Compatible'>
 <meta content='width=device-width, initial-scale=1' name='viewport'>
-<meta content='2014-10-08T14:24:22' name='og:modified_time'>
+<meta content='2014-10-08T14:24:07' name='og:modified_time'>
 <link href='http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.css' rel='stylesheet' type='text/css'>
 <link href='http://netdna.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.css' rel='stylesheet' type='text/css'>
 <link href='/dist/d3ext.css' rel='stylesheet' type='text/css'>
 <link href='/dist/examples.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var luxContext = {"lux_version": "0.1.0-alpha.1", "python_version": "3.4.1", "url": "", "datetimeFormat": "d MMM y, h:mm:ss a", "page": {"modified": "2014-10-08T14:24:22", "content_type": "text/html", "title": "D3 Extensions", "slug": "index", "name": "index"}, "ngModules": [], "name": "Lux", "year": 2014, "media": "", "date": "2014-10-08T20-11-53", "dateFormat": "d MMM y"};</script>
+var luxContext = {"lux_version": "0.1.0-alpha.1", "python_version": "3.4.1", "url": "", "datetimeFormat": "d MMM y, h:mm:ss a", "page": {"modified": "2014-10-08T14:24:07", "content_type": "text/html", "slug": "examples/force", "name": "examples_force"}, "ngModules": [], "name": "Lux", "year": 2014, "media": "", "date": "2014-10-08T20-11-53", "dateFormat": "d MMM y"};</script>
 <script type="text/javascript">
 var require = {"paths": {}, "waitSeconds": 200, "baseUrl": "/", "deps": [], "minify": false};
 </script>
@@ -24,7 +24,18 @@ var require = {"paths": {}, "waitSeconds": 200, "baseUrl": "/", "deps": [], "min
     <div class='navbar2-page'>
         <div class='row'>
             <div class='col-sm-12' data-highlight data-toc data-ng-cloak>
-                
+                <h2 id="force-layout">Force Layout</h2>
+<div class='row'>
+    <div class='col-sm-12'>
+        <h5></h5>
+        <div data-viz-force data-nodes=100 data-max-radius=12 data-gravity=0.1 data-charge=-1000 data-height='60%' data-resize=1></div>
+    </div>
+</div>
+
+<p>The Force layout contains 100 data nodes a full width and an height of 60% of the width.</p>
+<pre><code>&lt;div data-viz-force data-nodes=50 data-max-radius=12 data-gravity=0.1
+data-charge=-1000 data-height='60%' data-resize=1&gt;&lt;/div&gt;
+</code></pre>
             </div>
         </div>
     </div>

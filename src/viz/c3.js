@@ -1,5 +1,7 @@
 
     d3ext.C3 = Viz.extend({
+        c3opts: ['data', 'axis', 'grid', 'region', 'legend', 'tooltip',
+                 'subchart', 'zoom', 'point', 'line', 'bar', 'pie', 'donut'],
         //
         d3build: function () {
             var self = this,
@@ -19,10 +21,17 @@
                 });
             }
             //
-            var config = extend({
-                    bindto: this.element.node()
-                },
-                this.attrs.data),
-                chart = this.c3.generate(config);
+            var config = {
+                    bindto: this.element.node(),
+                    size: {
+                        width: opts.width,
+                        height: opts.height
+                    }
+                };
+            self.c3opts.forEach(function (name) {
+                if (opts[name])
+                    config[name] = opts[name];
+            });
+            var chart = this.c3.generate(config);
         }
     });
