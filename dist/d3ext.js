@@ -25,13 +25,16 @@ function(d3, root) {
     };
     d3.ext = d3ext;
 
+    //
+    //  Class
+    //  ============
 
+    //  Implements javascript class inheritance
+    //  Check http://ejohn.org/blog/simple-javascript-inheritance/ for details.
     var
     //
     // Test for ``_super`` method in a ``Class``.
     //
-    // Check http://ejohn.org/blog/simple-javascript-inheritance/
-    // for details.
     fnTest = /xyz/.test(function(){var xyz;}) ? /\b_super\b/ : /.*/,
     //
     // Create a method for a derived Class
@@ -116,10 +119,11 @@ function(d3, root) {
         return t;
     }(function(){})),
     //
-    //  ## Class
+    //  Class
+    //  -----------
 
-    //  Lux base class.
-    //  The `extend` method is the most important function of this object.
+    //  A function representing a base class.
+    //  The `extend` method is the most important function of this function-object.
     Class = d3ext.Class = (function (c) {
         c.__class__ = Type;
         //
@@ -447,6 +451,17 @@ function(d3, root) {
         c3opts: ['data', 'axis', 'grid', 'region', 'legend', 'tooltip',
                  'subchart', 'zoom', 'point', 'line', 'bar', 'pie', 'donut'],
         //
+        init: function (element, attrs) {
+            // make sure resize is false, let c3 do the resizing
+            if (!attrs && Object(element) === element) {
+                attrs = element;
+                element = null;
+            }
+            if (attrs)
+                attrs.resize = false;
+            this._super(element, attrs);
+        },
+        //
         d3build: function () {
             var self = this,
                 opts = this.attrs;
@@ -468,8 +483,8 @@ function(d3, root) {
             var config = {
                     bindto: this.element.node(),
                     size: {
-                        width: opts.width,
-                        height: opts.height
+                        width: this.elwidth ? null : opts.width,
+                        height: this.elheight ? null : opts.height
                     }
                 };
             self.c3opts.forEach(function (name) {

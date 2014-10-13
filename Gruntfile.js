@@ -74,16 +74,12 @@ module.exports = function (grunt) {
         uglify: uglify_libs(),
         jshint: jshint_libs(),
         jasmine: {
-            src : 'dist/d3ext.min.js',
+            src : [],
             options : {
                 specs : 'src/tests/*.js',
-                template: require('grunt-template-jasmine-requirejs'),
+                template: 'src/tests/test.tpl.html',
                 templateOptions: {
-                    requireConfig: {
-                        paths: {
-                            d3: "node_modules/d3/d3.min"
-                        }
-                    }
+                    deps: ['lux/lux.min.js', 'dist/d3ext.min.js']
                 }
             }
         }

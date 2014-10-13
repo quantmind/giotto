@@ -6,19 +6,19 @@
 <meta content='IE=edge' http-equiv='X-UA-Compatible'>
 <meta content='width=device-width, initial-scale=1' name='viewport'>
 <meta content='2014-10-08T22:28:05' name='og:modified_time'>
-<link href='http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.css' rel='stylesheet' type='text/css'>
-<link href='http://netdna.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.css' rel='stylesheet' type='text/css'>
-<link href='/dist/d3ext.css' rel='stylesheet' type='text/css'>
-<link href='/dist/examples.css' rel='stylesheet' type='text/css'>
+<link href='http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css' rel='stylesheet' type='text/css'>
+<link href='http://netdna.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css' rel='stylesheet' type='text/css'>
+<link href='http://quantmind.github.io/d3ext/dist/d3ext.css' rel='stylesheet' type='text/css'>
+<link href='http://quantmind.github.io/d3ext/dist/examples.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var luxContext = {"hrefs": ["/", "/:slug"], "page": "/:slug", "name": "Lux", "python_version": "3.4.1", "year": 2014, "url": "", "lux_version": "0.1.0-alpha.1", "datetimeFormat": "d MMM y, h:mm:ss a", "apiUrls": {}, "pages": {"/:slug": {"target": null, "template": "<div class='angular-view' data-dynamic-page=''></div>", "name": "view", "api": {"type": "static", "url": "/examples/ng/content", "name": "content"}, "parent": "/", "url": "/:slug", "controller": "Html5"}, "/": {"target": null, "template": "<div class='angular-view' data-dynamic-page=''></div>", "name": "", "api": {"type": "static", "url": "/examples/ng/content", "name": "content"}, "parent": null, "url": "/", "controller": "Html5"}}, "ngModules": ["ui.router"], "html5mode": true, "media": "", "date": "2014-10-08T22-46-47", "dateFormat": "d MMM y"};</script>
+var luxContext = {"name": "Lux", "year": 2014, "python_version": "3.4.1", "html5mode": true, "page": "/*slug", "pages": {"/": {"url": "/", "name": "", "controller": "Html5", "parent": null, "template": "<div class='angular-view' data-dynamic-page=''></div>", "api": {"name": "content", "url": "http://quantmind.github.io/d3ext/examples/ng/content", "type": "static"}, "target": null}, "/*slug": {"url": "/*slug", "name": "view", "controller": "Html5", "parent": "/", "template": "<div class='angular-view' data-dynamic-page=''></div>", "api": {"name": "content", "url": "http://quantmind.github.io/d3ext/examples/ng/content", "type": "static"}, "target": null}}, "dateFormat": "d MMM y", "url": "http://quantmind.github.io/d3ext", "media": "", "ngModules": ["ui.router"], "hrefs": ["/", "/*slug"], "datetimeFormat": "d MMM y, h:mm:ss a", "date": "2014-10-13T14-41-05", "lux_version": "0.1.0-alpha.1", "uiRouter": true, "apiUrls": {}};</script>
 <script type="text/javascript">
-var require = {"waitSeconds": 200, "baseUrl": "/", "minify": false, "deps": [], "paths": {}};
+var require = {"deps": [], "paths": {}, "waitSeconds": 200, "baseUrl": "http://quantmind.github.io/d3ext/", "minify": true};
 </script>
-<script src='http://quantmind.github.io/require-config-js/require.config.js' type='application/javascript'></script>
-<script src='http://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.js' type='application/javascript'></script>
+<script src='http://quantmind.github.io/require-config-js/require.config.min.js' type='application/javascript'></script>
+<script src='http://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js' type='application/javascript'></script>
 </head>
-<body data-ng-controller='Page' data-ng-model='page'>
+<body data-ng-controller='Page' data-ng-model='page' data-page=''>
 <div class="navbar2-wrapper navbar-{{navbar.theme}}" ng-controller="Navigation" ng-cloak>
     <navbar2></navbar2>
     <div navbar2-page>
@@ -38,7 +38,7 @@ var require = {"waitSeconds": 200, "baseUrl": "/", "minify": false, "deps": [], 
 </div>
 
 <script type="text/javascript">
-require(['lux', 'dist/d3ext', 'angular-ui-router', 'angular-strap'], function (lux, d3) {
+require(['lux/lux', 'dist/d3ext', 'angular-ui-router', 'angular-strap'], function (lux, d3) {
     var sitemap = function () {
         var s = ['sunburst', 'force', {href: 'c3', name: 'time series'}]
             all = [];

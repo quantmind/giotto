@@ -19,16 +19,12 @@
         }
     ],
     "homepage": "https://github.com/quantmind/d3ext",
-    "dependencies": {
-        "d3": ""
-    },
     "devDependencies": {
         "grunt": "",
         "grunt-contrib-uglify": "",
         "grunt-contrib-concat": "",
         "grunt-contrib-jshint": "",
-        "grunt-contrib-jasmine": "",
-        "grunt-template-jasmine-requirejs": ""
+        "grunt-contrib-jasmine": ""
     },
     "scripts": {
         "test": "grunt jasmine"

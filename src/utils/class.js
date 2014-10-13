@@ -1,10 +1,13 @@
+    //
+    //  Class
+    //  ============
 
+    //  Implements javascript class inheritance
+    //  Check http://ejohn.org/blog/simple-javascript-inheritance/ for details.
     var
     //
     // Test for ``_super`` method in a ``Class``.
     //
-    // Check http://ejohn.org/blog/simple-javascript-inheritance/
-    // for details.
     fnTest = /xyz/.test(function(){var xyz;}) ? /\b_super\b/ : /.*/,
     //
     // Create a method for a derived Class
@@ -89,10 +92,11 @@
         return t;
     }(function(){})),
     //
-    //  ## Class
+    //  Class
+    //  -----------
 
-    //  Lux base class.
-    //  The `extend` method is the most important function of this object.
+    //  A function representing a base class.
+    //  The `extend` method is the most important function of this function-object.
     Class = d3ext.Class = (function (c) {
         c.__class__ = Type;
         //
