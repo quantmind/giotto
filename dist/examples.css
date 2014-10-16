@@ -2,7 +2,7 @@
 /*
 ------------------------------------------------------------------
 Created by lux in 0.05 seconds
-Date: 2014-10-16 22:48:02
+Date: 2014-10-16 23:16:28
 
 http://quantmind.github.io/lux/
 ------------------------------------------------------------------ */
@@ -13,12 +13,12 @@ http://quantmind.github.io/lux/
 
 .hljs-comment,.hljs-title{color:#8e908c}.hljs-variable,.hljs-attribute,.hljs-tag,.hljs-regexp,.ruby .hljs-constant,.xml .hljs-tag .hljs-title,.xml .hljs-pi,.xml .hljs-doctype,.html .hljs-doctype,.css .hljs-id,.css .hljs-class,.css .hljs-pseudo{color:#c82829}.hljs-number,.hljs-preprocessor,.hljs-pragma,.hljs-built_in,.hljs-literal,.hljs-params,.hljs-constant{color:#f5871f}.ruby .hljs-class .hljs-title,.css .hljs-rules .hljs-attribute{color:#eab700}.hljs-string,.hljs-value,.hljs-inheritance,.hljs-header,.ruby .hljs-symbol,.xml .hljs-cdata{color:#718c00}.css .hljs-hexcolor{color:#3e999f}.hljs-function,.python .hljs-decorator,.python .hljs-title,.ruby .hljs-function .hljs-title,.ruby .hljs-title .hljs-keyword,.perl .hljs-sub,.javascript .hljs-title,.coffeescript .hljs-title{color:#4271ae}.hljs-keyword,.javascript .hljs-function{color:#8959a8}.hljs{display:block;overflow-x:auto;background:white;color:#4d4d4c;padding:0.5em;-webkit-text-size-adjust:none}.coffeescript .javascript,.javascript .xml,.tex .hljs-formula,.xml .javascript,.xml .vbscript,.xml .css,.xml .hljs-cdata{opacity:0.5}
 body {
-    font-style: normal;
+    line-height: 1.42857;
     font-size: 14px;
     color: #333;
-    background: #fff;
-    line-height: 1.42857;
     font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+    background: #fff;
+    font-style: normal;
 }
 
 .form-group .help-block {
@@ -34,8 +34,8 @@ body {
 }
 
 .absolute-full {
-    position: absolute;
     top: 0;
+    position: absolute;
     bottom: 0;
 }
 
@@ -59,15 +59,15 @@ dl.function > dt > tt.descname {
 
 dl.class dt tt.descname,
 dl.function dt tt.descname {
-    color: #333;
     font-weight: bold;
+    color: #333;
 }
 
 dl.class dt,
 dl.function dt {
-    color: #888;
-    font-weight: normal;
     font-size: 14px;
+    font-weight: normal;
+    color: #888;
 }
 
 [ng\:cloak],
@@ -101,9 +101,9 @@ dl.function dt {
 }
 @media all and (min-width:768px) {
     .sidebar {
-        position: absolute;
-        z-index: 1;
         margin-top: 51px;
+        z-index: 1;
+        position: absolute;
         width: 200px;
     }
 
@@ -126,8 +126,8 @@ dl.function dt {
 }
 
 .dir-entry-image img {
-    width: 120px;
     height: auto;
+    width: 120px;
 }
 
 h1:hover > a.headerlink,
@@ -141,10 +141,10 @@ dt:hover > a.headerlink {
 }
 
 a.headerlink {
+    visibility: hidden;
+    text-decoration: none;
     padding: 0 4px;
     color: #eee;
-    text-decoration: none;
-    visibility: hidden;
 }
 
 a.headerlink:hover {
