@@ -5,26 +5,24 @@
 <meta charset='utf-8'>
 <meta content='IE=edge' http-equiv='X-UA-Compatible'>
 <meta content='width=device-width, initial-scale=1' name='viewport'>
-<meta content='2014-10-09T08:10:41' name='og:modified_time'>
-<link href='http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css' rel='stylesheet' type='text/css'>
-<link href='http://netdna.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css' rel='stylesheet' type='text/css'>
-<link href='http://quantmind.github.io/d3ext/dist/d3ext.css' rel='stylesheet' type='text/css'>
-<link href='http://quantmind.github.io/d3ext/dist/examples.css' rel='stylesheet' type='text/css'>
+<meta content='2014-10-13T14:42:07' name='og:modified_time'>
+<link href='http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.css' rel='stylesheet' type='text/css'>
+<link href='http://netdna.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.css' rel='stylesheet' type='text/css'>
+<link href='/dist/d3ext.css' rel='stylesheet' type='text/css'>
+<link href='/dist/examples.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var luxContext = {"name": "Lux", "year": 2014, "python_version": "3.4.1", "html5mode": true, "page": "/*slug", "pages": {"/": {"url": "/", "name": "", "controller": "Html5", "parent": null, "template": "<div class='angular-view' data-dynamic-page=''></div>", "api": {"name": "content", "url": "http://quantmind.github.io/d3ext/examples/ng/content", "type": "static"}, "target": null}, "/*slug": {"url": "/*slug", "name": "view", "controller": "Html5", "parent": "/", "template": "<div class='angular-view' data-dynamic-page=''></div>", "api": {"name": "content", "url": "http://quantmind.github.io/d3ext/examples/ng/content", "type": "static"}, "target": null}}, "dateFormat": "d MMM y", "url": "http://quantmind.github.io/d3ext", "media": "", "ngModules": ["ui.router"], "hrefs": ["/", "/*slug"], "datetimeFormat": "d MMM y, h:mm:ss a", "date": "2014-10-13T14-41-05", "lux_version": "0.1.0-alpha.1", "uiRouter": true, "apiUrls": {}};</script>
+var luxContext = {"media": "", "python_version": "2.7.8", "dateFormat": "d MMM y", "url": "", "ngModules": ["highlight", "ui.router"], "navbar": {"collapseWidth": 768}, "pages": {"/*slug": {"name": "view", "parent": "/", "url": "/*slug", "controller": "Html5", "api": {"url": "/examples/ng/content", "type": "static", "name": "content"}, "template": "<div class='angular-view' data-dynamic-page=''></div>", "target": null}, "/": {"name": "", "parent": null, "url": "/", "controller": "Html5", "api": {"url": "/examples/ng/content", "type": "static", "name": "content"}, "template": "<div class='angular-view' data-dynamic-page=''></div>", "target": null}}, "date": "2014-10-16T22-48-03", "hrefs": ["/", "/*slug"], "html5mode": true, "year": 2014, "datetimeFormat": "d MMM y, h:mm:ss a", "lux_version": "0.1.1-alpha.1", "apiUrls": {}, "page": "/*slug", "uiRouter": true, "name": "Lux"};</script>
 <script type="text/javascript">
-var require = {"deps": [], "paths": {}, "waitSeconds": 200, "baseUrl": "http://quantmind.github.io/d3ext/", "minify": true};
+var require = {"paths": {}, "minify": false, "baseUrl": "/", "deps": [], "waitSeconds": 200};
 </script>
-<script src='http://quantmind.github.io/require-config-js/require.config.min.js' type='application/javascript'></script>
-<script src='http://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js' type='application/javascript'></script>
+<script src='http://quantmind.github.io/require-config-js/require.config.js' type='application/javascript'></script>
+<script src='http://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.js' type='application/javascript'></script>
 </head>
 <body data-ng-controller='Page' data-ng-model='page' data-page=''>
-<div class="navbar2-wrapper navbar-{{navbar.theme}}" ng-controller="Navigation" ng-cloak>
-    <navbar2></navbar2>
-    <div navbar2-page>
-        <div class='row'>
-            <div class='col-sm-12' data-highlight data-toc>
-                <div class='angular-view' data-ui-view=''><h2 id="time-series">Time Series</h2>
+<navbar2 data-options="lux.context.navbar">
+    <div class='row'>
+        <div class='col-sm-12' data-highlight data-toc>
+            <div class='angular-view' data-ui-view='main'><div class='hidden'><h2 id="time-series">Time Series</h2>
 <div class='row'>
     <div class='col-sm-12'>
         <h5></h5>
@@ -76,17 +74,20 @@ var d3examples = {
         }
     }
 };
-</script></div>
-            </div>
+</script></div></div>
         </div>
     </div>
-</div>
+</navbar2>
 
 <script type="text/javascript">
 require(['lux/lux', 'dist/d3ext', 'angular-ui-router', 'angular-strap'], function (lux, d3) {
     var sitemap = function () {
-        var s = ['sunburst', 'force', {href: 'c3', name: 'time series'}]
+        var s = ['sunburst',
+                 'force',
+                 {href: 'c3', name: 'time series'},
+                 'trianglify'],
             all = [];
+        //
         s.forEach(function (v) {
             if (typeof(v) === 'string')
                 v = {href: v, name: v};
@@ -107,7 +108,7 @@ require(['lux/lux', 'dist/d3ext', 'angular-ui-router', 'angular-strap'], functio
         }
     })
     .addD3ext(d3)
-    .bootstrap('d3extensions', ['lux.nav', 'ui.router', 'lux.blog', 'd3viz']);
+    .bootstrap('d3extensions', ['lux.nav', 'd3viz']);
 });
 </script>
 </body>

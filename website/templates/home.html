@@ -1,19 +1,20 @@
-<div class="navbar2-wrapper navbar-{{navbar.theme}}" ng-controller="Navigation" ng-cloak>
-    <navbar2></navbar2>
-    <div navbar2-page>
-        <div class='row'>
-            <div class='col-sm-12' data-highlight data-toc>
-                $html_main
-            </div>
+<navbar2 data-options="lux.context.navbar">
+    <div class='row'>
+        <div class='col-sm-12' data-highlight data-toc>
+            $html_main
         </div>
     </div>
-</div>
+</navbar2>
 
 <script type="text/javascript">
 require(['lux/lux', 'dist/d3ext', 'angular-ui-router', 'angular-strap'], function (lux, d3) {
     var sitemap = function () {
-        var s = ['sunburst', 'force', {href: 'c3', name: 'time series'}]
+        var s = ['sunburst',
+                 'force',
+                 {href: 'c3', name: 'time series'},
+                 'trianglify'],
             all = [];
+        //
         s.forEach(function (v) {
             if (typeof(v) === 'string')
                 v = {href: v, name: v};
@@ -34,6 +35,6 @@ require(['lux/lux', 'dist/d3ext', 'angular-ui-router', 'angular-strap'], functio
         }
     })
     .addD3ext(d3)
-    .bootstrap('d3extensions', ['lux.nav', 'ui.router', 'lux.blog', 'd3viz']);
+    .bootstrap('d3extensions', ['lux.nav', 'd3viz']);
 });
 </script>
