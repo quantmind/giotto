@@ -335,7 +335,7 @@ function(d3, root) {
             }
             //
             if (attrs.onInit)
-                attrs.onInit.call(this);
+                this._executeCallback(attrs.onInit);
         },
         //
         // Resize the vizualization
@@ -438,6 +438,25 @@ function(d3, root) {
         on: function (event, callback) {
             this.dispatch.on(event, callback);
             return this;
+        },
+        //
+        // Execute a callback
+        _executeCallback: function (callback) {
+            var cbk = callback;
+            if (typeof(callback) === 'string') {
+                var obj = root,
+                    bits= callback.split('.');
+
+                for (var i=0; i<bits.length; ++i) {
+                    obj = obj[bits[i]];
+                    if (!obj) break;
+                }
+                cbk = obj;
+            }
+            if (typeof(cbk) === 'function')
+                cbk.call(this);
+            else
+                this.log.error('Cannot execute callback "' + callback + '". Not a function');
         }
     });
 
@@ -864,7 +883,18 @@ function(d3, root) {
             if (!this._t)
                 this._t = new this.Trianglify();
             var pattern = this._t.generate(this.attrs.width, this.attrs.height),
-                element = this.element.html('').append('div');
+                element = this.element.select('.trianglify-background');
+            if (!element.node()) {
+                var parentNode = this.element.node(),
+                    node = document.createElement('div'),
+                    inner = parentNode.childNodes;
+                while (inner.length) {
+                    node.appendChild(inner[0]);
+                }
+                node.className = 'trianglify-background';
+                parentNode.appendChild(node);
+                element = this.element.select('.trianglify-background');
+            }
             element.style("height", this.attrs.height+"px")
                    .style("width", this.attrs.width+"px")
                    .style("background-image", pattern.dataUrl);

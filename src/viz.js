@@ -76,7 +76,7 @@
             }
             //
             if (attrs.onInit)
-                attrs.onInit.call(this);
+                this._executeCallback(attrs.onInit);
         },
         //
         // Resize the vizualization
@@ -179,6 +179,25 @@
         on: function (event, callback) {
             this.dispatch.on(event, callback);
             return this;
+        },
+        //
+        // Execute a callback
+        _executeCallback: function (callback) {
+            var cbk = callback;
+            if (typeof(callback) === 'string') {
+                var obj = root,
+                    bits= callback.split('.');
+
+                for (var i=0; i<bits.length; ++i) {
+                    obj = obj[bits[i]];
+                    if (!obj) break;
+                }
+                cbk = obj;
+            }
+            if (typeof(cbk) === 'function')
+                cbk.call(this);
+            else
+                this.log.error('Cannot execute callback "' + callback + '". Not a function');
         }
     });
 

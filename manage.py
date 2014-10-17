@@ -14,10 +14,12 @@ def argv(*argv):
 if __name__ == '__main__':
     name = 'website'
     if len(sys.argv) > 1 and sys.argv[1] == 'build_static':
+        args = argv('style', '--cssfile', 'dist/d3ext')
+        if '--nominify' not in sys.argv:
+            args.append('--minify')
         # Build css file for d3ext
         lux.execute_from_config(name,
-                                argv=argv('style', '--minify',
-                                          '--cssfile', 'dist/d3ext'),
+                                argv=args,
                                 EXTENSIONS=['lux.extensions.ui',
                                             'website.d3ext'],
                                 EXCLUDE_EXTENSIONS_CSS=['lux.extensions.ui',

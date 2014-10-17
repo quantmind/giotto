@@ -10,7 +10,7 @@ from lux.extensions.static import HtmlContent
 SITE_URL = 'http://quantmind.github.io/d3ext'
 HTML_TITLE = 'd3ext examples'
 STATIC_LOCATION = ''
-CONTEXT_LOCATION = None
+CONTEXT_LOCATION = 'website/content/context'
 MEDIA_URL = '/'
 ANGULAR_UI_ROUTER = True
 STATIC_API = 'examples/ng'

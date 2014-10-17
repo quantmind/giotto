@@ -19,7 +19,18 @@
             if (!this._t)
                 this._t = new this.Trianglify();
             var pattern = this._t.generate(this.attrs.width, this.attrs.height),
-                element = this.element.html('').append('div');
+                element = this.element.select('.trianglify-background');
+            if (!element.node()) {
+                var parentNode = this.element.node(),
+                    node = document.createElement('div'),
+                    inner = parentNode.childNodes;
+                while (inner.length) {
+                    node.appendChild(inner[0]);
+                }
+                node.className = 'trianglify-background';
+                parentNode.appendChild(node);
+                element = this.element.select('.trianglify-background');
+            }
             element.style("height", this.attrs.height+"px")
                    .style("width", this.attrs.width+"px")
                    .style("background-image", pattern.dataUrl);

@@ -6,10 +6,5 @@
                 "src/viz/*.js",
                 "src/close.js"],
         "dest": "dist/d3ext.js"
-    },
-    "tests": {
-        "src": ["src/tests/*.js"],
-        "dest": "dist/tests.js",
-        "minify": false
     }
 }
