@@ -5,6 +5,8 @@
         resizeDelay: 200,
         // Option callback after initialisation
         onInit: null,
+        //
+        autoBuild: true,
         // Events dispatched by the visualization
         events: ['build', 'change']
     };
@@ -47,14 +49,14 @@
             if (!attrs.width) {
                 attrs.width = getWidth(element);
                 if (attrs.width)
-                    this.elwidth = true;
+                    this.elwidth = getWidthElement(element);
                 else
                     attrs.width = 400;
             }
             if (!attrs.height) {
                 attrs.height = getHeight(element);
                 if (attrs.height)
-                    this.elheight = true;
+                    this.elheight = getHeightElement(element);
                 else
                     attrs.height = 400;
             }
@@ -77,16 +79,18 @@
             //
             if (attrs.onInit)
                 this._executeCallback(attrs.onInit);
+            if (attrs.autoBuild)
+                this.build();
         },
         //
         // Resize the vizualization
         _resize: function () {
-            var w = this.elwidth ? getWidth(this.element) : this.attrs.width,
+            var w = this.elwidth ? getWidth(this.elwidth) : this.attrs.width,
                 h;
             if (this.attrs.height_percentage)
                 h = w*this.attrs.height_percentage;
             else
-                h = this.elheight ? getHeight(this.element) : this.attrs.height;
+                h = this.elheight ? getHeight(this.elheight) : this.attrs.height;
             if (this.attrs.width !== w || this.attrs.height !== h) {
                 this.attrs.width = w;
                 this.attrs.height = h;
@@ -122,6 +126,15 @@
                 .attr("width", this.attrs.width)
                 .attr("height", this.attrs.height);
         },
+        //
+        // Return a new canvs element insite the element without any children
+        canvas: function () {
+            this.element.html('');
+            return this.element.append("canvas")
+                .attr("width", this.attrs.width)
+                .attr("height", this.attrs.height)
+                .node().getContext('2d');
+        },
 
         size: function () {
             return [this.attrs.width, this.attrs.height];
@@ -141,8 +154,12 @@
             if (options)
                 this.attrs = extend(this.attrs, options);
             this.d3build();
-            if (this.dispatch.build)
-                this.dispatch.build(this);
+            this.fire('build');
+        },
+        //
+        // Same as build
+        redraw: function (options) {
+            this.build(options);
         },
         //
         // This is the actual method to implement
@@ -179,6 +196,12 @@
         on: function (event, callback) {
             this.dispatch.on(event, callback);
             return this;
+        },
+        //
+        // Fire an event if it exists
+        fire: function (event) {
+            if (this.dispatch[event])
+                this.dispatch[event].call(this);
         },
         //
         // Execute a callback

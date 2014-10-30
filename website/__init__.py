@@ -34,8 +34,18 @@ class Extension(lux.Extension):
 
 
 def add_css(all):
-    from lux.extensions.ui import px
+    from lux.extensions.ui import px, Radius, Shadow, color
 
     css = all.css
     vars = all.variables
     vars.sidebar.width = px(200)
+
+    css('.trianglify-background',
+        padding_top=px(30))
+
+    css('.trianglify-box',
+        Radius(px(5)),
+        Shadow(px(1), px(1), px(4), color=color(0, 0, 0, 0.4)),
+        padding=px(20),
+        max_width=px(400),
+        background=color(255, 255, 255, 0.6))

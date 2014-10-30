@@ -226,9 +226,16 @@ function(d3, root) {
         return getParentRectValue(element, 'width');
     }
 
-
     function getHeight (element) {
         return getParentRectValue(element, 'height');
+    }
+
+    function getWidthElement (element) {
+        return getParentElementRect(element, 'width');
+    }
+
+    function getHeightElement (element) {
+        return getParentElementRect(element, 'height');
     }
 
     function getParentRectValue (element, key) {
@@ -241,6 +248,17 @@ function(d3, root) {
             parent = parent.parentNode;
         }
         return v;
+    }
+
+    function getParentElementRect (element, key) {
+        var parent = element.node(),
+            r, v;
+        while (parent && parent.tagName !== 'BODY') {
+            v = parent.getBoundingClientRect()[key];
+            if (v)
+                return d3.select(parent);
+            parent = parent.parentNode;
+        }
     }
 
     function generateResize () {
@@ -264,6 +282,8 @@ function(d3, root) {
         resizeDelay: 200,
         // Option callback after initialisation
         onInit: null,
+        //
+        autoBuild: true,
         // Events dispatched by the visualization
         events: ['build', 'change']
     };
@@ -306,14 +326,14 @@ function(d3, root) {
             if (!attrs.width) {
                 attrs.width = getWidth(element);
                 if (attrs.width)
-                    this.elwidth = true;
+                    this.elwidth = getWidthElement(element);
                 else
                     attrs.width = 400;
             }
             if (!attrs.height) {
                 attrs.height = getHeight(element);
                 if (attrs.height)
-                    this.elheight = true;
+                    this.elheight = getHeightElement(element);
                 else
                     attrs.height = 400;
             }
@@ -336,16 +356,18 @@ function(d3, root) {
             //
             if (attrs.onInit)
                 this._executeCallback(attrs.onInit);
+            if (attrs.autoBuild)
+                this.build();
         },
         //
         // Resize the vizualization
         _resize: function () {
-            var w = this.elwidth ? getWidth(this.element) : this.attrs.width,
+            var w = this.elwidth ? getWidth(this.elwidth) : this.attrs.width,
                 h;
             if (this.attrs.height_percentage)
                 h = w*this.attrs.height_percentage;
             else
-                h = this.elheight ? getHeight(this.element) : this.attrs.height;
+                h = this.elheight ? getHeight(this.elheight) : this.attrs.height;
             if (this.attrs.width !== w || this.attrs.height !== h) {
                 this.attrs.width = w;
                 this.attrs.height = h;
@@ -381,6 +403,15 @@ function(d3, root) {
                 .attr("width", this.attrs.width)
                 .attr("height", this.attrs.height);
         },
+        //
+        // Return a new canvs element insite the element without any children
+        canvas: function () {
+            this.element.html('');
+            return this.element.append("canvas")
+                .attr("width", this.attrs.width)
+                .attr("height", this.attrs.height)
+                .node().getContext('2d');
+        },
 
         size: function () {
             return [this.attrs.width, this.attrs.height];
@@ -400,8 +431,12 @@ function(d3, root) {
             if (options)
                 this.attrs = extend(this.attrs, options);
             this.d3build();
-            if (this.dispatch.build)
-                this.dispatch.build(this);
+            this.fire('build');
+        },
+        //
+        // Same as build
+        redraw: function (options) {
+            this.build(options);
         },
         //
         // This is the actual method to implement
@@ -438,6 +473,12 @@ function(d3, root) {
         on: function (event, callback) {
             this.dispatch.on(event, callback);
             return this;
+        },
+        //
+        // Fire an event if it exists
+        fire: function (event) {
+            if (this.dispatch[event])
+                this.dispatch[event].call(this);
         },
         //
         // Execute a callback
@@ -617,15 +658,20 @@ function(d3, root) {
         //
         d3build: function () {
             var o = this.attrs,
-                e = this.element[0];
-            require('leaflet', function () {
-                this.map = new L.Map(e, {
+                e = this.element.node();
+            if (typeof L === 'undefined') {
+                var self = this;
+                require(['leaflet'], function () {
+                    self.d3build();
+                });
+            } else {
+                this.map = new L.map(e, {
                     center: o.center,
                     zoom: o.zoom
                 });
                 if (o.buildMap)
                     o.buildMap.call(this);
-            });
+            }
         },
         //
         addLayer: function (url, options) {
@@ -642,10 +688,18 @@ function(d3, root) {
     //      padding: padding of sunburst (default 10)
     d3ext.SunBurst = Viz.extend({
         defaults: {
+            // Show labels
             labels: true,
+            // sunburst padding
+            addorder: false,
+            // Add the order of labels if available in the data
             padding: 10,
+            // speed in transitions
             transition: 750,
-            scale: 'sqrt'
+            //
+            scale: 'sqrt',
+            //
+            initNode: null
         },
         //
         // Calculate the text size to use from dimensions
@@ -656,6 +710,27 @@ function(d3, root) {
                 return Math.round(100 - 0.15*(500-dim));
             else
                 return 100;
+        },
+        //
+        select: function (path) {
+            if (!this.current) return;
+            var node = this.attrs.data;
+            if (path && path.length) {
+                for (var n=0; n<path.length; ++n) {
+                    var name = path[n];
+                    if (node.children) {
+                        for (var i=0; i<=node.children.length; ++i) {
+                            if (node.children[i].name === name) {
+                                node = node.children[i];
+                                break;
+                            }
+                        }
+                    } else {
+                        break;
+                    }
+                }
+            }
+            return this._select(node);
         },
         //
         d3build: function () {
@@ -727,6 +802,52 @@ function(d3, root) {
                 alignText(text);
             }
 
+            this._select = function (node) {
+                if (node === this.current) return;
+
+                if (text) text.transition().attr("opacity", 0);
+                //
+                function visible (e) {
+                    return e.x >= node.x && e.x < (node.x + node.dx);
+                }
+
+                var arct = arcTween(node);
+                depth = node.depth;
+
+                path.transition()
+                    .duration(transition)
+                    .attrTween("d", arct)
+                    .each('end', function (e, i) {
+                        if (node === e) {
+                            self.current = e;
+                            self.fire('change');
+                        }
+                    });
+
+                if (text) {
+                    positions = [];
+                    dummyPath.transition()
+                        .duration(transition)
+                        .attrTween("d", arct)
+                        .each('end', function (e, i) {
+                            // check if the animated element's data lies within the visible angle span given in d
+                            if (e.depth >= depth && visible(e)) {
+                                // fade in the text element and recalculate positions
+                                alignText(d3.select(this.parentNode)
+                                            .select("text")
+                                            .transition().duration(transition)
+                                            .attr("opacity", 1));
+                            }
+                        });
+                }
+                return true;
+            };
+
+            //
+            this.current = root;
+            if (!this.select(this.attrs.initNode))
+                this.fire('change');
+
             function scale (radius) {
                 if (attrs.scale === 'log')
                     return d3.scale.log().range([1, radius]);
@@ -736,7 +857,7 @@ function(d3, root) {
                     return d3.scale.sqrt().range([0, radius]);
             }
 
-            function click(d) {
+            function click (d) {
                 // Fade out all text elements
                 if (depth === d.depth) return;
                 if (text) text.transition().attr("opacity", 0);
@@ -752,8 +873,7 @@ function(d3, root) {
                     .each('end', function (e, i) {
                         if (e.depth === depth && visible(e)) {
                             self.current = e;
-                            if (self.dispatch.change)
-                                self.dispatch.change(self);
+                            self.fire('change');
                         }
                     });
 
@@ -863,26 +983,49 @@ function(d3, root) {
     });
 
 
-    d3ext.trianglify = Viz.extend({
+    d3ext.Trianglify = Viz.extend({
         //
         defaults: {
             center: [41.898582, 12.476801],
             zoom: 4,
-            maxZoom: 18
+            maxZoom: 18,
+            bleed: 150,
+            fillOpacity: 1,
+            strokeOpacity: 1,
+            noiseIntensity: 0,
+            gradient: null,
+            x_gradient: null,
+            y_gradient: null
         },
         //
         d3build: function () {
-            if (!this.Trianglify) {
-                var self = this;
-                require(['trianglify'], function (Trianglify) {
-                    self.Trianglify = Trianglify;
-                    self.d3build();
-                });
-                return;
-            }
+            //
+            var t = this._t,
+                attrs = this.attrs,
+                cellsize = attrs.cellsize ? +attrs.cellsize : 0,
+                cellpadding = attrs.cellpadding ? +attrs.cellpadding : 0,
+                fillOpacity = attrs.fillOpacity ? +attrs.fillOpacity : 1,
+                strokeOpacity = attrs.strokeOpacity ? +attrs.strokeOpacity : 1,
+                noiseIntensity = attrs.noiseIntensity ? +attrs.noiseIntensity : 0,
+                gradient = this.gradient(attrs.gradient),
+                x_gradient = this.gradient(attrs.x_gradient) || gradient,
+                y_gradient = this.gradient(attrs.y_gradient) || gradient;
+
             if (!this._t)
-                this._t = new this.Trianglify();
-            var pattern = this._t.generate(this.attrs.width, this.attrs.height),
+                this._t = t = new Trianglify();
+
+            t.options.fillOpacity = Math.min(1, Math.max(fillOpacity, 0));
+            t.options.strokeOpacity = Math.min(1, Math.max(strokeOpacity, 0));
+            t.options.noiseIntensity = Math.min(1, Math.max(noiseIntensity, 0));
+            if (x_gradient)
+                t.options.x_gradient = x_gradient;
+            if (y_gradient)
+                t.options.y_gradient = y_gradient;
+            if (cellsize > 0) {
+                t.options.cellsize = cellsize;
+                t.options.bleed = +attrs.bleed;
+            }
+            var pattern = t.generate(this.attrs.width, this.attrs.height),
                 element = this.element.select('.trianglify-background');
             if (!element.node()) {
                 var parentNode = this.element.node(),
@@ -895,9 +1038,23 @@ function(d3, root) {
                 parentNode.appendChild(node);
                 element = this.element.select('.trianglify-background');
             }
-            element.style("height", this.attrs.height+"px")
-                   .style("width", this.attrs.width+"px")
+            element.style("min-height", "100%")
+                   //.style("height", this.attrs.height+"px")
+                   //.style("width", this.attrs.width+"px")
                    .style("background-image", pattern.dataUrl);
+        },
+        //
+        gradient: function (value) {
+            if (value && typeof(value) === 'string') {
+                var bits = value.split('-');
+                if (bits.length === 2) {
+                    var palette = Trianglify.colorbrewer[bits[0]],
+                        num = +bits[1];
+                    if (palette) {
+                        return palette[num];
+                    }
+                }
+            }
         }
     });
     return d3;

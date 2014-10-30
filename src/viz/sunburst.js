@@ -6,10 +6,18 @@
     //      padding: padding of sunburst (default 10)
     d3ext.SunBurst = Viz.extend({
         defaults: {
+            // Show labels
             labels: true,
+            // sunburst padding
+            addorder: false,
+            // Add the order of labels if available in the data
             padding: 10,
+            // speed in transitions
             transition: 750,
-            scale: 'sqrt'
+            //
+            scale: 'sqrt',
+            //
+            initNode: null
         },
         //
         // Calculate the text size to use from dimensions
@@ -20,6 +28,27 @@
                 return Math.round(100 - 0.15*(500-dim));
             else
                 return 100;
+        },
+        //
+        select: function (path) {
+            if (!this.current) return;
+            var node = this.attrs.data;
+            if (path && path.length) {
+                for (var n=0; n<path.length; ++n) {
+                    var name = path[n];
+                    if (node.children) {
+                        for (var i=0; i<=node.children.length; ++i) {
+                            if (node.children[i].name === name) {
+                                node = node.children[i];
+                                break;
+                            }
+                        }
+                    } else {
+                        break;
+                    }
+                }
+            }
+            return this._select(node);
         },
         //
         d3build: function () {
@@ -91,6 +120,52 @@
                 alignText(text);
             }
 
+            this._select = function (node) {
+                if (node === this.current) return;
+
+                if (text) text.transition().attr("opacity", 0);
+                //
+                function visible (e) {
+                    return e.x >= node.x && e.x < (node.x + node.dx);
+                }
+
+                var arct = arcTween(node);
+                depth = node.depth;
+
+                path.transition()
+                    .duration(transition)
+                    .attrTween("d", arct)
+                    .each('end', function (e, i) {
+                        if (node === e) {
+                            self.current = e;
+                            self.fire('change');
+                        }
+                    });
+
+                if (text) {
+                    positions = [];
+                    dummyPath.transition()
+                        .duration(transition)
+                        .attrTween("d", arct)
+                        .each('end', function (e, i) {
+                            // check if the animated element's data lies within the visible angle span given in d
+                            if (e.depth >= depth && visible(e)) {
+                                // fade in the text element and recalculate positions
+                                alignText(d3.select(this.parentNode)
+                                            .select("text")
+                                            .transition().duration(transition)
+                                            .attr("opacity", 1));
+                            }
+                        });
+                }
+                return true;
+            };
+
+            //
+            this.current = root;
+            if (!this.select(this.attrs.initNode))
+                this.fire('change');
+
             function scale (radius) {
                 if (attrs.scale === 'log')
                     return d3.scale.log().range([1, radius]);
@@ -100,7 +175,7 @@
                     return d3.scale.sqrt().range([0, radius]);
             }
 
-            function click(d) {
+            function click (d) {
                 // Fade out all text elements
                 if (depth === d.depth) return;
                 if (text) text.transition().attr("opacity", 0);
@@ -116,8 +191,7 @@
                     .each('end', function (e, i) {
                         if (e.depth === depth && visible(e)) {
                             self.current = e;
-                            if (self.dispatch.change)
-                                self.dispatch.change(self);
+                            self.fire('change');
                         }
                     });
 

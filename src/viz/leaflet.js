@@ -8,15 +8,20 @@
         //
         d3build: function () {
             var o = this.attrs,
-                e = this.element[0];
-            require('leaflet', function () {
-                this.map = new L.Map(e, {
+                e = this.element.node();
+            if (typeof L === 'undefined') {
+                var self = this;
+                require(['leaflet'], function () {
+                    self.d3build();
+                });
+            } else {
+                this.map = new L.map(e, {
                     center: o.center,
                     zoom: o.zoom
                 });
                 if (o.buildMap)
                     o.buildMap.call(this);
-            });
+            }
         },
         //
         addLayer: function (url, options) {

@@ -23,14 +23,16 @@
 
         it("Check agile development build", function(done) {
             var sunb = new SunBurst({
+                    autoBuild: false,
                     padding: '30',
                     src: src
                 }),
-                check = function (o) {
-                    expect(o).toBe(sunb);
+                check = function () {
+                    expect(this).toBe(sunb);
                     //expect(typeof(o.attrs.data)).toBe('object');
                     done();
                 };
+            expect(sunb.attrs.autoBuild).toBe(false);
             sunb.on('build', check);
             sunb.build();
         });
