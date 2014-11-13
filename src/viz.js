@@ -1,4 +1,7 @@
-    d3ext.VizDefaults = {
+    x.VizDefaults = {
+        //
+        // Default paper type
+        paper: 'svg',
         // Add resizing on window resize
         resize: false,
         // milliseconds to delay the resizing of a visualization
@@ -8,8 +11,91 @@
         //
         autoBuild: true,
         // Events dispatched by the visualization
-        events: ['build', 'change']
+        events: ['build', 'change'],
+        //
+        // Default parameters when drawing lines
+        lines: {
+            interpolate: 'basis'
+        }
     };
+
+    x.paperDefaults = {
+        width: 500,
+        height: 400
+    };
+
+    x.constants = {
+        DEFAULT_VIZ_GROUP: 'default_viz_group'
+    };
+
+    x.vizRegistry = (function () {
+        var _vizMap = {};
+
+        function initializeVizGroup(group) {
+            if (!group) {
+                group = x.constants.DEFAULT_VIZ_GROUP;
+            }
+
+            if (!_vizMap[group]) {
+                _vizMap[group] = [];
+            }
+
+            return group;
+        }
+
+        return {
+            has: function (viz) {
+                for (var e in _vizMap) {
+                    if (_vizMap[e].indexOf(viz) >= 0) {
+                        return true;
+                    }
+                }
+                return false;
+            },
+
+            register: function (viz, group) {
+                group = initializeVizGroup(group);
+                _vizMap[group].push(viz);
+            },
+
+            deregister: function (viz, group) {
+                group = initializeVizGroup(group);
+                for (var i = 0; i < _vizMap[group].length; i++) {
+                    if (_vizMap[group][i].anchorName() === viz.anchorName()) {
+                        _vizMap[group].splice(i, 1);
+                        break;
+                    }
+                }
+            },
+
+            clear: function (group) {
+                if (group) {
+                    delete _vizMap[group];
+                } else {
+                    _vizMap = {};
+                }
+            },
+
+            list: function (group) {
+                group = initializeVisGroup(group);
+                return _vizMap[group];
+            }
+        };
+    }());
+
+    x.registerViz = function (viz, group) {
+        x.vizRegistry.register(viz, group);
+    };
+
+    x.deregisterViz = function (viz, group) {
+        x.vizRegistry.deregister(viz, group);
+    };
+
+    x.hasViz = function (viz) {
+        return x.vizRegistry.has(viz);
+    };
+
+    var _idCounter = 0;
     //
     //  Vizualization Class
     //  -------------------------------
@@ -40,11 +126,12 @@
             attrs = extend({}, d3ext.VizDefaults, this.defaults, attrs);
             element = d3.select(element);
             this.element = element;
-            this.attrs = attrs;
             this.log = log(attrs.debug);
             this.elwidth = null;
             this.elheight = null;
+            this.uid = ++_idCounter;
             this.dispatch = d3.dispatch.apply(d3, attrs.events);
+            this.d3 = d3;
 
             if (!attrs.width) {
                 attrs.width = getWidth(element);
@@ -64,6 +151,7 @@
                 attrs.height_percentage = 0.01*parseFloat(attrs.height);
                 attrs.height = attrs.height_percentage*attrs.width;
             }
+            this.attrs = this.getAttributes(attrs);
             //
             if (attrs.resize) {
                 var self = this;
@@ -117,6 +205,18 @@
                 this.attrs.height = size[1];
             }
             this.build();
+        },
+        //
+        //  Retrieve the paper when the visualization is displayed
+        //  Create a new one if not available
+        paper: function () {
+            if (this._paper === undefined) {
+                if (this.attrs.paper === 'canvas')
+                    this._paper = new Canvas(this.element, this.attrs);
+                else
+                    this._paper = new Svg(this.element, this.attrs);
+            }
+            return this._paper;
         },
         //
         // Return a new d3 svg element insite the element without any children
@@ -178,6 +278,10 @@
                     }
                 });
             }
+        },
+        //
+        getAttributes: function (attrs) {
+            return attrs;
         },
         //
         // Set new data for the visualization

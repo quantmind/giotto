@@ -38,7 +38,7 @@
                     var name = path[n];
                     if (node.children) {
                         for (var i=0; i<=node.children.length; ++i) {
-                            if (node.children[i].name === name) {
+                            if (node.children[i] && node.children[i].name === name) {
                                 node = node.children[i];
                                 break;
                             }

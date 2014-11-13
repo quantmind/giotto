@@ -3,8 +3,18 @@
         "src": ["src/open.js",
                 "src/utils/*.js",
                 "src/viz.js",
+                "src/svg.js",
+                "src/canvas.js",
                 "src/viz/*.js",
+                "src/charts/*.js",
                 "src/close.js"],
         "dest": "dist/d3ext.js"
+    },
+    "d3extweb": {
+        "src": ["website/js/open.js",
+                "website/js/charts.js",
+                "website/js/close.js"],
+        "dest": "dist/d3extweb.js",
+        "minify": false
     }
 }

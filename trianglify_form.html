@@ -5,61 +5,64 @@
 <meta charset='utf-8'>
 <meta content='IE=edge' http-equiv='X-UA-Compatible'>
 <meta content='width=device-width, initial-scale=1' name='viewport'>
-<meta content='2014-10-19T16:13:12' name='og:modified_time'>
-<link href='http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css' rel='stylesheet' type='text/css'>
-<link href='http://netdna.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css' rel='stylesheet' type='text/css'>
-<link href='http://quantmind.github.io/d3ext/dist/d3ext.css' rel='stylesheet' type='text/css'>
-<link href='http://quantmind.github.io/d3ext/dist/examples.css' rel='stylesheet' type='text/css'>
+<meta content='2014-10-30T18:00:36' name='og:modified_time'>
+<link href='http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.css' rel='stylesheet' type='text/css'>
+<link href='http://netdna.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.css' rel='stylesheet' type='text/css'>
+<link href='/dist/d3ext.css' rel='stylesheet' type='text/css'>
+<link href='/dist/examples.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var lux = {context: {"html5mode": true, "datetimeFormat": "d MMM y, h:mm:ss a", "ngModules": ["highlight", "ui.router"], "apiUrls": {}, "date": "2014-10-30T17-59-20", "name": "Lux", "pages": {"/d3ext/*slug": {"api": {"name": "content", "url": "http://quantmind.github.io/d3ext/examples/ng/content", "type": "static"}, "url": "/d3ext/*slug", "name": "view", "controller": "Html5", "parent": "/d3ext/", "template": "<div class='angular-view' data-dynamic-page=''></div>"}, "/d3ext/": {"api": {"name": "content", "url": "http://quantmind.github.io/d3ext/examples/ng/content", "type": "static"}, "url": "/d3ext/", "name": "", "controller": "Html5", "parent": null, "template": "<div class='angular-view' data-dynamic-page=''></div>"}, "/d3ext": {"url": "/d3ext", "redirectTo": "/d3ext/"}}, "year": 2014, "page": "/d3ext/*slug", "brand": "Lux", "hrefs": ["/d3ext/", "/d3ext/*slug", "/d3ext"], "url": "http://quantmind.github.io/d3ext", "media": "", "navbar": {"collapseWidth": 768}, "python_version": "3.4.1", "dateFormat": "d MMM y", "uiRouter": true, "lux_version": "0.1.1-alpha.1"}};</script>
+var lux = {context: {"page": "/*slug", "html5mode": true, "year": 2014, "python_version": "3.4.2", "lux_version": "0.1.1-alpha.1", "pages": {"/": {"parent": null, "controller": "Html5", "api": {"name": "content", "url": "/examples/ng/content", "type": "static"}, "template": "<div class='angular-view' data-dynamic-page=''></div>", "name": "", "url": "/"}, "/*slug": {"parent": "/", "controller": "Html5", "api": {"name": "content", "url": "/examples/ng/content", "type": "static"}, "template": "<div class='angular-view' data-dynamic-page=''></div>", "name": "view", "url": "/*slug"}}, "datetimeFormat": "d MMM y, h:mm:ss a", "brand": "Lux", "media": "", "ngModules": ["highlight", "ui.router"], "apiUrls": {}, "uiRouter": true, "navbar": {"collapseWidth": 768}, "date": "2014-11-12T18-02-22", "url": "", "name": "Lux", "dateFormat": "d MMM y", "hrefs": ["/", "/*slug"]}};</script>
 <script type='text/javascript'>
-lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
+    //
+    // A function to load module only when angular is ready to compile
+    lux.require = function (modules, callback) {
+        if (lux.angular || !lux.context.uiRouter) {
+            var lazy = {
+                callback: callback
+            };
+            lux.requireQueue.push(lazy);
+            require(rcfg.min(modules), function () {
+                lazy.arguments = Array.prototype.slice.call(arguments, 0);
+            });
+        }
+    };
+    lux.requireQueue = [];
+    //
+    // Use this function when angular is ready to compile
+    lux.loadRequire = function (callback) {
+        if (!this.loadingRequire) {
+            var queue = this.requireQueue,
+                notReady = [];
+            this.loadingRequire = true;
+            this.requireQueue = notReady;
+            for (var i=0; i<queue.length; ++i) {
+                if (queue[i].arguments === undefined)
+                    notReady.push(queue[i]);
+                else
+                    queue[i].callback.apply(this.root, queue[i].arguments);
+            }
+            this.loadingRequire = false;
+            if (notReady.length)
+                setTimeout(function () {
+                    lux.loadRequire(callback);
+                });
+            else if (callback)
+                callback();
+        }
+    };</script>
 <script type="text/javascript">
-var require = {"paths": {}, "baseUrl": "http://quantmind.github.io/d3ext/", "deps": [], "minify": true, "waitSeconds": 200};
+var require = {"paths": {}, "waitSeconds": 200, "minify": false, "deps": ["/dist/d3extweb.js"], "baseUrl": "/"};
 </script>
-<script src='http://quantmind.github.io/require-config-js/require.config.min.js' type='application/javascript'></script>
-<script src='http://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js' type='application/javascript'></script>
+<script src='http://quantmind.github.io/require-config-js/require.config.js' type='application/javascript'></script>
+<script src='http://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.js' type='application/javascript'></script>
 </head>
 <body data-ng-controller='Page' data-ng-model='page' data-page=''>
 <navbar2 data-options="lux.context.navbar">
     <div class='row'>
         <div class='col-sm-12' data-highlight data-toc>
-            <div class='angular-view' data-ui-view='main'><div class='hidden' id='seo-view'><lux-form data-options='luxforms.trianglify_shQ7t'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.trianglify_shQ7t = {"children": [{"children": [{"field": {"max_value": 1000, "type": "number", "value": 150, "name": "cellsize", "min_value": 1, "label": "cell size", "required": true}}, {"field": {"max_value": 1, "type": "number", "value": 1, "name": "fillOpacity", "min_value": 0, "label": "fill opacity", "required": true}}, {"field": {"max_value": 1, "type": "number", "value": 1, "name": "strokeOpacity", "min_value": 0, "label": "stroke opacity", "required": true}}, {"field": {"max_value": 1, "type": "number", "value": 0, "name": "noiseIntensity", "min_value": 0, "label": "noise intensity", "required": true}}, {"field": {"max_value": 1, "type": "text", "name": "x_gradient", "required": false, "label": "x gradient", "maxlength": 50, "min_value": 0}}, {"field": {"max_value": 1, "type": "text", "name": "y_gradient", "required": false, "label": "y gradient", "maxlength": 50, "min_value": 0}}], "field": {"type": "fieldset"}}, {"field": {"type": "button", "disabled": "form.$invalid", "label": "redraw", "click": "luxforms.redraw", "name": "redraw"}}], "field": {"layout": "horizontal", "id": "trianglify_shQ7t", "model": "trianglify", "type": "form", "labelSpan": 6}};</script></lux-form></div></div>
+            <div class='angular-view' data-ui-view='main'><div class='hidden' id='seo-view'><lux-form data-options='luxforms.trianglify_111l4'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.trianglify_111l4 = {"children": [{"children": [{"field": {"min_value": 1, "type": "number", "value": 150, "max_value": 1000, "required": true, "name": "cellsize", "label": "cell size"}}, {"field": {"min_value": 0, "type": "number", "value": 1, "max_value": 1, "required": true, "name": "fillOpacity", "label": "fill opacity"}}, {"field": {"min_value": 0, "type": "number", "value": 1, "max_value": 1, "required": true, "name": "strokeOpacity", "label": "stroke opacity"}}, {"field": {"min_value": 0, "type": "number", "value": 0, "max_value": 1, "required": true, "name": "noiseIntensity", "label": "noise intensity"}}, {"field": {"max_value": 1, "type": "text", "required": false, "min_value": 0, "label": "x gradient", "name": "x_gradient", "maxlength": 50}}, {"field": {"max_value": 1, "type": "text", "required": false, "min_value": 0, "label": "y gradient", "name": "y_gradient", "maxlength": 50}}], "field": {"type": "fieldset"}}, {"field": {"name": "redraw", "disabled": "form.$invalid", "label": "redraw", "click": "luxforms.redraw", "type": "button"}}], "field": {"id": "trianglify_111l4", "model": "trianglify", "labelSpan": 6, "type": "form", "layout": "horizontal"}};</script></lux-form></div></div>
         </div>
     </div>
 </navbar2>
-
-<script type="text/javascript">
-require(['lux/lux', 'dist/d3ext', 'angular-ui-router', 'angular-strap'], function (lux, d3) {
-    var sitemap = function () {
-        var s = ['sunburst',
-                 'force',
-                 {href: 'c3', name: 'time series'},
-                 'trianglify'],
-            all = [];
-        //
-        s.forEach(function (v) {
-            if (typeof(v) === 'string')
-                v = {href: v, name: v};
-            v.href = lux.context.url + '/examples/' + v.href;
-            all.push(v);
-        })
-        return all;
-    };
-    //
-    lux.extend({
-        navbar: {
-            brand: 'd3ext',
-            theme: 'default',
-            items: [{href: 'https://github.com/quantmind/d3ext',
-                     icon: 'fa fa-github fa-2x',
-                     name: 'bla'}],
-            items2: sitemap()
-        }
-    })
-    .addD3ext(d3)
-    .bootstrap('d3extensions', ['lux.nav', 'd3viz']);
-});
-</script>
 </body>
 </html>

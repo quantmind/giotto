@@ -1,6 +1,8 @@
+
+    var
     //  Simple extend function
     //
-    var extend = d3ext.extend = function () {
+    extend = d3ext.extend = function () {
         var length = arguments.length,
             object = arguments[0];
 
@@ -20,4 +22,17 @@
             }
         }
         return object;
+    },
+    //  copyMissing
+    //  =================
+    //
+    //  Copy values to toObj from fromObj which are missing (undefined) in toObj
+    copyMissing = function (fromObj, toObj) {
+        if (fromObj && toObj) {
+            for (var prop in fromObj) {
+                if (fromObj.hasOwnProperty(prop) && toObj[prop] === undefined)
+                    toObj[prop] = fromObj[prop];
+            }
+        }
+        return toObj;
     };

@@ -17,12 +17,12 @@
         // (assume that d3 is also global.)
         factory(d3, root);
     }
-}(
-function(d3, root) {
+}(function(d3, root) {
     "use strict";
     var d3ext = {
-        version: "0.1.0"
-    };
+            version: "0.1.0"
+        },
+        x = d3ext;
     d3.ext = d3ext;
 
     //
@@ -138,9 +138,11 @@ function(d3, root) {
     }(function() {}));
 
 
+
+    var
     //  Simple extend function
     //
-    var extend = d3ext.extend = function () {
+    extend = d3ext.extend = function () {
         var length = arguments.length,
             object = arguments[0];
 
@@ -160,7 +162,21 @@ function(d3, root) {
             }
         }
         return object;
+    },
+    //  copyMissing
+    //  =================
+    //
+    //  Copy values to toObj from fromObj which are missing (undefined) in toObj
+    copyMissing = function (fromObj, toObj) {
+        if (fromObj && toObj) {
+            for (var prop in fromObj) {
+                if (fromObj.hasOwnProperty(prop) && toObj[prop] === undefined)
+                    toObj[prop] = fromObj[prop];
+            }
+        }
+        return toObj;
     };
+
     function noop () {}
 
     var log = function (debug) {
@@ -222,6 +238,16 @@ function(d3, root) {
         };
     };
 
+    x.xyfunction = function (X, funy) {
+        var xy = [];
+        if (isArray(X))
+            X.forEach(function (x) {
+                xy.push([x, funy(x)]);
+            });
+        return xy;
+    };
+
+
     function getWidth (element) {
         return getParentRectValue(element, 'width');
     }
@@ -275,7 +301,23 @@ function(d3, root) {
     }
 
 
-    d3ext.VizDefaults = {
+
+    var
+
+    ostring = Object.prototype.toString,
+
+    isFunction = function (value) {
+        return ostring.call(value) === '[object Function]';
+    },
+
+    isArray = function (value) {
+        return ostring.call(value) === '[object Array]';
+    };
+
+    x.VizDefaults = {
+        //
+        // Default paper type
+        paper: 'svg',
         // Add resizing on window resize
         resize: false,
         // milliseconds to delay the resizing of a visualization
@@ -285,8 +327,91 @@ function(d3, root) {
         //
         autoBuild: true,
         // Events dispatched by the visualization
-        events: ['build', 'change']
+        events: ['build', 'change'],
+        //
+        // Default parameters when drawing lines
+        lines: {
+            interpolate: 'basis'
+        }
     };
+
+    x.paperDefaults = {
+        width: 500,
+        height: 400
+    };
+
+    x.constants = {
+        DEFAULT_VIZ_GROUP: 'default_viz_group'
+    };
+
+    x.vizRegistry = (function () {
+        var _vizMap = {};
+
+        function initializeVizGroup(group) {
+            if (!group) {
+                group = x.constants.DEFAULT_VIZ_GROUP;
+            }
+
+            if (!_vizMap[group]) {
+                _vizMap[group] = [];
+            }
+
+            return group;
+        }
+
+        return {
+            has: function (viz) {
+                for (var e in _vizMap) {
+                    if (_vizMap[e].indexOf(viz) >= 0) {
+                        return true;
+                    }
+                }
+                return false;
+            },
+
+            register: function (viz, group) {
+                group = initializeVizGroup(group);
+                _vizMap[group].push(viz);
+            },
+
+            deregister: function (viz, group) {
+                group = initializeVizGroup(group);
+                for (var i = 0; i < _vizMap[group].length; i++) {
+                    if (_vizMap[group][i].anchorName() === viz.anchorName()) {
+                        _vizMap[group].splice(i, 1);
+                        break;
+                    }
+                }
+            },
+
+            clear: function (group) {
+                if (group) {
+                    delete _vizMap[group];
+                } else {
+                    _vizMap = {};
+                }
+            },
+
+            list: function (group) {
+                group = initializeVisGroup(group);
+                return _vizMap[group];
+            }
+        };
+    }());
+
+    x.registerViz = function (viz, group) {
+        x.vizRegistry.register(viz, group);
+    };
+
+    x.deregisterViz = function (viz, group) {
+        x.vizRegistry.deregister(viz, group);
+    };
+
+    x.hasViz = function (viz) {
+        return x.vizRegistry.has(viz);
+    };
+
+    var _idCounter = 0;
     //
     //  Vizualization Class
     //  -------------------------------
@@ -317,11 +442,12 @@ function(d3, root) {
             attrs = extend({}, d3ext.VizDefaults, this.defaults, attrs);
             element = d3.select(element);
             this.element = element;
-            this.attrs = attrs;
             this.log = log(attrs.debug);
             this.elwidth = null;
             this.elheight = null;
+            this.uid = ++_idCounter;
             this.dispatch = d3.dispatch.apply(d3, attrs.events);
+            this.d3 = d3;
 
             if (!attrs.width) {
                 attrs.width = getWidth(element);
@@ -341,6 +467,7 @@ function(d3, root) {
                 attrs.height_percentage = 0.01*parseFloat(attrs.height);
                 attrs.height = attrs.height_percentage*attrs.width;
             }
+            this.attrs = this.getAttributes(attrs);
             //
             if (attrs.resize) {
                 var self = this;
@@ -394,6 +521,18 @@ function(d3, root) {
                 this.attrs.height = size[1];
             }
             this.build();
+        },
+        //
+        //  Retrieve the paper when the visualization is displayed
+        //  Create a new one if not available
+        paper: function () {
+            if (this._paper === undefined) {
+                if (this.attrs.paper === 'canvas')
+                    this._paper = new Canvas(this.element, this.attrs);
+                else
+                    this._paper = new Svg(this.element, this.attrs);
+            }
+            return this._paper;
         },
         //
         // Return a new d3 svg element insite the element without any children
@@ -457,6 +596,10 @@ function(d3, root) {
             }
         },
         //
+        getAttributes: function (attrs) {
+            return attrs;
+        },
+        //
         // Set new data for the visualization
         setData: function (data, callback) {
             if (this.attrs.processData)
@@ -505,6 +648,93 @@ function(d3, root) {
         return o !== Viz && o.prototype && o.prototype instanceof Viz;
     };
 
+
+
+    var
+
+    Paper = Class.extend({
+
+        init: function (element, options) {
+            options = extend({}, options, x.paperDefaults);
+            this.element = element;
+            this.element.html('');
+            //
+            // Create axis objects
+            this.axis = {
+                x: new Axis(options.xaxis),
+                y: new Axis(options.yaxis),
+                y2: new Axis(options.yaxis2)
+            };
+        }
+    }),
+
+    Axis = Class.extend({
+
+        init: function (options) {
+
+        }
+    }),
+
+    Svg = Paper.extend({
+
+        init: function (element, attrs) {
+            this._super(element, attrs);
+            attrs = this.attrs;
+            element = this.element;
+
+            var width = attrs.width,
+                height = attrs.height,
+                svg = this.element.append("svg")
+                                .attr("width", width)
+                                .attr("height", height)
+                                .attr("viewBox", "0 0 " + width + " " + height);
+
+            var x = d3.scale.linear()
+                        .range([0, width]),
+                y = d3.scale.linear()
+                        .range([height, 0]);
+        },
+        //
+        //  Draw a new Line from a serie object
+        //
+        drawLine: function (serie) {
+            if (isArray(serie)) serie = {data: serie};
+            if (!(serie && serie.data)) return;
+
+            copyMissing(this.options.lines, serie);
+
+            var line = d3.svg.line()
+                        .interpolate(serie.interpolate)
+                        .x(function(d) {
+                            return d.x;
+                        })
+                        .y(function(d) {
+                            return d.y;
+                        }),
+                data = this.xyData(serie.data);
+
+
+            var g = this.svg.append('g')
+                        .datum(data)
+                        .attr('d', line);
+        },
+        //
+        xyData: function (data) {
+            if (!isArray(data)) return;
+            if (isArray(data[0]) && data[0].length === 2) {
+                var xydata = [];
+                data.forEach(function (xy) {
+                    xydata.push({x: xy[0], y: xy[1]});
+                });
+                return xydata;
+            }
+            return data;
+        }
+    });
+
+    var Canvas = Paper.extend({
+
+    });
 
 
     d3ext.C3 = Viz.extend({
@@ -653,7 +883,14 @@ function(d3, root) {
         defaults: {
             center: [41.898582, 12.476801],
             zoom: 4,
-            maxZoom: 18
+            maxZoom: 18,
+            zoomControl: true,
+            wheelZoom: true,
+        },
+        getAttributes: function (attrs) {
+            // switch off resizing, handled by leflet
+            attrs.resize = false;
+            return attrs;
         },
         //
         d3build: function () {
@@ -665,10 +902,24 @@ function(d3, root) {
                     self.d3build();
                 });
             } else {
-                this.map = new L.map(e, {
-                    center: o.center,
-                    zoom: o.zoom
-                });
+                var opts = this.attrs,
+                    map = this.map = new L.map(e, {
+                        center: o.center,
+                        zoom: o.zoom
+                    });
+                if (opts.zoomControl) {
+                    if (!opts.wheelZoom)
+                        map.scrollWheelZoom.disable();
+                } else {
+                    map.dragging.disable();
+                    map.touchZoom.disable();
+                    map.doubleClickZoom.disable();
+                    map.scrollWheelZoom.disable();
+
+                    // Disable tap handler, if present.
+                    if (map.tap) map.tap.disable();
+                }
+
                 if (o.buildMap)
                     o.buildMap.call(this);
             }
@@ -677,6 +928,63 @@ function(d3, root) {
         addLayer: function (url, options) {
             if (this.map)
                 L.tileLayer(url, options).addTo(this.map);
+        },
+        //
+        addSvgLayer: function (collection, draw) {
+            var transform = d3.geo.transform({point: ProjectPoint}),
+                path = d3.geo.path().projection(transform),
+                map = this.map,
+                svg = map ? d3.select(map.getPanes().overlayPane).append("svg") : null,
+                g = svg ? svg.append("g").attr("class", "leaflet-zoom-hide") : null;
+
+            // Use Leaflet to implement a D3 geometric transformation.
+            function ProjectPoint (x, y) {
+                var point = map.latLngToLayerPoint(new L.LatLng(y, x));
+                this.stream.point(point.x, point.y);
+            }
+            //
+            // Reposition the SVG to cover the features.
+            function reset () {
+                var bounds = path.bounds(collection),
+                    topLeft = bounds[0],
+                    bottomRight = bounds[1];
+
+                svg.attr("width", bottomRight[0] - topLeft[0])
+                    .attr("height", bottomRight[1] - topLeft[1])
+                    .style("left", topLeft[0] + "px")
+                    .style("top", topLeft[1] + "px");
+
+                g.attr("transform", "translate(" + -topLeft[0] + "," + -topLeft[1] + ")");
+
+                if (draw)
+                    draw(path);
+            }
+            //
+            if (map) {
+                var svgLayer = {
+                    svg: svg,
+                    g: g,
+                    collection: collection,
+                    path: path,
+                    draw: function () {
+                        var bounds = path.bounds(collection),
+                            topLeft = bounds[0],
+                            bottomRight = bounds[1];
+
+                        svg.attr("width", bottomRight[0] - topLeft[0])
+                            .attr("height", bottomRight[1] - topLeft[1])
+                            .style("left", topLeft[0] + "px")
+                            .style("top", topLeft[1] + "px");
+
+                        g.attr("transform", "translate(" + -topLeft[0] + "," + -topLeft[1] + ")");
+
+                        if (draw)
+                            draw(svgLayer);
+                    }
+                };
+                map.on("viewreset", svgLayer.draw);
+                return svgLayer;
+            }
         }
     });
 
@@ -720,7 +1028,7 @@ function(d3, root) {
                     var name = path[n];
                     if (node.children) {
                         for (var i=0; i<=node.children.length; ++i) {
-                            if (node.children[i].name === name) {
+                            if (node.children[i] && node.children[i].name === name) {
                                 node = node.children[i];
                                 break;
                             }
@@ -1057,5 +1365,58 @@ function(d3, root) {
             }
         }
     });
+
+    x.Chart = x.Viz.extend({
+        serieDefaults: {
+            lines: {show: true},
+            points: {show: true}
+        },
+
+        defaults: {
+
+        },
+
+        svg: function () {
+            var w = this.attrs.width,
+                h = this.attrs.height;
+            this.element.html('');
+            return this.element.append("svg")
+                .attr("width", w)
+                .attr("height", h)
+                .attr("viewBox", "0 0 " + w + " " + h);
+        },
+
+        build: function () {
+            var self = this,
+                opts = this.attrs,
+                data = opts.data || [];
+
+            // Loop through data and build the graph
+            data.forEach(function (serie) {
+                if (isFunction (serie)) {
+                    serie = serie(self);
+                }
+                self.addSerie(serie);
+            });
+        },
+
+        addSerie: function (serie) {
+            // The serie is
+            if (!serie) return;
+
+            if (isArray(serie)) {
+                serie = {data: serie};
+            }
+            if (!serie.data) return;
+            this.log.info('Add new serie to chart');
+
+            copyMissing(this.serieDefaults, serie);
+
+            if (serie.lines.show)
+                this.paper().drawLine(serie.data, serie.lines);
+
+        }
+    });
+
     return d3;
 }));

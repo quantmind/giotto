@@ -1,6 +1,6 @@
 //      Lux Library - v0.1.0
 
-//      Compiled 2014-10-30.
+//      Compiled 2014-11-12.
 //      Copyright (c) 2014 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -101,6 +101,8 @@ function(angular, root) {
     lux.context.ngModules.push('lux.applications');
     var
     //
+    ostring = Object.prototype.toString,
+    //
     generateCallbacks = function () {
         var callbackFunctions = [],
             callFunctions = function () {
@@ -169,6 +171,10 @@ function(angular, root) {
         return url;
     },
     //
+    isObject = function (o) {
+        return ostring.call(o) === '[object Object]';
+    },
+    //
     getRootAttribute = function (name) {
         var obj = root,
             bits= name.split('.');
@@ -186,13 +192,16 @@ function(angular, root) {
     //  Retrive options for the ``options`` string in ``attrs`` if available.
     //  Used by directive when needing to specify options in javascript rather
     //  than html data attributes.
-    getOptions = function (attrs) {
+    getOptions = lux.getOptions = function (attrs) {
         if (attrs && typeof attrs.options === 'string') {
             var obj = getRootAttribute(attrs.options);
             if (typeof obj === 'function')
                 obj = obj();
             delete attrs.options;
-            attrs = extend(attrs, obj);
+            if (isObject(obj))
+                attrs = extend(attrs, obj);
+            else if (obj !== undefined)
+                return obj;
         }
         var options = {};
         forEach(attrs, function (value, name) {
@@ -257,6 +266,25 @@ function(angular, root) {
                 root["eval"].call(root, data );
             })(data);
         }
+    },
+    //
+    // Simple Slugify function
+    slugify = lux.slugify = function (str) {
+        str = str.replace(/^\s+|\s+$/g, ''); // trim
+        str = str.toLowerCase();
+
+        // remove accents, swap ñ for n, etc
+        var from = "àáäâèéëêìíïîòóöôùúüûñç·/_,:;";
+        var to   = "aaaaeeeeiiiioooouuuunc------";
+        for (var i=0, l=from.length ; i<l ; i++) {
+            str = str.replace(new RegExp(from.charAt(i), 'g'), to.charAt(i));
+        }
+
+        str = str.replace(/[^a-z0-9 -]/g, '') // remove invalid chars
+            .replace(/\s+/g, '-') // collapse whitespace and replace by -
+            .replace(/-+/g, '-'); // collapse dashes
+
+        return str;
     };
 
 
@@ -381,16 +409,6 @@ function(angular, root) {
             this.http = $http;
             this.q = $q;
             this.timeout = $timeout;
-
-            // A post method with CSRF parameter
-            this.post = function (url, data, cfg) {
-                if (lux.context.csrf) {
-                    data || (data = {});
-                    angular.extend(data, lux.context.csrf);
-                }
-                return $http.post(url, data, cfg);
-            };
-
             //  Create a client api
             //  -------------------------
             //
@@ -609,12 +627,19 @@ function(angular, root) {
             if (name && token)
                 csrf[name] = token;
 
+            // A post method with CSRF parameter
+            $lux.post = function (url, data, cfg) {
+                var ct = cfg ? cfg.contentType : null,
+                    fd = this.formData(ct);
+                return this.http.post(url, fd(data), cfg);
+            };
+
             //
             // Change the form data depending on content type
             $lux.formData = function (contentType) {
 
-                return function (data, getHeaders ) {
-                    extend(data, csrf);
+                return function (data) {
+                    data = extend(data || {}, csrf);
                     if (contentType === 'application/x-www-form-urlencoded')
                         return $.param(data);
                     else if (contentType === 'multipart/form-data') {
@@ -699,11 +724,13 @@ function(angular, root) {
             scroll.browser = true;
             scroll.path = false;
             //
+            scope.$location = location;
+            //
             // This is the first event triggered when the path location changes
             scope.$on('$locationChangeSuccess', function() {
                 if (!scroll.path) {
                     scroll.browser = true;
-                    _clear(100);
+                    _clear();
                 }
             });
 
@@ -829,7 +856,7 @@ function(angular, root) {
                 if (target.hasClass(scroll.scrollTargetClass))
                     target.addClass(scroll.scrollTargetClassFinish);
                 target = null;
-                _clear(0);
+                _clear();
             }
 
             function _clear (delay) {
@@ -899,7 +926,7 @@ function(angular, root) {
             });
         }]);
 
-angular.module('templates-page', ['page/breadcrumbs.tpl.html', 'page/messages.tpl.html']);
+angular.module('templates-page', ['page/breadcrumbs.tpl.html']);
 
 angular.module("page/breadcrumbs.tpl.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("page/breadcrumbs.tpl.html",
@@ -909,18 +936,6 @@ angular.module("page/breadcrumbs.tpl.html", []).run(["$templateCache", function(
     "        <span ng-if=\"step.last\">{{step.label}}</span>\n" +
     "    </li>\n" +
     "</ol>");
-}]);
-
-angular.module("page/messages.tpl.html", []).run(["$templateCache", function($templateCache) {
-  $templateCache.put("page/messages.tpl.html",
-    "<div ng-repeat=\"message in messages\" class=\"alert alert-dismissible\"\n" +
-    "ng-class=\"messageClass[message.level]\">\n" +
-    "<button type=\"button\" class=\"close\" data-dismiss=\"alert\" ng-click=\"dismiss($event, message)\">\n" +
-    "    <span aria-hidden=\"true\">&times;</span>\n" +
-    "    <span class=\"sr-only\">Close</span>\n" +
-    "</button>\n" +
-    "<span ng-bind-html=\"message.body\"></span>\n" +
-    "</div>");
 }]);
 
     function addPageInfo(page, $scope, dateFilter, $lux) {
@@ -965,16 +980,6 @@ angular.module("page/messages.tpl.html", []).run(["$templateCache", function($te
                 page = $scope.pages ? $scope.pages[page] : null;
             $scope.page = addPageInfo(page || {}, $scope, dateFilter, $lux);
             //
-            // logout via post method
-            $scope.logout = function(e, url) {
-                e.preventDefault();
-                e.stopPropagation();
-                $lux.post(url).success(function (data) {
-                    if (data.redirect)
-                        window.location.replace(data.redirect);
-                });
-            };
-
             $scope.togglePage = function ($event) {
                 $event.preventDefault();
                 $event.stopPropagation();
@@ -1005,6 +1010,7 @@ angular.module("page/messages.tpl.html", []).run(["$templateCache", function($te
                 log.info('Page ' + page.toString() + ' animation out');
             });
         }])
+
         .service('$breadcrumbs', [function () {
 
             this.crumbs = function () {
@@ -1058,52 +1064,7 @@ angular.module("page/messages.tpl.html", []).run(["$templateCache", function($te
                     }
                 }
             };
-        }])
-        //
-        // Directive for displaying page messages
-        //
-        //  <div data-options='sitemessages' data-page-messages></div>
-        //  <script>
-        //      sitemessages = {
-        //          messages: [...],
-        //          dismissUrl: (Optional url to use when dismissing a message)
-        //      };
-        //  </script>
-        .directive('pageMessages', ['$lux', '$sce', function ($lux, $sce) {
-
-            return {
-                restrict: 'AE',
-                templateUrl: "page/messages.tpl.html",
-                scope: {},
-                link: function (scope, element, attrs) {
-                    scope.messageClass = {
-                        info: 'alert-info',
-                        success: 'alert-success',
-                        warning: 'alert-warning',
-                        danger: 'alert-danger',
-                        error: 'alert-danger'
-                    };
-                    scope.dismiss = function (e, m) {
-                        var target = e.target;
-                        while (target && target.tagName !== 'DIV')
-                            target = target.parentNode;
-                        $(target).remove();
-                        $lux.post('/_dismiss_message', {message: m});
-                    };
-                    var messages = getOptions(attrs);
-                    scope.messages = [];
-                    forEach(messages, function (message) {
-                        if (message) {
-                            if (typeof(message) === 'string')
-                                message = {body: message};
-                            message.body = $sce.trustAsHtml(message.body);
-                        }
-                        scope.messages.push(message);
-                    });
-                }
-            };
         }]);
-
 
 
     angular.module('lux.router', ['lux.page'])
@@ -1252,7 +1213,7 @@ angular.module("page/messages.tpl.html", []).run(["$templateCache", function($te
                             var scripts= element[0].getElementsByTagName('script');
                             // Execute scripts in the loaded html
                             forEach(scripts, function (js) {
-                                globalEval(js.innerText);
+                                globalEval(js.innerHTML);
                             });
                             log.info('Compiling new html content');
                             $compile(element.contents())(scope);
@@ -1281,8 +1242,11 @@ angular.module("page/messages.tpl.html", []).run(["$templateCache", function($te
             promise,
             api;
         //
-        if (form.$invalid)
-            return this.showErrors();
+        // Flag the form as submitted
+        form.submitted = true;
+        if (form.$invalid) {
+            return;
+        }
 
         // Get the api information
         if (!target && apiname) {
@@ -1605,6 +1569,8 @@ angular.module("page/messages.tpl.html", []).run(["$templateCache", function($te
                     forEach(field.options, function (opt) {
                         if (typeof(opt) === 'string') {
                             opt = {'value': opt};
+                        } else if (isArray(opt)) {
+                            opt = {'value': opt[0], 'repr': opt[1] || opt[0]};
                         }
                         opt = $($document[0].createElement('option'))
                                 .attr('value', opt.value).html(opt.repr || opt.value);
@@ -1652,12 +1618,15 @@ angular.module("page/messages.tpl.html", []).run(["$templateCache", function($te
                 inputError: function (scope, element) {
                     var field = scope.field,
                         self = this,
+                        // True when the form is submitted
+                        submitted = scope.formName + '.submitted',
+                        // True if the field is dirty
                         dirty = [scope.formName, field.name, '$dirty'].join('.'),
                         invalid = [scope.formName, field.name, '$invalid'].join('.'),
                         error = [scope.formName, field.name, '$error'].join('.') + '.',
                         input = $(element[0].querySelector(scope.info.element)),
                         p = $($document[0].createElement('p'))
-                                .attr('ng-show', dirty + ' && ' + invalid)
+                                .attr('ng-show', '(' + submitted + ' || ' + dirty + ') && ' + invalid)
                                 .addClass('text-danger')
                                 .addClass(scope.formErrorClass)
                                 .html('{{formErrors.' + field.name + '}}'),
@@ -1982,10 +1951,84 @@ angular.module("page/messages.tpl.html", []).run(["$templateCache", function($te
             };
         });
 
+angular.module('templates-users', ['users/messages.tpl.html']);
+
+angular.module("users/messages.tpl.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("users/messages.tpl.html",
+    "<div ng-repeat=\"message in messages\" class=\"alert alert-dismissible\"\n" +
+    "ng-class=\"messageClass[message.level]\">\n" +
+    "<button type=\"button\" class=\"close\" data-dismiss=\"alert\" ng-click=\"dismiss($event, message)\">\n" +
+    "    <span aria-hidden=\"true\">&times;</span>\n" +
+    "    <span class=\"sr-only\">Close</span>\n" +
+    "</button>\n" +
+    "<span ng-bind-html=\"message.body\"></span>\n" +
+    "</div>");
+}]);
+
 
     // Controller for User.
     // This controller can be used by eny element, including forms
-    angular.module('lux.users', ['lux.form'])
+    angular.module('lux.users', ['lux.form', 'templates-users'])
+
+        .run(['$rootScope', '$lux', function (scope, $lux) {
+
+            // logout via post method
+            scope.logout = function(e, url) {
+                e.preventDefault();
+                e.stopPropagation();
+                $lux.post(url).success(function (data) {
+                    if (data.redirect)
+                        window.location.replace(data.redirect);
+                });
+            };
+
+        }])
+        //
+        // Directive for displaying page messages
+        //
+        //  <div data-options='sitemessages' data-page-messages></div>
+        //  <script>
+        //      sitemessages = {
+        //          messages: [...],
+        //          dismissUrl: (Optional url to use when dismissing a message)
+        //      };
+        //  </script>
+        .directive('pageMessages', ['$lux', '$sce', function ($lux, $sce) {
+
+            return {
+                restrict: 'AE',
+                templateUrl: "users/messages.tpl.html",
+                scope: {},
+                link: function (scope, element, attrs) {
+                    scope.messageClass = {
+                        info: 'alert-info',
+                        success: 'alert-success',
+                        warning: 'alert-warning',
+                        danger: 'alert-danger',
+                        error: 'alert-danger'
+                    };
+                    //
+                    // Dismiss a message
+                    scope.dismiss = function (e, m) {
+                        var target = e.target;
+                        while (target && target.tagName !== 'DIV')
+                            target = target.parentNode;
+                        $(target).remove();
+                        $lux.post('/_dismiss_message', {message: m});
+                    };
+                    var messages = getOptions(attrs);
+                    scope.messages = [];
+                    forEach(messages, function (message) {
+                        if (message) {
+                            if (typeof(message) === 'string')
+                                message = {body: message};
+                            message.body = $sce.trustAsHtml(message.body);
+                        }
+                        scope.messages.push(message);
+                    });
+                }
+            };
+        }])
 
         .directive('userForm', ['formRenderer', function (renderer) {
             //
@@ -2088,18 +2131,24 @@ angular.module("blog/pagination.tpl.html", []).run(["$templateCache", function($
   $templateCache.put("blog/pagination.tpl.html",
     "<ul class=\"media-list\">\n" +
     "    <li ng-repeat=\"post in items\" class=\"media\" data-ng-controller='BlogEntry'>\n" +
-    "        <a href=\"{{post.html_url}}\" class=\"pull-left hidden-xs dir-entry-image\">\n" +
-    "          <img ng-src=\"{{post.image}}\" alt=\"{{post.title}}\">\n" +
+    "        <a href=\"{{post.html_url}}\">\n" +
+    "            <div class=\"clearfix\">\n" +
+    "                <img ng-src=\"{{post.image}}\" class=\"hidden-xs post-image\" alt=\"{{post.title}}\">\n" +
+    "                <img ng-src=\"{{post.image}}\" alt=\"{{post.title}}\" class=\"visible-xs post-image-xs center-block\">\n" +
+    "                <div class=\"post-body hidden-xs\">\n" +
+    "                    <h3 class=\"media-heading\">{{post.title}}</h3>\n" +
+    "                    <p data-ng-if=\"post.description\">{{post.description}}</p>\n" +
+    "                    <p class=\"text-info small\">by {{post.authors}} on {{post.dateText}}</p>\n" +
+    "                </div>\n" +
+    "                <div class=\"visible-xs\">\n" +
+    "                    <br>\n" +
+    "                    <h3 class=\"media-heading text-center\">{{post.title}}</h3>\n" +
+    "                    <p data-ng-if=\"post.description\">{{post.description}}</p>\n" +
+    "                    <p class=\"text-info small\">by {{post.authors}} on {{post.dateText}}</p>\n" +
+    "                </div>\n" +
+    "            </div>\n" +
+    "            <hr>\n" +
     "        </a>\n" +
-    "        <a href=\"{{post.html_url}}\" class=\"visible-xs\">\n" +
-    "            <img ng-src=\"{{post.image}}\" alt=\"{{post.title}}\" class=\"dir-entry-image\">\n" +
-    "        </a>\n" +
-    "        <p class=\"visible-xs\"></p>\n" +
-    "        <div class=\"media-body\">\n" +
-    "            <h4 class=\"media-heading\"><a href=\"{{post.html_url}}\">{{post.title}}</a></h4>\n" +
-    "            <p data-ng-if=\"post.description\">{{post.description}}</p>\n" +
-    "            <p class=\"text-info small\">by {{post.authors}} on {{post.dateText}}</p>\n" +
-    "        </div>\n" +
     "    </li>\n" +
     "</ul>");
 }]);
@@ -2109,6 +2158,11 @@ angular.module("blog/pagination.tpl.html", []).run(["$templateCache", function($
     //
     //  Simple blog pagination directives and code highlight with highlight.js
     angular.module('lux.blog', ['templates-blog', 'lux.services', 'highlight', 'lux.scroll'])
+        .value('blogDefaults', {
+            centerMath: true,
+            fallback: true
+        })
+        //
         .controller('BlogEntry', ['$scope', 'dateFilter', '$lux', function ($scope, dateFilter, $lux) {
             var post = $scope.post;
             if (!post) {
@@ -2132,17 +2186,53 @@ angular.module("blog/pagination.tpl.html", []).run(["$templateCache", function($
             };
         })
         //
-        .directive('katex', function () {
+        .directive('katex', ['blogDefaults', function (blogDefaults) {
+
+            function error (element, err) {
+                element.html("<div class='alert alert-danger' role='alert'>" + err + "</div>");
+            }
+
+            function render(katex, text, element) {
+                try {
+                    katex.render(text, element[0]);
+                }
+                catch(err) {
+                    if (blogDefaults.fallback) {
+                        require(['mathjax'], function (mathjax) {
+                            try {
+                                if (text.substring(0, 15) === '\\displaystyle {')
+                                    text = text.substring(15, text.length-1);
+                                element.append(text);
+                                mathjax.Hub.Queue(["Typeset", mathjax.Hub, element[0]]);
+                            } catch (e) {
+                                error(element, err += ' - ' + e);
+                            }
+                        });
+                    } else
+                        error(element, err);
+                }
+            }
+
             return {
+                restrict: 'AE',
+
                 link: function (scope, element, attrs) {
                     var text = element.html();
-                    element.addClass('katex-outer').html();
-                    require(['katex'], function (katex) {
-                        katex.render(text, element[0]);
-                    });
+                    if (element[0].tagName === 'DIV') {
+                        if (blogDefaults.centerMath)
+                            element.addClass('text-center');
+                        text = '\\displaystyle {' + text + '}';
+                        element.addClass('katex-outer');
+                    }
+                    if (typeof(katex) === 'undefined')
+                        require(['katex'], function (katex) {
+                            render(katex, text, element);
+                        });
+                    else
+                        render(katex, text, element);
                 }
             };
-        });
+        }]);
 
     //
     //  Code highlighting with highlight.js
@@ -2188,7 +2278,36 @@ angular.module("blog/pagination.tpl.html", []).run(["$templateCache", function($
 
         });
     };
-angular.module('templates-nav', ['nav/navbar.tpl.html', 'nav/navbar2.tpl.html']);
+
+
+    angular.module('lux.bs', ['mgcrea.ngStrap', 'templates-bs'])
+
+        .config(['$tooltipProvider', function($tooltipProvider) {
+
+            extend($tooltipProvider.defaults, {
+                template: "bs/tooltip.tpl.html"
+            });
+        }]);
+angular.module('templates-bs', ['bs/tooltip.tpl.html']);
+
+angular.module("bs/tooltip.tpl.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("bs/tooltip.tpl.html",
+    "<div class=\"tooltip in\" ng-show=\"title\">\n" +
+    "    <div class=\"tooltip-arrow\"></div>\n" +
+    "    <div class=\"tooltip-inner\" ng-bind=\"title\"></div>\n" +
+    "</div>");
+}]);
+
+angular.module('templates-nav', ['nav/link.tpl.html', 'nav/navbar.tpl.html', 'nav/navbar2.tpl.html']);
+
+angular.module("nav/link.tpl.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("nav/link.tpl.html",
+    "<a ng-if=\"link.title\" ng-href=\"{{link.href}}\" data-title=\"{{link.title}}\" ng-click=\"clickLink($event, link)\"\n" +
+    "bs-tooltip=\"tooltip\">\n" +
+    "<i ng-if=\"link.icon\" class=\"{{link.icon}}\"></i> {{link.name}}</a>\n" +
+    "<a ng-if=\"!link.title\" ng-href=\"{{link.href}}\">\n" +
+    "<i ng-if=\"link.icon\" class=\"{{link.icon}}\"></i> {{link.name}}</a>");
+}]);
 
 angular.module("nav/navbar.tpl.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("nav/navbar.tpl.html",
@@ -2212,15 +2331,11 @@ angular.module("nav/navbar.tpl.html", []).run(["$templateCache", function($templ
     "        </div>\n" +
     "        <div class=\"navbar-collapse\" bs-collapse-target>\n" +
     "            <ul class=\"nav navbar-nav\">\n" +
-    "                <li ng-repeat=\"link in navbar.items\" ng-class=\"{active:activeLink(link)}\">\n" +
-    "                    <a href=\"{{link.href}}\" title=\"{{link.title || link.name}}\">\n" +
-    "                    <i ng-if=\"link.icon\" class=\"{{link.icon}}\"></i> {{link.name}}</a>\n" +
+    "                <li ng-repeat=\"link in navbar.items\" ng-class=\"{active:activeLink(link)}\" navbar-link>\n" +
     "                </li>\n" +
     "            </ul>\n" +
     "            <ul class=\"nav navbar-nav navbar-right\">\n" +
-    "                <li ng-repeat=\"link in navbar.itemsRight\" ng-class=\"{active:activeLink(link)}\">\n" +
-    "                    <a href=\"{{link.href}}\" title=\"{{link.title || link.name}}\">\n" +
-    "                    <i ng-if=\"link.icon\" class=\"{{link.icon}}\"></i> {{link.name}}</a>\n" +
+    "                <li ng-repeat=\"link in navbar.itemsRight\" ng-class=\"{active:activeLink(link)}\" navbar-link>\n" +
     "                </li>\n" +
     "            </ul>\n" +
     "        </div>\n" +
@@ -2265,13 +2380,13 @@ angular.module("nav/navbar2.tpl.html", []).run(["$templateCache", function($temp
     "                    </div>\n" +
     "                </li>\n" +
     "                <li ng-repeat=\"link in navbar.items2\">\n" +
-    "                    <a ng-if=\"!link.links\" href=\"{{link.href}}\">{{link.value || link.href}}</a>\n" +
-    "                    <a ng-if=\"link.links\" href=\"{{link.href}}\" class=\"with-children\">{{link.value}}</a>\n" +
+    "                    <a ng-if=\"!link.links\" href=\"{{link.href}}\">{{link.label || link.value || link.href}}</a>\n" +
+    "                    <a ng-if=\"link.links\" href=\"{{link.href}}\" class=\"with-children\">{{link.label || link.value}}</a>\n" +
     "                    <a ng-if=\"link.links\" href=\"#\" class=\"pull-right toggle\" ng-click=\"togglePage($event)\">\n" +
     "                        <i class=\"fa\" ng-class=\"{'fa-chevron-left': !link.active, 'fa-chevron-down': link.active}\"></i></a>\n" +
     "                    <ul ng-if=\"link.links\" class=\"nav nav-second-level collapse\" ng-class=\"{in: link.active}\">\n" +
     "                        <li ng-repeat=\"link in link.links\">\n" +
-    "                            <a ng-if=\"!link.vars\" href=\"{{link.href}}\" ng-click=\"loadPage($event)\">{{link.value}}</a>\n" +
+    "                            <a ng-if=\"!link.vars\" href=\"{{link.href}}\" ng-click=\"loadPage($event)\">{{link.label || link.value}}</a>\n" +
     "                        </li>\n" +
     "                    </ul>\n" +
     "                </li>\n" +
@@ -2309,7 +2424,7 @@ angular.module("nav/navbar2.tpl.html", []).run(["$templateCache", function($temp
         fluid: true
     };
 
-    angular.module('lux.nav', ['templates-nav', 'lux.services', 'mgcrea.ngStrap.collapse'])
+    angular.module('lux.nav', ['templates-nav', 'lux.services', 'lux.bs'])
         //
         .service('navService', ['$location', function ($location) {
 
@@ -2350,6 +2465,13 @@ angular.module("nav/navbar2.tpl.html", []).run(["$templateCache", function($temp
             };
         }])
         //
+        .directive('navbarLink', function () {
+            return {
+                templateUrl: "nav/link.tpl.html",
+                restrict: 'A'
+            };
+        })
+        //
         //  Directive for the simple navbar
         //  This directive does not require the Navigation controller
         .directive('navbar', ['navService', function (navService) {
@@ -2357,16 +2479,28 @@ angular.module("nav/navbar2.tpl.html", []).run(["$templateCache", function($temp
             return {
                 templateUrl: "nav/navbar.tpl.html",
                 restrict: 'AE',
-                // Create an isolated scope
-                scope: {},
                 // Link function
                 link: function (scope, element, attrs) {
                     scope.navbar = navService.initScope(attrs);
                     scope.activeLink = navService.activeLink;
+                    scope.clickLink = function (e, link) {
+                        if (link.click) {
+                            var func = scope[link.click];
+                            if (func)
+                                func(e, link.href, link);
+                        }
+                    };
                     //
                     windowResize(function () {
                         if (navService.maybeCollapse(scope.navbar))
                             scope.$apply();
+                    });
+                    //
+                    // When using ui-router, and a view changes collapse the
+                    //  navigation if needed
+                    scope.$on('$locationChangeSuccess', function () {
+                        navService.maybeCollapse(scope.navbar);
+                        //scope.$apply();
                     });
                 }
             };
@@ -2405,8 +2539,6 @@ angular.module("nav/navbar2.tpl.html", []).run(["$templateCache", function($temp
         //  Directive for the navbar with sidebar (nivebar2 template)
         .directive('navSideBar', ['$compile', '$document', function ($compile, $document) {
             return {
-                require: 'navbar2',
-
                 templateUrl: "nav/navbar2.tpl.html",
 
                 restrict: 'A',
@@ -2771,6 +2903,8 @@ angular.module("nav/navbar2.tpl.html", []).run(["$templateCache", function($temp
                                 var options = getOptions(d3, attrs),
                                     autoBuild = options.autoBuild;
                                 options.autoBuild = false;
+                                // add scope to the options
+                                options.scope = scope;
                                 viz = new VizClass(element[0], options);
                                 element.data(viz);
                                 viz.loadData = loadData($lux);
