@@ -8,17 +8,17 @@
     "version": "0.1.0",
     "repository": {
         "type": "git",
-        "url": "https://github.com/quantmind/d3ext"
+        "url": "https://github.com/quantmind/giotto"
     },
-    "description": "D3 extensions",
-    "title": "D3 extensions",
+    "description": "Giotto - d3 visualization extensions",
+    "title": "Giotto",
     "keywords": ["visualization"],
     "licenses": [
         {
             "type": "BSD"
         }
     ],
-    "homepage": "https://github.com/quantmind/d3ext",
+    "homepage": "http://quantmind.github.io/giotto/",
     "devDependencies": {
         "grunt": "",
         "grunt-contrib-uglify": "",

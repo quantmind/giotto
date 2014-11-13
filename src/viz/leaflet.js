@@ -1,4 +1,4 @@
-    d3ext.Leaflet = Viz.extend({
+    g.Leaflet = Viz.extend({
         //
         defaults: {
             center: [41.898582, 12.476801],

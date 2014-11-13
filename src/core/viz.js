@@ -1,39 +1,10 @@
-    x.VizDefaults = {
-        //
-        // Default paper type
-        paper: 'svg',
-        // Add resizing on window resize
-        resize: false,
-        // milliseconds to delay the resizing of a visualization
-        resizeDelay: 200,
-        // Option callback after initialisation
-        onInit: null,
-        //
-        autoBuild: true,
-        // Events dispatched by the visualization
-        events: ['build', 'change'],
-        //
-        // Default parameters when drawing lines
-        lines: {
-            interpolate: 'basis'
-        }
-    };
 
-    x.paperDefaults = {
-        width: 500,
-        height: 400
-    };
-
-    x.constants = {
-        DEFAULT_VIZ_GROUP: 'default_viz_group'
-    };
-
-    x.vizRegistry = (function () {
+    g.vizRegistry = (function () {
         var _vizMap = {};
 
         function initializeVizGroup(group) {
             if (!group) {
-                group = x.constants.DEFAULT_VIZ_GROUP;
+                group = g.constants.DEFAULT_VIZ_GROUP;
             }
 
             if (!_vizMap[group]) {
@@ -83,16 +54,16 @@
         };
     }());
 
-    x.registerViz = function (viz, group) {
-        x.vizRegistry.register(viz, group);
+    g.registerViz = function (viz, group) {
+        g.vizRegistry.register(viz, group);
     };
 
-    x.deregisterViz = function (viz, group) {
-        x.vizRegistry.deregister(viz, group);
+    g.deregisterViz = function (viz, group) {
+        g.vizRegistry.deregister(viz, group);
     };
 
-    x.hasViz = function (viz) {
-        return x.vizRegistry.has(viz);
+    g.hasViz = function (viz) {
+        return g.vizRegistry.has(viz);
     };
 
     var _idCounter = 0;
@@ -112,7 +83,7 @@
     //    from the element of its parent
     //  * ``height``: The height of the visualization, if not provided it will be evaluated
     //    from the element of its parent
-    var Viz = d3ext.Viz = Class.extend({
+    var Viz = g.Viz = Class.extend({
         //
         // Initialise the vizualization with a DOM element and
         //  an object of attributes
@@ -123,7 +94,7 @@
             }
             if (!element)
                 element = document.createElement('div');
-            attrs = extend({}, d3ext.VizDefaults, this.defaults, attrs);
+            attrs = extend({}, g.vizDefaults, this.defaults, attrs);
             element = d3.select(element);
             this.element = element;
             this.log = log(attrs.debug);
@@ -211,10 +182,7 @@
         //  Create a new one if not available
         paper: function () {
             if (this._paper === undefined) {
-                if (this.attrs.paper === 'canvas')
-                    this._paper = new Canvas(this.element, this.attrs);
-                else
-                    this._paper = new Svg(this.element, this.attrs);
+                this._paper = g.paper(this.element, this.attrs);
             }
             return this._paper;
         },
@@ -328,7 +296,7 @@
         }
     });
 
-    d3ext.isviz = function (o) {
+    g.isviz = function (o) {
         return o !== Viz && o.prototype && o.prototype instanceof Viz;
     };
 

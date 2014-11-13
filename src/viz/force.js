@@ -1,7 +1,7 @@
     //
     //
     // Force layout example
-    d3ext.Force = Viz.extend({
+    g.Force = Viz.extend({
         //
         d3build: function () {
             var d2 = this.d3,

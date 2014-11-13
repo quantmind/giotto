@@ -1,3 +1,5 @@
+'''Lux extension for creating giotto css file
+'''
 import lux
 from lux.extensions.ui import *
 

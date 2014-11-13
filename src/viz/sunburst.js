@@ -4,7 +4,7 @@
     //  In addition to standard Viz parameters:
     //      labels: display labels or not (default false)
     //      padding: padding of sunburst (default 10)
-    d3ext.SunBurst = Viz.extend({
+    g.SunBurst = Viz.extend({
         defaults: {
             // Show labels
             labels: true,

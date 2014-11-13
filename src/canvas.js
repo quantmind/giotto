@@ -1,4 +1,0 @@
-
-    var Canvas = Paper.extend({
-
-    });

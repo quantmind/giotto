@@ -2,7 +2,7 @@
     var
     //  Simple extend function
     //
-    extend = d3ext.extend = function () {
+    extend = g.extend = function () {
         var length = arguments.length,
             object = arguments[0];
 
@@ -35,4 +35,22 @@
             }
         }
         return toObj;
+    },
+    //
+    //
+    // Obtain extra information from javascript objects
+    getOptions = function (attrs) {
+        if (attrs && typeof attrs.options === 'string') {
+            var obj = root,
+                bits= attrs.options.split('.');
+
+            for (var i=0; i<bits.length; ++i) {
+                obj = obj[bits[i]];
+                if (!obj) break;
+            }
+            if (typeof obj === 'function')
+                obj = obj(g, attrs);
+            attrs = extend(attrs, obj);
+        }
+        return attrs;
     };

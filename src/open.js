@@ -19,8 +19,20 @@
     }
 }(function(d3, root) {
     "use strict";
-    var d3ext = {
-            version: "0.1.0"
+    var giotto = {
+            version: "0.1.0",
+            d3: d3
         },
-        x = d3ext;
-    d3.ext = d3ext;
+        g = giotto;
+    d3.giotto = giotto;
+
+    // Warps RequireJs call so it can be used in conjunction with
+    //  require-config.js
+    //
+    //  http://quantmind.github.io/require-config-js/
+    g.require = function (deps, callback) {
+        if (root.rcfg && root.rcfg.min)
+            deps = root.rcfg.min(deps);
+        require(deps, callback);
+        return g;
+    };

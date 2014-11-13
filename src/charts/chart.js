@@ -1,5 +1,5 @@
 
-    x.Chart = x.Viz.extend({
+    g.Chart = Viz.extend({
         serieDefaults: {
             lines: {show: true},
             points: {show: true}
@@ -7,16 +7,6 @@
 
         defaults: {
 
-        },
-
-        svg: function () {
-            var w = this.attrs.width,
-                h = this.attrs.height;
-            this.element.html('');
-            return this.element.append("svg")
-                .attr("width", w)
-                .attr("height", h)
-                .attr("viewBox", "0 0 " + w + " " + h);
         },
 
         build: function () {

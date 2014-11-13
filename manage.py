@@ -1,7 +1,6 @@
-'''Create the index.html for testing::
+'''Build the giotto web site::
 
-    grunt
-    python maketesthtml.py build_static
+    python manage.py build_static
 '''
 import lux
 import sys
@@ -12,16 +11,15 @@ def argv(*argv):
 
 
 if __name__ == '__main__':
-    name = 'giottoweb'
     if len(sys.argv) > 1 and sys.argv[1] == 'build_static':
-        args = argv('style', '--cssfile', 'dist/d3ext')
+        args = argv('style', '--cssfile', 'dist/giotto')
         if '--nominify' not in sys.argv:
             args.append('--minify')
-        # Build css file for d3ext
+        # Build css file for giotto
         lux.execute_from_config('giottoweb',
                                 argv=args,
                                 EXTENSIONS=['lux.extensions.ui',
-                                            'website.d3ext'],
+                                            'giottoweb.giotto'],
                                 EXCLUDE_EXTENSIONS_CSS=['lux.extensions.ui',
                                                         'giottoweb'])
         # Build css file for example site
@@ -29,4 +27,4 @@ if __name__ == '__main__':
                                 argv=argv('style'),
                                 EXCLUDE_EXTENSIONS_CSS=['giottoweb.giotto'])
     # Execute command
-    lux.execute_from_config('website')
+    lux.execute_from_config('giottoweb')

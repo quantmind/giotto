@@ -1,10 +1,11 @@
     //
     describe("Test extension object", function() {
-        var d3ext = d3.ext;
+        var g = d3.giotto;
 
         it("Check basic properties", function() {
-            expect(typeof(d3ext)).toBe('object');
-            expect(typeof(d3ext.version)).toBe('string');
+            expect(typeof(g)).toBe('object');
+            expect(typeof(g.version)).toBe('string');
+            expect(g.d3).toBe(d3);
         });
 
         it("Check phantom", function() {

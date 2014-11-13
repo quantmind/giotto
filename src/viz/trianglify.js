@@ -1,10 +1,7 @@
 
-    d3ext.Trianglify = Viz.extend({
+    g.Trianglify = Viz.extend({
         //
         defaults: {
-            center: [41.898582, 12.476801],
-            zoom: 4,
-            maxZoom: 18,
             bleed: 150,
             fillOpacity: 1,
             strokeOpacity: 1,
@@ -16,6 +13,17 @@
         //
         d3build: function () {
             //
+            if (this.Trianglify === undefined && typeof Trianglify === 'undefined') {
+                var self = this;
+                return g.require(['trianglify'], function (Trianglify) {
+                    self.Trianglify = Trianglify || null;
+                    self.d3build();
+                });
+            }
+
+            if (this.Trianglify === undefined)
+                this.Trianglify = Trianglify;
+
             var t = this._t,
                 attrs = this.attrs,
                 cellsize = attrs.cellsize ? +attrs.cellsize : 0,

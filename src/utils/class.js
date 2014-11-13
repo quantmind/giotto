@@ -35,7 +35,7 @@
 
     //  A Type is a factory of Classes. This is the correspondent of
     //  python metaclasses.
-    Type = d3ext.Type = (function (t) {
+    Type = g.Type = (function (t) {
 
         t.new_class = function (Caller, attrs) {
             var type = this,
@@ -97,7 +97,7 @@
 
     //  A function representing a base class.
     //  The `extend` method is the most important function of this function-object.
-    Class = d3ext.Class = (function (c) {
+    Class = g.Class = (function (c) {
         c.__class__ = Type;
         //
         c.extend = function (attrs) {

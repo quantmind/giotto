@@ -1,5 +1,5 @@
 
-    d3ext.C3 = Viz.extend({
+    g.C3 = Viz.extend({
         c3opts: ['data', 'axis', 'grid', 'region', 'legend', 'tooltip',
                  'subchart', 'zoom', 'point', 'line', 'bar', 'pie', 'donut'],
         //

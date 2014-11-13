@@ -58,3 +58,5 @@
 
         };
     };
+
+    g.log = log(root.debug);

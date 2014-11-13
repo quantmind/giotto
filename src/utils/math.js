@@ -1,5 +1,5 @@
 
-    x.xyfunction = function (X, funy) {
+    g.xyfunction = function (X, funy) {
         var xy = [];
         if (isArray(X))
             X.forEach(function (x) {

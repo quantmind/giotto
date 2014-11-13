@@ -1,10 +1,17 @@
 {
     "giotto": {
+        "options": {
+            "banner": "src/banner.js"
+        },
         "src": ["src/open.js",
+                "src/core/defaults.js",
                 "src/utils/*.js",
-                "src/viz.js",
-                "src/svg.js",
-                "src/canvas.js",
+                "src/core/paper.js",
+                "src/core/svg.js",
+                "src/core/viz.js",
+                "src/canvas/canvas.js",
+                "src/canvas/axis.js",
+                "src/core/canvas.js",
                 "src/viz/*.js",
                 "src/charts/*.js",
                 "src/close.js"],
