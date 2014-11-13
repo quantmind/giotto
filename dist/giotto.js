@@ -661,17 +661,18 @@
             //
             // Create axis objects
             this.axis = {
-                x: new Axis(options.xaxis),
-                y: new Axis(options.yaxis),
-                y2: new Axis(options.yaxis2)
+                x: new Axis(this, options.xaxis),
+                y: new Axis(this, options.yaxis),
+                y2: new Axis(this, options.yaxis2)
             };
         }
     }),
 
     Axis = Class.extend({
 
-        init: function (options) {
-
+        init: function (paper, options) {
+            options = options || {};
+            this.type = options.type || 'linear';
         }
     }),
 
@@ -688,6 +689,7 @@
                                 .attr("width", width)
                                 .attr("height", height)
                                 .attr("viewBox", "0 0 " + width + " " + height);
+                                //perserveAspectRatio="xMinYMid"
 
             var x = d3.scale.linear()
                         .range([0, width]),

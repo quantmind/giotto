@@ -79,7 +79,7 @@ module.exports = function (grunt) {
                 specs : 'src/tests/*.js',
                 template: 'src/tests/test.tpl.html',
                 templateOptions: {
-                    deps: ['lux/lux.min.js', 'dist/d3ext.min.js']
+                    deps: ['dist/giotto.min.js']
                 }
             }
         }

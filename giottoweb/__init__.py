@@ -11,8 +11,8 @@ from lux.extensions.static import HtmlContent
 
 SITE_URL = 'http://quantmind.github.io/giotto'
 HTML_TITLE = 'GiottoJs Examples'
-STATIC_LOCATION = '../../docs/giotto'
-CONTEXT_LOCATION = 'website/content/context'
+STATIC_LOCATION = '../docs/giotto'
+CONTEXT_LOCATION = 'giottoweb/content/context'
 MEDIA_URL = '/'
 ANGULAR_UI_ROUTER = True
 STATIC_API = 'examples/ng'
@@ -23,8 +23,8 @@ EXTENSIONS = ['lux.extensions.base',
               'lux.extensions.code',
               'lux.extensions.angular',
               'lux.extensions.static',
-              'website.d3ext']
-HTML_LINKS = ['dist/d3ext',
+              'website.giotto']
+HTML_LINKS = ['dist/giotto',
               'dist/examples.css']
 REQUIREJS = [MEDIA_URL + 'dist/d3extweb.js']
 

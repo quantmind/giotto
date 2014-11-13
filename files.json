@@ -1,5 +1,5 @@
 {
-    "d3ext": {
+    "giotto": {
         "src": ["src/open.js",
                 "src/utils/*.js",
                 "src/viz.js",
@@ -8,13 +8,13 @@
                 "src/viz/*.js",
                 "src/charts/*.js",
                 "src/close.js"],
-        "dest": "dist/d3ext.js"
+        "dest": "dist/giotto.js"
     },
-    "d3extweb": {
-        "src": ["website/js/open.js",
-                "website/js/charts.js",
-                "website/js/close.js"],
-        "dest": "dist/d3extweb.js",
+    "giottoweb": {
+        "src": ["src/examples/open.js",
+                "src/examples/charts.js",
+                "src/examples/close.js"],
+        "dest": "giottoweb/media/giottoweb/giottoweb.js",
         "minify": false
     }
 }
