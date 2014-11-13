@@ -1,5 +1,7 @@
 '''
-Lux application for building the example page
+Lux application for building the example website
+
+https://github.com/quantmind/lux
 '''
 from os import path
 
@@ -7,9 +9,9 @@ import lux
 from lux.extensions.static import HtmlContent
 
 
-SITE_URL = 'http://quantmind.github.io/d3ext'
-HTML_TITLE = 'd3ext examples'
-STATIC_LOCATION = ''
+SITE_URL = 'http://quantmind.github.io/giotto'
+HTML_TITLE = 'GiottoJs Examples'
+STATIC_LOCATION = '../../docs/giotto'
 CONTEXT_LOCATION = 'website/content/context'
 MEDIA_URL = '/'
 ANGULAR_UI_ROUTER = True
