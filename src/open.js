@@ -17,10 +17,10 @@
         // (assume that d3 is also global.)
         factory(d3, root);
     }
-}(
-function(d3, root) {
+}(function(d3, root) {
     "use strict";
     var d3ext = {
-        version: "0.1.0"
-    };
+            version: "0.1.0"
+        },
+        x = d3ext;
     d3.ext = d3ext;

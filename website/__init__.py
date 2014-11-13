@@ -24,8 +24,9 @@ EXTENSIONS = ['lux.extensions.base',
               'lux.extensions.angular',
               'lux.extensions.static',
               'website.d3ext']
-HTML_LINKS = ['dist/d3ext.css',
+HTML_LINKS = ['dist/d3ext',
               'dist/examples.css']
+REQUIREJS = [MEDIA_URL + 'dist/d3extweb.js']
 
 
 class Extension(lux.Extension):
