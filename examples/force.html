@@ -1,60 +1,24 @@
 <!DOCTYPE html>
 <html data-debug='false' lang='en'>
 <head>
-<title>d3ext examples</title>
+<title>GiottoJs Examples</title>
 <meta charset='utf-8'>
 <meta content='IE=edge' http-equiv='X-UA-Compatible'>
 <meta content='width=device-width, initial-scale=1' name='viewport'>
-<meta content='2014-10-08T22:28:05' name='og:modified_time'>
-<link href='http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.css' rel='stylesheet' type='text/css'>
-<link href='http://netdna.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.css' rel='stylesheet' type='text/css'>
-<link href='/dist/d3ext.css' rel='stylesheet' type='text/css'>
-<link href='/dist/examples.css' rel='stylesheet' type='text/css'>
+<meta content='2014-11-13T07:39:44' name='og:modified_time'>
+<link href='http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css' rel='stylesheet' type='text/css'>
+<link href='http://netdna.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css' rel='stylesheet' type='text/css'>
+<link href='http://quantmind.github.io/giotto/media/giotto/giotto.min.css' rel='stylesheet' type='text/css'>
+<link href='http://quantmind.github.io/giotto/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var lux = {context: {"page": "/*slug", "html5mode": true, "year": 2014, "python_version": "3.4.2", "lux_version": "0.1.1-alpha.1", "pages": {"/": {"parent": null, "controller": "Html5", "api": {"name": "content", "url": "/examples/ng/content", "type": "static"}, "template": "<div class='angular-view' data-dynamic-page=''></div>", "name": "", "url": "/"}, "/*slug": {"parent": "/", "controller": "Html5", "api": {"name": "content", "url": "/examples/ng/content", "type": "static"}, "template": "<div class='angular-view' data-dynamic-page=''></div>", "name": "view", "url": "/*slug"}}, "datetimeFormat": "d MMM y, h:mm:ss a", "brand": "Lux", "media": "", "ngModules": ["highlight", "ui.router"], "apiUrls": {}, "uiRouter": true, "navbar": {"collapseWidth": 768}, "date": "2014-11-12T18-02-22", "url": "", "name": "Lux", "dateFormat": "d MMM y", "hrefs": ["/", "/*slug"]}};</script>
+var lux = {context: {"uiRouter": true, "page": "/giotto/*slug", "url": "http://quantmind.github.io/giotto", "dateFormat": "d MMM y", "navbar": {"collapseWidth": 768}, "python_version": "3.4.2", "pages": {"/giotto/*slug": {"parent": "/giotto/", "api": {"type": "static", "url": "http://quantmind.github.io/giotto/examples/ng/content", "name": "content"}, "url": "/giotto/*slug", "controller": "Html5", "name": "view", "template": "<div class='angular-view' data-dynamic-page=''></div>"}, "/giotto/": {"parent": null, "api": {"type": "static", "url": "http://quantmind.github.io/giotto/examples/ng/content", "name": "content"}, "url": "/giotto/", "controller": "Html5", "name": "", "template": "<div class='angular-view' data-dynamic-page=''></div>"}, "/giotto": {"redirectTo": "/giotto/", "url": "/giotto"}}, "name": "Lux", "datetimeFormat": "d MMM y, h:mm:ss a", "html5mode": true, "apiUrls": {}, "media": "/media", "brand": "Lux", "hrefs": ["/giotto/", "/giotto/*slug", "/giotto"], "year": 2014, "lux_version": "0.1.1-alpha.1", "ngModules": ["ui.router", "highlight"], "date": "2014-11-13T08-49-09"}};</script>
 <script type='text/javascript'>
-    //
-    // A function to load module only when angular is ready to compile
-    lux.require = function (modules, callback) {
-        if (lux.angular || !lux.context.uiRouter) {
-            var lazy = {
-                callback: callback
-            };
-            lux.requireQueue.push(lazy);
-            require(rcfg.min(modules), function () {
-                lazy.arguments = Array.prototype.slice.call(arguments, 0);
-            });
-        }
-    };
-    lux.requireQueue = [];
-    //
-    // Use this function when angular is ready to compile
-    lux.loadRequire = function (callback) {
-        if (!this.loadingRequire) {
-            var queue = this.requireQueue,
-                notReady = [];
-            this.loadingRequire = true;
-            this.requireQueue = notReady;
-            for (var i=0; i<queue.length; ++i) {
-                if (queue[i].arguments === undefined)
-                    notReady.push(queue[i]);
-                else
-                    queue[i].callback.apply(this.root, queue[i].arguments);
-            }
-            this.loadingRequire = false;
-            if (notReady.length)
-                setTimeout(function () {
-                    lux.loadRequire(callback);
-                });
-            else if (callback)
-                callback();
-        }
-    };</script>
+lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
 <script type="text/javascript">
-var require = {"paths": {}, "waitSeconds": 200, "minify": false, "deps": ["/dist/d3extweb.js"], "baseUrl": "/"};
+var require = {"waitSeconds": 200, "baseUrl": "http://quantmind.github.io/giotto/media/", "minify": true, "deps": ["/media/giottoweb/giottoweb.js"], "paths": {}};
 </script>
-<script src='http://quantmind.github.io/require-config-js/require.config.js' type='application/javascript'></script>
-<script src='http://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.js' type='application/javascript'></script>
+<script src='http://quantmind.github.io/require-config-js/require.config.min.js' type='application/javascript'></script>
+<script src='http://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js' type='application/javascript'></script>
 </head>
 <body data-ng-controller='Page' data-ng-model='page' data-page=''>
 <navbar2 data-options="lux.context.navbar">

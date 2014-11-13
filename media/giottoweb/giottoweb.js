@@ -1,4 +1,4 @@
-require(rcfg.min(['lux/lux', 'dist/d3ext', 'angular-ui-router', 'angular-strap']), function (lux, d3) {
+require(rcfg.min(['lux/lux', 'giotto/giotto', 'angular-ui-router', 'angular-strap']), function (lux, d3) {
 
     var sitemap = function () {
         var s = ['sunburst',
@@ -29,3 +29,26 @@ require(rcfg.min(['lux/lux', 'dist/d3ext', 'angular-ui-router', 'angular-strap']
     });
     //
     var examples = this.examples = {};
+
+
+
+    examples.sigmoid = function (d3) {
+
+        var X = d3.range(-2, 2, 0.1);
+
+        return {
+            data: [
+                d3.ext.xyfunction(X, function (x) {
+                    return 1/(1+Math.exp(-x));
+                }),
+                d3.ext.xyfunction(X, function (x) {
+                    return x*x;
+                })
+            ]
+        };
+    };
+
+
+    lux.addD3ext(d3)
+        .bootstrap('d3extensions', ['lux.nav', 'd3viz']);
+});
