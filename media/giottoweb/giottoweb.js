@@ -1,9 +1,14 @@
+//
+//  Script for giotto website
+//  =============================
 require(rcfg.min(['lux/lux', 'giotto/giotto', 'angular-ui-router', 'angular-strap']), function (lux, d3) {
 
-    var sitemap = function () {
+    var url = lux.context.url,
+        sitemap = function () {
         var s = ['sunburst',
                  'force',
                  {href: 'charts', label: 'Charting'},
+                 {href: 'giotto', label: 'Logo'},
                  {href: 'c3', name: 'time series'},
                  'trianglify'],
             all = [];
@@ -11,7 +16,7 @@ require(rcfg.min(['lux/lux', 'giotto/giotto', 'angular-ui-router', 'angular-stra
         s.forEach(function (v) {
             if (typeof(v) === 'string')
                 v = {href: v, name: v};
-            v.href = lux.context.url + '/examples/' + v.href;
+            v.href = url + '/examples/' + v.href;
             all.push(v);
         });
         return all;
@@ -19,29 +24,39 @@ require(rcfg.min(['lux/lux', 'giotto/giotto', 'angular-ui-router', 'angular-stra
     //
     lux.extend({
         navbar: {
-            brand: 'd3ext',
+            brand: 'Giotto',
             theme: 'default',
-            items: [{href: 'https://github.com/quantmind/d3ext',
-                     icon: 'fa fa-github fa-2x',
-                     name: 'bla'}],
+            items: [
+                {
+                    href: url + '/api/',
+                    icon: 'fa fa-cogs fa-2x',
+                    label: 'api'
+                },
+                {
+                    href: 'https://github.com/quantmind/giotto',
+                    icon: 'fa fa-github fa-2x',
+                    name: 'bla'
+                }
+            ],
             items2: sitemap()
         }
     });
     //
-    var examples = this.examples = {};
+    var examples = this.examples = {},
+        g = d3.giotto;
 
 
 
-    examples.sigmoid = function (d3) {
+    examples.sigmoid = function () {
 
         var X = d3.range(-2, 2, 0.1);
 
         return {
             data: [
-                d3.ext.xyfunction(X, function (x) {
+                d3.giotto.xyfunction(X, function (x) {
                     return 1/(1+Math.exp(-x));
                 }),
-                d3.ext.xyfunction(X, function (x) {
+                d3.giotto.xyfunction(X, function (x) {
                     return x*x;
                 })
             ]
@@ -49,6 +64,48 @@ require(rcfg.min(['lux/lux', 'giotto/giotto', 'angular-ui-router', 'angular-stra
     };
 
 
-    lux.addD3ext(d3)
-        .bootstrap('d3extensions', ['lux.nav', 'd3viz']);
+    g.Giotto = g.Viz.extend({
+
+        d3build: function () {
+            var self = this,
+                paper = this.paper();
+
+            paper.group().attr('class', 'containers');
+            paper.xAxis().scale().domain([-1, 1]);
+            paper.yAxis().scale().domain([-1, 1]);
+            paper.rect(-1, -1, 2, 2).attr('fill', 'none');
+            paper.circle(0, 0, 1).attr('fill', 'none');
+            paper.root().group().attr('class', 'random');
+            var anim = {total: 0, circle: 0, frame: 0};
+            d3.timer(function () {
+                return self._step(anim);
+            });
+        },
+
+        _step: function (anim) {
+            var i = 0, self = this, x, y, r2, pi;
+            while (i < 4) {
+                ++i;
+                x = 2*(Math.random() - 0.5);
+                y = 2*(Math.random() - 0.5);
+                r2 = x*x + y*y;
+                anim.total += 1;
+                if (r2 <= 1)
+                    anim.circle += 1;
+
+                pi = 4*anim.circle/anim.total;
+
+                this.paper().circle(x, y, 0.02);
+            }
+            d3.timer(function () {
+                return self._step(anim);
+            });
+            return true;
+        }
+    });
+
+
+    d3.giotto.angular.addAll(angular);
+
+    lux.bootstrap('d3extensions', ['lux.nav', 'giotto']);
 });

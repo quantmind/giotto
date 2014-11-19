@@ -1,6 +1,6 @@
 //      Lux Library - v0.1.0
 
-//      Compiled 2014-11-12.
+//      Compiled 2014-11-19.
 //      Copyright (c) 2014 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -99,6 +99,20 @@ function(angular, root) {
         }]);
 
     lux.context.ngModules.push('lux.applications');
+    var _ = lux._ = {},
+
+    pick = _.pick = function (obj, callback) {
+        var picked = {},
+            val;
+        for (var key in obj) {
+            if (obj.hasOwnProperty(key)) {
+                val = callback(obj[key], key);
+                if (val !== undefined)
+                    picked[key] = val;
+            }
+        }
+        return picked;
+    };
     var
     //
     ostring = Object.prototype.toString,
@@ -193,21 +207,19 @@ function(angular, root) {
     //  Used by directive when needing to specify options in javascript rather
     //  than html data attributes.
     getOptions = lux.getOptions = function (attrs) {
+        var options;
         if (attrs && typeof attrs.options === 'string') {
-            var obj = getRootAttribute(attrs.options);
-            if (typeof obj === 'function')
-                obj = obj();
-            delete attrs.options;
-            if (isObject(obj))
-                attrs = extend(attrs, obj);
-            else if (obj !== undefined)
-                return obj;
+            options = getRootAttribute(attrs.options);
+            if (typeof options === 'function')
+                options = options();
+        } else {
+            options = {};
         }
-        var options = {};
-        forEach(attrs, function (value, name) {
-            if (name.substring(0, 1) !== '$')
-                options[name] = value;
-        });
+        if (isObject(options))
+            forEach(attrs, function (value, name) {
+                if (name.substring(0, 1) !== '$' && name !== 'options')
+                    options[name] = value;
+            });
         return options;
     },
     //
@@ -285,6 +297,20 @@ function(angular, root) {
             .replace(/-+/g, '-'); // collapse dashes
 
         return str;
+    },
+    //
+    now = lux.now = function () {
+        return Date.now ? Date.now() : new Date().getTime();
+    },
+    //
+    size = lux.size = function (o) {
+        if (!o) return 0;
+        if (o.length !== undefined) return o.length;
+        var n = 0;
+        forEach(o, function () {
+            ++n;
+        });
+        return n;
     };
 
 
@@ -424,12 +450,14 @@ function(angular, root) {
                 var Api = ApiTypes[context.type || 'lux'];
                 if (!Api)
                     $lux.log.error('Api provider "' + context.name + '" is not available');
-                else
+                else {
                     return new Api(context.name, context.url, context.options, $lux);
+                }
             };
             //
-            this.registerApi = function (name, object) {
-                ApiTypes[name] = ApiClient.extend(object);
+            this.registerApi = function (name, object, inheritFrom) {
+                var Base = inheritFrom ? ApiTypes[inheritFrom] : ApiClient;
+                ApiTypes[name] = Base.extend(object);
                 return ApiTypes[name];
             };
         }]);
@@ -469,10 +497,10 @@ function(angular, root) {
         //
         // Can be used to manipulate the url
         url: function (urlparams) {
-            if (urlparams)
-                return self._url + '/' + urlparams.id;
+            if (urlparams && urlparams.id)
+                return this._url + '/' + urlparams.id;
             else
-                return self._url;
+                return this._url;
         },
         //
         //  Handle authentication
@@ -491,7 +519,8 @@ function(angular, root) {
         // Build the object used by $http when executing the api call
         httpOptions: function (request) {
             var options = request.options;
-            options.url = this.url(request.urlparams);
+            if (!options.url)
+                options.url = this.url(request.urlparams);
             return options;
         },
         //
@@ -563,23 +592,33 @@ function(angular, root) {
             return this.request('GET', null, options);
         },
         //
+        getPage: function (page, state, stateParams) {
+            return page;
+        },
+        //
+        getItems: function (page, state, stateParams) {
+            if (!lux.size(stateParams))
+                return this.getList();
+        },
+        //
         //  Execute an API call for a given request
         //  This method is hardly used directly, the ``request`` method is normally used.
         //
         //      request: a request object obtained from the ``request`` method
         call: function (request) {
-            var $lux = this.$lux;
+            var $lux = this.$lux,
+                url = request.options.url || this._url;
             //
-            if (!this._url && ! this.name) {
+            if (!url && ! this.name) {
                 return request.error('api should have url or name');
             }
 
-            if (!this._url) {
+            if (!url) {
                 if (this.apiUrls) {
-                    this._url = this.apiUrls[this.name] || this.apiUrls[this.name + '_url'];
+                    this._url = url = this.apiUrls[this.name] || this.apiUrls[this.name + '_url'];
                     //
                     // No api url!
-                    if (!this.url)
+                    if (url)
                         return request.error('Could not find a valid url for ' + this.name);
                     //
                 } else if (lux.context.apiUrl) {
@@ -622,10 +661,10 @@ function(angular, root) {
             //
             var csrf = {},
                 name = $(document.querySelector("meta[name=csrf-param]")).attr('content'),
-                token = $(document.querySelector("meta[name=csrf-token]")).attr('content');
+                csrf_token = $(document.querySelector("meta[name=csrf-token]")).attr('content');
 
-            if (name && token)
-                csrf[name] = token;
+            if (name && csrf_token)
+                csrf[name] = csrf_token;
 
             // A post method with CSRF parameter
             $lux.post = function (url, data, cfg) {
@@ -659,30 +698,33 @@ function(angular, root) {
                 authentication: function (request) {
                     var self = this;
                     //
-                    if (lux.context.user) {
+                    if (lux.context.user_token) {
+                        self.auth = {user_token: lux.context.user_token};
+                    } else if (lux.context.user) {
                         $lux.log.info('Fetching authentication token');
                         //
                         $lux.post('/_token').success(function (data) {
-                            self.auth = {user_token: data.token};
+                            lux.context.user_token = data.token;
+                            self.auth = {user_token: lux.context.user_token};
                             self.call(request);
                         }).error(request.error);
                         //
                         return request.deferred.promise;
                     } else {
                         self.auth = {};
-                        self.call(request);
                     }
+                    self.call(request);
                 },
                 //
-                addAuth: function (api, options) {
+                addAuth: function (request) {
                     //
-                            // Add authentication token
-                    if (this.user_token) {
-                        var headers = options.headers;
+                    // Add authentication token
+                    if (lux.context.user_token) {
+                        var headers = request.options.headers;
                         if (!headers)
-                            options.headers = headers = {};
+                            request.options.headers = headers = {};
 
-                        headers.Authorization = 'Bearer ' + this.user_token;
+                        headers.Authorization = 'Bearer ' + lux.context.user_token;
                     }
                 },
             });
@@ -897,13 +939,14 @@ function(angular, root) {
 
         }]);
     //
-    //  Lux Static JSON API
+    //  Lux Static site JSON API
     //  ------------------------
     //
     //  Api used by static sites
     angular.module('lux.static.api', ['lux.api'])
 
         .run(['$lux', function ($lux) {
+            var pageCache = {};
 
             $lux.registerApi('static', {
                 //
@@ -922,6 +965,34 @@ function(angular, root) {
                     if (url.substring(url.length-5) !== '.json')
                         url += '.json';
                     return url;
+                },
+                //
+                getPage: function (page, state, stateParams) {
+                    var href = lux.stateHref(state, page.name, stateParams),
+                        data = pageCache[href];
+                    if (data)
+                        return data;
+                    //
+                    return this.get(stateParams).success(function (data) {
+                        pageCache[href] = data;
+                        forEach(data.require_css, function (css) {
+                            loadCss(css);
+                        });
+                        if (data.require_js) {
+                            var defer = $lux.q.defer();
+                            require(rcfg.min(data.require_js), function () {
+                                // let angular resolve its queue if it needs to
+                                defer.resolve(data);
+                            });
+                            return defer.promise;
+                        } else
+                            return data;
+                    });
+                },
+                //
+                getItems: function (page, state, stateParams) {
+                    if (page.apiItems)
+                        return this.getList({url: this._url + '.json'});
                 }
             });
         }]);
@@ -938,39 +1009,51 @@ angular.module("page/breadcrumbs.tpl.html", []).run(["$templateCache", function(
     "</ol>");
 }]);
 
-    function addPageInfo(page, $scope, dateFilter, $lux) {
-        if (page.head && page.head.title) {
-            document.title = page.head.title;
-        }
-        if (page.author) {
-            if (page.author instanceof Array)
-                page.authors = page.author.join(', ');
-            else
-                page.authors = page.author;
-        }
-        var date;
-        if (page.date) {
-            try {
-                date = new Date(page.date);
-            } catch (e) {
-                $lux.log.error('Could not parse date');
-            }
-            page.date = date;
-            page.dateText = dateFilter(date, $scope.dateFormat);
-        }
-        page.toString = function () {
-            return this.name || this.url || '<noname>';
-        };
-
-        return page;
-    }
-
-    //  Lux angular
+    //  Lux Page
     //  ==============
-    //  Lux main module for angular. Design to work with the ``lux.extension.angular``
+    //
+    //  Design to work with the ``lux.extension.angular``
     angular.module('lux.page', ['lux.services', 'lux.form', 'lux.scroll', 'templates-page'])
         //
-        .controller('Page', ['$scope', '$log', '$lux', 'dateFilter', function ($scope, log, $lux, dateFilter) {
+        .service('pageService', ['$lux', 'dateFilter', function ($lux, dateFilter) {
+
+            this.addInfo = function (page, $scope) {
+                if (!page)
+                    return $lux.log.error('No page, cannot add page information');
+                if (page.head && page.head.title) {
+                    document.title = page.head.title;
+                }
+                if (page.author) {
+                    if (page.author instanceof Array)
+                        page.authors = page.author.join(', ');
+                    else
+                        page.authors = page.author;
+                }
+                var date;
+                if (page.date) {
+                    try {
+                        date = new Date(page.date);
+                    } catch (e) {
+                        $lux.log.error('Could not parse date');
+                    }
+                    page.date = date;
+                    page.dateText = dateFilter(date, $scope.dateFormat);
+                }
+                page.toString = function () {
+                    return this.name || this.url || '<noname>';
+                };
+
+                return page;
+            };
+
+            this.formatDate = function (dt, format) {
+                if (!dt)
+                    dt = new Date();
+                return dateFilter(dt, format || 'yyyy-MM-ddTHH:mm:ss');
+            };
+        }])
+        //
+        .controller('Page', ['$scope', '$log', '$lux', 'pageService', function ($scope, log, $lux, pageService) {
             //
             $lux.log.info('Setting up angular page');
             //
@@ -978,7 +1061,7 @@ angular.module("page/breadcrumbs.tpl.html", []).run(["$templateCache", function(
             // If the page is a string, retrieve it from the pages object
             if (typeof page === 'string')
                 page = $scope.pages ? $scope.pages[page] : null;
-            $scope.page = addPageInfo(page || {}, $scope, dateFilter, $lux);
+            $scope.page = pageService.addInfo(page, $scope);
             //
             $scope.togglePage = function ($event) {
                 $event.preventDefault();
@@ -1104,7 +1187,7 @@ angular.module("page/breadcrumbs.tpl.html", []).run(["$templateCache", function(
 
     // Hack for delaing with ui-router state.href
     // TODO: fix this!
-    var stateHref = function (state, State, Params) {
+    var stateHref = lux.stateHref = function (state, State, Params) {
         if (Params) {
             var url = state.href(State, Params);
             return url.replace(/%2F/g, '/');
@@ -1128,54 +1211,44 @@ angular.module("page/breadcrumbs.tpl.html", []).run(["$templateCache", function(
             var
             hrefs = lux.context.hrefs,
             pages = lux.context.pages,
-            //
-            pageCache = {},
+            pageCache = lux.context.cachePages ? {} : null,
             //
             state_config = function (page) {
+                var main = {
+                    //
+                    resolve: {
+                        // Fetch page information
+                        page: ['$lux', '$state', '$stateParams', function ($lux, state, stateParams) {
+                            if (page.api) {
+                                var api = $lux.api(page.api);
+                                if (api)
+                                    return api.getPage(page, state, stateParams);
+                            }
+                            return page;
+                        }],
+                        // Fetch items if needed
+                        items: ['$lux', '$state', '$stateParams', function ($lux, state, stateParams) {
+                            if (page.api) {
+                                var api = $lux.api(page.api);
+                                if (api)
+                                    return api.getItems(page, state, stateParams);
+                            }
+                        }],
+                    },
+                    //
+                    controller: page.controller
+                };
+
+                if (page.template)
+                    main.template = page.template;
+                else if (page.templateUrl)
+                    main.templateUrl = page.templateUrl;
+
                 return {
                     url: page.url,
                     //
                     views: {
-                        main: {
-                            template: page.template,
-                            //
-                            resolve: {
-                                // Fetch page information
-                                page: ['$lux', '$state', '$stateParams', function ($lux, state, stateParams) {
-                                    if (page.api) {
-                                        var api = $lux.api(page.api);
-                                        if (api) {
-                                            var href = stateHref(state, page.name, stateParams),
-                                                data = pageCache[href];
-                                            return data ? data : api.get(stateParams).success(function (data) {
-                                                pageCache[href] = data;
-                                                forEach(data.require_css, function (css) {
-                                                    loadCss(css);
-                                                });
-                                                if (data.require_js) {
-                                                    var defer = $lux.q.defer();
-                                                    require(rcfg.min(data.require_js), function () {
-                                                        defer.resolve(data);
-                                                    });
-                                                    return defer.promise;
-                                                } else
-                                                    return data;
-                                            });
-                                        }
-                                    }
-                                }],
-                                // Fetch items if needed
-                                items: ['$lux', function ($lux) {
-                                    if (page.apiItems) {
-                                        var api = $lux.api(page.apiItems);
-                                        if (api)
-                                            return api.getList();
-                                    }
-                                }],
-                            },
-                            //
-                            controller: page.controller
-                        }
+                        main: main
                     }
                 };
             };
@@ -1197,10 +1270,10 @@ angular.module("page/breadcrumbs.tpl.html", []).run(["$templateCache", function(
             });
         }])
         //
-        .controller('Html5', ['$scope', '$state', 'dateFilter', '$lux', 'page', 'items',
-            function ($scope, $state, dateFilter, $lux, page, items) {
+        .controller('Html5', ['$scope', '$state', 'pageService', 'page', 'items',
+            function ($scope, $state, pageService, page, items) {
                 $scope.items = items ? items.data : null;
-                $scope.page = addPageInfo(page, $scope, dateFilter, $lux);
+                $scope.page = pageService.addInfo(page, $scope);
             }])
         //
         .directive('dynamicPage', ['$compile', '$log', function ($compile, log) {
@@ -1375,6 +1448,7 @@ angular.module("page/breadcrumbs.tpl.html", []).run(["$templateCache", function(
                 //
                 baseAttributes = ['id', 'name', 'title', 'style'],
                 inputAttributes = extendArray([], baseAttributes, ['disabled', 'type', 'value', 'placeholder']),
+                textareaAttributes = extendArray([], baseAttributes, ['disabled', 'placeholder', 'rows', 'cols']),
                 buttonAttributes = extendArray([], baseAttributes, ['disabled']),
                 formAttributes = extendArray([], baseAttributes, ['accept-charset', 'action', 'autocomplete',
                                                                   'enctype', 'method', 'novalidate', 'target']),
@@ -1514,14 +1588,14 @@ angular.module("page/breadcrumbs.tpl.html", []).run(["$templateCache", function(
                         if (field[name]) input.attr(name, field[name]);
                     });
 
-                    return element.append(label.append(input));
+                    return this.onChange(scope, element.append(label.append(input)));
                 },
                 //
                 checkbox: function (scope) {
                     return this.radio(scope);
                 },
                 //
-                input: function (scope) {
+                input: function (scope, attributes) {
                     this.fillDefaults(scope);
 
                     var field = scope.field,
@@ -1540,7 +1614,7 @@ angular.module("page/breadcrumbs.tpl.html", []).run(["$templateCache", function(
                             field.placeholder = field.label;
                     }
 
-                    this.addAttrs(scope, input, inputAttributes);
+                    this.addAttrs(scope, input, attributes || inputAttributes);
                     if (field.value !== undefined) {
                         scope[scope.formModelName][field.name] = field.value;
                         if (info.textBased)
@@ -1553,11 +1627,11 @@ angular.module("page/breadcrumbs.tpl.html", []).run(["$templateCache", function(
                     } else {
                         element = [label, input];
                     }
-                    return this.inputError(scope, element);
+                    return this.onChange(scope, this.inputError(scope, element));
                 },
                 //
                 textarea: function (scope) {
-                    return this.input(scope);
+                    return this.input(scope, textareaAttributes);
                 },
                 //
                 // Create a select element
@@ -1576,7 +1650,7 @@ angular.module("page/breadcrumbs.tpl.html", []).run(["$templateCache", function(
                                 .attr('value', opt.value).html(opt.repr || opt.value);
                         select.append(opt);
                     });
-                    return element;
+                    return this.onChange(scope, element);
                 },
                 //
                 button: function (scope) {
@@ -1609,6 +1683,14 @@ angular.module("page/breadcrumbs.tpl.html", []).run(["$templateCache", function(
                         callback.call(this, e);
                     };
                     element.attr('ng-click', clickname + '($event)');
+                    return element;
+                },
+                //
+                //  Add change event
+                onChange: function (scope, element) {
+                    var field = scope.field,
+                        input = $(element[0].querySelector(scope.info.element));
+                    input.attr('ng-change', 'fireFieldChange("' + field.name + '")');
                     return element;
                 },
                 //
@@ -1780,11 +1862,22 @@ angular.module("page/breadcrumbs.tpl.html", []).run(["$templateCache", function(
             };
             //
             this.initScope = function (scope, element, attrs) {
-                var data = getOptions(attrs),
-                    form = data.field,
-                    formmodel = {};
+                var data = getOptions(attrs);
 
-                if (form) {
+                // No data, maybe this form was loaded via angular ui router
+                // try to evaluate internal scripts
+                if (!data) {
+                    var scripts= element[0].getElementsByTagName('script');
+                    forEach(scripts, function (js) {
+                        globalEval(js.innerHTML);
+                    });
+                    data = getOptions(attrs);
+                }
+
+                if (data && data.field) {
+                    var form = data.field,
+                        formmodel = {};
+
                     // extend with form defaults
                     data.field = extend({}, formDefaults, form);
                     extend(scope, data);
@@ -1816,6 +1909,16 @@ angular.module("page/breadcrumbs.tpl.html", []).run(["$templateCache", function(
                         forEach(messages, function (messages, field) {
                             scope.formMessages[field] = messages;
                         });
+                    };
+
+                    scope.fireFieldChange = function (name) {
+                        var obj = {
+                            form: formmodel,
+                            field: name
+                        };
+                        // Triggered wvery time a form field changes
+                        scope.$broadcast('fieldChange', obj);
+                        scope.$emit('formFieldChange', obj);
                     };
                 } else {
                     $lux.log.error('Form data does not contain field entry');
@@ -1961,7 +2064,7 @@ angular.module("users/messages.tpl.html", []).run(["$templateCache", function($t
     "    <span aria-hidden=\"true\">&times;</span>\n" +
     "    <span class=\"sr-only\">Close</span>\n" +
     "</button>\n" +
-    "<span ng-bind-html=\"message.body\"></span>\n" +
+    "<span ng-bind-html=\"message.html\"></span>\n" +
     "</div>");
 }]);
 
@@ -2022,7 +2125,7 @@ angular.module("users/messages.tpl.html", []).run(["$templateCache", function($t
                         if (message) {
                             if (typeof(message) === 'string')
                                 message = {body: message};
-                            message.body = $sce.trustAsHtml(message.body);
+                            message.html = $sce.trustAsHtml(message.body);
                         }
                         scope.messages.push(message);
                     });
@@ -2073,6 +2176,10 @@ angular.module("users/messages.tpl.html", []).run(["$templateCache", function($t
     lux.loader
         .value('context', lux.context)
         //
+        .config(['$controllerProvider', function ($controllerProvider) {
+            lux.loader.cp = $controllerProvider;
+        }])
+        //
         .run(['$rootScope', '$log', '$timeout', 'context', function (scope, $log, $timeout, context) {
             $log.info('Extend root scope with context');
             extend(scope, context);
@@ -2090,7 +2197,7 @@ angular.module("users/messages.tpl.html", []).run(["$templateCache", function($t
             if (!isArray(modules))
                 modules = [];
             if (lux.context.uiRouter) {
-                modules.push('lux.ui.router');
+                modules.push(lux.context.uiRouter);
                 // Remove seo view, we don't want to bootstrap it
                 $(document.querySelector('#seo-view')).remove();
             }
@@ -2131,12 +2238,12 @@ angular.module("blog/pagination.tpl.html", []).run(["$templateCache", function($
   $templateCache.put("blog/pagination.tpl.html",
     "<ul class=\"media-list\">\n" +
     "    <li ng-repeat=\"post in items\" class=\"media\" data-ng-controller='BlogEntry'>\n" +
-    "        <a href=\"{{post.html_url}}\">\n" +
+    "        <a href=\"{{post.html_url}}\" ng-attr-target=\"{{postTarget}}\">\n" +
     "            <div class=\"clearfix\">\n" +
     "                <img ng-src=\"{{post.image}}\" class=\"hidden-xs post-image\" alt=\"{{post.title}}\">\n" +
     "                <img ng-src=\"{{post.image}}\" alt=\"{{post.title}}\" class=\"visible-xs post-image-xs center-block\">\n" +
     "                <div class=\"post-body hidden-xs\">\n" +
-    "                    <h3 class=\"media-heading\">{{post.title}}</h3>\n" +
+    "                    <h3 class=\"media-heading\">{{post.title || \"Untitled\"}}</h3>\n" +
     "                    <p data-ng-if=\"post.description\">{{post.description}}</p>\n" +
     "                    <p class=\"text-info small\">by {{post.authors}} on {{post.dateText}}</p>\n" +
     "                </div>\n" +
@@ -2157,19 +2264,21 @@ angular.module("blog/pagination.tpl.html", []).run(["$templateCache", function($
     //  ===============
     //
     //  Simple blog pagination directives and code highlight with highlight.js
-    angular.module('lux.blog', ['templates-blog', 'lux.services', 'highlight', 'lux.scroll'])
+    angular.module('lux.blog', ['lux.page', 'templates-blog', 'highlight'])
         .value('blogDefaults', {
             centerMath: true,
             fallback: true
         })
         //
-        .controller('BlogEntry', ['$scope', 'dateFilter', '$lux', function ($scope, dateFilter, $lux) {
+        .controller('BlogEntry', ['$scope', 'pageService', '$lux', function ($scope, pageService, $lux) {
             var post = $scope.post;
-            if (!post) {
+            if (!post)
                 $lux.log.error('post not available in $scope, cannot use pagination controller!');
-                return;
+            else {
+                if (!post.date)
+                    post.date = post.published || post.last_modified;
+                pageService.addInfo(post, $scope);
             }
-            addPageInfo(post, $scope, dateFilter, $lux);
         }])
         //
         .directive('blogPagination', function () {
@@ -2303,9 +2412,9 @@ angular.module('templates-nav', ['nav/link.tpl.html', 'nav/navbar.tpl.html', 'na
 angular.module("nav/link.tpl.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("nav/link.tpl.html",
     "<a ng-if=\"link.title\" ng-href=\"{{link.href}}\" data-title=\"{{link.title}}\" ng-click=\"clickLink($event, link)\"\n" +
-    "bs-tooltip=\"tooltip\">\n" +
+    "ng-attr-target=\"{{link.target}}\" bs-tooltip=\"tooltip\">\n" +
     "<i ng-if=\"link.icon\" class=\"{{link.icon}}\"></i> {{link.name}}</a>\n" +
-    "<a ng-if=\"!link.title\" ng-href=\"{{link.href}}\">\n" +
+    "<a ng-if=\"!link.title\" ng-href=\"{{link.href}}\" ng-attr-target=\"{{link.target}}\">\n" +
     "<i ng-if=\"link.icon\" class=\"{{link.icon}}\"></i> {{link.name}}</a>");
 }]);
 
@@ -2316,7 +2425,7 @@ angular.module("nav/navbar.tpl.html", []).run(["$templateCache", function($templ
     "ng-model=\"navbar.collapse\" bs-collapse>\n" +
     "    <div class=\"{{navbar.container}}\">\n" +
     "        <div class=\"navbar-header\">\n" +
-    "            <button type=\"button\" class=\"navbar-toggle\" bs-collapse-toggle>\n" +
+    "            <button ng-if=\"navbar.toggle\" type=\"button\" class=\"navbar-toggle\" bs-collapse-toggle>\n" +
     "                <span class=\"sr-only\">Toggle navigation</span>\n" +
     "                <span class=\"icon-bar\"></span>\n" +
     "                <span class=\"icon-bar\"></span>\n" +
@@ -2330,11 +2439,11 @@ angular.module("nav/navbar.tpl.html", []).run(["$templateCache", function($templ
     "            </a>\n" +
     "        </div>\n" +
     "        <div class=\"navbar-collapse\" bs-collapse-target>\n" +
-    "            <ul class=\"nav navbar-nav\">\n" +
+    "            <ul ng-if=\"navbar.items\" class=\"nav navbar-nav\">\n" +
     "                <li ng-repeat=\"link in navbar.items\" ng-class=\"{active:activeLink(link)}\" navbar-link>\n" +
     "                </li>\n" +
     "            </ul>\n" +
-    "            <ul class=\"nav navbar-nav navbar-right\">\n" +
+    "            <ul ng-if=\"navbar.itemsRight\" class=\"nav navbar-nav navbar-right\">\n" +
     "                <li ng-repeat=\"link in navbar.itemsRight\" ng-class=\"{active:activeLink(link)}\" navbar-link>\n" +
     "                </li>\n" +
     "            </ul>\n" +
@@ -2347,7 +2456,7 @@ angular.module("nav/navbar2.tpl.html", []).run(["$templateCache", function($temp
   $templateCache.put("nav/navbar2.tpl.html",
     "<nav class=\"navbar navbar-{{navbar.themeTop}} navbar-fixed-top navbar-static-top\" role=\"navigation\" ng-model=\"navbar.collapse\" bs-collapse>\n" +
     "    <div class=\"navbar-header\">\n" +
-    "        <button type=\"button\" class=\"navbar-toggle\" bs-collapse-toggle>\n" +
+    "        <button ng-if=\"navbar.toggle\" type=\"button\" class=\"navbar-toggle\" bs-collapse-toggle>\n" +
     "            <span class=\"sr-only\">Toggle navigation</span>\n" +
     "            <span class=\"icon-bar\"></span>\n" +
     "            <span class=\"icon-bar\"></span>\n" +
@@ -2362,8 +2471,8 @@ angular.module("nav/navbar2.tpl.html", []).run(["$templateCache", function($temp
     "    </div>\n" +
     "    <ul class=\"nav navbar-nav navbar-right\">\n" +
     "        <li ng-repeat=\"item in navbar.items\">\n" +
-    "            <a href=\"{{item.href}}\" target=\"{{item.target}}\" title=\"{{item.title || item.value}}\">\n" +
-    "            <i ng-if=\"item.icon\" class=\"{{item.icon}}\"></i> {{item.value}}</a>\n" +
+    "            <a href=\"{{item.href}}\" target=\"{{item.target}}\" title=\"{{item.title || item.label || item.value}}\">\n" +
+    "            <i ng-if=\"item.icon\" class=\"{{item.icon}}\"></i> {{item.label || item.value}}</a>\n" +
     "        </li>\n" +
     "    </ul>\n" +
     "    <div class=\"sidebar navbar-{{navbar.theme}}\" role=\"navigation\">\n" +
@@ -2421,6 +2530,7 @@ angular.module("nav/navbar2.tpl.html", []).run(["$templateCache", function($temp
         search: false,
         url: lux.context.url,
         target: '',
+        toggle: true,
         fluid: true
     };
 
@@ -2428,14 +2538,24 @@ angular.module("nav/navbar2.tpl.html", []).run(["$templateCache", function($temp
         //
         .service('navService', ['$location', function ($location) {
 
-            this.initScope = function (opts) {
-                var navbar = extend({}, navBarDefaults, getOptions(opts));
+            this.initScope = function (scope, opts) {
+                var navbar = extend({}, navBarDefaults, getOptions(opts), scope.navbar);
                 if (!navbar.url)
                     navbar.url = '/';
                 if (!navbar.themeTop)
                     navbar.themeTop = navbar.theme;
                 navbar.container = navbar.fluid ? 'container-fluid' : 'container';
+
                 this.maybeCollapse(navbar);
+                scope.activeLink = this.activeLink;
+                scope.clickLink = function (e, link) {
+                    if (link.click) {
+                        var func = scope[link.click];
+                        if (func)
+                            func(e, link.href, link);
+                    }
+                };
+                scope.navbar = navbar;
                 return navbar;
             };
 
@@ -2481,15 +2601,7 @@ angular.module("nav/navbar2.tpl.html", []).run(["$templateCache", function($temp
                 restrict: 'AE',
                 // Link function
                 link: function (scope, element, attrs) {
-                    scope.navbar = navService.initScope(attrs);
-                    scope.activeLink = navService.activeLink;
-                    scope.clickLink = function (e, link) {
-                        if (link.click) {
-                            var func = scope[link.click];
-                            if (func)
-                                func(e, link.href, link);
-                        }
-                    };
+                    navService.initScope(scope, attrs);
                     //
                     windowResize(function () {
                         if (navService.maybeCollapse(scope.navbar))
@@ -2521,8 +2633,8 @@ angular.module("nav/navbar2.tpl.html", []).run(["$templateCache", function($temp
                     return {
                         post: function (scope, element, attrs) {
                             scope.navbar2Content = inner;
-                            scope.activeLink = navService.activeLink;
-                            scope.navbar = navService.initScope(attrs);
+                            navService.initScope(scope, attrs);
+
                             inner = $compile('<div data-nav-side-bar></div>')(scope);
                             element.replaceWith(inner.addClass(className));
                             //

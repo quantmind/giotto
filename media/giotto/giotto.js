@@ -1,3 +1,11 @@
+//      Giotto - v0.1.0
+
+//      Compiled 2014-11-19.
+//      Copyright (c) 2014 - Luca Sbardella
+//      Licensed BSD.
+//      For all details and documentation:
+//      http://quantmind.github.io/giotto/
+//
 (function (factory) {
     var root;
     if (typeof module === "object" && module.exports)
@@ -19,11 +27,96 @@
     }
 }(function(d3, root) {
     "use strict";
-    var d3ext = {
-            version: "0.1.0"
+    var giotto = {
+            version: "0.1.0",
+            d3: d3,
+            math: {}
         },
-        x = d3ext;
-    d3.ext = d3ext;
+        g = giotto;
+
+    d3.giotto = giotto;
+
+    // Warps RequireJs call so it can be used in conjunction with
+    //  require-config.js
+    //
+    //  http://quantmind.github.io/require-config-js/
+    g.require = function (deps, callback) {
+        if (root.rcfg && root.rcfg.min)
+            deps = root.rcfg.min(deps);
+        require(deps, callback);
+        return g;
+    };
+
+    //
+    //  Create an angular module for visualizations
+    //
+    g.angular = {
+        module: function (angular, moduleName, deps) {
+            moduleName = moduleName || 'giotto';
+            deps = deps || [];
+
+            return angular.module(moduleName, deps)
+                        .directive('jstats', function () {
+                            return {
+                                link: function (scope, element, attrs) {
+                                    var mode = attrs.mode ? +attrs.mode : 1;
+                                    require(rcfg.min(['stats']), function () {
+                                        var stats = new Stats();
+                                        stats.setMode(mode);
+                                        scope.stats = stats;
+                                        element.append($(stats.domElement));
+                                    });
+                                }
+                            };
+                        });
+        },
+
+        directive: function (angular, name, VizClass, moduleName, injects) {
+            moduleName = moduleName || 'giotto';
+            injects = injects || [];
+            var dname = 'viz' + name.substring(0,1).toUpperCase() + name.substring(1);
+
+            injects.push(function () {
+                var injected = arguments;
+                return {
+                    //
+                    // Create via element tag or attribute
+                    restrict: 'AE',
+                    //
+                    link: function (scope, element, attrs) {
+                        var viz = element.data(dname);
+                        if (!viz) {
+                            var options = getOptions(attrs),
+                                autoBuild = options.autoBuild;
+                            options.autoBuild = false;
+                            // add scope to the options
+                            options.scope = scope;
+                            viz = new VizClass(element[0], options);
+                            element.data(viz);
+                            // Add a callback for injects
+                            if (autoBuild === undefined || autoBuild)
+                                viz.build();
+                        }
+                    }
+                };
+            });
+
+            angular.module(moduleName).directive(dname, injects);
+        },
+        //
+        //  Load all visualizations into angular 'giotto' module
+        addAll: function (angular, moduleName, deps, injects) {
+            g.angular.module(angular, moduleName, deps);
+            //
+            // Loop through d3 extensions and create directives
+            // for each Visualization class
+            angular.forEach(g, function (VizClass, name) {
+                if (g.isviz(VizClass)) {
+                    g.angular.directive(angular, name, VizClass, moduleName, injects);
+                }
+            });
+        }
+    };
 
     //
     //  Class
@@ -62,7 +155,7 @@
 
     //  A Type is a factory of Classes. This is the correspondent of
     //  python metaclasses.
-    Type = d3ext.Type = (function (t) {
+    Type = g.Type = (function (t) {
 
         t.new_class = function (Caller, attrs) {
             var type = this,
@@ -124,7 +217,7 @@
 
     //  A function representing a base class.
     //  The `extend` method is the most important function of this function-object.
-    Class = d3ext.Class = (function (c) {
+    Class = g.Class = (function (c) {
         c.__class__ = Type;
         //
         c.extend = function (attrs) {
@@ -137,45 +230,6 @@
         return c;
     }(function() {}));
 
-
-
-    var
-    //  Simple extend function
-    //
-    extend = d3ext.extend = function () {
-        var length = arguments.length,
-            object = arguments[0];
-
-        if (!object || length < 2) {
-            return object;
-        }
-        var index = 0,
-            obj;
-
-        while (++index < length) {
-            obj = arguments[index];
-            if (Object(obj) === obj) {
-                for (var prop in obj) {
-                    if (obj.hasOwnProperty(prop))
-                        object[prop] = obj[prop];
-                }
-            }
-        }
-        return object;
-    },
-    //  copyMissing
-    //  =================
-    //
-    //  Copy values to toObj from fromObj which are missing (undefined) in toObj
-    copyMissing = function (fromObj, toObj) {
-        if (fromObj && toObj) {
-            for (var prop in fromObj) {
-                if (fromObj.hasOwnProperty(prop) && toObj[prop] === undefined)
-                    toObj[prop] = fromObj[prop];
-            }
-        }
-        return toObj;
-    };
 
     function noop () {}
 
@@ -238,13 +292,113 @@
         };
     };
 
-    x.xyfunction = function (X, funy) {
+    g.log = log(root.debug);
+
+
+    g.xyfunction = function (X, funy) {
         var xy = [];
         if (isArray(X))
             X.forEach(function (x) {
                 xy.push([x, funy(x)]);
             });
         return xy;
+    };
+
+
+    var
+    //
+    ostring = Object.prototype.toString,
+    //
+    // Underscore-like object
+    _ = g._ = {},
+    //  Simple extend function
+    //
+    extend = g.extend = function () {
+        var length = arguments.length,
+            object = arguments[0];
+
+        if (!object || length < 2) {
+            return object;
+        }
+        var index = 0,
+            obj;
+
+        while (++index < length) {
+            obj = arguments[index];
+            if (Object(obj) === obj) {
+                for (var prop in obj) {
+                    if (obj.hasOwnProperty(prop))
+                        object[prop] = obj[prop];
+                }
+            }
+        }
+        return object;
+    },
+    //  copyMissing
+    //  =================
+    //
+    //  Copy values to toObj from fromObj which are missing (undefined) in toObj
+    copyMissing = function (fromObj, toObj) {
+        if (fromObj && toObj) {
+            for (var prop in fromObj) {
+                if (fromObj.hasOwnProperty(prop) && toObj[prop] === undefined)
+                    toObj[prop] = fromObj[prop];
+            }
+        }
+        return toObj;
+    },
+    //
+    //
+    // Obtain extra information from javascript objects
+    getOptions = function (attrs) {
+        if (attrs && typeof attrs.options === 'string') {
+            var obj = root,
+                bits= attrs.options.split('.');
+
+            for (var i=0; i<bits.length; ++i) {
+                obj = obj[bits[i]];
+                if (!obj) break;
+            }
+            if (typeof obj === 'function')
+                obj = obj(g, attrs);
+            attrs = extend(attrs, obj);
+        }
+        return attrs;
+    },
+    //
+    //
+    keys = _.keys = function (obj) {
+        var keys = [];
+        for (var key in obj) {
+            if (obj.hasOwnProperty(key))
+                keys.push(key);
+        }
+        return keys;
+    },
+    //
+    pick = _.pick = function (obj, callback) {
+        var picked = {},
+            val;
+        for (var key in obj) {
+            if (obj.hasOwnProperty(key)) {
+                val = callback(obj[key], key);
+                if (val !== undefined)
+                    picked[key] = val;
+            }
+        }
+        return picked;
+    },
+    //
+    isObject = _.isObject = function (value) {
+        return ostring.call(value) === '[object Object]';
+    },
+    //
+    isFunction = _.isFunction = function (value) {
+        return ostring.call(value) === '[object Function]';
+    },
+    //
+    isArray = _.isFunction = function (value) {
+        return ostring.call(value) === '[object Array]';
     };
 
 
@@ -301,27 +455,18 @@
     }
 
 
+    g.defaults = {};
 
-    var
-
-    ostring = Object.prototype.toString,
-
-    isFunction = function (value) {
-        return ostring.call(value) === '[object Function]';
-    },
-
-    isArray = function (value) {
-        return ostring.call(value) === '[object Array]';
+    g.defaults.paper = {
+        type: 'svg',
+        resizeDelay: 200,
+        yaxis: 1,
+        resize: false,
+        margin: {top: 20, right: 20, bottom: 20, left: 20},
     };
 
-    x.VizDefaults = {
+    g.defaults.viz = extend({
         //
-        // Default paper type
-        paper: 'svg',
-        // Add resizing on window resize
-        resize: false,
-        // milliseconds to delay the resizing of a visualization
-        resizeDelay: 200,
         // Option callback after initialisation
         onInit: null,
         //
@@ -333,23 +478,240 @@
         lines: {
             interpolate: 'basis'
         }
+    });
+
+    g.constants = {
+        DEFAULT_VIZ_GROUP: 'default_viz_group',
+        WIDTH: 400,
+        HEIGHT: 300
+    };
+    //
+    // Create a new paper for drawing stuff
+    g.paper = function (element, p) {
+
+        var paper = {};
+
+        if (isObject(element)) {
+            p = element;
+            element = null;
+        }
+        if (!element)
+            element = d3.select(document.createElement('div'));
+
+        p = _newPaperAttr(element, p);
+
+        g.paper.types[p.type](paper, element, p);
+
+        paper.type = function () {
+            return p.type;
+        };
+
+        paper.size = function () {
+            return [p.size[0], p.size[1]];
+        };
+
+        paper.width = function () {
+            return p.size[0];
+        };
+
+        paper.height = function () {
+            return p.size[1];
+        };
+
+        paper.element = function () {
+            return element;
+        };
+
+        paper.yaxis = function (x) {
+            if (!arguments.length) return p.yaxis;
+            if (x === 1 || x === 2)
+                p.yaxis = x;
+            return paper;
+        };
+
+        paper.xAxis = function (x) {
+            if (!arguments.length) return p.xAxis;
+            p.xAxis = x;
+            return paper;
+        };
+
+        paper.yAxis = function (x) {
+            if (!arguments.length) return p.yAxis[p.yaxis-1];
+            p.yAxis[p.yaxis-1] = x;
+            return paper;
+        };
+
+        paper.scale = function (r) {
+            var s = p.xAxis.scale();
+            return s(r) - s(0);
+        };
+
+        paper.scalex = function (x) {
+            return p.xAxis.scale()(x);
+        };
+
+        paper.scaley = function (y) {
+            return paper.yAxis().scale()(y);
+        };
+
+        paper.resize = function (size) {
+            p._resizing = true;
+            if (!size) {
+                size = paper.boundingBox();
+            }
+            if (p.size[0] !== size[0] || p.size[1] !== size[1]) {
+                g.log.info('Resizing paper');
+                p.size = size;
+                paper.refresh();
+            }
+            p._resizing = false;
+        };
+
+        paper.boundingBox = function () {
+            var w = p.elwidth ? getWidth(p.elwidth) : p.width,
+                h;
+            if (p.height_percentage)
+                h = w*p.height_percentage;
+            else
+                h = p.elheight ? getHeight(p.elheight) : p.height;
+            return [w, h];
+        };
+
+        // Auto resize the paper
+        if (p.resize) {
+            //
+            d3.select(window).on('resize', function () {
+                if (!p._resizing) {
+                    if (p.resizeDelay) {
+                        p._resizing = true;
+                        d3.timer(function () {
+                            paper.resize();
+                            return true;
+                        }, p.resizeDelay);
+                    } else {
+                        paper.resize();
+                    }
+                }
+            });
+        }
+
+        return _initPaper(paper, p);
     };
 
-    x.paperDefaults = {
-        width: 500,
-        height: 400
+
+    g.paper.types = {};
+
+
+    function xyData (data) {
+        if (!isArray(data)) return;
+        if (isArray(data[0]) && data[0].length === 2) {
+            var xydata = [];
+            data.forEach(function (xy) {
+                xydata.push({x: xy[0], y: xy[1]});
+            });
+            return xydata;
+        }
+        return data;
+    }
+
+    //
+    //  SVG Paper
+    //  ================
+    //
+    g.paper.types.svg = function (paper, element, p) {
+        var svg = element.append('svg')
+                        .attr('width', p.size[0])
+                        .attr('height', p.size[1])
+                        .attr("viewBox", "0 0 " + p.size[0] + " " + p.size[1]),
+            current = svg;
+
+        p.xAxis = d3.svg.axis(),
+        p.yAxis = [d3.svg.axis(), d3.svg.axis()];
+
+        // return the current svg element
+        paper.current = function () {
+            return current;
+        };
+
+        // set the current element to be the root svg element and returns the paper
+        paper.root = function () {
+            current = svg;
+            return paper;
+        };
+
+        // set the current element to be the parent and returns the paper
+        paper.parent = function () {
+            if (current !== svg) {
+                var parent = current.node().parentNode;
+                if (parent === svg.node())
+                    return svg;
+                else
+                    return d3.select(parent);
+            }
+            return paper;
+        };
+
+        paper.group = function () {
+            current = current.append('g');
+            return current;
+        };
+
+        paper.circle = function (cx, cy, r) {
+            cx = paper.scalex(cx);
+            cy = paper.scaley(cy);
+            r = paper.scale(r);
+            return current.append('circle')
+                            .attr('cx', cx)
+                            .attr('cy', cy)
+                            .attr('r', r);
+        };
+
+        paper.rect = function (x, y, width, height, r) {
+            var X = paper.scalex(x),
+                Y = paper.scaley(y);
+            width = paper.scalex(x+width) - X;
+            height = paper.scalex(y+height) - Y;
+            var rect = current.append('rect')
+                                .attr('x', x)
+                                .attr('y', y)
+                                .attr('width', width)
+                                .attr('height', height);
+            if (r) {
+                var rx = paper.scalex(r) - paper.scalex(0),
+                    ry = paper.scaley(r) - paper.scaley(0);
+                rect.attr('rx', rx).attr('ry', rt);
+            }
+            return rect;
+        };
+
+        paper.path = function (opts) {
+            if (isArray(opts)) opts = {data: opts};
+            if (!(opts && opts.data)) return;
+
+            copyMissing(this.options.lines, opts);
+
+            var line = d3.svg.line()
+                        .interpolate(opts.interpolate)
+                        .x(function(d) {
+                            return d.x;
+                        })
+                        .y(function(d) {
+                            return d.y;
+                        }),
+                data = xyData(opts.data);
+
+            return current.append('path')
+                            .datum(data)
+                            .attr('d', line);
+        };
     };
 
-    x.constants = {
-        DEFAULT_VIZ_GROUP: 'default_viz_group'
-    };
-
-    x.vizRegistry = (function () {
+    g.vizRegistry = (function () {
         var _vizMap = {};
 
         function initializeVizGroup(group) {
             if (!group) {
-                group = x.constants.DEFAULT_VIZ_GROUP;
+                group = g.constants.DEFAULT_VIZ_GROUP;
             }
 
             if (!_vizMap[group]) {
@@ -399,16 +761,16 @@
         };
     }());
 
-    x.registerViz = function (viz, group) {
-        x.vizRegistry.register(viz, group);
+    g.registerViz = function (viz, group) {
+        g.vizRegistry.register(viz, group);
     };
 
-    x.deregisterViz = function (viz, group) {
-        x.vizRegistry.deregister(viz, group);
+    g.deregisterViz = function (viz, group) {
+        g.vizRegistry.deregister(viz, group);
     };
 
-    x.hasViz = function (viz) {
-        return x.vizRegistry.has(viz);
+    g.hasViz = function (viz) {
+        return g.vizRegistry.has(viz);
     };
 
     var _idCounter = 0;
@@ -428,7 +790,7 @@
     //    from the element of its parent
     //  * ``height``: The height of the visualization, if not provided it will be evaluated
     //    from the element of its parent
-    var Viz = d3ext.Viz = Class.extend({
+    var Viz = g.Viz = Class.extend({
         //
         // Initialise the vizualization with a DOM element and
         //  an object of attributes
@@ -439,7 +801,7 @@
             }
             if (!element)
                 element = document.createElement('div');
-            attrs = extend({}, d3ext.VizDefaults, this.defaults, attrs);
+            attrs = extend({}, g.defaults.viz, g.defaults.paper, this.defaults, attrs);
             element = d3.select(element);
             this.element = element;
             this.log = log(attrs.debug);
@@ -447,26 +809,7 @@
             this.elheight = null;
             this.uid = ++_idCounter;
             this.dispatch = d3.dispatch.apply(d3, attrs.events);
-            this.d3 = d3;
-
-            if (!attrs.width) {
-                attrs.width = getWidth(element);
-                if (attrs.width)
-                    this.elwidth = getWidthElement(element);
-                else
-                    attrs.width = 400;
-            }
-            if (!attrs.height) {
-                attrs.height = getHeight(element);
-                if (attrs.height)
-                    this.elheight = getHeightElement(element);
-                else
-                    attrs.height = 400;
-            }
-            else if (typeof(attrs.height) === "string" && attrs.height.indexOf('%') === attrs.height.length-1) {
-                attrs.height_percentage = 0.01*parseFloat(attrs.height);
-                attrs.height = attrs.height_percentage*attrs.width;
-            }
+            this.g = g;
             this.attrs = this.getAttributes(attrs);
             //
             if (attrs.resize) {
@@ -527,10 +870,7 @@
         //  Create a new one if not available
         paper: function () {
             if (this._paper === undefined) {
-                if (this.attrs.paper === 'canvas')
-                    this._paper = new Canvas(this.element, this.attrs);
-                else
-                    this._paper = new Svg(this.element, this.attrs);
+                this._paper = g.paper(this.element, this.attrs);
             }
             return this._paper;
         },
@@ -644,102 +984,234 @@
         }
     });
 
-    d3ext.isviz = function (o) {
+    g.isviz = function (o) {
         return o !== Viz && o.prototype && o.prototype instanceof Viz;
     };
 
 
+    //
+    //  Initaise paper
+    function _initPaper (paper, p) {
 
-    var
+        paper.xAxis().scale().range([0, p.size[0]]);
+        paper.yaxis(2).yAxis().scale().range([0, p.size[1]]);
+        paper.yaxis(1).yAxis().scale().range([0, p.size[1]]);
+        //
+        return paper;
+    }
 
-    Paper = Class.extend({
 
-        init: function (element, options) {
-            options = extend({}, options, x.paperDefaults);
-            this.element = element;
-            this.element.html('');
-            //
-            // Create axis objects
-            this.axis = {
-                x: new Axis(this, options.xaxis),
-                y: new Axis(this, options.yaxis),
-                y2: new Axis(this, options.yaxis2)
-            };
+    function _newPaperAttr (element, cfg) {
+        var width, height;
+
+        if (cfg) {
+            width = cfg.width;
+            height = cfg.height;
+            cfg = pick(cfg, function (value, key) {
+                if (g.defaults.paper[key] !== undefined)
+                    return value;
+            });
         }
-    }),
+        else
+            cfg = {};
 
-    Axis = Class.extend({
+        var p = extend({}, g.defaults.paper, cfg);
 
-        init: function (paper, options) {
-            options = options || {};
-            this.type = options.type || 'linear';
+        if (!width) {
+            width = getWidth(element);
+            if (width)
+                p.elwidth = getWidthElement(element);
+            else
+                width = g.constants.WIDTH;
         }
-    }),
 
-    Svg = Paper.extend({
+        if (!height) {
+            height = getHeight(element);
+            if (height)
+                p.elheight = getHeightElement(element);
+            else
+                height = g.constants.HEIGHT;
+        }
+        else if (typeof(height) === "string" && height.indexOf('%') === height.length-1) {
+            p.height_percentage = 0.01*parseFloat(height);
+            height = p.height_percentage*width;
+        }
 
-        init: function (element, attrs) {
-            this._super(element, attrs);
-            attrs = this.attrs;
-            element = this.element;
+        p.size = [width, height];
+        return p;
+    }
 
-            var width = attrs.width,
-                height = attrs.height,
-                svg = this.element.append("svg")
-                                .attr("width", width)
-                                .attr("height", height)
-                                .attr("viewBox", "0 0 " + width + " " + height);
-                                //perserveAspectRatio="xMinYMid"
+    //
+    //  Extend d3 with canvas object
+    //  ===============================
+    //
+    d3.canvas = {};
 
-            var x = d3.scale.linear()
-                        .range([0, width]),
-                y = d3.scale.linear()
-                        .range([height, 0]);
-        },
-        //
-        //  Draw a new Line from a serie object
-        //
-        drawLine: function (serie) {
-            if (isArray(serie)) serie = {data: serie};
-            if (!(serie && serie.data)) return;
+    d3.canvas.axis = function() {
+        var scale = d3.scale.linear(),
+            orient = d3_canvas_axisDefaultOrient,
+            innerTickSize = 6,
+            outerTickSize = 6,
+            tickPadding = 3,
+            tickArguments_ = [10],
+            tickValues = null,
+            tickFormat_;
 
-            copyMissing(this.options.lines, serie);
+        function axis (g) {
+            g.each(function() {
+            var g = d3.select(this);
 
-            var line = d3.svg.line()
-                        .interpolate(serie.interpolate)
-                        .x(function(d) {
-                            return d.x;
-                        })
-                        .y(function(d) {
-                            return d.y;
-                        }),
-                data = this.xyData(serie.data);
+            // Stash a snapshot of the new scale, and retrieve the old snapshot.
+            var scale0 = this.__chart__ || scale,
+                scale1 = this.__chart__ = scale.copy();
 
+            // Ticks, or domain values for ordinal scales.
+            var ticks = tickValues === null ? (scale1.ticks ? scale1.ticks.apply(scale1, tickArguments_) : scale1.domain()) : tickValues,
+                tickFormat = tickFormat_ === null ? (scale1.tickFormat ? scale1.tickFormat.apply(scale1, tickArguments_) : d3_identity) : tickFormat_,
+                tick = g.selectAll(".tick").data(ticks, scale1),
+                tickEnter = tick.enter().insert("g", ".domain").attr("class", "tick").style("opacity", ε),
+                tickExit = d3.transition(tick.exit()).style("opacity", ε).remove(),
+                tickUpdate = d3.transition(tick.order()).style("opacity", 1),
+                tickSpacing = Math.max(innerTickSize, 0) + tickPadding,
+                tickTransform;
 
-            var g = this.svg.append('g')
-                        .datum(data)
-                        .attr('d', line);
-        },
-        //
-        xyData: function (data) {
-            if (!isArray(data)) return;
-            if (isArray(data[0]) && data[0].length === 2) {
-                var xydata = [];
-                data.forEach(function (xy) {
-                    xydata.push({x: xy[0], y: xy[1]});
-                });
-                return xydata;
+            // Domain.
+            var range = d3_scaleRange(scale1),
+                path = g.selectAll(".domain").data([0]),
+                pathUpdate = (path.enter().append("path").attr("class", "domain"), d3.transition(path));
+
+            tickEnter.append("line");
+            tickEnter.append("text");
+
+            var lineEnter = tickEnter.select("line"),
+                lineUpdate = tickUpdate.select("line"),
+                text = tick.select("text").text(tickFormat),
+                textEnter = tickEnter.select("text"),
+                textUpdate = tickUpdate.select("text"),
+                sign = orient === "top" || orient === "left" ? -1 : 1,
+                x1, x2, y1, y2;
+
+            if (orient === "bottom" || orient === "top") {
+              tickTransform = d3_canvas_axisX, x1 = "x", y1 = "y", x2 = "x2", y2 = "y2";
+              text.attr("dy", sign < 0 ? "0em" : ".71em").style("text-anchor", "middle");
+              pathUpdate.attr("d", "M" + range[0] + "," + sign * outerTickSize + "V0H" + range[1] + "V" + sign * outerTickSize);
+            } else {
+              tickTransform = d3_canvas_axisY, x1 = "y", y1 = "x", x2 = "y2", y2 = "x2";
+              text.attr("dy", ".32em").style("text-anchor", sign < 0 ? "end" : "start");
+              pathUpdate.attr("d", "M" + sign * outerTickSize + "," + range[0] + "H0V" + range[1] + "H" + sign * outerTickSize);
             }
-            return data;
+
+            lineEnter.attr(y2, sign * innerTickSize);
+            textEnter.attr(y1, sign * tickSpacing);
+            lineUpdate.attr(x2, 0).attr(y2, sign * innerTickSize);
+            textUpdate.attr(x1, 0).attr(y1, sign * tickSpacing);
+
+            // If either the new or old scale is ordinal,
+            // entering ticks are undefined in the old scale,
+            // and so can fade-in in the new scale’s position.
+            // Exiting ticks are likewise undefined in the new scale,
+            // and so can fade-out in the old scale’s position.
+            if (scale1.rangeBand) {
+              var x = scale1, dx = x.rangeBand() / 2;
+              scale0 = scale1 = function(d) { return x(d) + dx; };
+            } else if (scale0.rangeBand) {
+              scale0 = scale1;
+            } else {
+              tickExit.call(tickTransform, scale1, scale0);
+            }
+
+            tickEnter.call(tickTransform, scale0, scale1);
+            tickUpdate.call(tickTransform, scale1, scale1);
+            });
         }
-    });
 
-    var Canvas = Paper.extend({
+        axis.scale = function(x) {
+            if (!arguments.length) return scale;
+            scale = x;
+            return axis;
+        };
 
-    });
+        axis.orient = function(x) {
+            if (!arguments.length) return orient;
+            orient = x in d3_canvas_axisOrients ? x + "" : d3_canvas_axisDefaultOrient;
+            return axis;
+        };
 
+        axis.ticks = function() {
+            if (!arguments.length) return tickArguments_;
+            tickArguments_ = arguments;
+            return axis;
+        };
 
-    d3ext.C3 = Viz.extend({
+        axis.tickValues = function(x) {
+            if (!arguments.length) return tickValues;
+            tickValues = x;
+            return axis;
+        };
+
+        axis.tickFormat = function(x) {
+            if (!arguments.length) return tickFormat_;
+            tickFormat_ = x;
+            return axis;
+        };
+
+        axis.tickSize = function(x) {
+            var n = arguments.length;
+            if (!n) return innerTickSize;
+            innerTickSize = +x;
+            outerTickSize = +arguments[n - 1];
+            return axis;
+        };
+
+        axis.innerTickSize = function(x) {
+            if (!arguments.length) return innerTickSize;
+            innerTickSize = +x;
+            return axis;
+        };
+
+        axis.outerTickSize = function(x) {
+            if (!arguments.length) return outerTickSize;
+            outerTickSize = +x;
+            return axis;
+        };
+
+        axis.tickPadding = function(x) {
+            if (!arguments.length) return tickPadding;
+            tickPadding = +x;
+            return axis;
+        };
+
+        axis.tickSubdivide = function() {
+            return arguments.length && axis;
+        };
+
+        return axis;
+    };
+
+    var d3_canvas_axisDefaultOrient = "bottom",
+        d3_canvas_axisOrients = {top: 1, right: 1, bottom: 1, left: 1};
+
+    function d3_canvas_axisX(selection, x0, x1) {
+        selection.attr("transform", function(d) { var v0 = x0(d); return "translate(" + (isFinite(v0) ? v0 : x1(d)) + ",0)"; });
+    }
+
+    function d3_canvas_axisY(selection, y0, y1) {
+        selection.attr("transform", function(d) { var v0 = y0(d); return "translate(0," + (isFinite(v0) ? v0 : y1(d)) + ")"; });
+    }
+
+    g.paper.types.canvas = function (paper, element, cfg) {
+        var canvas = element.append("canvas")
+                .attr("width", cfg.width)
+                .attr("height", cfg.height),
+            ctx = canvas.node().getContext('2d');
+
+        cfg.yaxis = 1,
+        cfg.xAxis = d3.canvas.axis(),
+        cfg.yAxis = [d3.canvas.axis(), d3.canvas.axis()];
+
+    };
+
+    g.C3 = Viz.extend({
         c3opts: ['data', 'axis', 'grid', 'region', 'legend', 'tooltip',
                  'subchart', 'zoom', 'point', 'line', 'bar', 'pie', 'donut'],
         //
@@ -790,7 +1262,7 @@
     //
     //
     // Force layout example
-    d3ext.Force = Viz.extend({
+    g.Force = Viz.extend({
         //
         d3build: function () {
             var d2 = this.d3,
@@ -880,7 +1352,7 @@
         //  handle node charge
 
     });
-    d3ext.Leaflet = Viz.extend({
+    g.Leaflet = Viz.extend({
         //
         defaults: {
             center: [41.898582, 12.476801],
@@ -996,7 +1468,7 @@
     //  In addition to standard Viz parameters:
     //      labels: display labels or not (default false)
     //      padding: padding of sunburst (default 10)
-    d3ext.SunBurst = Viz.extend({
+    g.SunBurst = Viz.extend({
         defaults: {
             // Show labels
             labels: true,
@@ -1293,12 +1765,9 @@
     });
 
 
-    d3ext.Trianglify = Viz.extend({
+    g.Trianglify = Viz.extend({
         //
         defaults: {
-            center: [41.898582, 12.476801],
-            zoom: 4,
-            maxZoom: 18,
             bleed: 150,
             fillOpacity: 1,
             strokeOpacity: 1,
@@ -1310,6 +1779,17 @@
         //
         d3build: function () {
             //
+            if (this.Trianglify === undefined && typeof Trianglify === 'undefined') {
+                var self = this;
+                return g.require(['trianglify'], function (Trianglify) {
+                    self.Trianglify = Trianglify || null;
+                    self.d3build();
+                });
+            }
+
+            if (this.Trianglify === undefined)
+                this.Trianglify = Trianglify;
+
             var t = this._t,
                 attrs = this.attrs,
                 cellsize = attrs.cellsize ? +attrs.cellsize : 0,
@@ -1368,7 +1848,7 @@
         }
     });
 
-    x.Chart = x.Viz.extend({
+    g.Chart = Viz.extend({
         serieDefaults: {
             lines: {show: true},
             points: {show: true}
@@ -1376,16 +1856,6 @@
 
         defaults: {
 
-        },
-
-        svg: function () {
-            var w = this.attrs.width,
-                h = this.attrs.height;
-            this.element.html('');
-            return this.element.append("svg")
-                .attr("width", w)
-                .attr("height", h)
-                .attr("viewBox", "0 0 " + w + " " + h);
         },
 
         build: function () {
@@ -1419,6 +1889,96 @@
 
         }
     });
+var BITS = 52,
+    SCALE = 2 << 51,
+    MAX_DIMENSION = 21201,
+    COEFFICIENTS = [
+        'd       s       a       m_i',
+        '2       1       0       1',
+        '3       2       1       1 3',
+        '4       3       1       1 3 1',
+        '5       3       2       1 1 1',
+        '6       4       1       1 1 3 3',
+        '7       4       4       1 3 5 13',
+        '8       5       2       1 1 5 5 17',
+        '9       5       4       1 1 5 5 5',
+        '10      5       7       1 1 7 11 1'
+    ];
+
+
+g.math.sobol = function (dim) {
+    if (dim < 1 || dim > MAX_DIMENSION) throw new Error("Out of range dimension");
+    var sobol = {},
+        count = 0,
+        direction = [],
+        x = [],
+        zero = [],
+        lines,
+        i;
+
+    sobol.next = function() {
+        var v = [];
+        if (count === 0) {
+            count++;
+            return zero.slice();
+        }
+        var c = 1;
+        var value = count - 1;
+        while ((value & 1) == 1) {
+            value >>= 1;
+            c++;
+        }
+        for (i = 0; i < dim; i++) {
+            x[i] ^= direction[i][c];
+            v[i] = x[i] / SCALE;
+        }
+        count++;
+        return v;
+    };
+
+    sobol.dimension = function () {
+        return dim;
+    };
+
+    sobol.count = function () {
+        return count;
+    };
+
+
+    var tmp = [];
+    for (i = 0; i <= BITS; i++) tmp.push(0);
+    for (i = 0; i < dim; i++) {
+        direction[i] = tmp.slice();
+        x[i] = 0;
+        zero[i] = 0;
+    }
+
+    if (dim > COEFFICIENTS.length) {
+        throw new Error("Out of range dimension");
+        //var data = fs.readFileSync(file);
+        //lines = ("" + data).split("\n");
+    }
+    else
+        lines = COEFFICIENTS;
+
+    for (i = 1; i <= BITS; i++) direction[0][i] = 1 << (BITS - i);
+    for (var d = 1; d < dim; d++) {
+        var cells = lines[d].split(/\s+/);
+        var s = +cells[1];
+        var a = +cells[2];
+        var m = [0];
+        for (i = 0; i < s; i++) m.push(+cells[3 + i]);
+        for (i = 1; i <= s; i++) direction[d][i] = m[i] << (BITS - i);
+        for (i = s + 1; i <= BITS; i++) {
+            direction[d][i] = direction[d][i - s] ^ (direction[d][i - s] >> s);
+            for (var k = 1; k <= s - 1; k++)
+            direction[d][i] ^= ((a >> (s - 1 - k)) & 1) * direction[d][i - k];
+        }
+    }
+
+    return sobol;
+};
+
 
     return d3;
 }));

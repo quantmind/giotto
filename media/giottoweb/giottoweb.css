@@ -1,8 +1,8 @@
 @charset "UTF-8";
 /*
 ------------------------------------------------------------------
-Created by lux in 0.04 seconds
-Date: 2014-11-13 08:49:09
+Created by lux in 0.07 seconds
+Date: 2014-11-19 21:00:14
 
 http://quantmind.github.io/lux/
 ------------------------------------------------------------------ */
@@ -13,9 +13,9 @@ http://quantmind.github.io/lux/
 }
 
 .lazyContainer > .content {
-    top: 0;
     min-height: 100%;
     position: absolute;
+    top: 0;
 }
 
 .push-bottom {
@@ -24,12 +24,12 @@ http://quantmind.github.io/lux/
 
 .hljs-comment,.hljs-title{color:#8e908c}.hljs-variable,.hljs-attribute,.hljs-tag,.hljs-regexp,.ruby .hljs-constant,.xml .hljs-tag .hljs-title,.xml .hljs-pi,.xml .hljs-doctype,.html .hljs-doctype,.css .hljs-id,.css .hljs-class,.css .hljs-pseudo{color:#c82829}.hljs-number,.hljs-preprocessor,.hljs-pragma,.hljs-built_in,.hljs-literal,.hljs-params,.hljs-constant{color:#f5871f}.ruby .hljs-class .hljs-title,.css .hljs-rules .hljs-attribute{color:#eab700}.hljs-string,.hljs-value,.hljs-inheritance,.hljs-header,.ruby .hljs-symbol,.xml .hljs-cdata{color:#718c00}.css .hljs-hexcolor{color:#3e999f}.hljs-function,.python .hljs-decorator,.python .hljs-title,.ruby .hljs-function .hljs-title,.ruby .hljs-title .hljs-keyword,.perl .hljs-sub,.javascript .hljs-title,.coffeescript .hljs-title{color:#4271ae}.hljs-keyword,.javascript .hljs-function{color:#8959a8}.hljs{display:block;overflow-x:auto;background:white;color:#4d4d4c;padding:0.5em;-webkit-text-size-adjust:none}.coffeescript .javascript,.javascript .xml,.tex .hljs-formula,.xml .javascript,.xml .vbscript,.xml .css,.xml .hljs-cdata{opacity:0.5}
 body {
-    background: #fff;
-    font-size: 14px;
-    line-height: 1.42857;
     font-style: normal;
-    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
-    color: #333;
+    color: rgba(0, 0, 0, 0.8);
+    font-family: "freight-text-pro",Georgia,Cambria,"Times New Roman",Times,serif;
+    font-size: 18px;
+    background: #fff;
+    line-height: 1.5;
 }
 
 p.form-error {
@@ -51,8 +51,8 @@ p.form-error {
 
 .absolute-full {
     bottom: 0;
-    top: 0;
     position: absolute;
+    top: 0;
 }
 
 .nav.navbar-nav > li > a {
@@ -62,39 +62,53 @@ p.form-error {
 .katex-outer {
     margin-bottom: 10px;
     margin-right: auto;
-    display: block;
     margin-left: auto;
+    display: block;
+    margin-bottom: 10px;
+    margin-right: auto;
+    margin-left: auto;
+    display: block;
 }
 
 code.hljs.inline {
+    padding: 2px 4px;
+    display: inline;
     padding: 2px 4px;
     display: inline;
 }
 
 dl dd {
     margin-left: 30px;
+    margin-left: 30px;
 }
 
 dl.class dl.method {
-    color: #333;
+    color: rgba(0, 0, 0, 0.8);
+    color: rgba(0, 0, 0, 0.8);
 }
 
 dl.class > dt > tt.descname,
 dl.function > dt > tt.descname {
     font-size: 24px;
+    font-size: 24px;
 }
 
 dl.class dt tt.descname,
 dl.function dt tt.descname {
+    color: rgba(0, 0, 0, 0.8);
     font-weight: bold;
-    color: #333;
+    color: rgba(0, 0, 0, 0.8);
+    font-weight: bold;
 }
 
 dl.class dt,
 dl.function dt {
-    font-size: 14px;
+    color: #888;
+    font-size: 18px;
     font-weight: normal;
     color: #888;
+    font-size: 18px;
+    font-weight: normal;
 }
 
 [ng\:cloak],
@@ -106,13 +120,21 @@ dl.function dt {
     display: none !important;
 }
 
+.navbar {
+    min-height: 50px;
+}
+
+.navbar .navbar-toggle {
+    margin-top: 8px;
+}
+
+.navbar-default {
+    background: #f8f8f8;
+}
+
 .navbar2-wrapper {
     min-height: 100%;
     width: 100%;
-}
-
-.navbar2-wrapper.navbar-default {
-    background: #f8f8f8;
 }
 
 .navbar2-page {
@@ -133,14 +155,14 @@ dl.function dt {
 @media all and (min-width:768px) {
     .sidebar {
         position: absolute;
+        width: 200px;
         margin-top: 51px;
         z-index: 1;
-        width: 200px;
     }
 
 }
 .scroll-target {
-    background: inherit;
+    background: #99EBFF;
 }
 
 .scroll-target.finished {
@@ -152,8 +174,8 @@ dl.function dt {
 }
 
 .media-list > .media > a {
-    text-decoration: none;
     color: #808080;
+    text-decoration: none;
 }
 
 .media-list > .media > a .post-body {
@@ -161,20 +183,20 @@ dl.function dt {
 }
 
 .media-list > .media > a h3 {
-    font-weight: normal;
     color: #333;
+    font-weight: normal;
 }
 
 .post-image {
-    height: auto;
     max-height: 140px;
-    float: left;
     width: 140px;
+    height: auto;
+    float: left;
 }
 
 .post-image-xs {
-    max-height: 150px;
     max-width: 90%;
+    max-height: 150px;
     width: auto;
 }
 
@@ -189,10 +211,10 @@ dt:hover > a.headerlink {
 }
 
 a.headerlink {
+    color: #eee;
     padding: 0 4px;
     visibility: hidden;
     text-decoration: none;
-    color: #eee;
 }
 
 a.headerlink:hover {
@@ -217,9 +239,9 @@ table.docutils.field-list th {
 }
 
 .trianglify-box {
+    max-width: 400px;
     background: rgba(255, 255, 255, 0.6);
     padding: 20px;
-    max-width: 400px;
     -webkit-border-radius: 5px;
        -moz-border-radius: 5px;
             border-radius: 5px;
