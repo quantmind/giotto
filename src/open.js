@@ -21,9 +21,11 @@
     "use strict";
     var giotto = {
             version: "0.1.0",
-            d3: d3
+            d3: d3,
+            math: {}
         },
         g = giotto;
+
     d3.giotto = giotto;
 
     // Warps RequireJs call so it can be used in conjunction with

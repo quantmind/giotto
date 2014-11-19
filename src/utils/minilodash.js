@@ -1,5 +1,10 @@
 
     var
+    //
+    ostring = Object.prototype.toString,
+    //
+    // Underscore-like object
+    _ = g._ = {},
     //  Simple extend function
     //
     extend = g.extend = function () {
@@ -53,4 +58,39 @@
             attrs = extend(attrs, obj);
         }
         return attrs;
+    },
+    //
+    //
+    keys = _.keys = function (obj) {
+        var keys = [];
+        for (var key in obj) {
+            if (obj.hasOwnProperty(key))
+                keys.push(key);
+        }
+        return keys;
+    },
+    //
+    pick = _.pick = function (obj, callback) {
+        var picked = {},
+            val;
+        for (var key in obj) {
+            if (obj.hasOwnProperty(key)) {
+                val = callback(obj[key], key);
+                if (val !== undefined)
+                    picked[key] = val;
+            }
+        }
+        return picked;
+    },
+    //
+    isObject = _.isObject = function (value) {
+        return ostring.call(value) === '[object Object]';
+    },
+    //
+    isFunction = _.isFunction = function (value) {
+        return ostring.call(value) === '[object Function]';
+    },
+    //
+    isArray = _.isFunction = function (value) {
+        return ostring.call(value) === '[object Array]';
     };

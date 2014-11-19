@@ -1,12 +1,34 @@
+    //
+    // Create a new paper for drawing stuff
+    g.paper = function (element, p) {
 
-    g.paper = function (element, cfg) {
-        var paper = {},
-            p = extend({}, cfg, g.paperDefaults);
+        var paper = {};
+
+        if (isObject(element)) {
+            p = element;
+            element = null;
+        }
+        if (!element)
+            element = d3.select(document.createElement('div'));
+
+        p = _newPaperAttr(element, p);
 
         g.paper.types[p.type](paper, element, p);
 
         paper.type = function () {
             return p.type;
+        };
+
+        paper.size = function () {
+            return [p.size[0], p.size[1]];
+        };
+
+        paper.width = function () {
+            return p.size[0];
+        };
+
+        paper.height = function () {
+            return p.size[1];
         };
 
         paper.element = function () {
@@ -32,12 +54,17 @@
             return paper;
         };
 
+        paper.scale = function (r) {
+            var s = p.xAxis.scale();
+            return s(r) - s(0);
+        };
+
         paper.scalex = function (x) {
-            return p.xAxis.scale(x);
+            return p.xAxis.scale()(x);
         };
 
         paper.scaley = function (y) {
-            return paper.yAxis().scale(y);
+            return paper.yAxis().scale()(y);
         };
 
         paper.resize = function (size) {
@@ -64,7 +91,7 @@
         };
 
         // Auto resize the paper
-        if (cfg.resize) {
+        if (p.resize) {
             //
             d3.select(window).on('resize', function () {
                 if (!p._resizing) {
@@ -75,20 +102,20 @@
                             return true;
                         }, p.resizeDelay);
                     } else {
-                        this.resize();
+                        paper.resize();
                     }
                 }
             });
         }
+
+        return _initPaper(paper, p);
     };
 
 
     g.paper.types = {};
 
 
-    var
-
-    xyData = function (data) {
+    function xyData (data) {
         if (!isArray(data)) return;
         if (isArray(data[0]) && data[0].length === 2) {
             var xydata = [];
@@ -98,4 +125,4 @@
             return xydata;
         }
         return data;
-    };
+    }

@@ -8,6 +8,7 @@ require(rcfg.min(['lux/lux', 'giotto/giotto', 'angular-ui-router', 'angular-stra
         var s = ['sunburst',
                  'force',
                  {href: 'charts', label: 'Charting'},
+                 {href: 'giotto', label: 'Logo'},
                  {href: 'c3', name: 'time series'},
                  'trianglify'],
             all = [];
@@ -41,4 +42,5 @@ require(rcfg.min(['lux/lux', 'giotto/giotto', 'angular-ui-router', 'angular-stra
         }
     });
     //
-    var examples = this.examples = {};
+    var examples = this.examples = {},
+        g = d3.giotto;

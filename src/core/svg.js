@@ -1,13 +1,39 @@
-
+    //
+    //  SVG Paper
+    //  ================
+    //
     g.paper.types.svg = function (paper, element, p) {
         var svg = element.append('svg')
-                        .attr('width', p.width)
-                        .attr('height', p.height)
-                        .attr("viewBox", "0 0 " + p.width + " " + p.height),
+                        .attr('width', p.size[0])
+                        .attr('height', p.size[1])
+                        .attr("viewBox", "0 0 " + p.size[0] + " " + p.size[1]),
             current = svg;
 
         p.xAxis = d3.svg.axis(),
         p.yAxis = [d3.svg.axis(), d3.svg.axis()];
+
+        // return the current svg element
+        paper.current = function () {
+            return current;
+        };
+
+        // set the current element to be the root svg element and returns the paper
+        paper.root = function () {
+            current = svg;
+            return paper;
+        };
+
+        // set the current element to be the parent and returns the paper
+        paper.parent = function () {
+            if (current !== svg) {
+                var parent = current.node().parentNode;
+                if (parent === svg.node())
+                    return svg;
+                else
+                    return d3.select(parent);
+            }
+            return paper;
+        };
 
         paper.group = function () {
             current = current.append('g');
@@ -15,9 +41,9 @@
         };
 
         paper.circle = function (cx, cy, r) {
-            cx = p.scalex(cx);
-            cy = p.scaley(cx);
-            rx = p.scalex(r);
+            cx = paper.scalex(cx);
+            cy = paper.scaley(cy);
+            r = paper.scale(r);
             return current.append('circle')
                             .attr('cx', cx)
                             .attr('cy', cy)
@@ -25,13 +51,20 @@
         };
 
         paper.rect = function (x, y, width, height, r) {
+            var X = paper.scalex(x),
+                Y = paper.scaley(y);
+            width = paper.scalex(x+width) - X;
+            height = paper.scalex(y+height) - Y;
             var rect = current.append('rect')
-                                .attr('x', x)
-                                .attr('y', y)
+                                .attr('x', X)
+                                .attr('y', Y)
                                 .attr('width', width)
                                 .attr('height', height);
-            if (r)
-                rect.attr('rx', r).attr('ry', r);
+            if (r) {
+                var rx = paper.scalex(r) - paper.scalex(0),
+                    ry = paper.scaley(r) - paper.scaley(0);
+                rect.attr('rx', rx).attr('ry', rt);
+            }
             return rect;
         };
 

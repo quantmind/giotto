@@ -4,22 +4,25 @@
             "banner": "src/banner.js"
         },
         "src": ["src/open.js",
-                "src/core/defaults.js",
                 "src/utils/*.js",
+                "src/core/defaults.js",
                 "src/core/paper.js",
                 "src/core/svg.js",
                 "src/core/viz.js",
+                "src/core/private/*.js",
                 "src/canvas/canvas.js",
                 "src/canvas/axis.js",
                 "src/core/canvas.js",
                 "src/viz/*.js",
                 "src/charts/*.js",
+                "src/math/*.js",
                 "src/close.js"],
         "dest": "dist/giotto.js"
     },
     "giottoweb": {
         "src": ["src/examples/open.js",
                 "src/examples/charts.js",
+                "src/examples/giotto.js",
                 "src/examples/close.js"],
         "dest": "giottoweb/media/giottoweb/giottoweb.js",
         "minify": false

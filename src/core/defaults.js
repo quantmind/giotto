@@ -1,11 +1,15 @@
-    g.vizDefaults = {
-        //
-        // Default paper type
-        paperType: 'svg',
-        // Add resizing on window resize
-        resize: false,
-        // milliseconds to delay the resizing of a visualization
+    g.defaults = {};
+
+    g.defaults.paper = {
+        type: 'svg',
         resizeDelay: 200,
+        yaxis: 1,
+        resize: false,
+        margin: {top: 20, right: 20, bottom: 20, left: 20},
+    };
+
+    g.defaults.viz = extend({
+        //
         // Option callback after initialisation
         onInit: null,
         //
@@ -17,16 +21,10 @@
         lines: {
             interpolate: 'basis'
         }
-    };
-
-    g.paperDefaults = {
-        type: 'svg',
-        resizeDelay: 200,
-        yaxis: 1,
-        width: 500,
-        height: 400
-    };
+    });
 
     g.constants = {
-        DEFAULT_VIZ_GROUP: 'default_viz_group'
+        DEFAULT_VIZ_GROUP: 'default_viz_group',
+        WIDTH: 400,
+        HEIGHT: 300
     };

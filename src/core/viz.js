@@ -94,7 +94,7 @@
             }
             if (!element)
                 element = document.createElement('div');
-            attrs = extend({}, g.vizDefaults, this.defaults, attrs);
+            attrs = extend({}, g.defaults.viz, g.defaults.paper, this.defaults, attrs);
             element = d3.select(element);
             this.element = element;
             this.log = log(attrs.debug);
@@ -102,26 +102,7 @@
             this.elheight = null;
             this.uid = ++_idCounter;
             this.dispatch = d3.dispatch.apply(d3, attrs.events);
-            this.d3 = d3;
-
-            if (!attrs.width) {
-                attrs.width = getWidth(element);
-                if (attrs.width)
-                    this.elwidth = getWidthElement(element);
-                else
-                    attrs.width = 400;
-            }
-            if (!attrs.height) {
-                attrs.height = getHeight(element);
-                if (attrs.height)
-                    this.elheight = getHeightElement(element);
-                else
-                    attrs.height = 400;
-            }
-            else if (typeof(attrs.height) === "string" && attrs.height.indexOf('%') === attrs.height.length-1) {
-                attrs.height_percentage = 0.01*parseFloat(attrs.height);
-                attrs.height = attrs.height_percentage*attrs.width;
-            }
+            this.g = g;
             this.attrs = this.getAttributes(attrs);
             //
             if (attrs.resize) {

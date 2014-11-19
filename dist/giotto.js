@@ -1,6 +1,6 @@
 //      Giotto - v0.1.0
 
-//      Compiled 2014-11-13.
+//      Compiled 2014-11-19.
 //      Copyright (c) 2014 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -29,9 +29,11 @@
     "use strict";
     var giotto = {
             version: "0.1.0",
-            d3: d3
+            d3: d3,
+            math: {}
         },
         g = giotto;
+
     d3.giotto = giotto;
 
     // Warps RequireJs call so it can be used in conjunction with
@@ -45,38 +47,6 @@
         return g;
     };
 
-    g.vizDefaults = {
-        //
-        // Default paper type
-        paperType: 'svg',
-        // Add resizing on window resize
-        resize: false,
-        // milliseconds to delay the resizing of a visualization
-        resizeDelay: 200,
-        // Option callback after initialisation
-        onInit: null,
-        //
-        autoBuild: true,
-        // Events dispatched by the visualization
-        events: ['build', 'change'],
-        //
-        // Default parameters when drawing lines
-        lines: {
-            interpolate: 'basis'
-        }
-    };
-
-    g.paperDefaults = {
-        type: 'svg',
-        resizeDelay: 200,
-        yaxis: 1,
-        width: 500,
-        height: 400
-    };
-
-    g.constants = {
-        DEFAULT_VIZ_GROUP: 'default_viz_group'
-    };
     //
     //  Create an angular module for visualizations
     //
@@ -261,63 +231,6 @@
     }(function() {}));
 
 
-
-    var
-    //  Simple extend function
-    //
-    extend = g.extend = function () {
-        var length = arguments.length,
-            object = arguments[0];
-
-        if (!object || length < 2) {
-            return object;
-        }
-        var index = 0,
-            obj;
-
-        while (++index < length) {
-            obj = arguments[index];
-            if (Object(obj) === obj) {
-                for (var prop in obj) {
-                    if (obj.hasOwnProperty(prop))
-                        object[prop] = obj[prop];
-                }
-            }
-        }
-        return object;
-    },
-    //  copyMissing
-    //  =================
-    //
-    //  Copy values to toObj from fromObj which are missing (undefined) in toObj
-    copyMissing = function (fromObj, toObj) {
-        if (fromObj && toObj) {
-            for (var prop in fromObj) {
-                if (fromObj.hasOwnProperty(prop) && toObj[prop] === undefined)
-                    toObj[prop] = fromObj[prop];
-            }
-        }
-        return toObj;
-    },
-    //
-    //
-    // Obtain extra information from javascript objects
-    getOptions = function (attrs) {
-        if (attrs && typeof attrs.options === 'string') {
-            var obj = root,
-                bits= attrs.options.split('.');
-
-            for (var i=0; i<bits.length; ++i) {
-                obj = obj[bits[i]];
-                if (!obj) break;
-            }
-            if (typeof obj === 'function')
-                obj = obj(g, attrs);
-            attrs = extend(attrs, obj);
-        }
-        return attrs;
-    };
-
     function noop () {}
 
     var log = function (debug) {
@@ -392,6 +305,103 @@
     };
 
 
+    var
+    //
+    ostring = Object.prototype.toString,
+    //
+    // Underscore-like object
+    _ = g._ = {},
+    //  Simple extend function
+    //
+    extend = g.extend = function () {
+        var length = arguments.length,
+            object = arguments[0];
+
+        if (!object || length < 2) {
+            return object;
+        }
+        var index = 0,
+            obj;
+
+        while (++index < length) {
+            obj = arguments[index];
+            if (Object(obj) === obj) {
+                for (var prop in obj) {
+                    if (obj.hasOwnProperty(prop))
+                        object[prop] = obj[prop];
+                }
+            }
+        }
+        return object;
+    },
+    //  copyMissing
+    //  =================
+    //
+    //  Copy values to toObj from fromObj which are missing (undefined) in toObj
+    copyMissing = function (fromObj, toObj) {
+        if (fromObj && toObj) {
+            for (var prop in fromObj) {
+                if (fromObj.hasOwnProperty(prop) && toObj[prop] === undefined)
+                    toObj[prop] = fromObj[prop];
+            }
+        }
+        return toObj;
+    },
+    //
+    //
+    // Obtain extra information from javascript objects
+    getOptions = function (attrs) {
+        if (attrs && typeof attrs.options === 'string') {
+            var obj = root,
+                bits= attrs.options.split('.');
+
+            for (var i=0; i<bits.length; ++i) {
+                obj = obj[bits[i]];
+                if (!obj) break;
+            }
+            if (typeof obj === 'function')
+                obj = obj(g, attrs);
+            attrs = extend(attrs, obj);
+        }
+        return attrs;
+    },
+    //
+    //
+    keys = _.keys = function (obj) {
+        var keys = [];
+        for (var key in obj) {
+            if (obj.hasOwnProperty(key))
+                keys.push(key);
+        }
+        return keys;
+    },
+    //
+    pick = _.pick = function (obj, callback) {
+        var picked = {},
+            val;
+        for (var key in obj) {
+            if (obj.hasOwnProperty(key)) {
+                val = callback(obj[key], key);
+                if (val !== undefined)
+                    picked[key] = val;
+            }
+        }
+        return picked;
+    },
+    //
+    isObject = _.isObject = function (value) {
+        return ostring.call(value) === '[object Object]';
+    },
+    //
+    isFunction = _.isFunction = function (value) {
+        return ostring.call(value) === '[object Function]';
+    },
+    //
+    isArray = _.isFunction = function (value) {
+        return ostring.call(value) === '[object Array]';
+    };
+
+
     function getWidth (element) {
         return getParentRectValue(element, 'width');
     }
@@ -445,28 +455,67 @@
     }
 
 
+    g.defaults = {};
 
-    var
-
-    ostring = Object.prototype.toString,
-
-    isFunction = function (value) {
-        return ostring.call(value) === '[object Function]';
-    },
-
-    isArray = function (value) {
-        return ostring.call(value) === '[object Array]';
+    g.defaults.paper = {
+        type: 'svg',
+        resizeDelay: 200,
+        yaxis: 1,
+        resize: false,
+        margin: {top: 20, right: 20, bottom: 20, left: 20},
     };
 
+    g.defaults.viz = extend({
+        //
+        // Option callback after initialisation
+        onInit: null,
+        //
+        autoBuild: true,
+        // Events dispatched by the visualization
+        events: ['build', 'change'],
+        //
+        // Default parameters when drawing lines
+        lines: {
+            interpolate: 'basis'
+        }
+    });
 
-    g.paper = function (element, cfg) {
-        var paper = {},
-            p = extend({}, cfg, g.paperDefaults);
+    g.constants = {
+        DEFAULT_VIZ_GROUP: 'default_viz_group',
+        WIDTH: 400,
+        HEIGHT: 300
+    };
+    //
+    // Create a new paper for drawing stuff
+    g.paper = function (element, p) {
+
+        var paper = {};
+
+        if (isObject(element)) {
+            p = element;
+            element = null;
+        }
+        if (!element)
+            element = d3.select(document.createElement('div'));
+
+        p = _newPaperAttr(element, p);
 
         g.paper.types[p.type](paper, element, p);
 
         paper.type = function () {
             return p.type;
+        };
+
+        paper.size = function () {
+            return [p.size[0], p.size[1]];
+        };
+
+        paper.width = function () {
+            return p.size[0];
+        };
+
+        paper.height = function () {
+            return p.size[1];
         };
 
         paper.element = function () {
@@ -492,12 +541,17 @@
             return paper;
         };
 
+        paper.scale = function (r) {
+            var s = p.xAxis.scale();
+            return s(r) - s(0);
+        };
+
         paper.scalex = function (x) {
-            return p.xAxis.scale(x);
+            return p.xAxis.scale()(x);
         };
 
         paper.scaley = function (y) {
-            return paper.yAxis().scale(y);
+            return paper.yAxis().scale()(y);
         };
 
         paper.resize = function (size) {
@@ -524,7 +578,7 @@
         };
 
         // Auto resize the paper
-        if (cfg.resize) {
+        if (p.resize) {
             //
             d3.select(window).on('resize', function () {
                 if (!p._resizing) {
@@ -535,20 +589,20 @@
                             return true;
                         }, p.resizeDelay);
                     } else {
-                        this.resize();
+                        paper.resize();
                     }
                 }
             });
         }
+
+        return _initPaper(paper, p);
     };
 
 
     g.paper.types = {};
 
 
-    var
-
-    xyData = function (data) {
+    function xyData (data) {
         if (!isArray(data)) return;
         if (isArray(data[0]) && data[0].length === 2) {
             var xydata = [];
@@ -558,18 +612,44 @@
             return xydata;
         }
         return data;
-    };
+    }
 
-
+    //
+    //  SVG Paper
+    //  ================
+    //
     g.paper.types.svg = function (paper, element, p) {
         var svg = element.append('svg')
-                        .attr('width', p.width)
-                        .attr('height', p.height)
-                        .attr("viewBox", "0 0 " + p.width + " " + p.height),
+                        .attr('width', p.size[0])
+                        .attr('height', p.size[1])
+                        .attr("viewBox", "0 0 " + p.size[0] + " " + p.size[1]),
             current = svg;
 
         p.xAxis = d3.svg.axis(),
         p.yAxis = [d3.svg.axis(), d3.svg.axis()];
+
+        // return the current svg element
+        paper.current = function () {
+            return current;
+        };
+
+        // set the current element to be the root svg element and returns the paper
+        paper.root = function () {
+            current = svg;
+            return paper;
+        };
+
+        // set the current element to be the parent and returns the paper
+        paper.parent = function () {
+            if (current !== svg) {
+                var parent = current.node().parentNode;
+                if (parent === svg.node())
+                    return svg;
+                else
+                    return d3.select(parent);
+            }
+            return paper;
+        };
 
         paper.group = function () {
             current = current.append('g');
@@ -577,9 +657,9 @@
         };
 
         paper.circle = function (cx, cy, r) {
-            cx = p.scalex(cx);
-            cy = p.scaley(cx);
-            rx = p.scalex(r);
+            cx = paper.scalex(cx);
+            cy = paper.scaley(cy);
+            r = paper.scale(r);
             return current.append('circle')
                             .attr('cx', cx)
                             .attr('cy', cy)
@@ -587,13 +667,20 @@
         };
 
         paper.rect = function (x, y, width, height, r) {
+            var X = paper.scalex(x),
+                Y = paper.scaley(y);
+            width = paper.scalex(x+width) - X;
+            height = paper.scalex(y+height) - Y;
             var rect = current.append('rect')
-                                .attr('x', x)
-                                .attr('y', y)
+                                .attr('x', X)
+                                .attr('y', Y)
                                 .attr('width', width)
                                 .attr('height', height);
-            if (r)
-                rect.attr('rx', r).attr('ry', r);
+            if (r) {
+                var rx = paper.scalex(r) - paper.scalex(0),
+                    ry = paper.scaley(r) - paper.scaley(0);
+                rect.attr('rx', rx).attr('ry', rt);
+            }
             return rect;
         };
 
@@ -714,7 +801,7 @@
             }
             if (!element)
                 element = document.createElement('div');
-            attrs = extend({}, g.vizDefaults, this.defaults, attrs);
+            attrs = extend({}, g.defaults.viz, g.defaults.paper, this.defaults, attrs);
             element = d3.select(element);
             this.element = element;
             this.log = log(attrs.debug);
@@ -722,26 +809,7 @@
             this.elheight = null;
             this.uid = ++_idCounter;
             this.dispatch = d3.dispatch.apply(d3, attrs.events);
-            this.d3 = d3;
-
-            if (!attrs.width) {
-                attrs.width = getWidth(element);
-                if (attrs.width)
-                    this.elwidth = getWidthElement(element);
-                else
-                    attrs.width = 400;
-            }
-            if (!attrs.height) {
-                attrs.height = getHeight(element);
-                if (attrs.height)
-                    this.elheight = getHeightElement(element);
-                else
-                    attrs.height = 400;
-            }
-            else if (typeof(attrs.height) === "string" && attrs.height.indexOf('%') === attrs.height.length-1) {
-                attrs.height_percentage = 0.01*parseFloat(attrs.height);
-                attrs.height = attrs.height_percentage*attrs.width;
-            }
+            this.g = g;
             this.attrs = this.getAttributes(attrs);
             //
             if (attrs.resize) {
@@ -920,6 +988,58 @@
         return o !== Viz && o.prototype && o.prototype instanceof Viz;
     };
 
+
+    //
+    //  Initaise paper
+    function _initPaper (paper, p) {
+
+        paper.xAxis().scale().range([0, p.size[0]]);
+        paper.yaxis(2).yAxis().scale().range([0, p.size[1]]);
+        paper.yaxis(1).yAxis().scale().range([0, p.size[1]]);
+        //
+        return paper;
+    }
+
+
+    function _newPaperAttr (element, cfg) {
+        var width, height;
+
+        if (cfg) {
+            width = cfg.width;
+            height = cfg.height;
+            cfg = pick(cfg, function (value, key) {
+                if (g.defaults.paper[key] !== undefined)
+                    return value;
+            });
+        }
+        else
+            cfg = {};
+
+        var p = extend({}, g.defaults.paper, cfg);
+
+        if (!width) {
+            width = getWidth(element);
+            if (width)
+                p.elwidth = getWidthElement(element);
+            else
+                width = g.constants.WIDTH;
+        }
+
+        if (!height) {
+            height = getHeight(element);
+            if (height)
+                p.elheight = getHeightElement(element);
+            else
+                height = g.constants.HEIGHT;
+        }
+        else if (typeof(height) === "string" && height.indexOf('%') === height.length-1) {
+            p.height_percentage = 0.01*parseFloat(height);
+            height = p.height_percentage*width;
+        }
+
+        p.size = [width, height];
+        return p;
+    }
 
     //
     //  Extend d3 with canvas object
@@ -1738,16 +1858,6 @@
 
         },
 
-        svg: function () {
-            var w = this.attrs.width,
-                h = this.attrs.height;
-            this.element.html('');
-            return this.element.append("svg")
-                .attr("width", w)
-                .attr("height", h)
-                .attr("viewBox", "0 0 " + w + " " + h);
-        },
-
         build: function () {
             var self = this,
                 opts = this.attrs,
@@ -1779,6 +1889,96 @@
 
         }
     });
+var BITS = 52,
+    SCALE = 2 << 51,
+    MAX_DIMENSION = 21201,
+    COEFFICIENTS = [
+        'd       s       a       m_i',
+        '2       1       0       1',
+        '3       2       1       1 3',
+        '4       3       1       1 3 1',
+        '5       3       2       1 1 1',
+        '6       4       1       1 1 3 3',
+        '7       4       4       1 3 5 13',
+        '8       5       2       1 1 5 5 17',
+        '9       5       4       1 1 5 5 5',
+        '10      5       7       1 1 7 11 1'
+    ];
+
+
+g.math.sobol = function (dim) {
+    if (dim < 1 || dim > MAX_DIMENSION) throw new Error("Out of range dimension");
+    var sobol = {},
+        count = 0,
+        direction = [],
+        x = [],
+        zero = [],
+        lines,
+        i;
+
+    sobol.next = function() {
+        var v = [];
+        if (count === 0) {
+            count++;
+            return zero.slice();
+        }
+        var c = 1;
+        var value = count - 1;
+        while ((value & 1) == 1) {
+            value >>= 1;
+            c++;
+        }
+        for (i = 0; i < dim; i++) {
+            x[i] ^= direction[i][c];
+            v[i] = x[i] / SCALE;
+        }
+        count++;
+        return v;
+    };
+
+    sobol.dimension = function () {
+        return dim;
+    };
+
+    sobol.count = function () {
+        return count;
+    };
+
+
+    var tmp = [];
+    for (i = 0; i <= BITS; i++) tmp.push(0);
+    for (i = 0; i < dim; i++) {
+        direction[i] = tmp.slice();
+        x[i] = 0;
+        zero[i] = 0;
+    }
+
+    if (dim > COEFFICIENTS.length) {
+        throw new Error("Out of range dimension");
+        //var data = fs.readFileSync(file);
+        //lines = ("" + data).split("\n");
+    }
+    else
+        lines = COEFFICIENTS;
+
+    for (i = 1; i <= BITS; i++) direction[0][i] = 1 << (BITS - i);
+    for (var d = 1; d < dim; d++) {
+        var cells = lines[d].split(/\s+/);
+        var s = +cells[1];
+        var a = +cells[2];
+        var m = [0];
+        for (i = 0; i < s; i++) m.push(+cells[3 + i]);
+        for (i = 1; i <= s; i++) direction[d][i] = m[i] << (BITS - i);
+        for (i = s + 1; i <= BITS; i++) {
+            direction[d][i] = direction[d][i - s] ^ (direction[d][i - s] >> s);
+            for (var k = 1; k <= s - 1; k++)
+            direction[d][i] ^= ((a >> (s - 1 - k)) & 1) * direction[d][i - k];
+        }
+    }
+
+    return sobol;
+};
+
 
     return d3;
 }));
