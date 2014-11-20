@@ -99,10 +99,9 @@
             this.element = element;
             this.log = log(attrs.debug);
             this.uid = ++_idCounter;
+            this.dispatch = d3.dispatch.apply(d3, attrs.events);
             this.g = g;
             this.attrs = this.getAttributes(attrs);
-            this.event = d3.dispatch.apply(d3, attrs.events);
-            d3.rebind(this, this.event, 'on');
             //
             if (attrs.onInit)
                 this._executeCallback(attrs.onInit);
@@ -125,7 +124,7 @@
                 if (this._paper)
                     this._paper.destroy();
 
-                this._paper = g.paper(this.element, this.attrs);
+                this._paper = g.paper(this.element.node(), this.attrs);
                 this._paper.on('refresh', function () {
                     self._refresh();
                 });
@@ -138,7 +137,7 @@
             if (options)
                 this.attrs = extend(this.attrs, options);
             this.d3build();
-            this.event.build(this);
+            this.dispatch.build(this);
         },
         //
         // Same as build
@@ -178,6 +177,18 @@
                 this.attrs.data = data;
             if (callback)
                 callback();
+        },
+        //
+        // Shortcut for this.dispatch.on(...) but chainable
+        on: function (event, callback) {
+            this.dispatch.on(event, callback);
+            return this;
+        },
+        //
+        // Fire an event if it exists
+        fire: function (event) {
+            if (this.dispatch[event])
+                this.dispatch[event].call(this);
         },
         //
         // Execute a callback
