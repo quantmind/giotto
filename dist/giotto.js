@@ -1,6 +1,6 @@
 //      Giotto - v0.1.0
 
-//      Compiled 2014-11-19.
+//      Compiled 2014-11-20.
 //      Copyright (c) 2014 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -554,6 +554,7 @@
             return paper.yAxis().scale()(y);
         };
 
+        // Resize the paper and fire the resize event if resizing was performed
         paper.resize = function (size) {
             p._resizing = true;
             if (!size) {
@@ -563,6 +564,7 @@
                 g.log.info('Resizing paper');
                 p.size = size;
                 paper.refresh();
+                p.event.resize({type: 'resize', size: p.size.slice(0)});
             }
             p._resizing = false;
         };
@@ -627,6 +629,11 @@
 
         p.xAxis = d3.svg.axis(),
         p.yAxis = [d3.svg.axis(), d3.svg.axis()];
+
+        paper.refresh = function () {
+            svg.attr('width', p.size[0])
+               .attr('height', p.size[1]);
+        };
 
         // return the current svg element
         paper.current = function () {
@@ -805,24 +812,10 @@
             element = d3.select(element);
             this.element = element;
             this.log = log(attrs.debug);
-            this.elwidth = null;
-            this.elheight = null;
             this.uid = ++_idCounter;
             this.dispatch = d3.dispatch.apply(d3, attrs.events);
             this.g = g;
             this.attrs = this.getAttributes(attrs);
-            //
-            if (attrs.resize) {
-                var self = this;
-                if (window.onresize === null) {
-                    window.onresize = generateResize();
-                }
-                if (window.onresize.add) {
-                    window.onresize.add(function () {
-                        self._resize();
-                    });
-                }
-            }
             //
             if (attrs.onInit)
                 this._executeCallback(attrs.onInit);
@@ -831,46 +824,21 @@
         },
         //
         // Resize the vizualization
-        _resize: function () {
-            var w = this.elwidth ? getWidth(this.elwidth) : this.attrs.width,
-                h;
-            if (this.attrs.height_percentage)
-                h = w*this.attrs.height_percentage;
-            else
-                h = this.elheight ? getHeight(this.elheight) : this.attrs.height;
-            if (this.attrs.width !== w || this.attrs.height !== h) {
-                this.attrs.width = w;
-                this.attrs.height = h;
-                if (!this._resizing) {
-                    if (this.attrs.resizeDelay) {
-                        var self = this;
-                        this._resizing = true;
-                        setTimeout(function () {
-                            self.log.info('Resizing visualization');
-                            self.resize();
-                            self._resizing = false;
-                        }, this.attrs.resizeDelay);
-                    } else {
-                        this.resize();
-                    }
-                }
-            }
-        },
-        //
-        // Resize the vizualization
         resize: function (size) {
-            if (size) {
-                this.attrs.width = size[0];
-                this.attrs.height = size[1];
-            }
-            this.build();
+            if (this._paper)
+                this._paper.resize(size);
         },
         //
         //  Retrieve the paper when the visualization is displayed
         //  Create a new one if not available
         paper: function () {
             if (this._paper === undefined) {
+                var self = this;
+
                 this._paper = g.paper(this.element, this.attrs);
+                this._paper.on('resize', function () {
+                    self._resize();
+                });
             }
             return this._paper;
         },
@@ -981,7 +949,10 @@
                 cbk.call(this);
             else
                 this.log.error('Cannot execute callback "' + callback + '". Not a function');
-        }
+        },
+        //
+        // Use this method to do something when a resize event occurs
+        _resize: function () {}
     });
 
     g.isviz = function (o) {
@@ -997,7 +968,7 @@
         paper.yaxis(2).yAxis().scale().range([0, p.size[1]]);
         paper.yaxis(1).yAxis().scale().range([0, p.size[1]]);
         //
-        return paper;
+        return d3.rebind(paper, p.event, 'on');
     }
 
 
@@ -1038,6 +1009,7 @@
         }
 
         p.size = [width, height];
+        p.event = d3.dispatch('resize');
         return p;
     }
 
@@ -1203,12 +1175,16 @@
         var canvas = element.append("canvas")
                 .attr("width", cfg.width)
                 .attr("height", cfg.height),
-            ctx = canvas.node().getContext('2d');
+            ctx = canvas.node().getContext('2d'),
+            current = ctx;
 
         cfg.yaxis = 1,
         cfg.xAxis = d3.canvas.axis(),
         cfg.yAxis = [d3.canvas.axis(), d3.canvas.axis()];
 
+        paper.current = function () {
+            return current;
+        };
     };
 
     g.C3 = Viz.extend({

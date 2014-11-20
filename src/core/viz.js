@@ -98,24 +98,10 @@
             element = d3.select(element);
             this.element = element;
             this.log = log(attrs.debug);
-            this.elwidth = null;
-            this.elheight = null;
             this.uid = ++_idCounter;
             this.dispatch = d3.dispatch.apply(d3, attrs.events);
             this.g = g;
             this.attrs = this.getAttributes(attrs);
-            //
-            if (attrs.resize) {
-                var self = this;
-                if (window.onresize === null) {
-                    window.onresize = generateResize();
-                }
-                if (window.onresize.add) {
-                    window.onresize.add(function () {
-                        self._resize();
-                    });
-                }
-            }
             //
             if (attrs.onInit)
                 this._executeCallback(attrs.onInit);
@@ -124,46 +110,21 @@
         },
         //
         // Resize the vizualization
-        _resize: function () {
-            var w = this.elwidth ? getWidth(this.elwidth) : this.attrs.width,
-                h;
-            if (this.attrs.height_percentage)
-                h = w*this.attrs.height_percentage;
-            else
-                h = this.elheight ? getHeight(this.elheight) : this.attrs.height;
-            if (this.attrs.width !== w || this.attrs.height !== h) {
-                this.attrs.width = w;
-                this.attrs.height = h;
-                if (!this._resizing) {
-                    if (this.attrs.resizeDelay) {
-                        var self = this;
-                        this._resizing = true;
-                        setTimeout(function () {
-                            self.log.info('Resizing visualization');
-                            self.resize();
-                            self._resizing = false;
-                        }, this.attrs.resizeDelay);
-                    } else {
-                        this.resize();
-                    }
-                }
-            }
-        },
-        //
-        // Resize the vizualization
         resize: function (size) {
-            if (size) {
-                this.attrs.width = size[0];
-                this.attrs.height = size[1];
-            }
-            this.build();
+            if (this._paper)
+                this._paper.resize(size);
         },
         //
         //  Retrieve the paper when the visualization is displayed
         //  Create a new one if not available
         paper: function () {
             if (this._paper === undefined) {
+                var self = this;
+
                 this._paper = g.paper(this.element, this.attrs);
+                this._paper.on('resize', function () {
+                    self._resize();
+                });
             }
             return this._paper;
         },
@@ -274,7 +235,10 @@
                 cbk.call(this);
             else
                 this.log.error('Cannot execute callback "' + callback + '". Not a function');
-        }
+        },
+        //
+        // Use this method to do something when a resize event occurs
+        _resize: function () {}
     });
 
     g.isviz = function (o) {

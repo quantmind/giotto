@@ -12,6 +12,11 @@
         p.xAxis = d3.svg.axis(),
         p.yAxis = [d3.svg.axis(), d3.svg.axis()];
 
+        paper.refresh = function () {
+            svg.attr('width', p.size[0])
+               .attr('height', p.size[1]);
+        };
+
         // return the current svg element
         paper.current = function () {
             return current;

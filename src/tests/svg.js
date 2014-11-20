@@ -63,6 +63,21 @@
             expect(+r.attr('y')).toBe(125);
         });
 
+        it("Check resize", function () {
+            var paper = g.paper({width: 600, height: 500});
+
+            function listener (e) {
+                expect(e.type).toBe('resize');
+                expect(e.size[0]).toBe(400);
+                expect(e.size[1]).toBe(300);
+            }
+
+            paper.on('resize', listener);
+            paper.resize([400, 300]);
+            expect(paper.width()).toBe(400);
+            expect(paper.height()).toBe(300);
+        });
+
         function checkScale(paper) {
             var width = paper.width(),
                 height = paper.height(),

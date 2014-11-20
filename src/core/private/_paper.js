@@ -6,7 +6,7 @@
         paper.yaxis(2).yAxis().scale().range([0, p.size[1]]);
         paper.yaxis(1).yAxis().scale().range([0, p.size[1]]);
         //
-        return paper;
+        return d3.rebind(paper, p.event, 'on');
     }
 
 
@@ -47,5 +47,6 @@
         }
 
         p.size = [width, height];
+        p.event = d3.dispatch('resize');
         return p;
     }

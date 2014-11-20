@@ -67,6 +67,7 @@
             return paper.yAxis().scale()(y);
         };
 
+        // Resize the paper and fire the resize event if resizing was performed
         paper.resize = function (size) {
             p._resizing = true;
             if (!size) {
@@ -76,6 +77,7 @@
                 g.log.info('Resizing paper');
                 p.size = size;
                 paper.refresh();
+                p.event.resize({type: 'resize', size: p.size.slice(0)});
             }
             p._resizing = false;
         };
