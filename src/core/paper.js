@@ -9,11 +9,15 @@
             element = null;
         }
         if (!element)
-            element = d3.select(document.createElement('div'));
+            element = document.createElement('div');
+
+        element = d3.select(element);
 
         p = _newPaperAttr(element, p);
 
-        g.paper.types[p.type](paper, element, p);
+        paper.destroy = function () {
+            element.selectAll('*').remove();
+        };
 
         paper.type = function () {
             return p.type;
@@ -29,6 +33,10 @@
 
         paper.height = function () {
             return p.size[1];
+        };
+
+        paper.aspectRatio = function () {
+            return p.size[1]/p.size[0];
         };
 
         paper.element = function () {
@@ -77,18 +85,17 @@
                 g.log.info('Resizing paper');
                 p.size = size;
                 paper.refresh();
-                p.event.resize({type: 'resize', size: p.size.slice(0)});
             }
             p._resizing = false;
         };
 
         paper.boundingBox = function () {
-            var w = p.elwidth ? getWidth(p.elwidth) : p.width,
+            var w = p.elwidth ? getWidth(p.elwidth) : p.size[0],
                 h;
             if (p.height_percentage)
                 h = w*p.height_percentage;
             else
-                h = p.elheight ? getHeight(p.elheight) : p.height;
+                h = p.elheight ? getHeight(p.elheight) : p.size[1];
             return [w, h];
         };
 

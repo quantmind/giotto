@@ -27,6 +27,7 @@
         g = giotto;
 
     d3.giotto = giotto;
+    d3.canvas = {};
 
     // Warps RequireJs call so it can be used in conjunction with
     //  require-config.js

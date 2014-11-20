@@ -7,19 +7,20 @@
             deps = deps || [];
 
             return angular.module(moduleName, deps)
-                        .directive('jstats', function () {
-                            return {
-                                link: function (scope, element, attrs) {
-                                    var mode = attrs.mode ? +attrs.mode : 1;
-                                    require(rcfg.min(['stats']), function () {
-                                        var stats = new Stats();
-                                        stats.setMode(mode);
-                                        scope.stats = stats;
-                                        element.append($(stats.domElement));
-                                    });
-                                }
-                            };
-                        });
+
+                    .directive('jstats', function () {
+                        return {
+                            link: function (scope, element, attrs) {
+                                var mode = attrs.mode ? +attrs.mode : 1;
+                                require(rcfg.min(['stats']), function () {
+                                    var stats = new Stats();
+                                    stats.setMode(mode);
+                                    scope.stats = stats;
+                                    element.append(angular.element(stats.domElement));
+                                });
+                            }
+                        };
+                    });
         },
 
         directive: function (angular, name, VizClass, moduleName, injects) {
@@ -44,6 +45,7 @@
                             options.scope = scope;
                             viz = new VizClass(element[0], options);
                             element.data(viz);
+                            scope.$emit('giotto-viz', viz);
                             // Add a callback for injects
                             if (autoBuild === undefined || autoBuild)
                                 viz.build();

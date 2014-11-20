@@ -1,6 +1,7 @@
     //
     //  Initaise paper
     function _initPaper (paper, p) {
+        g.paper.types[p.type](paper, p);
 
         paper.xAxis().scale().range([0, p.size[0]]);
         paper.yaxis(2).yAxis().scale().range([0, p.size[1]]);
@@ -47,6 +48,6 @@
         }
 
         p.size = [width, height];
-        p.event = d3.dispatch('resize');
+        p.event = d3.dispatch('refresh');
         return p;
     }

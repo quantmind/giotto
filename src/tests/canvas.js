@@ -14,4 +14,35 @@
             expect(paper.height()).toBe(g.constants.HEIGHT);
         });
 
+        it("Check resize", function () {
+            var paper = g.paper({type: 'canvas', width: 600, height: 500}),
+                width = 400,
+                height = 300;
+
+            expect(paper.type()).toBe('canvas');
+
+            function listener (e) {
+                expect(e.type).toBe('refresh');
+                expect(e.size[0]).toBe(width);
+                expect(e.size[1]).toBe(height);
+            }
+            paper.on('refresh', listener);
+
+            paper.resize([width, height]);
+            expect(paper.width()).toBe(width);
+            expect(paper.height()).toBe(height);
+
+            width = 200;
+            height = 180;
+            paper.resize([width, height]);
+            expect(paper.width()).toBe(width);
+            expect(paper.height()).toBe(height);
+        });
+
+        it("Check clear", function () {
+            var paper = g.paper({type: 'canvas'});
+
+            expect(paper.clear()).toBe(paper);
+        });
+
     });

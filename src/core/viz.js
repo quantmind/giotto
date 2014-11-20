@@ -99,9 +99,10 @@
             this.element = element;
             this.log = log(attrs.debug);
             this.uid = ++_idCounter;
-            this.dispatch = d3.dispatch.apply(d3, attrs.events);
             this.g = g;
             this.attrs = this.getAttributes(attrs);
+            this.event = d3.dispatch.apply(d3, attrs.events);
+            d3.rebind(this, this.event, 'on');
             //
             if (attrs.onInit)
                 this._executeCallback(attrs.onInit);
@@ -117,46 +118,19 @@
         //
         //  Retrieve the paper when the visualization is displayed
         //  Create a new one if not available
-        paper: function () {
-            if (this._paper === undefined) {
+        paper: function (createNew) {
+            if (createNew || this._paper === undefined) {
                 var self = this;
 
+                if (this._paper)
+                    this._paper.destroy();
+
                 this._paper = g.paper(this.element, this.attrs);
-                this._paper.on('resize', function () {
-                    self._resize();
+                this._paper.on('refresh', function () {
+                    self._refresh();
                 });
             }
             return this._paper;
-        },
-        //
-        // Return a new d3 svg element insite the element without any children
-        svg: function () {
-            this.element.html('');
-            return this.element.append("svg")
-                .attr("width", this.attrs.width)
-                .attr("height", this.attrs.height);
-        },
-        //
-        // Return a new canvs element insite the element without any children
-        canvas: function () {
-            this.element.html('');
-            return this.element.append("canvas")
-                .attr("width", this.attrs.width)
-                .attr("height", this.attrs.height)
-                .node().getContext('2d');
-        },
-
-        size: function () {
-            return [this.attrs.width, this.attrs.height];
-        },
-        //
-        // Normalized Height
-        //
-        // Try to always work with non dimensional coordinates,
-        // Normalised vi the width
-        sy: function () {
-            var size = this.size();
-            return size[1]/size[0];
         },
         //
         // Build the visualisation
@@ -164,7 +138,7 @@
             if (options)
                 this.attrs = extend(this.attrs, options);
             this.d3build();
-            this.fire('build');
+            this.event.build(this);
         },
         //
         // Same as build
@@ -206,18 +180,6 @@
                 callback();
         },
         //
-        // Shortcut for this.dispatch.on(...) but chainable
-        on: function (event, callback) {
-            this.dispatch.on(event, callback);
-            return this;
-        },
-        //
-        // Fire an event if it exists
-        fire: function (event) {
-            if (this.dispatch[event])
-                this.dispatch[event].call(this);
-        },
-        //
         // Execute a callback
         _executeCallback: function (callback) {
             var cbk = callback;
@@ -237,8 +199,11 @@
                 this.log.error('Cannot execute callback "' + callback + '". Not a function');
         },
         //
-        // Use this method to do something when a resize event occurs
-        _resize: function () {}
+        // Use this method to do something when a refresh event occurs
+        _refresh: function () {
+            if (this.paper().type() === 'canvas')
+                this.build();
+        }
     });
 
     g.isviz = function (o) {

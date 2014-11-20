@@ -14,8 +14,8 @@
         onInit: null,
         //
         autoBuild: true,
-        // Events dispatched by the visualization
-        events: ['build', 'change'],
+        // Default events dispatched by the visualization
+        events: ['build', 'change', 'start', 'tick', 'end'],
         //
         // Default parameters when drawing lines
         lines: {

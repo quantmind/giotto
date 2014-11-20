@@ -93,4 +93,23 @@
     //
     isArray = _.isFunction = function (value) {
         return ostring.call(value) === '[object Array]';
+    },
+
+    encodeObject = _.encodeObject = function (obj, contentType) {
+        var p;
+        if (contentType === 'multipart/form-data') {
+            var fd = new FormData();
+            for(p in obj)
+                if (obj.hasOwnProperty(p))
+                    fd.append(p, obj[p]);
+            return fd;
+        } else if (contentType === 'application/json') {
+            return JSON.stringify(obj);
+        } else {
+            var str = [];
+            for(p in obj)
+                if (obj.hasOwnProperty(p))
+                    str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
+            return str.join("&");
+        }
     };

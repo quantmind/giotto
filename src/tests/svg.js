@@ -64,18 +64,32 @@
         });
 
         it("Check resize", function () {
-            var paper = g.paper({width: 600, height: 500});
+            var paper = g.paper({width: 600, height: 500}),
+                width = 400,
+                height = 300;
 
             function listener (e) {
-                expect(e.type).toBe('resize');
-                expect(e.size[0]).toBe(400);
-                expect(e.size[1]).toBe(300);
+                expect(e.type).toBe('refresh');
+                expect(e.size[0]).toBe(width);
+                expect(e.size[1]).toBe(height);
             }
+            paper.on('refresh', listener);
 
-            paper.on('resize', listener);
-            paper.resize([400, 300]);
-            expect(paper.width()).toBe(400);
-            expect(paper.height()).toBe(300);
+            paper.resize([width, height]);
+            expect(paper.width()).toBe(width);
+            expect(paper.height()).toBe(height);
+
+            width = 200;
+            height = 180;
+            paper.resize([width, height]);
+            expect(paper.width()).toBe(width);
+            expect(paper.height()).toBe(height);
+        });
+
+        it("Check clear", function () {
+            var paper = g.paper();
+
+            expect(paper.clear()).toBe(paper);
         });
 
         function checkScale(paper) {

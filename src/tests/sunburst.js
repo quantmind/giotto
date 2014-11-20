@@ -27,8 +27,8 @@
                     padding: '30',
                     src: src
                 }),
-                check = function () {
-                    expect(this).toBe(sunb);
+                check = function (o) {
+                    expect(o).toBe(sunb);
                     //expect(typeof(o.attrs.data)).toBe('object');
                     done();
                 };
