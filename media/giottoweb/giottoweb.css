@@ -1,8 +1,8 @@
 @charset "UTF-8";
 /*
 ------------------------------------------------------------------
-Created by lux in 0.11 seconds
-Date: 2014-11-21 11:42:04
+Created by lux in 0.13 seconds
+Date: 2014-11-21 11:45:52
 
 http://quantmind.github.io/lux/
 ------------------------------------------------------------------ */
@@ -12,9 +12,9 @@ http://quantmind.github.io/lux/
 }
 
 .lazyContainer > .content {
-    min-height: 100%;
     position: absolute;
     width: 100%;
+    min-height: 100%;
     left: 0;
     top: 0;
 }
@@ -28,9 +28,9 @@ body {
     line-height: 1.5;
     font-size: 18px;
     background: #fff;
-    font-family: "freight-text-pro",Georgia,Cambria,"Times New Roman",Times,serif;
     color: rgba(0, 0, 0, 0.8);
     font-style: normal;
+    font-family: "freight-text-pro",Georgia,Cambria,"Times New Roman",Times,serif;
 }
 
 p.form-error {
@@ -55,21 +55,21 @@ p.form-error {
 }
 
 .katex-outer {
-    margin-left: auto;
-    display: block;
     margin-right: auto;
     margin-bottom: 10px;
-    margin-left: auto;
     display: block;
+    margin-left: auto;
     margin-right: auto;
     margin-bottom: 10px;
+    display: block;
+    margin-left: auto;
 }
 
 code.hljs.inline {
-    display: inline;
     padding: 2px 4px;
     display: inline;
     padding: 2px 4px;
+    display: inline;
 }
 
 dl dd {
@@ -90,20 +90,20 @@ dl.function > dt > tt.descname {
 
 dl.class dt tt.descname,
 dl.function dt tt.descname {
-    color: rgba(0, 0, 0, 0.8);
     font-weight: bold;
     color: rgba(0, 0, 0, 0.8);
     font-weight: bold;
+    color: rgba(0, 0, 0, 0.8);
 }
 
 dl.class dt,
 dl.function dt {
-    color: #888;
-    font-size: 18px;
     font-weight: normal;
     color: #888;
     font-size: 18px;
     font-weight: normal;
+    color: #888;
+    font-size: 18px;
 }
 
 [ng\:cloak],
@@ -128,8 +128,8 @@ dl.function dt {
 }
 
 .navbar2-wrapper {
-    min-height: 100%;
     width: 100%;
+    min-height: 100%;
 }
 
 .navbar2-page {
@@ -150,9 +150,9 @@ dl.function dt {
 @media all and (min-width:768px) {
     .sidebar {
         margin-top: 51px;
-        z-index: 1;
         width: 200px;
         position: absolute;
+        z-index: 1;
     }
 
 }
@@ -178,21 +178,21 @@ dl.function dt {
 }
 
 .media-list > .media > a h3 {
-    color: #333;
     font-weight: normal;
+    color: #333;
 }
 
 .post-image {
+    width: 140px;
     max-height: 140px;
     height: auto;
     float: left;
-    width: 140px;
 }
 
 .post-image-xs {
-    max-height: 150px;
-    width: auto;
     max-width: 90%;
+    width: auto;
+    max-height: 150px;
 }
 
 h1:hover > a.headerlink,
@@ -206,10 +206,10 @@ dt:hover > a.headerlink {
 }
 
 a.headerlink {
+    padding: 0 4px;
     color: #eee;
     visibility: hidden;
     text-decoration: none;
-    padding: 0 4px;
 }
 
 a.headerlink:hover {
@@ -221,8 +221,8 @@ a.headerlink:hover {
 }
 
 div.viewcode-block:target {
-    padding: 0 10px;
     margin: -1px -10px;
+    padding: 0 10px;
 }
 
 table.docutils.field-list th {
@@ -235,8 +235,8 @@ table.docutils.field-list th {
 
 .trianglify-box {
     max-width: 400px;
-    padding: 20px;
     background: rgba(255, 255, 255, 0.6);
+    padding: 20px;
     -webkit-border-radius: 5px;
        -moz-border-radius: 5px;
             border-radius: 5px;
