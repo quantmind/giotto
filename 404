@@ -1,0 +1,17 @@
+priority: 0
+
+<div id="page-error" class="fullpage">
+    <div class="error-message-container">
+        <div class="container-fluid error-message">
+            <div class="row">
+                <div class="col-sm-3">
+                    <p>404</p>
+                </div>
+                <div class="col-sm-9">
+                    <p>Sorry, but nothing exists here.</p>
+                    <span>Find something <a href="/">interesting to look at</a></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
