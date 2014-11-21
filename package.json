@@ -25,9 +25,10 @@
         "grunt-contrib-concat": "",
         "grunt-contrib-jshint": "",
         "grunt-contrib-jasmine": "",
-        "grunt-template-jasmine-istanbul": ""
+        "grunt-template-jasmine-istanbul": "",
+        "grunt-coveralls": ""
     },
     "scripts": {
-        "test": "grunt jasmine"
+        "test": "grunt jasmine && grunt coveralls"
     }
 }

@@ -2,6 +2,7 @@ node_modules
 .project
 .pydevproject
 .grunt
+.coveralls.yml
 clean.py
 *.log
 *.pyc

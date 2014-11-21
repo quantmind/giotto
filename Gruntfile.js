@@ -90,9 +90,9 @@ module.exports = function (grunt) {
                         coverage: 'coverage/coverage.json',
                         report: [
                             {
-                                type: 'html',
+                                type: 'lcov',
                                 options: {
-                                    dir: 'coverage/html'
+                                    dir: 'coverage'
                                 }
                             },
                             {
@@ -107,6 +107,12 @@ module.exports = function (grunt) {
                 }
             }
         },
+        coveralls: {
+            options: {
+                src: 'coverage/lcov.info',
+                force: false
+            }
+        }
     });
     //
     // These plugins provide necessary tasks.
@@ -114,6 +120,7 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-contrib-jasmine');
+    grunt.loadNpmTasks('grunt-coveralls');
     //
     grunt.registerTask('gruntfile', 'jshint Gruntfile.js',
             ['jshint:gruntfile']);
