@@ -111,6 +111,10 @@ module.exports = function (grunt) {
             options: {
                 src: 'coverage/lcov.info',
                 force: false
+            },
+            target: {
+                src: 'coverage/lcov.info',
+                force: false
             }
         }
     });
