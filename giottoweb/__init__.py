@@ -17,11 +17,12 @@ EXTENSIONS = ['lux.extensions.base',
               'lux.extensions.code',
               'lux.extensions.angular',
               'lux.extensions.static',
+              'lux.extensions.sitemap',
               'lux.extensions.code',
               'giottoweb.giotto']
 HTML_LINKS = ['giotto/giotto',
               'giottoweb/giottoweb.css']
-REQUIREJS = [MEDIA_URL + 'giottoweb/giottoweb.js']
+REQUIREJS = ['.giottoweb/giottoweb.js']
 
 LINKS = {'AngularJS': 'https://angularjs.org/',
          'RequireJS': 'http://requirejs.org/',
@@ -31,14 +32,20 @@ LINKS = {'AngularJS': 'https://angularjs.org/',
 from os import path
 
 import lux
-from lux.extensions.static import HtmlContent, MediaBuilder
+from lux.extensions.static import HtmlContent, MediaBuilder, Sitemap
 
 
 class Extension(lux.Extension):
 
     def middleware(self, app):
         media_url = app.config['MEDIA_URL']
-        examples = HtmlContent('/', drafts=False,
+        examples = HtmlContent('/',
+                               Sitemap('/sitemap.xml'),
+                               HtmlContent('/examples',
+                                           html_body_template='examples.html',
+                                           dir='giottoweb/content/examples',
+                                           drafts=False),
+                               drafts=False,
                                dir='giottoweb/content/site')
         dist = MediaBuilder(media_url+'giotto', 'dist', lux=False)
         return [dist, examples]
@@ -66,3 +73,38 @@ def add_css(all):
         padding=px(20),
         max_width=px(400),
         background=color(255, 255, 255, 0.6))
+
+    error_page(all)
+
+
+def error_page(all):
+    from lux.extensions.ui import px, pc, spacing, color, BoxSizing, Background
+    css = all.css
+    media = all.media
+    cfg = all.app.config
+    mediaurl = cfg['MEDIA_URL']
+    collapse_width = px(cfg['NAVBAR_COLLAPSE_WIDTH'])
+
+    css('#page-error',
+        css(' a, a:hover',
+            color=color('#fff'),
+            text_decoration='underline'),
+        Background(url=mediaurl+'giottoweb/see.jpg',
+                   size='cover',
+                   repeat='no-repeat',
+                   position='left top'),
+        color=color('#fff'))
+    css('.error-message-container',
+        BoxSizing('border-box'),
+        padding=spacing(40, 120),
+        background=color(0, 0, 0, 0.4),
+        height=pc(100)),
+    css('.error-message',
+        css(' p',
+            font_size=px(50)))
+    media(max_width=collapse_width).css(
+        '.error-message p',
+        font_size=px(32)).css(
+        '.error-message-container',
+        text_align='center',
+        padding=spacing(40, 0))

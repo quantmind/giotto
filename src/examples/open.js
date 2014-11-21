@@ -9,13 +9,13 @@ require(rcfg.min(['lux/lux', 'giotto/giotto', 'angular-ui-router', 'angular-stra
                  'force',
                  {href: 'charts', label: 'Charting'},
                  {href: 'giotto', label: 'Logo'},
-                 {href: 'c3', name: 'time series'},
+                 {href: 'c3', label: 'time series'},
                  'trianglify'],
             all = [];
         //
         s.forEach(function (v) {
             if (typeof(v) === 'string')
-                v = {href: v, name: v};
+                v = {href: v, label: v};
             v.href = url + '/examples/' + v.href;
             all.push(v);
         });
@@ -26,16 +26,24 @@ require(rcfg.min(['lux/lux', 'giotto/giotto', 'angular-ui-router', 'angular-stra
         navbar: {
             brand: 'Giotto',
             theme: 'default',
-            items: [
+            top: true,
+            target: '_self',
+            itemsRight: [
+                {
+                    href: url + '/examples/',
+                    icon: 'fa fa-bar-chart',
+                    label: 'examples',
+                    target: '_self'
+                },
                 {
                     href: url + '/api/',
-                    icon: 'fa fa-cogs fa-2x',
-                    label: 'api'
+                    icon: 'fa fa-cogs',
+                    label: 'api',
+                    target: '_self'
                 },
                 {
                     href: 'https://github.com/quantmind/giotto',
-                    icon: 'fa fa-github fa-2x',
-                    name: 'bla'
+                    icon: 'fa fa-github'
                 }
             ],
             items2: sitemap()
