@@ -2,31 +2,96 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>d3 extensions Spec Runner</title>
-  <link rel="shortcut icon" type="image/png" href="<%= temp %>/jasmine_favicon.png">
-<% css.forEach(function(style){ %>
+  <title>Jasmine Spec Runner</title>
+
+  <% css.forEach(function(style){ %>
   <link rel="stylesheet" type="text/css" href="<%= style %>">
-<% }) %>
-<script type="text/javascript">
-var require = {minify: true};
-</script>
-<script src="http://quantmind.github.io/require-config-js/require.config.min.js" type="text/javascript"></script>
-<script src="http://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js" type="text/javascript"></script>
- <% with (scripts) { %>
+  <% }) %>
+  <script type="text/javascript">
+  var require = {minify: true};
+  </script>
+  <script src="http://quantmind.github.io/require-config-js/require.config.min.js" type="text/javascript"></script>
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js" type="text/javascript"></script>
+  <script>
+    require.onError = function(error) {
+      var message = error.requireType + ': ';
+      if (error.requireType === 'scripterror' || error.requireType === 'notloaded' && error.requireModules) {
+        message += 'Illegal path or script error: ' + '[\'' + error.requireModules.join("', '") + '\']';
+      } else {
+        message += error.message;
+      }
+
+      throw Error(message);
+    };
+  </script>
+
+  <% with (scripts) { %>
   <% [].concat(jasmine, boot, vendor, helpers).forEach(function(script){ %>
   <script src="<%= script %>"></script>
   <% }) %>
   <% }; %>
-<script>
+
+  <script>
+    <% if (options.mainRequireConfig) { %>
+      require.config(<%= serializeRequireConfig(options.mainRequireConfig) %>);
+    <% } %>
+
+    <% var hasCallback = false;
+       if (options.requireConfig) {
+        if ('callback' in options.requireConfig) {
+            /* Inserting launchTest() as the last statement in callback function
+               to make sure spec is called after all initialization stuffs */
+
+            // capture the arguments and body fo callback function
+            options.requireConfig['callback'].toString().replace(/^function\s+\w*\(([^\)]*)\)\s*\{((?:.|[\n\r])*)}/m, function(match, args, body) {
+                var being_recreated_function = [];
+                if (args.length > 0) {
+                    args = args.split(/,\s*/);
+                    being_recreated_function = being_recreated_function.concat(args);
+                }
+                // append launchTest() to the end of function body
+                body += '\nlaunchTest();';
+
+                being_recreated_function = being_recreated_function.concat(body);
+
+                // recreate an anonymouse function with modified body
+                // re-assign callback property by just created new function
+                // (return value dosen't matter)
+                options.requireConfig['callback'] = Function.apply(this, being_recreated_function);
+                hasCallback = true;
+            });
+        }
+    %>
+      require.config(<%= serializeRequireConfig(options.requireConfig) %>);
+    <% } %>
+  </script>
+
+  <script>
     // Delay onLoad function until we are ready
     var startTests = window.onload;
     window.onload = null;
-    require(['<%= [].concat(options.deps).join("', '") %>'], function() {
-        require(['<%= [].concat(scripts.specs,scripts.reporters).join("','") %>'], function(){
-            startTests();
-        });
-    });
-</script>
+
+    function launchTest() {
+    require([
+      <% scripts.src.forEach(function(script, i){ %>
+        <% script = script.replace(/\\/g, '/') // replace all backward slashes to forward slash %>
+        '<%= script %>' <%= i < scripts.src.length-1 ? ',' : '' %>
+      <% }) %>
+    ],
+    function(){
+      require(['<%= [].concat(scripts.specs,scripts.reporters).join("','") %>'], function(){
+        startTests();
+      });
+    }
+    )
+  }
+  </script>
+
+  <% if (!hasCallback) { %>
+  <script>
+  launchTest();
+  </script>
+  <% } %>
 </head>
 <body>
 </body>

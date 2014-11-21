@@ -74,15 +74,39 @@ module.exports = function (grunt) {
         uglify: uglify_libs(),
         jshint: jshint_libs(),
         jasmine: {
-            src : [],
-            options : {
-                specs : 'src/tests/*.js',
-                template: 'src/tests/test.tpl.html',
-                templateOptions: {
-                    deps: ['dist/giotto.min.js']
+            test: {
+                src : 'dist/giotto.min.js',
+                options : {
+                    specs : 'src/tests/*.js',
+                    template: 'src/tests/test.tpl.html'
+                }
+            },
+            coverage: {
+                src : 'dist/giotto.js',
+                options : {
+                    specs : 'src/tests/*.js',
+                    template: require('grunt-template-jasmine-istanbul'),
+                    templateOptions: {
+                        coverage: 'coverage/coverage.json',
+                        report: [
+                            {
+                                type: 'html',
+                                options: {
+                                    dir: 'coverage/html'
+                                }
+                            },
+                            {
+                                type: 'text-summary'
+                            }
+                        ],
+                        template: 'src/tests/test.tpl.html',
+                        templateOptions: {
+                            deps: ['dist/giotto.js']
+                        }
+                    },
                 }
             }
-        }
+        },
     });
     //
     // These plugins provide necessary tasks.
@@ -95,9 +119,11 @@ module.exports = function (grunt) {
             ['jshint:gruntfile']);
     grunt.registerTask('build', 'Compile and lint all libraries',
             ['gruntfile', 'concat', 'jshint', 'uglify']);
+    grunt.registerTask('coverage', 'Test coverage using Jasmine and Istanbul',
+            ['jasmine:coverage']);
     grunt.registerTask('all', 'Compile lint and test all libraries',
             ['build', 'jasmine']);
-    grunt.registerTask('default', ['all']);
+    grunt.registerTask('default', ['build', 'jasmine:test']);
     //
     for_each(libs, function (name) {
         var tasks = ['concat:' + name, 'jshint:' + name];
