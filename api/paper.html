@@ -11,18 +11,19 @@
 <link href='http://quantmind.github.io/giotto/media/giotto/giotto.min.css' rel='stylesheet' type='text/css'>
 <link href='http://quantmind.github.io/giotto/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var lux = {context: {"apiUrls": {}, "brand": "Lux", "pages": {"/giotto/*slug": {"templateUrl": null, "controller": "Html5", "template": "<div class='angular-view' data-dynamic-page=''></div>", "parent": "/giotto/", "url": "/giotto/*slug", "api": {"url": "http://quantmind.github.io/giotto/ng/site", "name": "site", "type": "static"}, "name": "view"}, "/giotto/": {"templateUrl": null, "controller": "Html5", "template": "<div class='angular-view' data-dynamic-page=''></div>", "parent": null, "url": "/giotto/", "api": {"url": "http://quantmind.github.io/giotto/ng/site", "name": "site", "type": "static"}, "name": ""}, "/giotto": {"url": "/giotto", "redirectTo": "/giotto/"}}, "datetimeFormat": "d MMM y, h:mm:ss a", "media": "/media", "year": 2014, "html5mode": true, "navbar": {"collapseWidth": 768}, "date": "2014-11-21T13-07-33", "hrefs": ["/giotto/", "/giotto/*slug", "/giotto"], "name": "Lux", "dateFormat": "d MMM y", "python_version": "3.4.2", "url": "http://quantmind.github.io/giotto", "lux_version": "0.1.1-alpha.1", "ngModules": ["ui.router", "highlight"], "uiRouter": "lux.ui.router", "page": "/giotto/*slug"}};
+var lux = {context: {"media": "/media", "html5mode": true, "datetimeFormat": "d MMM y, h:mm:ss a", "date": "2014-11-21T20-48-00", "dateFormat": "d MMM y", "python_version": "3.4.2", "lux_version": "0.1.1-alpha.1", "hrefs": ["/giotto/", "/giotto/*slug", "/giotto"], "navbar": {"collapseWidth": 768}, "name": "Lux", "pages": {"/giotto": {"url": "/giotto", "redirectTo": "/giotto/"}, "/giotto/": {"template": "<div class='angular-view' data-dynamic-page=''></div>", "name": "", "api": {"type": "static", "name": "site", "url": "http://quantmind.github.io/giotto/ng/site"}, "templateUrl": null, "controller": "Html5", "url": "/giotto/", "parent": null}, "/giotto/*slug": {"template": "<div class='angular-view' data-dynamic-page=''></div>", "name": "view", "api": {"type": "static", "name": "site", "url": "http://quantmind.github.io/giotto/ng/site"}, "templateUrl": null, "controller": "Html5", "url": "/giotto/*slug", "parent": "/giotto/"}}, "uiRouter": "lux.ui.router", "apiUrls": {}, "year": 2014, "page": "/giotto/*slug", "ngModules": ["highlight", "ui.router"], "brand": "Lux", "url": "http://quantmind.github.io/giotto"}};
 </script>
 <script type='text/javascript'>
 lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
 <script type="text/javascript">
-var require = {"waitSeconds": 200, "baseUrl": "http://quantmind.github.io/giotto/media/", "minify": true, "deps": ["http://quantmind.github.io/giotto/media/giottoweb/giottoweb.js"], "paths": {}};
+var require = {"deps": ["http://quantmind.github.io/giotto/media/giottoweb/giottoweb.js"], "waitSeconds": 200, "baseUrl": "http://quantmind.github.io/giotto/media/", "paths": {}, "minify": true};
 </script>
 <script src='http://quantmind.github.io/require-config-js/require.config.min.js' type='application/javascript'></script>
 <script src='http://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js' type='application/javascript'></script>
 </head>
 <body data-ng-controller='Page' data-ng-model='page' data-page=''>
-<navbar2 data-options="lux.context.navbar">
+<navbar data-options="lux.context.navbar"></navbar>
+<div class="container">
     <div class='row'>
         <div class='col-sm-12' data-highlight data-toc>
             <div class='angular-view' data-ui-view='main'><div class='hidden' id='seo-view'><p>A <code>giotto.paper</code> is a constructor for a <code>paper</code> object, an abstraction
@@ -31,6 +32,7 @@ on top of the <code>svg</code> or the <code>canvas</code> element.</p>
 </code></pre></div></div>
         </div>
     </div>
-</navbar2>
+</div>
+
 </body>
 </html>
