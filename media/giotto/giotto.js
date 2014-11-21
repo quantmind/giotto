@@ -1,6 +1,6 @@
 //      Giotto - v0.1.0
 
-//      Compiled 2014-11-19.
+//      Compiled 2014-11-20.
 //      Copyright (c) 2014 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -35,6 +35,7 @@
         g = giotto;
 
     d3.giotto = giotto;
+    d3.canvas = {};
 
     // Warps RequireJs call so it can be used in conjunction with
     //  require-config.js
@@ -56,19 +57,20 @@
             deps = deps || [];
 
             return angular.module(moduleName, deps)
-                        .directive('jstats', function () {
-                            return {
-                                link: function (scope, element, attrs) {
-                                    var mode = attrs.mode ? +attrs.mode : 1;
-                                    require(rcfg.min(['stats']), function () {
-                                        var stats = new Stats();
-                                        stats.setMode(mode);
-                                        scope.stats = stats;
-                                        element.append($(stats.domElement));
-                                    });
-                                }
-                            };
-                        });
+
+                    .directive('jstats', function () {
+                        return {
+                            link: function (scope, element, attrs) {
+                                var mode = attrs.mode ? +attrs.mode : 1;
+                                require(rcfg.min(['stats']), function () {
+                                    var stats = new Stats();
+                                    stats.setMode(mode);
+                                    scope.stats = stats;
+                                    element.append(angular.element(stats.domElement));
+                                });
+                            }
+                        };
+                    });
         },
 
         directive: function (angular, name, VizClass, moduleName, injects) {
@@ -93,6 +95,7 @@
                             options.scope = scope;
                             viz = new VizClass(element[0], options);
                             element.data(viz);
+                            scope.$emit('giotto-viz', viz);
                             // Add a callback for injects
                             if (autoBuild === undefined || autoBuild)
                                 viz.build();
@@ -399,6 +402,25 @@
     //
     isArray = _.isFunction = function (value) {
         return ostring.call(value) === '[object Array]';
+    },
+
+    encodeObject = _.encodeObject = function (obj, contentType) {
+        var p;
+        if (contentType === 'multipart/form-data') {
+            var fd = new FormData();
+            for(p in obj)
+                if (obj.hasOwnProperty(p))
+                    fd.append(p, obj[p]);
+            return fd;
+        } else if (contentType === 'application/json') {
+            return JSON.stringify(obj);
+        } else {
+            var str = [];
+            for(p in obj)
+                if (obj.hasOwnProperty(p))
+                    str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
+            return str.join("&");
+        }
     };
 
 
@@ -471,8 +493,8 @@
         onInit: null,
         //
         autoBuild: true,
-        // Events dispatched by the visualization
-        events: ['build', 'change'],
+        // Default events dispatched by the visualization
+        events: ['build', 'change', 'start', 'tick', 'end'],
         //
         // Default parameters when drawing lines
         lines: {
@@ -496,11 +518,15 @@
             element = null;
         }
         if (!element)
-            element = d3.select(document.createElement('div'));
+            element = document.createElement('div');
+
+        element = d3.select(element);
 
         p = _newPaperAttr(element, p);
 
-        g.paper.types[p.type](paper, element, p);
+        paper.destroy = function () {
+            element.selectAll('*').remove();
+        };
 
         paper.type = function () {
             return p.type;
@@ -516,6 +542,10 @@
 
         paper.height = function () {
             return p.size[1];
+        };
+
+        paper.aspectRatio = function () {
+            return p.size[1]/p.size[0];
         };
 
         paper.element = function () {
@@ -554,6 +584,7 @@
             return paper.yAxis().scale()(y);
         };
 
+        // Resize the paper and fire the resize event if resizing was performed
         paper.resize = function (size) {
             p._resizing = true;
             if (!size) {
@@ -568,12 +599,12 @@
         };
 
         paper.boundingBox = function () {
-            var w = p.elwidth ? getWidth(p.elwidth) : p.width,
+            var w = p.elwidth ? getWidth(p.elwidth) : p.size[0],
                 h;
             if (p.height_percentage)
                 h = w*p.height_percentage;
             else
-                h = p.elheight ? getHeight(p.elheight) : p.height;
+                h = p.elheight ? getHeight(p.elheight) : p.size[1];
             return [w, h];
         };
 
@@ -618,8 +649,8 @@
     //  SVG Paper
     //  ================
     //
-    g.paper.types.svg = function (paper, element, p) {
-        var svg = element.append('svg')
+    g.paper.types.svg = function (paper, p) {
+        var svg = paper.element().append('svg')
                         .attr('width', p.size[0])
                         .attr('height', p.size[1])
                         .attr("viewBox", "0 0 " + p.size[0] + " " + p.size[1]),
@@ -627,6 +658,19 @@
 
         p.xAxis = d3.svg.axis(),
         p.yAxis = [d3.svg.axis(), d3.svg.axis()];
+
+        paper.refresh = function () {
+            svg.attr('width', p.size[0])
+               .attr('height', p.size[1]);
+            p.event.refresh({type: 'refresh', size: p.size.slice(0)});
+            return paper;
+        };
+
+        paper.clear = function () {
+            current = svg;
+            svg.selectAll('*').remove();
+            return paper;
+        };
 
         // return the current svg element
         paper.current = function () {
@@ -672,8 +716,8 @@
             width = paper.scalex(x+width) - X;
             height = paper.scalex(y+height) - Y;
             var rect = current.append('rect')
-                                .attr('x', x)
-                                .attr('y', y)
+                                .attr('x', X)
+                                .attr('y', Y)
                                 .attr('width', width)
                                 .attr('height', height);
             if (r) {
@@ -704,7 +748,75 @@
                             .datum(data)
                             .attr('d', line);
         };
+
+        paper.encode = function () {
+            return btoa(unescape(encodeURIComponent(
+                svg.attr("version", "1.1")
+                    .attr("xmlns", "http://www.w3.org/2000/svg")
+                    .node().parentNode.innerHTML)));
+        };
+
+        paper.downloadSVG = function (e) {
+            var data = "data:image/svg+xml;charset=utf-8;base64," + paper.encode();
+            d3.select(e.target).attr("href", data);
+        };
+
+        paper.downloadPNG = function (e) {
+            if (!g.cloudConvertApiKey)
+                return;
+
+            var params = {
+                apikey: g.cloudConvertApiKey,
+                inputformat: 'svg',
+                outputformat: 'png'
+            };
+
+            var blob = new Blob(['base64,',paper.encode()], {type : 'image/svg+xml;charset=utf-8'});
+
+            d3.xhr('https://api.cloudconvert.org/process?' + encodeObject(params))
+                .header('content-type', 'multipart/form-data')
+                .post(submit);
+
+            function submit(_, request) {
+                if (!request || request.status !== 200)
+                    return;
+                var data = JSON.parse(request.responseText);
+                d3.xhr(data.url)
+                    .post(encodeObject({
+                        input: 'upload',
+                        file: blob
+                    }, 'multipart/form-data'), function (r, request) {
+                        if (!request || request.status !== 200)
+                            return;
+                        data = JSON.parse(request.responseText);
+                        wait_for_data(data);
+                    });
+            }
+
+            function wait_for_data (data) {
+                d3.xhr(data.url, function (r, request) {
+                    if (!request || request.status !== 200)
+                        return;
+                    data = JSON.parse(request.responseText);
+                    if (data.step === 'finished')
+                        download(data.output);
+                    else if (data.step === 'error')
+                        error(data);
+                    else
+                        wait_for_data(data);
+                });
+            }
+
+            function error (data) {
+
+            }
+
+            function download(data) {
+                d3.select(e.target).attr("href", data.url + '?inline');
+            }
+        };
     };
+
 
     g.vizRegistry = (function () {
         var _vizMap = {};
@@ -805,24 +917,10 @@
             element = d3.select(element);
             this.element = element;
             this.log = log(attrs.debug);
-            this.elwidth = null;
-            this.elheight = null;
             this.uid = ++_idCounter;
             this.dispatch = d3.dispatch.apply(d3, attrs.events);
             this.g = g;
             this.attrs = this.getAttributes(attrs);
-            //
-            if (attrs.resize) {
-                var self = this;
-                if (window.onresize === null) {
-                    window.onresize = generateResize();
-                }
-                if (window.onresize.add) {
-                    window.onresize.add(function () {
-                        self._resize();
-                    });
-                }
-            }
             //
             if (attrs.onInit)
                 this._executeCallback(attrs.onInit);
@@ -831,78 +929,26 @@
         },
         //
         // Resize the vizualization
-        _resize: function () {
-            var w = this.elwidth ? getWidth(this.elwidth) : this.attrs.width,
-                h;
-            if (this.attrs.height_percentage)
-                h = w*this.attrs.height_percentage;
-            else
-                h = this.elheight ? getHeight(this.elheight) : this.attrs.height;
-            if (this.attrs.width !== w || this.attrs.height !== h) {
-                this.attrs.width = w;
-                this.attrs.height = h;
-                if (!this._resizing) {
-                    if (this.attrs.resizeDelay) {
-                        var self = this;
-                        this._resizing = true;
-                        setTimeout(function () {
-                            self.log.info('Resizing visualization');
-                            self.resize();
-                            self._resizing = false;
-                        }, this.attrs.resizeDelay);
-                    } else {
-                        this.resize();
-                    }
-                }
-            }
-        },
-        //
-        // Resize the vizualization
         resize: function (size) {
-            if (size) {
-                this.attrs.width = size[0];
-                this.attrs.height = size[1];
-            }
-            this.build();
+            if (this._paper)
+                this._paper.resize(size);
         },
         //
         //  Retrieve the paper when the visualization is displayed
         //  Create a new one if not available
-        paper: function () {
-            if (this._paper === undefined) {
-                this._paper = g.paper(this.element, this.attrs);
+        paper: function (createNew) {
+            if (createNew || this._paper === undefined) {
+                var self = this;
+
+                if (this._paper)
+                    this._paper.destroy();
+
+                this._paper = g.paper(this.element.node(), this.attrs);
+                this._paper.on('refresh', function () {
+                    self._refresh();
+                });
             }
             return this._paper;
-        },
-        //
-        // Return a new d3 svg element insite the element without any children
-        svg: function () {
-            this.element.html('');
-            return this.element.append("svg")
-                .attr("width", this.attrs.width)
-                .attr("height", this.attrs.height);
-        },
-        //
-        // Return a new canvs element insite the element without any children
-        canvas: function () {
-            this.element.html('');
-            return this.element.append("canvas")
-                .attr("width", this.attrs.width)
-                .attr("height", this.attrs.height)
-                .node().getContext('2d');
-        },
-
-        size: function () {
-            return [this.attrs.width, this.attrs.height];
-        },
-        //
-        // Normalized Height
-        //
-        // Try to always work with non dimensional coordinates,
-        // Normalised vi the width
-        sy: function () {
-            var size = this.size();
-            return size[1]/size[0];
         },
         //
         // Build the visualisation
@@ -910,7 +956,7 @@
             if (options)
                 this.attrs = extend(this.attrs, options);
             this.d3build();
-            this.fire('build');
+            this.dispatch.build(this);
         },
         //
         // Same as build
@@ -981,6 +1027,12 @@
                 cbk.call(this);
             else
                 this.log.error('Cannot execute callback "' + callback + '". Not a function');
+        },
+        //
+        // Use this method to do something when a refresh event occurs
+        _refresh: function () {
+            if (this.paper().type() === 'canvas')
+                this.build();
         }
     });
 
@@ -990,14 +1042,126 @@
 
 
     //
+    g.viz = {};
+    //
+    // Factory of Giotto visualizations
+    g.createviz = function (name, defaults, constructor) {
+
+        var vizType = function (element, opts) {
+
+            if (isObject(element)) {
+                opts = element;
+                element = null;
+            }
+            opts = extend({}, g.defaults.viz, g.defaults.paper, defaults, opts);
+
+            var viz = {},
+                uid = ++_idCounter,
+                event = d3.dispatch.apply(d3, opts.events),
+                alpha = 0,
+                paper;
+
+            viz.uid = function () {
+                return uid;
+            };
+
+            // Return the visualization type (a function)
+            viz.vizType = function () {
+                return vizType;
+            };
+
+            viz.vizName = function () {
+                return vizType.vizName();
+            };
+
+            viz.paper = function (createNew) {
+                if (createNew || paper === undefined) {
+                    if (paper)
+                        paper.destroy();
+
+                    paper = g.paper(element, opts);
+                    paper.on('refresh', function () {
+                        viz.refresh();
+                    });
+                }
+                return paper;
+            };
+
+            viz.element = function () {
+                return viz.paper().element();
+            };
+
+            viz.alpha = function(x) {
+                if (!arguments.length) return alpha;
+
+                x = +x;
+                if (alpha) { // if we're already running
+                    if (x > 0) alpha = x; // we might keep it hot
+                    else alpha = 0; // or, next tick will dispatch "end"
+                } else if (x > 0) { // otherwise, fire it up!
+                    event.start({type: "start", alpha: alpha = x});
+                    d3.timer(viz.tick);
+                }
+
+                return viz;
+            };
+
+            viz.resume = function() {
+                return viz.alpha(0.1);
+            };
+
+            viz.stop = function() {
+                return viz.alpha(0);
+            };
+
+            viz.tick = function() {
+                // simulated annealing, basically
+                if ((alpha *= 0.99) < 0.005) {
+                    event.end({type: "end", alpha: alpha = 0});
+                    return true;
+                }
+
+                event.tick({type: "tick", alpha: alpha});
+            };
+
+            // This could be re-implemented by the constructor
+            viz.start = function () {
+                return viz.resume();
+            };
+
+            viz.refresh = function () {
+                if (paper && paper.type() === 'canvas')
+                    this.start();
+                return viz;
+            };
+
+            d3.rebind(viz, event, 'on');
+
+            if (constructor)
+                constructor(viz, opts);
+
+            return viz;
+        };
+
+        g.viz[name] = vizType;
+
+        vizType.vizName = function () {
+            return name;
+        };
+
+        return vizType;
+    };
+
+    //
     //  Initaise paper
     function _initPaper (paper, p) {
+        g.paper.types[p.type](paper, p);
 
         paper.xAxis().scale().range([0, p.size[0]]);
         paper.yaxis(2).yAxis().scale().range([0, p.size[1]]);
         paper.yaxis(1).yAxis().scale().range([0, p.size[1]]);
         //
-        return paper;
+        return d3.rebind(paper, p.event, 'on');
     }
 
 
@@ -1038,14 +1202,9 @@
         }
 
         p.size = [width, height];
+        p.event = d3.dispatch('refresh');
         return p;
     }
-
-    //
-    //  Extend d3 with canvas object
-    //  ===============================
-    //
-    d3.canvas = {};
 
     d3.canvas.axis = function() {
         var scale = d3.scale.linear(),
@@ -1199,16 +1358,34 @@
         selection.attr("transform", function(d) { var v0 = y0(d); return "translate(0," + (isFinite(v0) ? v0 : y1(d)) + ")"; });
     }
 
-    g.paper.types.canvas = function (paper, element, cfg) {
-        var canvas = element.append("canvas")
-                .attr("width", cfg.width)
-                .attr("height", cfg.height),
+    g.paper.types.canvas = function (paper, p) {
+        var canvas, ctx, current;
+
+        p.xAxis = d3.canvas.axis();
+        p.yAxis = [d3.canvas.axis(), d3.canvas.axis()];
+
+        paper.refresh = function () {
+            paper.destroy();
+            canvas = paper.element().append("canvas")
+                            .attr("width", p.size[0])
+                            .attr("height", p.size[1]);
             ctx = canvas.node().getContext('2d');
+            current = ctx;
+            p.event.refresh({type: 'refresh', size: p.size.slice(0)});
+            return paper;
+        };
 
-        cfg.yaxis = 1,
-        cfg.xAxis = d3.canvas.axis(),
-        cfg.yAxis = [d3.canvas.axis(), d3.canvas.axis()];
+        paper.refresh();
 
+        paper.current = function () {
+            return current;
+        };
+
+        paper.clear = function () {
+            current = ctx;
+            current.clearRect(0, 0, p.size[0], p.size[1]);
+            return paper;
+        };
     };
 
     g.C3 = Viz.extend({

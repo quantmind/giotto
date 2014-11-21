@@ -1,8 +1,8 @@
 @charset "UTF-8";
 /*
 ------------------------------------------------------------------
-Created by lux in 0.2 seconds
-Date: 2014-11-19 21:00:13
+Created by lux in 0.05 seconds
+Date: 2014-11-21 11:36:42
 
 http://quantmind.github.io/lux/
 ------------------------------------------------------------------ */
@@ -216,6 +216,6 @@ http://quantmind.github.io/lux/
 }
 
 .sunburst path {
-    fill-rule: evenodd;
     stroke: #fff;
+    fill-rule: evenodd;
 }
