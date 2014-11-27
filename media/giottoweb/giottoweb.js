@@ -32,14 +32,12 @@ require(rcfg.min(['lux/lux', 'giotto/giotto', 'angular-ui-router', 'angular-stra
                 {
                     href: url + '/examples/',
                     icon: 'fa fa-bar-chart',
-                    label: 'examples',
-                    target: '_self'
+                    label: 'examples'
                 },
                 {
                     href: url + '/api/',
                     icon: 'fa fa-cogs',
-                    label: 'api',
-                    target: '_self'
+                    label: 'api'
                 },
                 {
                     href: 'https://github.com/quantmind/giotto',
@@ -54,6 +52,44 @@ require(rcfg.min(['lux/lux', 'giotto/giotto', 'angular-ui-router', 'angular-stra
         g = d3.giotto;
 
 
+    examples.sunburst = function (viz) {
+        var scope = viz.options().scope;
+        scope.$on('formFieldChange', function (e, o, value) {
+            if (o && o.field === 'scale')
+                viz.scale(o.form.scale);
+        });
+    };
+
+    examples.force1 = function (force) {
+        var opts = force.options(),
+            root = {fixed: true, radius: 0},
+            paper = force.paper(),
+            charge = force.charge();
+
+        force.addNode(root);
+
+        force.charge(function (d) {
+            return d.fixed ? charge : 0;
+        }).drawCircles();
+
+        paper.current().on("mousemove", function() {
+            var p1 = d3.mouse(this);
+            root.px = paper.xAxis().scale().invert(p1[0]);
+            root.py = paper.yAxis().scale().invert(p1[1]);
+            force.resume();
+        }).on("touchmove", function() {
+            var p1 = d3.touches(this);
+            root.px = paper.xAxis().scale().invert(p1[0]);
+            root.py = paper.yAxis().scale().invert(p1[1]);
+            force.resume();
+        });
+
+        force.on("tick", function(e) {
+            paper.current().selectAll("circle")
+                .attr("cx", function (d) { return paper.scalex(d.x); })
+                .attr("cy", function (d) { return paper.scaley(d.y); });
+        });
+    };
 
     examples.sigmoid = function () {
 
@@ -72,48 +108,7 @@ require(rcfg.min(['lux/lux', 'giotto/giotto', 'angular-ui-router', 'angular-stra
     };
 
 
-    g.Giotto = g.Viz.extend({
-
-        d3build: function () {
-            var self = this,
-                paper = this.paper();
-
-            paper.group().attr('class', 'containers');
-            paper.xAxis().scale().domain([-1, 1]);
-            paper.yAxis().scale().domain([-1, 1]);
-            paper.rect(-1, -1, 2, 2).attr('fill', 'none');
-            paper.circle(0, 0, 1).attr('fill', 'none');
-            paper.root().group().attr('class', 'random');
-            var anim = {total: 0, circle: 0, frame: 0};
-            d3.timer(function () {
-                return self._step(anim);
-            });
-        },
-
-        _step: function (anim) {
-            var i = 0, self = this, x, y, r2, pi;
-            while (i < 4) {
-                ++i;
-                x = 2*(Math.random() - 0.5);
-                y = 2*(Math.random() - 0.5);
-                r2 = x*x + y*y;
-                anim.total += 1;
-                if (r2 <= 1)
-                    anim.circle += 1;
-
-                pi = 4*anim.circle/anim.total;
-
-                this.paper().circle(x, y, 0.02);
-            }
-            d3.timer(function () {
-                return self._step(anim);
-            });
-            return true;
-        }
-    });
-
-
     d3.giotto.angular.addAll(angular);
 
-    lux.bootstrap('d3extensions', ['lux.nav', 'giotto']);
+    lux.bootstrap('giottoExamples', ['lux.nav', 'giotto']);
 });

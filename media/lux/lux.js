@@ -1,6 +1,6 @@
-//      Lux Library - v0.1.0
+//      Lux Library - v0.1.1
 
-//      Compiled 2014-11-21.
+//      Compiled 2014-11-27.
 //      Copyright (c) 2014 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -450,7 +450,7 @@ function(angular, root) {
                 }
                 var Api = ApiTypes[context.type || 'lux'];
                 if (!Api)
-                    $lux.log.error('Api provider "' + context.name + '" is not available');
+                    $lux.log.error('Api provider "' + context.type + '" is not available');
                 else {
                     return new Api(context.name, context.url, context.options, $lux);
                 }
@@ -593,10 +593,12 @@ function(angular, root) {
             return this.request('GET', null, options);
         },
         //
+        // Retrieve a page when in angular ui.router
         getPage: function (page, state, stateParams) {
             return page;
         },
         //
+        // Retrieve a list of items when in angular ui.router
         getItems: function (page, state, stateParams) {
             if (!lux.size(stateParams))
                 return this.getList();
@@ -652,6 +654,66 @@ function(angular, root) {
                 request.error('Api url not available');
         }
     });
+
+    //
+    //  CMS api for dynamic web apps
+    //  -------------------------------
+    //
+    angular.module('lux.cms.api', ['lux.api'])
+
+        .run(['$lux', '$window', function ($lux, $window) {
+            var pageCache = {};
+
+            $lux.registerApi('cms', {
+                //
+                url: function (urlparams) {
+                    var url = this._url,
+                        name = urlparams ? urlparams.slug : null;
+                    if (url.substring(url.length-5) === '.json')
+                        return url;
+                    if (url.substring(url.length-1) !== '/')
+                        url += '/';
+                    url += name || 'index';
+                    if (url.substring(url.length-5) === '.html')
+                        url = url.substring(0, url.length-5);
+                    else if (url.substring(url.length-1) === '/')
+                        url += 'index';
+                    if (url.substring(url.length-5) !== '.json')
+                        url += '.json';
+                    return url;
+                },
+                //
+                getPage: function (page, state, stateParams) {
+                    var href = lux.stateHref(state, page.name, stateParams),
+                        data = pageCache[href];
+                    if (data)
+                        return data;
+                    //
+                    return this.get(stateParams).then(function (response) {
+                        var data = response.data;
+                        pageCache[href] = data;
+                        forEach(data.require_css, function (css) {
+                            loadCss(css);
+                        });
+                        if (data.require_js) {
+                            var defer = $lux.q.defer();
+                            require(rcfg.min(data.require_js), function () {
+                                // let angular resolve its queue if it needs to
+                                defer.resolve(data);
+                            });
+                            return defer.promise;
+                        } else
+                            return data;
+                    }, function (response) {
+                        if (response.status === 404) {
+                            $window.location.reload();
+                        }
+                    });
+                },
+                //
+                getItems: function (page, state, stateParams) {}
+            });
+        }]);
 
     //
     //  Lux web and api handler
@@ -1215,10 +1277,11 @@ angular.module("page/breadcrumbs.tpl.html", []).run(["$templateCache", function(
             function ($locationProvider, $stateProvider, $urlRouterProvider, $anchorScrollProvider) {
 
             var
+
             hrefs = lux.context.hrefs,
+
             pages = lux.context.pages,
-            pageCache = lux.context.cachePages ? {} : null,
-            //
+
             state_config = function (page) {
                 var main = {
                     //
@@ -1276,25 +1339,31 @@ angular.module("page/breadcrumbs.tpl.html", []).run(["$templateCache", function(
             });
         }])
         //
+        // Default controller for an Html5 page loaded via the ui router
         .controller('Html5', ['$scope', '$state', 'pageService', 'page', 'items',
             function ($scope, $state, pageService, page, items) {
                 $scope.items = items ? items.data : null;
                 $scope.page = pageService.addInfo(page, $scope);
             }])
         //
-        .directive('dynamicPage', ['$compile', '$log', function ($compile, log) {
+        // A directive to compile Html received from the server
+        // A page that returns html should use the following template
+        //  <div data-compile-html></div>
+        .directive('compileHtml', ['$compile', function ($compile) {
+
             return {
-                link: function (scope, element, attrs) {
+                link: function (scope, element) {
                     scope.$on('$stateChangeSuccess', function () {
                         var page = scope.page;
-                        if (page.html && page.html.main) {
-                            element[0].innerHTML = page.html.main;
+                        if (page && page.html) {
+                            var html = page.html;
+                            if (html.main) html = html.main;
+                            element.html(html);
                             var scripts= element[0].getElementsByTagName('script');
                             // Execute scripts in the loaded html
                             forEach(scripts, function (js) {
                                 globalEval(js.innerHTML);
                             });
-                            log.info('Compiling new html content');
                             $compile(element.contents())(scope);
                             // load required scripts if necessary
                             lux.loadRequire();
