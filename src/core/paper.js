@@ -17,6 +17,7 @@
 
         paper.destroy = function () {
             element.selectAll('*').remove();
+            return paper;
         };
 
         paper.type = function () {

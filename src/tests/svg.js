@@ -24,6 +24,7 @@
             paper = g.paper({width: 600, height: 500});
             expect(paper.width()).toBe(600);
             expect(paper.height()).toBe(500);
+            expect(paper.aspectRatio()).toBe(5/6);
             checkScale(paper);
         });
 
