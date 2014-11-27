@@ -97,6 +97,9 @@
                 return viz.resume();
             };
 
+            // refresh the visualization
+            // By default it does nothing unless the paper is canvas in which case
+            // it start the visualization
             viz.refresh = function () {
                 if (paper && paper.type() === 'canvas')
                     this.start();

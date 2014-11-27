@@ -1149,6 +1149,9 @@
                 return viz.resume();
             };
 
+            // refresh the visualization
+            // By default it does nothing unless the paper is canvas in which case
+            // it start the visualization
             viz.refresh = function () {
                 if (paper && paper.type() === 'canvas')
                     this.start();
@@ -1510,30 +1513,36 @@
         nodes: 0,
         minRadius: 0.02,
         maxRadius: 0.08,
-        theta: 0.8
+        theta: 0.8,
+        friction: 0.9
     }, function (force, opts) {
         var nodes = [],
-            neighbors,
+            neighbors, friction,
             q, i, j, o, l, s, t, x, y, k;
 
         force.nodes = function(x) {
             if (!arguments.length) return nodes;
             neighbors = null;
             nodes = x;
-            for (i = 0; i < nodes.length; ++i) {
-                (o = nodes[i]).index = i;
-                o.weight = 0;
-                if (isNaN(o.x)) o.x = Math.random();
-                if (isNaN(o.y)) o.y = Math.random();
-                if (isNaN(o.px)) o.px = o.x;
-                if (isNaN(o.py)) o.py = o.y;
-            }
+            for (i = 0; i < nodes.length; ++i)
+                initNode(nodes[i]).index = i;
             return force;
+        };
+
+        force.addNode = function (o) {
+            o.index = nodes.length;
+            nodes.push(initNode(o));
         };
 
         force.theta = function(x) {
             if (!arguments.length) return +opts.theta;
             opts.theta = x;
+            return force;
+        };
+
+        force.friction = function(x) {
+            if (!arguments.length) return +opts.friction;
+            opts.friction = x;
             return force;
         };
 
@@ -1578,13 +1587,23 @@
 
         force.on("tick.main", function(e) {
             q = null;
-            //while (++i < n) {
-            //    q.visit(collide(nodes[i]));
-            //}
+            force.quadtree();
+            friction = force.friction();
+            i = -1; while (++i < nodes.length) {
+                o = nodes[i];
+                if (o.fixed) {
+                    o.x = o.px;
+                    o.y = o.py;
+                } else {
+                    o.x -= (o.px - (o.px = o.x)) * friction;
+                    o.y -= (o.py - (o.py = o.y)) * friction;
+                }
+                q.visit(collide(nodes[i]));
+            }
         });
 
         function collide (node) {
-            var r = node.radius + 16,
+            var r = node.radius + 0.05,
                 nx1 = node.x - r,
                 nx2 = node.x + r,
                 ny1 = node.y - r,
@@ -1614,6 +1633,15 @@
             force.nodes(d3.range(+opts.nodes).map(function() {
                 return force.randomNode();
             }));
+        }
+
+        function initNode (o) {
+            o.weight = 0;
+            if (isNaN(o.x)) o.x = Math.random();
+            if (isNaN(o.y)) o.y = Math.random();
+            if (isNaN(o.px)) o.px = o.x;
+            if (isNaN(o.py)) o.py = o.y;
+            return o;
         }
     });
 
@@ -1716,8 +1744,10 @@
             if (k) {
                 for (i = 0; i < nodes.length; ++i) {
                     o = nodes[i];
-                    o.x += (0.5 - o.x) * k;
-                    o.y += (0.5 - o.y) * k;
+                    if (!o.fixed) {
+                        o.x += (0.5 - o.x) * k;
+                        o.y += (0.5 - o.y) * k;
+                    }
                 }
             }
         });
@@ -1727,9 +1757,10 @@
     // Charge plugin
     g.viz.force.plugin(function (force, opts) {
         var charges,
-            charge, nodes, q, i, k, o;
+            charge, nodes, q, i, k, o,
+            chargeDistance2;
 
-        g._.copyMissing({charge: -30, chargeDistance2: Infinity}, opts);
+        g._.copyMissing({charge: -30, chargeDistance: Infinity}, opts);
 
         force.charge = function (x) {
             if (!arguments.length) return typeof opts.charge === "function" ? opts.charge : +opts.charge;
@@ -1738,8 +1769,9 @@
         };
 
         force.chargeDistance = function(x) {
-            if (!arguments.length) return Math.sqrt(opts.chargeDistance2);
-            opts.chargeDistance2 = x * x;
+            if (!arguments.length) return +opts.chargeDistance;
+            opts.chargeDistance2 = +x;
+            chargeDistance2 = x * x;
             return force;
         };
 
@@ -1761,6 +1793,7 @@
         });
 
         function _init () {
+            force.chargeDistance(opts.chargeDistance);
             charge = force.charge();
             nodes = force.nodes();
             charges = [];
@@ -1774,33 +1807,32 @@
 
         function repulse(node) {
             var theta = force.theta(),
-                theta2 = theta*theta,
-                chargeDistance2 = +opts.chargeDistance2;
+                theta2 = theta*theta;
 
             return function(quad, x1, _, x2) {
-              if (quad.point !== node) {
-                var dx = quad.cx - node.x,
-                    dy = quad.cy - node.y,
-                    dw = x2 - x1,
-                    dn = dx * dx + dy * dy;
+                if (quad.point !== node) {
+                    var dx = quad.cx - node.x,
+                        dy = quad.cy - node.y,
+                        dw = x2 - x1,
+                        dn = dx * dx + dy * dy;
 
-                /* Barnes-Hut criterion. */
-                if (dw * dw / theta2 < dn) {
-                  if (dn < chargeDistance2) {
-                    k = quad.charge / dn;
-                    node.px -= dx * k;
-                    node.py -= dy * k;
-                  }
-                  return true;
-                }
+                    /* Barnes-Hut criterion. */
+                    if (dw * dw / theta2 < dn) {
+                        if (dn < chargeDistance2) {
+                            k = quad.charge / dn;
+                            node.px -= dx * k;
+                            node.py -= dy * k;
+                        }
+                        return true;
+                    }
 
-                if (quad.point && dn && dn < chargeDistance2) {
-                  k = quad.pointCharge / dn;
-                  node.px -= dx * k;
-                  node.py -= dy * k;
+                    if (quad.point && dn && dn < chargeDistance2) {
+                        k = quad.pointCharge / dn;
+                        node.px -= dx * k;
+                        node.py -= dy * k;
+                    }
                 }
-              }
-              return !quad.charge;
+                return !quad.charge;
             };
         }
 
@@ -1836,39 +1868,6 @@
             quad.cx = cx / quad.charge;
             quad.cy = cy / quad.charge;
         }
-    });
-
-    // Friction plugin
-    //
-    g.viz.force.plugin(function (force, opts) {
-        var nodes, friction, i, o;
-
-        if (opts.friction === undefined)
-            opts.friction = 0.9;
-
-        force.friction = function(x) {
-            if (!arguments.length) return +opts.friction;
-            opts.friction = x;
-            return force;
-        };
-
-        force.on('tick.friction', function () {
-            // position verlet integration
-            nodes = force.nodes();
-            friction = force.friction();
-            if (nodes.length && friction) {
-                i = -1; while (++i < nodes.length) {
-                    o = nodes[i];
-                    if (o.fixed) {
-                        o.x = o.px;
-                        o.y = o.py;
-                    } else {
-                        o.x -= (o.px - (o.px = o.x)) * friction;
-                        o.y -= (o.py - (o.py = o.y)) * friction;
-                    }
-                }
-            }
-        });
     });
 
     g.Leaflet = Viz.extend({

@@ -62,25 +62,25 @@ require(rcfg.min(['lux/lux', 'giotto/giotto', 'angular-ui-router', 'angular-stra
 
     examples.force1 = function (force) {
         var opts = force.options(),
-            root = {fixed: true, radius: 0, x: -1000, y: -1000},
+            root = {fixed: true, radius: 0},
             paper = force.paper(),
             charge = force.charge();
 
-        force.nodes().push(root);
+        force.addNode(root);
 
         force.charge(function (d) {
-            return d.fixed ? 0 : charge;
+            return d.fixed ? charge : 0;
         }).drawCircles();
 
         paper.current().on("mousemove", function() {
             var p1 = d3.mouse(this);
-            root.x = paper.xAxis().scale().invert(p1[0]);
-            root.y = paper.yAxis().scale().invert(p1[1]);
+            root.px = paper.xAxis().scale().invert(p1[0]);
+            root.py = paper.yAxis().scale().invert(p1[1]);
             force.resume();
         }).on("touchmove", function() {
             var p1 = d3.touches(this);
-            root.x = paper.xAxis().scale().invert(p1[0]);
-            root.y = paper.yAxis().scale().invert(p1[1]);
+            root.px = paper.xAxis().scale().invert(p1[0]);
+            root.py = paper.yAxis().scale().invert(p1[1]);
             force.resume();
         });
 

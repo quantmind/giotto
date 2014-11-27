@@ -3,7 +3,7 @@
 <div class='row'>
     <div class='col-sm-12'>
         <h5></h5>
-        <div data-giotto-force data-nodes=5 data-max-radius=0.04 data-min-radius=0.005 data-gravity=0.5 data-charge=-1000 data-height='60%' data-friction=0 data-on-init='examples.force1'></div>
+        <div data-giotto-force data-nodes=100 data-max-radius=0.04 data-min-radius=0.01 data-gravity=0.05 data-charge=-0.005 data-height='60%' data-on-init='examples.force1'></div>
     </div>
 </div>
 
