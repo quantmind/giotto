@@ -11,7 +11,6 @@ MEDIA_URL = '/media/'
 ANGULAR_UI_ROUTER = True
 STATIC_API = 'ng'
 MINIFIED_MEDIA = True
-ASSET_PROTOCOL = 'http:'
 EXTENSIONS = ['lux.extensions.base',
               'lux.extensions.ui',
               'lux.extensions.code',

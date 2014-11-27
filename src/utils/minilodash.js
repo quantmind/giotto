@@ -32,7 +32,7 @@
     //  =================
     //
     //  Copy values to toObj from fromObj which are missing (undefined) in toObj
-    copyMissing = function (fromObj, toObj) {
+    copyMissing = _.copyMissing = function (fromObj, toObj) {
         if (fromObj && toObj) {
             for (var prop in fromObj) {
                 if (fromObj.hasOwnProperty(prop) && toObj[prop] === undefined)
@@ -87,11 +87,15 @@
         return ostring.call(value) === '[object Object]';
     },
     //
+    isString = _.isString = function (value) {
+        return ostring.call(value) === '[object String]';
+    },
+    //
     isFunction = _.isFunction = function (value) {
         return ostring.call(value) === '[object Function]';
     },
     //
-    isArray = _.isFunction = function (value) {
+    isArray = _.isArray = function (value) {
         return ostring.call(value) === '[object Array]';
     },
 
@@ -112,4 +116,17 @@
                     str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
             return str.join("&");
         }
+    },
+
+    getObject = _.getObject = function (o) {
+        if (_.isString(o)) {
+            var bits= o.split('.');
+            o = root;
+
+            for (var i=0; i<bits.length; ++i) {
+                o = o[bits[i]];
+                if (!o) break;
+            }
+        }
+        return o;
     };

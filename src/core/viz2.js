@@ -1,10 +1,18 @@
     //
     g.viz = {};
     //
-    // Factory of Giotto visualizations
+    // Factory of Giotto visualization factories
+    //  name: name of the visualization constructor, the constructor is
+    //        accessed via the giotto.viz object
+    //  defaults: object of default parameters
+    //  constructor: function called back with a visualization object
+    //               and an object containing options for the visualization
+    //  returns a functyion which create visualization of the ``name`` family
     g.createviz = function (name, defaults, constructor) {
 
-        var vizType = function (element, opts) {
+        // The visualization factory
+        var plugins = [],
+            vizType = function (element, opts) {
 
             if (isObject(element)) {
                 opts = element;
@@ -16,7 +24,10 @@
                 uid = ++_idCounter,
                 event = d3.dispatch.apply(d3, opts.events),
                 alpha = 0,
+                loading_data = false,
                 paper;
+
+            opts.event = event;
 
             viz.uid = function () {
                 return uid;
@@ -81,7 +92,7 @@
                 event.tick({type: "tick", alpha: alpha});
             };
 
-            // This could be re-implemented by the constructor
+            // Starts the visualization
             viz.start = function () {
                 return viz.resume();
             };
@@ -92,10 +103,53 @@
                 return viz;
             };
 
+            viz.loadData = function (callback) {
+                if (opts.src && !loading_data) {
+                    loading_data = true;
+                    g.log.info('Giotto loading data from ' + opts.src);
+                    return d3.json(opts.src, function(error, json) {
+                        loading_data = false;
+                        if (!error) {
+                            viz.setData(json, callback);
+                        }
+                    });
+                }
+            };
+
+            //
+            // Set new data for the visualization
+            viz.setData = function (data, callback) {
+                if (opts.processData)
+                    data = opts.processData(data);
+                if (Object(data) === data && data.data)
+                    extend(opts, data);
+                else
+                    opts.data = data;
+                if (callback)
+                    callback();
+            };
+
+            // returns the options object
+            viz.options = function () {
+                return opts;
+            };
+
             d3.rebind(viz, event, 'on');
 
             if (constructor)
                 constructor(viz, opts);
+
+            for (var i=0; i < plugins.length; ++i)
+                plugins[i](viz, opts);
+
+            // if the onInit callback available, execute it
+            if (opts.onInit) {
+                var init = getObject(opts.onInit);
+                if (isFunction(init))
+                    init(viz);
+                else
+                    g.log.error('Could not locate onInit function ' + opts.onInit);
+            }
 
             return viz;
         };
@@ -104,6 +158,10 @@
 
         vizType.vizName = function () {
             return name;
+        };
+
+        vizType.plugin = function (callback) {
+            plugins.push(callback);
         };
 
         return vizType;

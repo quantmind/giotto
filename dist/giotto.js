@@ -1,6 +1,6 @@
 //      Giotto - v0.1.0
 
-//      Compiled 2014-11-26.
+//      Compiled 2014-11-27.
 //      Copyright (c) 2014 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -73,10 +73,10 @@
                     });
         },
 
-        directive: function (angular, name, VizClass, moduleName, injects) {
+        directive: function (angular, name, vizType, moduleName, injects) {
             moduleName = moduleName || 'giotto';
-            injects = injects || [];
-            var dname = 'viz' + name.substring(0,1).toUpperCase() + name.substring(1);
+            injects = injects ? injects.slice() : [];
+            var dname = moduleName.toLowerCase() + name.substring(0,1).toUpperCase() + name.substring(1);
 
             injects.push(function () {
                 var injected = arguments;
@@ -88,17 +88,12 @@
                     link: function (scope, element, attrs) {
                         var viz = element.data(dname);
                         if (!viz) {
-                            var options = getOptions(attrs),
-                                autoBuild = options.autoBuild;
-                            options.autoBuild = false;
-                            // add scope to the options
+                            var options = getOptions(attrs);
                             options.scope = scope;
-                            viz = new VizClass(element[0], options);
-                            element.data(viz);
+                            viz = vizType(element[0], options);
+                            element.data(dname, viz);
                             scope.$emit('giotto-viz', viz);
-                            // Add a callback for injects
-                            if (autoBuild === undefined || autoBuild)
-                                viz.build();
+                            viz.start();
                         }
                     }
                 };
@@ -113,10 +108,8 @@
             //
             // Loop through d3 extensions and create directives
             // for each Visualization class
-            angular.forEach(g, function (VizClass, name) {
-                if (g.isviz(VizClass)) {
-                    g.angular.directive(angular, name, VizClass, moduleName, injects);
-                }
+            angular.forEach(g.viz, function (vizType, name) {
+                g.angular.directive(angular, name, vizType, moduleName, injects);
             });
         }
     };
@@ -341,7 +334,7 @@
     //  =================
     //
     //  Copy values to toObj from fromObj which are missing (undefined) in toObj
-    copyMissing = function (fromObj, toObj) {
+    copyMissing = _.copyMissing = function (fromObj, toObj) {
         if (fromObj && toObj) {
             for (var prop in fromObj) {
                 if (fromObj.hasOwnProperty(prop) && toObj[prop] === undefined)
@@ -396,11 +389,15 @@
         return ostring.call(value) === '[object Object]';
     },
     //
+    isString = _.isString = function (value) {
+        return ostring.call(value) === '[object String]';
+    },
+    //
     isFunction = _.isFunction = function (value) {
         return ostring.call(value) === '[object Function]';
     },
     //
-    isArray = _.isFunction = function (value) {
+    isArray = _.isArray = function (value) {
         return ostring.call(value) === '[object Array]';
     },
 
@@ -421,6 +418,19 @@
                     str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
             return str.join("&");
         }
+    },
+
+    getObject = _.getObject = function (o) {
+        if (_.isString(o)) {
+            var bits= o.split('.');
+            o = root;
+
+            for (var i=0; i<bits.length; ++i) {
+                o = o[bits[i]];
+                if (!o) break;
+            }
+        }
+        return o;
     };
 
 
@@ -483,16 +493,15 @@
         type: 'svg',
         resizeDelay: 200,
         yaxis: 1,
-        resize: false,
+        resize: true,
         margin: {top: 20, right: 20, bottom: 20, left: 20},
     };
 
     g.defaults.viz = extend({
         //
-        // Option callback after initialisation
+        // Optional callback after initialisation
         onInit: null,
         //
-        autoBuild: true,
         // Default events dispatched by the visualization
         events: ['build', 'change', 'start', 'tick', 'end'],
         //
@@ -602,7 +611,7 @@
             var w = p.elwidth ? getWidth(p.elwidth) : p.size[0],
                 h;
             if (p.height_percentage)
-                h = w*p.height_percentage;
+                h = d3.round(w*p.height_percentage, 0);
             else
                 h = p.elheight ? getHeight(p.elheight) : p.size[1];
             return [w, h];
@@ -1044,10 +1053,18 @@
     //
     g.viz = {};
     //
-    // Factory of Giotto visualizations
+    // Factory of Giotto visualization factories
+    //  name: name of the visualization constructor, the constructor is
+    //        accessed via the giotto.viz object
+    //  defaults: object of default parameters
+    //  constructor: function called back with a visualization object
+    //               and an object containing options for the visualization
+    //  returns a functyion which create visualization of the ``name`` family
     g.createviz = function (name, defaults, constructor) {
 
-        var vizType = function (element, opts) {
+        // The visualization factory
+        var plugins = [],
+            vizType = function (element, opts) {
 
             if (isObject(element)) {
                 opts = element;
@@ -1059,7 +1076,10 @@
                 uid = ++_idCounter,
                 event = d3.dispatch.apply(d3, opts.events),
                 alpha = 0,
+                loading_data = false,
                 paper;
+
+            opts.event = event;
 
             viz.uid = function () {
                 return uid;
@@ -1124,7 +1144,7 @@
                 event.tick({type: "tick", alpha: alpha});
             };
 
-            // This could be re-implemented by the constructor
+            // Starts the visualization
             viz.start = function () {
                 return viz.resume();
             };
@@ -1135,10 +1155,53 @@
                 return viz;
             };
 
+            viz.loadData = function (callback) {
+                if (opts.src && !loading_data) {
+                    loading_data = true;
+                    g.log.info('Giotto loading data from ' + opts.src);
+                    return d3.json(opts.src, function(error, json) {
+                        loading_data = false;
+                        if (!error) {
+                            viz.setData(json, callback);
+                        }
+                    });
+                }
+            };
+
+            //
+            // Set new data for the visualization
+            viz.setData = function (data, callback) {
+                if (opts.processData)
+                    data = opts.processData(data);
+                if (Object(data) === data && data.data)
+                    extend(opts, data);
+                else
+                    opts.data = data;
+                if (callback)
+                    callback();
+            };
+
+            // returns the options object
+            viz.options = function () {
+                return opts;
+            };
+
             d3.rebind(viz, event, 'on');
 
             if (constructor)
                 constructor(viz, opts);
+
+            for (var i=0; i < plugins.length; ++i)
+                plugins[i](viz, opts);
+
+            // if the onInit callback available, execute it
+            if (opts.onInit) {
+                var init = getObject(opts.onInit);
+                if (isFunction(init))
+                    init(viz);
+                else
+                    g.log.error('Could not locate onInit function ' + opts.onInit);
+            }
 
             return viz;
         };
@@ -1147,6 +1210,10 @@
 
         vizType.vizName = function () {
             return name;
+        };
+
+        vizType.plugin = function (callback) {
+            plugins.push(callback);
         };
 
         return vizType;
@@ -1198,7 +1265,7 @@
         }
         else if (typeof(height) === "string" && height.indexOf('%') === height.length-1) {
             p.height_percentage = 0.01*parseFloat(height);
-            height = p.height_percentage*width;
+            height = d3.round(p.height_percentage*width);
         }
 
         p.size = [width, height];
@@ -1439,96 +1506,371 @@
     //
     //
     // Force layout example
-    g.Force = Viz.extend({
-        //
-        d3build: function () {
-            var d2 = this.d3,
-                svg = this.svg(),
-                attrs = this.attrs,
-                nNodes = attrs.nodes || 100,
-                minRadius = attrs.minRadius || 4,
-                maxRadius = attrs.maxRadius || 16,
-                gravity = attrs.gravity || 0.05,
-                charge = attrs.charge || -2000,
-                dr = maxRadius > minRadius ? maxRadius - minRadius : 0,
-                nodes = d3.range(nNodes).map(function() { return {radius: Math.random() * dr + minRadius}; }),
+    g.createviz('force', {
+        nodes: 0,
+        minRadius: 0.02,
+        maxRadius: 0.08,
+        theta: 0.8
+    }, function (force, opts) {
+        var nodes = [],
+            neighbors,
+            q, i, j, o, l, s, t, x, y, k;
+
+        force.nodes = function(x) {
+            if (!arguments.length) return nodes;
+            neighbors = null;
+            nodes = x;
+            for (i = 0; i < nodes.length; ++i) {
+                (o = nodes[i]).index = i;
+                o.weight = 0;
+                if (isNaN(o.x)) o.x = Math.random();
+                if (isNaN(o.y)) o.y = Math.random();
+                if (isNaN(o.px)) o.px = o.x;
+                if (isNaN(o.py)) o.py = o.y;
+            }
+            return force;
+        };
+
+        force.theta = function(x) {
+            if (!arguments.length) return +opts.theta;
+            opts.theta = x;
+            return force;
+        };
+
+        force.quadtree = function () {
+            if (!q)
+                q = d3.geom.quadtree(nodes);
+            return q;
+        };
+
+        // Create a node with random radius
+        force.randomNode = function () {
+            var minRadius = +opts.minRadius,
+                maxRadius = +opts.maxRadius,
+                dr = maxRadius > minRadius ? maxRadius - minRadius : 0;
+            return {radius: Math.random() * dr + minRadius};
+        };
+
+        force.drawCircles = function (color) {
+            if (!color)
                 color = d3.scale.category10();
+            var paper = force.paper(),
+                N = color.range().length;
 
-            var force = d3.layout.force()
-                .gravity(gravity)
-                .charge(function(d, i) {
-                    return i ? 0 : charge;
-                })
-                .nodes(nodes)
-                .size(this.size());
+            if (paper.type() === 'svg') {
+                var svg = paper.clear().current();
+                return svg.selectAll("circle")
+                            .data(nodes)
+                            .enter().append("svg:circle")
+                            .attr("r", function (d) {
+                                var r = paper.scale(d.radius);
+                                return r > 2 ? r - 2 : 0;
+                            })
+                            .attr("cx", function (d) {
+                                return paper.scalex(d.x);
+                            })
+                            .attr("cy", function (d) {
+                                return paper.scaley(d.y);
+                            })
+                            .style("fill", function(d, i) { return color(i % N); });
+            }
+        };
 
-            var root = nodes[0];
-            root.radius = 0;
-            root.fixed = true;
+        force.on("tick.main", function(e) {
+            q = null;
+            //while (++i < n) {
+            //    q.visit(collide(nodes[i]));
+            //}
+        });
 
-            force.start();
+        function collide (node) {
+            var r = node.radius + 16,
+                nx1 = node.x - r,
+                nx2 = node.x + r,
+                ny1 = node.y - r,
+                ny2 = node.y + r;
 
-            svg.selectAll("circle")
-                .data(nodes.slice(1))
-                .enter().append("svg:circle")
-                .attr("r", function(d) { return d.radius - 2; })
-                .style("fill", function(d, i) { return color(i % 3); });
+            return function(quad, x1, y1, x2, y2) {
+                if (quad.point && (quad.point !== node)) {
+                    var x = node.x - quad.point.x,
+                        y = node.y - quad.point.y,
+                        l = Math.sqrt(x * x + y * y),
+                        r = node.radius + quad.point.radius;
+                    if (l < r) {
+                        l = (l - r) / l * 0.5;
+                        node.x -= x *= l;
+                        node.y -= y *= l;
+                        quad.point.x += x;
+                        quad.point.y += y;
+                    }
+                }
+                return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
+            };
+        }
 
-            force.on("tick", function(e) {
-                var q = d3.geom.quadtree(nodes),
-                    i = 0,
-                    n = nodes.length;
+        // INTERNALS
+        if (+opts.nodes) {
+            // Add a set of random nodes if required
+            force.nodes(d3.range(+opts.nodes).map(function() {
+                return force.randomNode();
+            }));
+        }
+    });
 
-                while (++i < n) {
-                    q.visit(collide(nodes[i]));
+    // gauss-seidel relaxation for links
+    g.viz.force.plugin(function (force, opts) {
+        var links = [],
+            distances, strengths,
+            nodes, i, o, s, t, x, y, l;
+
+        g._.copyMissing({linkStrength: 1, linkDistance: 20}, opts);
+
+
+        force.linkStrength = function(x) {
+            if (!arguments.length) return opts.linkStrength;
+            opts.linkStrength = typeof x === "function" ? x : +x;
+            return force;
+        };
+
+        force.linkDistance = function(x) {
+            if (!arguments.length) return opts.linkDistance;
+            opts.linkDistance = typeof x === "function" ? x : +x;
+            return force;
+        };
+
+        force.on('tick.links', function () {
+            if (!distances)
+                _init();
+
+            for (i = 0; i < links.length; ++i) {
+                o = links[i];
+                s = o.source;
+                t = o.target;
+                x = t.x - s.x;
+                y = t.y - s.y;
+                l = (x * x + y * y);
+                if (l) {
+                    l = opts.alpha * strengths[i] * ((l = Math.sqrt(l)) - distances[i]) / l;
+                    x *= l;
+                    y *= l;
+                    t.x -= x * (k = s.weight / (t.weight + s.weight));
+                    t.y -= y * k;
+                    s.x += x * (k = 1 - k);
+                    s.y += y * k;
+                }
+            }
+        });
+
+        function _init () {
+            var linkDistance = opts.linkDistance,
+                linkStrength = opts.linkStrength,
+                nodes = force.nodes();
+            distances = [];
+            strengths = [];
+
+            if (links.length) {
+
+                for (i = 0; i < links.length; ++i) {
+                    o = links[i];
+                    if (typeof o.source == "number") o.source = nodes[o.source];
+                    if (typeof o.target == "number") o.target = nodes[o.target];
+                    ++o.source.weight;
+                    ++o.target.weight;
                 }
 
-                svg.selectAll("circle")
-                    .attr("cx", function(d) { return d.x; })
-                    .attr("cy", function(d) { return d.y; });
-            });
+                if (typeof linkDistance === "function")
+                    for (i = 0; i < links.length; ++i)
+                        distances[i] = +linkDistance.call(force, links[i], i);
+                else
+                    for (i = 0; i < links.length; ++i)
+                        distances[i] = linkDistance;
 
-            svg.on("mousemove", function() {
-                var p1 = d3.mouse(this);
-                root.px = p1[0];
-                root.py = p1[1];
-                force.resume();
-            }).on("touchmove", function() {
-                var p1 = d3.touches(this);
-                root.px = p1[0];
-                root.py = p1[1];
-                force.resume();
-            });
-
-            function collide (node) {
-                var r = node.radius + 16,
-                    nx1 = node.x - r,
-                    nx2 = node.x + r,
-                    ny1 = node.y - r,
-                    ny2 = node.y + r;
-
-                return function(quad, x1, y1, x2, y2) {
-                    if (quad.point && (quad.point !== node)) {
-                        var x = node.x - quad.point.x,
-                            y = node.y - quad.point.y,
-                            l = Math.sqrt(x * x + y * y),
-                            r = node.radius + quad.point.radius;
-                        if (l < r) {
-                            l = (l - r) / l * 0.5;
-                            node.x -= x *= l;
-                            node.y -= y *= l;
-                            quad.point.x += x;
-                            quad.point.y += y;
-                        }
-                    }
-                    return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
-                };
+                if (typeof linkStrength === "function")
+                    for (i = 0; i < links.length; ++i)
+                        strengths[i] = +linkStrength.call(force, links[i], i);
+                else
+                    for (i = 0; i < links.length; ++i)
+                        strengths[i] = linkStrength;
             }
-        },
-        //
-        //  handle node charge
-
+        }
     });
+
+    //
+    // Gravity plugin
+    g.viz.force.plugin(function (force, opts) {
+        var i, k, o, nodes;
+
+        if (opts.gravity === undefined)
+            opts.gravity = 0.05;
+
+        force.gravity = function (x) {
+            if (!arguments.length) return +opts.gravity;
+            opts.gravity = x;
+            return force;
+        };
+
+        force.on('tick.gravity', function () {
+            k = force.alpha() * opts.gravity;
+            nodes = force.nodes();
+
+            if (k) {
+                for (i = 0; i < nodes.length; ++i) {
+                    o = nodes[i];
+                    o.x += (0.5 - o.x) * k;
+                    o.y += (0.5 - o.y) * k;
+                }
+            }
+        });
+    });
+
+    //
+    // Charge plugin
+    g.viz.force.plugin(function (force, opts) {
+        var charges,
+            charge, nodes, q, i, k, o;
+
+        g._.copyMissing({charge: -30, chargeDistance2: Infinity}, opts);
+
+        force.charge = function (x) {
+            if (!arguments.length) return typeof opts.charge === "function" ? opts.charge : +opts.charge;
+            opts.charge = x;
+            return force;
+        };
+
+        force.chargeDistance = function(x) {
+            if (!arguments.length) return Math.sqrt(opts.chargeDistance2);
+            opts.chargeDistance2 = x * x;
+            return force;
+        };
+
+        force.on('tick.charge', function () {
+            // compute quadtree center of mass and apply charge forces
+            nodes = force.nodes();
+            charge = force.charge();
+            if (charge && nodes.length) {
+                if (!charges)
+                    _init();
+
+                d3_layout_forceAccumulate(q = force.quadtree(), force.alpha(), charges);
+                i = -1; while (++i < nodes.length) {
+                    if (!(o = nodes[i]).fixed) {
+                        q.visit(repulse(o));
+                    }
+                }
+            }
+        });
+
+        function _init () {
+            charge = force.charge();
+            nodes = force.nodes();
+            charges = [];
+            if (typeof charge === "function")
+                for (i = 0; i < nodes.length; ++i)
+                    charges[i] = +charge.call(force, nodes[i], i);
+            else
+                for (i = 0; i < nodes.length; ++i)
+                    charges[i] = charge;
+        }
+
+        function repulse(node) {
+            var theta = force.theta(),
+                theta2 = theta*theta,
+                chargeDistance2 = +opts.chargeDistance2;
+
+            return function(quad, x1, _, x2) {
+              if (quad.point !== node) {
+                var dx = quad.cx - node.x,
+                    dy = quad.cy - node.y,
+                    dw = x2 - x1,
+                    dn = dx * dx + dy * dy;
+
+                /* Barnes-Hut criterion. */
+                if (dw * dw / theta2 < dn) {
+                  if (dn < chargeDistance2) {
+                    k = quad.charge / dn;
+                    node.px -= dx * k;
+                    node.py -= dy * k;
+                  }
+                  return true;
+                }
+
+                if (quad.point && dn && dn < chargeDistance2) {
+                  k = quad.pointCharge / dn;
+                  node.px -= dx * k;
+                  node.py -= dy * k;
+                }
+              }
+              return !quad.charge;
+            };
+        }
+
+        function d3_layout_forceAccumulate(quad, alpha, charges) {
+            var cx = 0,
+                cy = 0;
+            quad.charge = 0;
+            if (!quad.leaf) {
+                var nodes = quad.nodes,
+                    n = nodes.length,
+                    i = -1,
+                    c;
+                while (++i < n) {
+                    c = nodes[i];
+                    if (!c) continue;
+                    d3_layout_forceAccumulate(c, alpha, charges);
+                    quad.charge += c.charge;
+                    cx += c.charge * c.cx;
+                    cy += c.charge * c.cy;
+                }
+            }
+            if (quad.point) {
+                // jitter internal nodes that are coincident
+                if (!quad.leaf) {
+                  quad.point.x += Math.random() - 0.5;
+                  quad.point.y += Math.random() - 0.5;
+                }
+                var k = alpha * charges[quad.point.index];
+                quad.charge += quad.pointCharge = k;
+                cx += k * quad.point.x;
+                cy += k * quad.point.y;
+            }
+            quad.cx = cx / quad.charge;
+            quad.cy = cy / quad.charge;
+        }
+    });
+
+    // Friction plugin
+    //
+    g.viz.force.plugin(function (force, opts) {
+        var nodes, friction, i, o;
+
+        if (opts.friction === undefined)
+            opts.friction = 0.9;
+
+        force.friction = function(x) {
+            if (!arguments.length) return +opts.friction;
+            opts.friction = x;
+            return force;
+        };
+
+        force.on('tick.friction', function () {
+            // position verlet integration
+            nodes = force.nodes();
+            friction = force.friction();
+            if (nodes.length && friction) {
+                i = -1; while (++i < nodes.length) {
+                    o = nodes[i];
+                    if (o.fixed) {
+                        o.x = o.px;
+                        o.y = o.py;
+                    } else {
+                        o.x -= (o.px - (o.px = o.x)) * friction;
+                        o.y -= (o.py - (o.py = o.y)) * friction;
+                    }
+                }
+            }
+        });
+    });
+
     g.Leaflet = Viz.extend({
         //
         defaults: {
@@ -1645,35 +1987,58 @@
     //  In addition to standard Viz parameters:
     //      labels: display labels or not (default false)
     //      padding: padding of sunburst (default 10)
-    g.SunBurst = Viz.extend({
-        defaults: {
-            // Show labels
-            labels: true,
-            // sunburst padding
-            addorder: false,
-            // Add the order of labels if available in the data
-            padding: 10,
-            // speed in transitions
-            transition: 750,
-            //
-            scale: 'sqrt',
-            //
-            initNode: null
-        },
+    g.createviz('sunBurst', {
+        // Show labels
+        labels: true,
+        // sunburst padding
+        addorder: false,
+        // Add the order of labels if available in the data
+        padding: 10,
+        // speed in transitions
+        transition: 750,
         //
-        // Calculate the text size to use from dimensions
-        textSize: function () {
-            var size = this.size(),
-                dim = Math.min(size[0], size[1]);
-            if (dim < 400)
-                return Math.round(100 - 0.15*(500-dim));
-            else
-                return 100;
-        },
+        scale: 'sqrt',
         //
-        select: function (path) {
-            if (!this.current) return;
-            var node = this.attrs.data;
+        initNode: null
+    }, function (self, opts) {
+
+        var current,
+            loading = false,
+            paper = self.paper(),
+            textSize = calcTextSize(),
+            color = d3.scale.category20c(),
+            transition = +opts.transition,
+            x = d3.scale.linear().range([0, 2 * Math.PI]),  // angular position
+            y,
+            arc = d3.svg.arc()
+                    .startAngle(function(d) { return Math.max(0, Math.min(2 * Math.PI, x(d.x))); })
+                    .endAngle(function(d) { return Math.max(0, Math.min(2 * Math.PI, x(d.x + d.dx))); })
+                    .innerRadius(function(d) { return Math.max(0, y(d.y)); })
+                    .outerRadius(function(d) { return Math.max(0, y(d.y + d.dy)); }),
+            radius,
+            textContainer,
+            dummyPath,
+            text,
+            positions,
+            depth,
+            path;
+
+        self.on('tick.main', function (e) {
+            // Load data if not already available
+            if (!opts.data)
+                return self.loadData();
+            else {
+                build();
+                self.alpha(0);
+            }
+        });
+
+        // API
+        //
+        // Select a path
+        self.select = function (path) {
+            if (!current) return;
+            var node = opts.data;
             if (path && path.length) {
                 for (var n=0; n<path.length; ++n) {
                     var name = path[n];
@@ -1689,57 +2054,102 @@
                     }
                 }
             }
-            return this._select(node);
-        },
-        //
-        d3build: function () {
-            var self = this;
-            //
-            // Load data if not already available
-            if (!this.attrs.data) {
-                return this.loadData(function () {
-                    self.d3build();
-                });
+            return select(node);
+        };
+
+        // Set the scale or returns it
+        self.scale = function (scale) {
+            if (!arguments.length) return opts.scale;
+            if (opts.scale !== scale) {
+                opts.scale = scale;
+                self.resume();
             }
+            return self;
+        };
+
+        // Private methods
+
+        // Calculate the text size to use from dimensions
+        function calcTextSize () {
+            var size = paper.size(),
+                dim = Math.min(size[0], size[1]);
+            if (dim < 400)
+                return Math.round(100 - 0.15*(500-dim));
+            else
+                return 100;
+        }
+
+        function select (node) {
+            if (node === current) return;
+
+            if (text) text.transition().attr("opacity", 0);
             //
-            var size = this.size(),
-                attrs = this.attrs,
-                root = attrs.data,
-                textSize = this.textSize(),
-                padding = +attrs.padding,
-                transition = +attrs.transition,
+            function visible (e) {
+                return e.x >= node.x && e.x < (node.x + node.dx);
+            }
+
+            var arct = arcTween(node);
+            depth = node.depth;
+
+            path.transition()
+                .duration(transition)
+                .attrTween("d", arct)
+                .each('end', function (e, i) {
+                    if (node === e) {
+                        self.current = e;
+                        self.fire('change');
+                    }
+                });
+
+            if (text) {
+                positions = [];
+                dummyPath.transition()
+                    .duration(transition)
+                    .attrTween("d", arct)
+                    .each('end', function (e, i) {
+                        // check if the animated element's data lies within the visible angle span given in d
+                        if (e.depth >= depth && visible(e)) {
+                            // fade in the text element and recalculate positions
+                            alignText(d3.select(this.parentNode)
+                                        .select("text")
+                                        .transition().duration(transition)
+                                        .attr("opacity", 1));
+                        }
+                    });
+            }
+            return true;
+        }
+
+        //
+        function build () {
+
+            var size = paper.clear().size(),
                 width = size[0]/2,
                 height = size[1]/2,
-                radius = Math.min(width, height)-padding,
                 // Create the partition layout
                 partition = d3.layout.partition()
                     .value(function(d) { return d.size; })
                     .sort(function (d) { return d.order === undefined ? d.size : d.order;}),
-                svg = this.svg().append('g')
+                svg = paper.group()
                           .attr("transform", "translate(" + width + "," + height + ")"),
-                sunburst = svg.append('g').attr('class', 'sunburst'),
-                color = d3.scale.category20c(),
-                x = d3.scale.linear().range([0, 2 * Math.PI]),  // angular position
-                y = scale(radius),  // radial position
-                depth = 0,
-                textContainer,
-                dummyPath,
-                text,
-                positions;
-            //
-            var arc = d3.svg.arc()
-                    .startAngle(function(d) { return Math.max(0, Math.min(2 * Math.PI, x(d.x))); })
-                    .endAngle(function(d) { return Math.max(0, Math.min(2 * Math.PI, x(d.x + d.dx))); })
-                    .innerRadius(function(d) { return Math.max(0, y(d.y)); })
-                    .outerRadius(function(d) { return Math.max(0, y(d.y + d.dy)); }),
-                path = sunburst.selectAll("path")
-                        .data(partition.nodes(root))
-                        .enter()
-                        .append('path')
-                        .attr("d", arc)
-                        .style("fill", function(d) { return color((d.children ? d : d.parent).name); });
+                sunburst = svg.append('g').attr('class', 'sunburst');
 
-            if (this.attrs.labels) {
+            radius = Math.min(width, height) - opts.padding;
+            y = scale(radius);  // radial position
+            depth = 0;
+            current = opts.data;
+
+            var y0 = y(0),
+                yr = y(radius);
+
+            path = sunburst.selectAll("path")
+                    .data(partition.nodes(current))
+                    .enter()
+                    .append('path')
+                    .attr("d", arc)
+                    .style("fill", function(d) { return color((d.children ? d : d.parent).name); });
+
+            if (opts.labels) {
                 var data = path.data();
                 positions = [];
                 textContainer = svg.append('g')
@@ -1753,7 +2163,7 @@
                         .on("click", click);
                 text = textContainer.append('text')
                         .text(function(d) {
-                            if (attrs.addorder !== undefined && d.order !== undefined)
+                            if (opts.addorder !== undefined && d.order !== undefined)
                                 return d.order + ' - ' + d.name;
                             else
                                 return d.name;
@@ -1761,183 +2171,147 @@
                 alignText(text);
             }
 
-            this._select = function (node) {
-                if (node === this.current) return;
-
-                if (text) text.transition().attr("opacity", 0);
-                //
-                function visible (e) {
-                    return e.x >= node.x && e.x < (node.x + node.dx);
-                }
-
-                var arct = arcTween(node);
-                depth = node.depth;
-
-                path.transition()
-                    .duration(transition)
-                    .attrTween("d", arct)
-                    .each('end', function (e, i) {
-                        if (node === e) {
-                            self.current = e;
-                            self.fire('change');
-                        }
-                    });
-
-                if (text) {
-                    positions = [];
-                    dummyPath.transition()
-                        .duration(transition)
-                        .attrTween("d", arct)
-                        .each('end', function (e, i) {
-                            // check if the animated element's data lies within the visible angle span given in d
-                            if (e.depth >= depth && visible(e)) {
-                                // fade in the text element and recalculate positions
-                                alignText(d3.select(this.parentNode)
-                                            .select("text")
-                                            .transition().duration(transition)
-                                            .attr("opacity", 1));
-                            }
-                        });
-                }
-                return true;
-            };
-
             //
-            this.current = root;
-            if (!this.select(this.attrs.initNode))
-                this.fire('change');
+            if (!self.select(opts.initNode))
+                opts.event.change({type: 'change', viz: self});
+        }
 
-            function scale (radius) {
-                if (attrs.scale === 'log')
-                    return d3.scale.log().range([1, radius]);
-                if (attrs.scale === 'linear')
-                    return d3.scale.linear().range([0, radius]);
-                else
-                    return d3.scale.sqrt().range([0, radius]);
+        function scale (radius) {
+            //if (opts.scale === 'log')
+            //    return d3.scale.log().range([1, radius]);
+            if (opts.scale === 'linear')
+                return d3.scale.linear().range([0, radius]);
+            else
+                return d3.scale.sqrt().range([0, radius]);
+        }
+
+        function click (d) {
+            // Fade out all text elements
+            if (depth === d.depth) return;
+            if (text) text.transition().attr("opacity", 0);
+            depth = d.depth;
+            //
+            function visible (e) {
+                return e.x >= d.x && e.x < (d.x + d.dx);
             }
+            //
+            path.transition()
+                .duration(transition)
+                .attrTween("d", arcTween(d))
+                .each('end', function (e, i) {
+                    if (e.depth === depth && visible(e)) {
+                        self.current = e;
+                        opts.event.change({type: 'change', viz: self});
+                    }
+                });
 
-            function click (d) {
-                // Fade out all text elements
-                if (depth === d.depth) return;
-                if (text) text.transition().attr("opacity", 0);
-                depth = d.depth;
-                //
-                function visible (e) {
-                    return e.x >= d.x && e.x < (d.x + d.dx);
-                }
-                //
-                path.transition()
+            if (text) {
+                positions = [];
+                dummyPath.transition()
                     .duration(transition)
                     .attrTween("d", arcTween(d))
                     .each('end', function (e, i) {
-                        if (e.depth === depth && visible(e)) {
-                            self.current = e;
-                            self.fire('change');
+                        // check if the animated element's data lies within the visible angle span given in d
+                        if (e.depth >= depth && visible(e)) {
+                            // fade in the text element and recalculate positions
+                            alignText(d3.select(this.parentNode)
+                                        .select("text")
+                                        .transition().duration(transition)
+                                        .attr("opacity", 1));
                         }
                     });
+            }
+        }
 
-                if (text) {
-                    positions = [];
-                    dummyPath.transition()
-                        .duration(transition)
-                        .attrTween("d", arcTween(d))
-                        .each('end', function (e, i) {
-                            // check if the animated element's data lies within the visible angle span given in d
-                            if (e.depth >= depth && visible(e)) {
-                                // fade in the text element and recalculate positions
-                                alignText(d3.select(this.parentNode)
-                                            .select("text")
-                                            .transition().duration(transition)
-                                            .attr("opacity", 1));
-                            }
-                        });
+        function calculateAngle (d) {
+            var a = x(d.x + d.dx / 2),
+                changed = true,
+                tole=Math.PI/40;
+
+            function tween (angle) {
+                var da = a - angle;
+                if (da >= 0 && da < tole) {
+                    a += tole;
+                    changed = true;
+                }
+                else if (da < 0 && da > -tole) {
+                    a -= tole - da;
+                    changed = true;
                 }
             }
 
-            function calculateAngle (d) {
-                var a = x(d.x + d.dx / 2),
-                    changed = true,
-                    tole=Math.PI/40;
-
-                function tween (angle) {
-                    var da = a - angle;
-                    if (da >= 0 && da < tole) {
-                        a += tole;
-                        changed = true;
-                    }
-                    else if (da < 0 && da > -tole) {
-                        a -= tole - da;
-                        changed = true;
-                    }
-                }
-
-                while (changed) {
-                    changed = false;
-                    positions.forEach(tween);
-                }
-                positions.push(a);
-                return a;
+            while (changed) {
+                changed = false;
+                positions.forEach(tween);
             }
+            positions.push(a);
+            return a;
+        }
 
-            // Align text when labels are displaid
-            function alignText(text) {
-                var a;
-                return text.attr("x", function(d, i) {
-                    // Set the Radial position
-                    if (d.depth === depth)
-                        return 0;
-                    else {
-                        a = calculateAngle(d);
-                        this.__data__.angle = a;
-                        return a > Math.PI ? -y(d.y) : y(d.y);
-                    }
-                }).attr("dx", function(d) {
-                    // Set the margin
-                    return d.depth === depth ? 0 : (d.angle > Math.PI ? -6 : 6);
-                }).attr("dy", function(d) {
-                    // Set the Radial position
-                    if (d.depth === depth)
-                        return d.depth ? 40 : 0;
-                    else
-                        return ".35em";
-                }).attr("transform", function(d) {
-                    // Set the Angular position
-                    a = 0;
-                    if (d.depth > depth) {
-                        a = d.angle;
-                        if (a > Math.PI)
-                            a -= Math.PI;
-                        a -= Math.PI / 2;
-                    }
-                    return "rotate(" + (a / Math.PI * 180) + ")";
-                }).attr("text-anchor", function (d) {
-                    // Make sure text is never oriented downwards
+        // Align text when labels are displaid
+        function alignText (text) {
+            var a;
+            return text.attr("x", function(d, i) {
+                // Set the Radial position
+                if (d.depth === depth)
+                    return 0;
+                else {
+                    a = calculateAngle(d);
+                    this.__data__.angle = a;
+                    return a > Math.PI ? -y(d.y) : y(d.y);
+                }
+            }).attr("dx", function(d) {
+                // Set the margin
+                return d.depth === depth ? 0 : (d.angle > Math.PI ? -6 : 6);
+            }).attr("dy", function(d) {
+                // Set the Radial position
+                if (d.depth === depth)
+                    return d.depth ? 40 : 0;
+                else
+                    return ".35em";
+            }).attr("transform", function(d) {
+                // Set the Angular position
+                a = 0;
+                if (d.depth > depth) {
                     a = d.angle;
-                    if (d.depth === depth)
-                        return "middle";
-                    else if (a && a > Math.PI)
-                        return "end";
-                    else
-                        return "start";
-                }).style("font-size", function(d) {
-                    var g = d.depth - depth,
-                        pc = textSize;
-                    if (!g) pc *= 1.2;
-                    else if (g > 0)
-                        pc = Math.max((1.2*pc - 20*g), 30);
-                    return Math.round(pc) + '%';
-                });
-            }
+                    if (a > Math.PI)
+                        a -= Math.PI;
+                    a -= Math.PI / 2;
+                }
+                return "rotate(" + (a / Math.PI * 180) + ")";
+            }).attr("text-anchor", function (d) {
+                // Make sure text is never oriented downwards
+                a = d.angle;
+                if (d.depth === depth)
+                    return "middle";
+                else if (a && a > Math.PI)
+                    return "end";
+                else
+                    return "start";
+            }).style("font-size", function(d) {
+                var g = d.depth - depth,
+                    pc = textSize;
+                if (!g) pc *= 1.2;
+                else if (g > 0)
+                    pc = Math.max((1.2*pc - 20*g), 30);
+                return Math.round(pc) + '%';
+            });
+        }
 
-            // Interpolate the scales!
-            function arcTween(d) {
-                var xd = d3.interpolate(x.domain(), [d.x, d.x + d.dx]),
-                    yd = d3.interpolate(y.domain(), [d.y, 1]),
-                    yr = d3.interpolate(y.range(), [d.y ? 20 : 0, radius]);
-                return function(d, i) {
-                    return i ? function(t) { return arc(d); } : function(t) { x.domain(xd(t)); y.domain(yd(t)).range(yr(t)); return arc(d); };
+        // Interpolate the scales!
+        function arcTween(d) {
+            var xd = d3.interpolate(x.domain(), [d.x, d.x + d.dx]),
+                yd = d3.interpolate(y.domain(), [d.y, 1]),
+                yr = d3.interpolate(y.range(), [d.y ? 20 : 0, radius]);
+            return function(d, i) {
+                return i ? function(t) {
+                    return arc(d);
+                } : function(t) {
+                    x.domain(xd(t));
+                    y.domain(yd(t)).range(yr(t));
+                    return arc(d);
                 };
-            }
+            };
         }
     });
 

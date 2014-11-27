@@ -21,8 +21,7 @@
     },
     "giottoweb": {
         "src": ["src/examples/open.js",
-                "src/examples/charts.js",
-                "src/examples/giotto.js",
+                "src/examples/examples.js",
                 "src/examples/close.js"],
         "dest": "giottoweb/media/giottoweb/giottoweb.js",
         "minify": false

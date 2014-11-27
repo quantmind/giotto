@@ -23,10 +23,10 @@
                     });
         },
 
-        directive: function (angular, name, VizClass, moduleName, injects) {
+        directive: function (angular, name, vizType, moduleName, injects) {
             moduleName = moduleName || 'giotto';
-            injects = injects || [];
-            var dname = 'viz' + name.substring(0,1).toUpperCase() + name.substring(1);
+            injects = injects ? injects.slice() : [];
+            var dname = moduleName.toLowerCase() + name.substring(0,1).toUpperCase() + name.substring(1);
 
             injects.push(function () {
                 var injected = arguments;
@@ -38,17 +38,12 @@
                     link: function (scope, element, attrs) {
                         var viz = element.data(dname);
                         if (!viz) {
-                            var options = getOptions(attrs),
-                                autoBuild = options.autoBuild;
-                            options.autoBuild = false;
-                            // add scope to the options
+                            var options = getOptions(attrs);
                             options.scope = scope;
-                            viz = new VizClass(element[0], options);
-                            element.data(viz);
+                            viz = vizType(element[0], options);
+                            element.data(dname, viz);
                             scope.$emit('giotto-viz', viz);
-                            // Add a callback for injects
-                            if (autoBuild === undefined || autoBuild)
-                                viz.build();
+                            viz.start();
                         }
                     }
                 };
@@ -63,10 +58,8 @@
             //
             // Loop through d3 extensions and create directives
             // for each Visualization class
-            angular.forEach(g, function (VizClass, name) {
-                if (g.isviz(VizClass)) {
-                    g.angular.directive(angular, name, VizClass, moduleName, injects);
-                }
+            angular.forEach(g.viz, function (vizType, name) {
+                g.angular.directive(angular, name, vizType, moduleName, injects);
             });
         }
     };

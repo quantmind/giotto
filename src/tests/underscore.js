@@ -12,4 +12,11 @@
             expect(picked.b).toBe(null);
             expect(picked.c).toBe(undefined);
         });
+
+        it("Check type functions", function () {
+            expect(_.isObject({})).toBe(true);
+            expect(_.isObject('ciao')).toBe(false);
+            expect(_.isObject([])).toBe(false);
+            expect(_.isObject(function () {})).toBe(false);
+        });
     });

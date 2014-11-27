@@ -93,7 +93,7 @@
             var w = p.elwidth ? getWidth(p.elwidth) : p.size[0],
                 h;
             if (p.height_percentage)
-                h = w*p.height_percentage;
+                h = d3.round(w*p.height_percentage, 0);
             else
                 h = p.elheight ? getHeight(p.elheight) : p.size[1];
             return [w, h];

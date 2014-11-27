@@ -4,16 +4,15 @@
         type: 'svg',
         resizeDelay: 200,
         yaxis: 1,
-        resize: false,
+        resize: true,
         margin: {top: 20, right: 20, bottom: 20, left: 20},
     };
 
     g.defaults.viz = extend({
         //
-        // Option callback after initialisation
+        // Optional callback after initialisation
         onInit: null,
         //
-        autoBuild: true,
         // Default events dispatched by the visualization
         events: ['build', 'change', 'start', 'tick', 'end'],
         //

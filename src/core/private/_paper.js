@@ -44,7 +44,7 @@
         }
         else if (typeof(height) === "string" && height.indexOf('%') === height.length-1) {
             p.height_percentage = 0.01*parseFloat(height);
-            height = p.height_percentage*width;
+            height = d3.round(p.height_percentage*width);
         }
 
         p.size = [width, height];

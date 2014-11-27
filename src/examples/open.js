@@ -32,14 +32,12 @@ require(rcfg.min(['lux/lux', 'giotto/giotto', 'angular-ui-router', 'angular-stra
                 {
                     href: url + '/examples/',
                     icon: 'fa fa-bar-chart',
-                    label: 'examples',
-                    target: '_self'
+                    label: 'examples'
                 },
                 {
                     href: url + '/api/',
                     icon: 'fa fa-cogs',
-                    label: 'api',
-                    target: '_self'
+                    label: 'api'
                 },
                 {
                     href: 'https://github.com/quantmind/giotto',
