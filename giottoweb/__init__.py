@@ -51,6 +51,9 @@ class Extension(lux.Extension):
         dist = MediaBuilder(media_url+'giotto', 'dist', lux=False)
         return [dist, examples]
 
+    def on_html_document(self, app, request, doc):
+        doc.head.embedded_js.append('var examples = {};')
+
 
 def add_css(all):
     from lux.extensions.ui import px, Radius, Shadow, color

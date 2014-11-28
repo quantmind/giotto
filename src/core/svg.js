@@ -4,6 +4,7 @@
     //
     g.paper.types.svg = function (paper, p) {
         var svg = paper.element().append('svg')
+                        .attr('class', 'giotto')
                         .attr('width', p.size[0])
                         .attr('height', p.size[1])
                         .attr("viewBox", "0 0 " + p.size[0] + " " + p.size[1]),
@@ -38,18 +39,15 @@
 
         // set the current element to be the parent and returns the paper
         paper.parent = function () {
-            if (current !== svg) {
-                var parent = current.node().parentNode;
-                if (parent === svg.node())
-                    return svg;
-                else
-                    return d3.select(parent);
-            }
+            var node = current.node();
+            if (node !== svg.node())
+                current = d3.select(node.parentNode);
             return paper;
         };
 
         paper.group = function () {
-            current = current.append('g');
+            current = current.append('g')
+                            .attr("transform", "translate(" + p.margin.left + "," + p.margin.top + ")");
             return current;
         };
 
@@ -81,25 +79,50 @@
             return rect;
         };
 
-        paper.path = function (opts) {
-            if (isArray(opts)) opts = {data: opts};
-            if (!(opts && opts.data)) return;
+        // Draw a path or an area, data must be an xy array [[x1,y1], [x2, y2], ...]
+        paper.path = function (data, opts) {
+            opts || (opts = {});
+            copyMissing(p.lines, opts);
 
-            copyMissing(this.options.lines, opts);
+            var line = opts.area ? d3.svg.area() : d3.svg.line(),
+                scalex = paper.scalex,
+                scaley = paper.scaley,
+                color = opts.color || paper.pickColor();
 
-            var line = d3.svg.line()
-                        .interpolate(opts.interpolate)
-                        .x(function(d) {
-                            return d.x;
-                        })
-                        .y(function(d) {
-                            return d.y;
-                        }),
-                data = xyData(opts.data);
+            line.interpolate(opts.interpolate)
+                .x(function(d) {
+                    return scalex(d.x);
+                })
+                .y(function(d) {
+                    return scaley(d.y);
+                });
 
             return current.append('path')
-                            .datum(data)
-                            .attr('d', line);
+                                .attr('class', opts.area ? 'area' : 'line')
+                                .attr('stroke', color)
+                                .attr('stroke-width', opts.width)
+                                .datum(data)
+                                .attr('d', line);
+        };
+
+        paper.drawXaxis = function () {
+            var opts = p.xaxis,
+                py = opts.position === 'top' ? p.margin.top : p.size[1] - p.margin.bottom;
+            return _axis(svg.append("g")
+                .attr("class", "axis x-axis")
+                .attr("transform", "translate(" + p.margin.left + "," + py + ")")
+                .call(p.xAxis), opts);
+        };
+
+        paper.drawYaxis = function () {
+            var yaxis = paper.yaxis(),
+                opts = yaxis === 1 ? p.yaxis : p.yaxis2,
+                px = opts.position === 'left' ? p.margin.left : p.size[0] - p.margin.right,
+                yAxis = paper.yAxis();
+            return _axis(svg.append("g")
+                    .attr("class", "axis y-axis-" + yaxis)
+                    .attr("transform", "translate(" + px + "," + p.margin.top + ")")
+                    .call(yAxis), opts);
         };
 
         paper.encode = function () {
@@ -168,4 +191,22 @@
                 d3.select(e.target).attr("href", data.url + '?inline');
             }
         };
+
+        function _axis(axis, opts) {
+            var font = opts.font;
+            axis.attr('stroke', opts.color);
+            return _font(axis, opts.font);
+        }
+
+        function _font(element, opts) {
+            var font = p.font;
+            opts || (opts = {});
+            return element.style({
+                'font-size': opts.size || font.size,
+                'font-weight': opts.weight || font.weight,
+                'font-style': opts.style || font.style,
+                'font-family': opts.family || font.family,
+                'font-variant': opts.variant || font.variant
+            });
+        }
     };

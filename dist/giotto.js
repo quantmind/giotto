@@ -385,12 +385,36 @@
 
     g.defaults = {};
 
+    g.defaults.axis = {
+        color: '#000',
+        tickSize: 0.05,
+        minTickSize: 0.02
+    };
+
     g.defaults.paper = {
         type: 'svg',
         resizeDelay: 200,
-        yaxis: 1,
         resize: true,
         margin: {top: 20, right: 20, bottom: 20, left: 20},
+        xaxis: extend({position: 'bottom'}, g.defaults.axis),
+        yaxis: extend({position: 'left'}, g.defaults.axis),
+        yaxis2: extend({position: 'right'}, g.defaults.axis),
+        colors: d3.scale.category10().range(),
+        lines: {
+            interpolate: 'basis',
+            width: 2
+        },
+        nodes: {
+            symbol: 'circle'
+        },
+        font: {
+            size: 11,
+            weight: 'bold',
+            lineHeight: 13,
+            style: "italic",
+            family: "sans-serif",
+            variant: "small-caps"
+        }
     };
 
     g.defaults.viz = extend({
@@ -400,11 +424,6 @@
         //
         // Default events dispatched by the visualization
         events: ['build', 'change', 'start', 'tick', 'end'],
-        //
-        // Default parameters when drawing lines
-        lines: {
-            interpolate: 'basis'
-        }
     });
 
     g.constants = {
@@ -417,7 +436,8 @@
     // Create a new paper for drawing stuff
     g.paper = function (element, p) {
 
-        var paper = {};
+        var paper = {},
+            color = 0;
 
         if (isObject(element)) {
             p = element;
@@ -451,18 +471,27 @@
             return p.size[1];
         };
 
+        paper.innerWidth = function () {
+            return p.size[0] - p.margin.left - p.margin.right;
+        };
+
+        paper.innerHeight = function () {
+            return p.size[1] - p.margin.top - p.margin.bottom;
+        };
+
         paper.aspectRatio = function () {
-            return p.size[1]/p.size[0];
+            return paper.innerHeight()/paper.innerWidth();
         };
 
         paper.element = function () {
             return element;
         };
 
+        // returns the number of the y-axis currently selected
         paper.yaxis = function (x) {
-            if (!arguments.length) return p.yaxis;
+            if (!arguments.length) return p.yaxisNumber;
             if (x === 1 || x === 2)
-                p.yaxis = x;
+                p.yaxisNumber = x;
             return paper;
         };
 
@@ -473,8 +502,8 @@
         };
 
         paper.yAxis = function (x) {
-            if (!arguments.length) return p.yAxis[p.yaxis-1];
-            p.yAxis[p.yaxis-1] = x;
+            if (!arguments.length) return p.yAxis[p.yaxisNumber-1];
+            p.yAxis[p.yaxisNumber-1] = x;
             return paper;
         };
 
@@ -515,6 +544,53 @@
             return [w, h];
         };
 
+        paper.xyData = function (data) {
+            if (!data) return;
+            if (!data.data) data = {data: data};
+
+            var xy = data.data,
+                xmin = Infinity,
+                ymin = Infinity,
+                xmax =-Infinity,
+                ymax =-Infinity,
+                x = function (x) {
+                    xmin = x < xmin ? x : xmin;
+                    xmax = x > xmax ? x : xmax;
+                    return x;
+                },
+                y = function (y) {
+                    ymin = y < ymin ? y : ymin;
+                    ymax = y > ymax ? y : ymax;
+                    return y;
+                };
+            if (isArray(xy[0]) && xy[0].length === 2) {
+                var xydata = [];
+                xy.forEach(function (xy) {
+                    xydata.push({x: x(xy[0]), y: y(xy[1])});
+                });
+                xy = xydata;
+            } else {
+                xy.forEach(function (xy) {
+                    xy.x = x(xy.x);
+                    xy.y = y(xy.y);
+                });
+            }
+            data.data = xy;
+            data.xrange = [xmin, xmax];
+            data.yrange = [ymin, ymax];
+            return data;
+        };
+
+        // pick a unique color, never picked before
+        paper.pickColor = function () {
+            var c = p.colors[color++];
+            if (color === p.colors.length) {
+                // TODO: lighetn the colors maybe?
+                color = 0;
+            }
+            return c;
+        };
+
         // Auto resize the paper
         if (p.resize) {
             //
@@ -540,24 +616,13 @@
     g.paper.types = {};
 
 
-    function xyData (data) {
-        if (!isArray(data)) return;
-        if (isArray(data[0]) && data[0].length === 2) {
-            var xydata = [];
-            data.forEach(function (xy) {
-                xydata.push({x: xy[0], y: xy[1]});
-            });
-            return xydata;
-        }
-        return data;
-    }
-
     //
     //  SVG Paper
     //  ================
     //
     g.paper.types.svg = function (paper, p) {
         var svg = paper.element().append('svg')
+                        .attr('class', 'giotto')
                         .attr('width', p.size[0])
                         .attr('height', p.size[1])
                         .attr("viewBox", "0 0 " + p.size[0] + " " + p.size[1]),
@@ -592,18 +657,15 @@
 
         // set the current element to be the parent and returns the paper
         paper.parent = function () {
-            if (current !== svg) {
-                var parent = current.node().parentNode;
-                if (parent === svg.node())
-                    return svg;
-                else
-                    return d3.select(parent);
-            }
+            var node = current.node();
+            if (node !== svg.node())
+                current = d3.select(node.parentNode);
             return paper;
         };
 
         paper.group = function () {
-            current = current.append('g');
+            current = current.append('g')
+                            .attr("transform", "translate(" + p.margin.left + "," + p.margin.top + ")");
             return current;
         };
 
@@ -635,25 +697,50 @@
             return rect;
         };
 
-        paper.path = function (opts) {
-            if (isArray(opts)) opts = {data: opts};
-            if (!(opts && opts.data)) return;
+        // Draw a path or an area, data must be an xy array [[x1,y1], [x2, y2], ...]
+        paper.path = function (data, opts) {
+            opts || (opts = {});
+            copyMissing(p.lines, opts);
 
-            copyMissing(this.options.lines, opts);
+            var line = opts.area ? d3.svg.area() : d3.svg.line(),
+                scalex = paper.scalex,
+                scaley = paper.scaley,
+                color = opts.color || paper.pickColor();
 
-            var line = d3.svg.line()
-                        .interpolate(opts.interpolate)
-                        .x(function(d) {
-                            return d.x;
-                        })
-                        .y(function(d) {
-                            return d.y;
-                        }),
-                data = xyData(opts.data);
+            line.interpolate(opts.interpolate)
+                .x(function(d) {
+                    return scalex(d.x);
+                })
+                .y(function(d) {
+                    return scaley(d.y);
+                });
 
             return current.append('path')
-                            .datum(data)
-                            .attr('d', line);
+                                .attr('class', opts.area ? 'area' : 'line')
+                                .attr('stroke', color)
+                                .attr('stroke-width', opts.width)
+                                .datum(data)
+                                .attr('d', line);
+        };
+
+        paper.drawXaxis = function () {
+            var opts = p.xaxis,
+                py = opts.position === 'top' ? p.margin.top : p.size[1] - p.margin.bottom;
+            return _axis(svg.append("g")
+                .attr("class", "axis x-axis")
+                .attr("transform", "translate(" + p.margin.left + "," + py + ")")
+                .call(p.xAxis), opts);
+        };
+
+        paper.drawYaxis = function () {
+            var yaxis = paper.yaxis(),
+                opts = yaxis === 1 ? p.yaxis : p.yaxis2,
+                px = opts.position === 'left' ? p.margin.left : p.size[0] - p.margin.right,
+                yAxis = paper.yAxis();
+            return _axis(svg.append("g")
+                    .attr("class", "axis y-axis-" + yaxis)
+                    .attr("transform", "translate(" + px + "," + p.margin.top + ")")
+                    .call(yAxis), opts);
         };
 
         paper.encode = function () {
@@ -722,6 +809,24 @@
                 d3.select(e.target).attr("href", data.url + '?inline');
             }
         };
+
+        function _axis(axis, opts) {
+            var font = opts.font;
+            axis.attr('stroke', opts.color);
+            return _font(axis, opts.font);
+        }
+
+        function _font(element, opts) {
+            var font = p.font;
+            opts || (opts = {});
+            return element.style({
+                'font-size': opts.size || font.size,
+                'font-weight': opts.weight || font.weight,
+                'font-style': opts.style || font.style,
+                'font-family': opts.family || font.family,
+                'font-variant': opts.variant || font.variant
+            });
+        }
     };
 
     var _idCounter = 0;
@@ -745,7 +850,7 @@
                 opts = element;
                 element = null;
             }
-            opts = extend({}, g.defaults.viz, g.defaults.paper, defaults, opts);
+            opts = extend({}, vizType.defaults, opts);
 
             var viz = {},
                 uid = ++_idCounter,
@@ -864,6 +969,8 @@
                 return opts;
             };
 
+            viz.xyfunction = g.xyfunction;
+
             d3.rebind(viz, event, 'on');
 
             if (constructor)
@@ -886,6 +993,8 @@
 
         g.viz[name] = vizType;
 
+        vizType.defaults = extend({}, g.defaults.viz, g.defaults.paper, defaults);
+
         vizType.vizName = function () {
             return name;
         };
@@ -902,9 +1011,12 @@
     function _initPaper (paper, p) {
         g.paper.types[p.type](paper, p);
 
-        paper.xAxis().scale().range([0, p.size[0]]);
-        paper.yaxis(2).yAxis().scale().range([0, p.size[1]]);
-        paper.yaxis(1).yAxis().scale().range([0, p.size[1]]);
+        var width = p.size[0] - p.margin.left - p.margin.right,
+            height = p.size[1] - p.margin.top - p.margin.bottom;
+
+        paper.xAxis().orient(p.xaxis.position).scale().range([0, width]);
+        paper.yaxis(2).yAxis().orient(p.yaxis2.position).scale().range([height, 0]);
+        paper.yaxis(1).yAxis().orient(p.yaxis.position).scale().range([height, 0]);
         //
         return d3.rebind(paper, p.event, 'on');
     }
@@ -1132,6 +1244,122 @@
             return paper;
         };
     };
+
+    g.createviz('chart', {
+        margin: {top: 30, right: 30, bottom: 30, left: 30},
+        serie: {
+            lines: {show: true},
+            points: {show: false},
+            bars: {show: false}
+        }
+    }, function (chart, opts) {
+
+        var paper = chart.paper(),
+            defaults = chart.vizType().defaults;
+
+        chart.addSeries = function (series) {
+            // Loop through data and build the graph
+            var xrange = [Infinity, -Infinity],
+                yrange = [Infinity, -Infinity],
+                data = [];
+
+            series.forEach(function (serie) {
+
+                if (isFunction (serie)) {
+                    serie = serie(chart);
+                }
+
+                serie = addSerie(serie);
+
+                if (serie) {
+                    data.push(serie);
+                    xrange[0] = Math.min(xrange[0], serie.xrange[0]);
+                    xrange[1] = Math.max(xrange[1], serie.xrange[1]);
+                    yrange[0] = Math.min(yrange[0], serie.yrange[0]);
+                    yrange[1] = Math.max(yrange[1], serie.yrange[1]);
+                }
+            });
+
+            paper.xAxis().scale().domain([ac(opts.xaxis.min, xrange[0]), ac(opts.xaxis.min, xrange[1])]);
+            paper.yAxis().scale().domain([ac(opts.yaxis.min, yrange[0]), ac(opts.yaxis.min, yrange[1])]);
+
+            data.forEach(function (serie) {
+                addSerie(serie, true);
+            });
+            return chart;
+        };
+
+        chart.draw = function () {
+            var data = opts.data;
+            if (!data && opts.src)
+                return chart.loadData(chart.draw);
+            if (g._.isFunction(data))
+                data = data(chart);
+            chart.addSeries(data);
+
+            // Axis
+            if (show(opts.xaxis))
+                paper.drawXaxis();
+            if (show(opts.yaxis))
+                paper.drawYaxis();
+            if (show(opts.yaxis2, false))
+                paper.drawYaxis();
+        };
+
+
+        chart.on('tick.main', function () {
+            // Chart don't need ticking unless explicitly required (real time updates for example)
+            chart.stop();
+            chart.draw();
+        });
+
+
+        // Internals
+        function show (o, d) {
+            if (o) {
+                if (o.show === undefined)
+                    return d === undefined ? true : d;
+                else
+                    return o.show;
+            }
+            return false;
+        }
+
+        function ac(val, calc) {
+            val = val === undefined || val === null ? calc : val;
+            return val;
+        }
+
+        function addSerie (serie, add) {
+            // The serie is
+            if (!serie) return;
+
+            if (add) {
+                paper.group();
+
+                g.log.info('Add new serie to chart');
+
+                copyMissing(defaults.serie, serie);
+
+                if (serie.lines.show)
+                    serie.lines = paper.path(serie.data, serie.lines);
+
+                if (serie.points.show)
+                    serie.points = paper.nodes(serie.data, serie.points);
+
+                if (serie.bars.show)
+                    serie.bars = paper.bars(serie.data, serie.bars);
+
+                paper.parent();
+            } else {
+
+                if (isArray(serie)) {
+                    serie = {data: serie};
+                }
+                return paper.xyData(serie);
+            }
+        }
+    });
     //
     //
     // Force layout example
@@ -2036,45 +2264,6 @@
         }
     });
 
-
-    g.createviz('chart', {
-        serie: {
-            lines: {show: true},
-            points: {show: true}
-        }
-    }, function (viz, opts) {
-
-        viz._todo =  function () {
-            var opts = viz.attrs,
-                data = opts.data || [];
-
-            // Loop through data and build the graph
-            data.forEach(function (serie) {
-                if (isFunction (serie)) {
-                    serie = serie(viz);
-                }
-                viz.addSerie(serie);
-            });
-        };
-
-        viz.addSerie = function (serie) {
-            // The serie is
-            if (!serie) return;
-
-            if (isArray(serie)) {
-                serie = {data: serie};
-            }
-            if (!serie.data) return;
-            viz.log.info('Add new serie to chart');
-
-            copyMissing(viz.serieDefaults, serie);
-
-            if (serie.lines.show)
-                viz.paper().drawLine(serie.data, serie.lines);
-
-        };
-
-    });
 var BITS = 52,
     SCALE = 2 << 51,
     MAX_DIMENSION = 21201,

@@ -2,7 +2,8 @@
     // Create a new paper for drawing stuff
     g.paper = function (element, p) {
 
-        var paper = {};
+        var paper = {},
+            color = 0;
 
         if (isObject(element)) {
             p = element;
@@ -36,18 +37,27 @@
             return p.size[1];
         };
 
+        paper.innerWidth = function () {
+            return p.size[0] - p.margin.left - p.margin.right;
+        };
+
+        paper.innerHeight = function () {
+            return p.size[1] - p.margin.top - p.margin.bottom;
+        };
+
         paper.aspectRatio = function () {
-            return p.size[1]/p.size[0];
+            return paper.innerHeight()/paper.innerWidth();
         };
 
         paper.element = function () {
             return element;
         };
 
+        // returns the number of the y-axis currently selected
         paper.yaxis = function (x) {
-            if (!arguments.length) return p.yaxis;
+            if (!arguments.length) return p.yaxisNumber;
             if (x === 1 || x === 2)
-                p.yaxis = x;
+                p.yaxisNumber = x;
             return paper;
         };
 
@@ -58,8 +68,8 @@
         };
 
         paper.yAxis = function (x) {
-            if (!arguments.length) return p.yAxis[p.yaxis-1];
-            p.yAxis[p.yaxis-1] = x;
+            if (!arguments.length) return p.yAxis[p.yaxisNumber-1];
+            p.yAxis[p.yaxisNumber-1] = x;
             return paper;
         };
 
@@ -100,6 +110,53 @@
             return [w, h];
         };
 
+        paper.xyData = function (data) {
+            if (!data) return;
+            if (!data.data) data = {data: data};
+
+            var xy = data.data,
+                xmin = Infinity,
+                ymin = Infinity,
+                xmax =-Infinity,
+                ymax =-Infinity,
+                x = function (x) {
+                    xmin = x < xmin ? x : xmin;
+                    xmax = x > xmax ? x : xmax;
+                    return x;
+                },
+                y = function (y) {
+                    ymin = y < ymin ? y : ymin;
+                    ymax = y > ymax ? y : ymax;
+                    return y;
+                };
+            if (isArray(xy[0]) && xy[0].length === 2) {
+                var xydata = [];
+                xy.forEach(function (xy) {
+                    xydata.push({x: x(xy[0]), y: y(xy[1])});
+                });
+                xy = xydata;
+            } else {
+                xy.forEach(function (xy) {
+                    xy.x = x(xy.x);
+                    xy.y = y(xy.y);
+                });
+            }
+            data.data = xy;
+            data.xrange = [xmin, xmax];
+            data.yrange = [ymin, ymax];
+            return data;
+        };
+
+        // pick a unique color, never picked before
+        paper.pickColor = function () {
+            var c = p.colors[color++];
+            if (color === p.colors.length) {
+                // TODO: lighetn the colors maybe?
+                color = 0;
+            }
+            return c;
+        };
+
         // Auto resize the paper
         if (p.resize) {
             //
@@ -124,15 +181,3 @@
 
     g.paper.types = {};
 
-
-    function xyData (data) {
-        if (!isArray(data)) return;
-        if (isArray(data[0]) && data[0].length === 2) {
-            var xydata = [];
-            data.forEach(function (xy) {
-                xydata.push({x: xy[0], y: xy[1]});
-            });
-            return xydata;
-        }
-        return data;
-    }

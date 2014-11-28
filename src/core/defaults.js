@@ -1,11 +1,35 @@
     g.defaults = {};
 
+    g.defaults.axis = {
+        color: '#000',
+        tickSize: 0.05,
+        minTickSize: 0.02
+    };
+
     g.defaults.paper = {
         type: 'svg',
         resizeDelay: 200,
-        yaxis: 1,
         resize: true,
         margin: {top: 20, right: 20, bottom: 20, left: 20},
+        xaxis: extend({position: 'bottom'}, g.defaults.axis),
+        yaxis: extend({position: 'left'}, g.defaults.axis),
+        yaxis2: extend({position: 'right'}, g.defaults.axis),
+        colors: d3.scale.category10().range(),
+        lines: {
+            interpolate: 'basis',
+            width: 2
+        },
+        nodes: {
+            symbol: 'circle'
+        },
+        font: {
+            size: 11,
+            weight: 'bold',
+            lineHeight: 13,
+            style: "italic",
+            family: "sans-serif",
+            variant: "small-caps"
+        }
     };
 
     g.defaults.viz = extend({
@@ -15,11 +39,6 @@
         //
         // Default events dispatched by the visualization
         events: ['build', 'change', 'start', 'tick', 'end'],
-        //
-        // Default parameters when drawing lines
-        lines: {
-            interpolate: 'basis'
-        }
     });
 
     g.constants = {

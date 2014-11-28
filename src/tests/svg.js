@@ -24,15 +24,16 @@
             paper = g.paper({width: 600, height: 500});
             expect(paper.width()).toBe(600);
             expect(paper.height()).toBe(500);
-            expect(paper.aspectRatio()).toBe(5/6);
+            expect(paper.aspectRatio()).not.toBe(5/6);
+            expect(paper.aspectRatio()).toBe(paper.innerHeight()/paper.innerWidth());
             checkScale(paper);
         });
 
         it("Check scalex scaley methods", function () {
             var paper = g.paper();
 
-            expect(paper.scalex(1)).toBe(paper.width());
-            expect(paper.scaley(1)).toBe(paper.height());
+            expect(paper.scalex(1)).toBe(paper.innerWidth());
+            expect(paper.scaley(1)).toBe(0);
         });
 
         it("Check group", function () {
@@ -48,9 +49,9 @@
                 c = paper.circle(0.5, 0.5, 0.3);
 
             expect(c.node().tagName).toBe('circle');
-            expect(+c.attr('cx')).toBe(0.5*paper.width());
-            expect(+c.attr('cy')).toBe(0.5*paper.height());
-            expect(+c.attr('r')).toBe(0.3*paper.width());
+            expect(+c.attr('cx')).toBe(0.5*paper.innerWidth());
+            expect(+c.attr('cy')).toBe(0.5*paper.innerHeight());
+            expect(+c.attr('r')).toBe(0.3*paper.innerWidth());
         });
 
         it("Check rect", function () {
@@ -60,8 +61,8 @@
 
             var r = paper.rect(-0.5, -0.5, 1, 1);
 
-            expect(+r.attr('x')).toBe(150);
-            expect(+r.attr('y')).toBe(125);
+            expect(+r.attr('x')).toBe(140);
+            expect(+r.attr('y')).toBe(345);
         });
 
         it("Check resize", function () {
@@ -94,8 +95,8 @@
         });
 
         function checkScale(paper) {
-            var width = paper.width(),
-                height = paper.height(),
+            var width = paper.innerWidth(),
+                height = paper.innerHeight(),
                 scale = paper.xAxis().scale();
 
             expect(scale(1)).toBe(width);

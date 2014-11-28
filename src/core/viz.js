@@ -19,7 +19,7 @@
                 opts = element;
                 element = null;
             }
-            opts = extend({}, g.defaults.viz, g.defaults.paper, defaults, opts);
+            opts = extend({}, vizType.defaults, opts);
 
             var viz = {},
                 uid = ++_idCounter,
@@ -138,6 +138,8 @@
                 return opts;
             };
 
+            viz.xyfunction = g.xyfunction;
+
             d3.rebind(viz, event, 'on');
 
             if (constructor)
@@ -159,6 +161,8 @@
         };
 
         g.viz[name] = vizType;
+
+        vizType.defaults = extend({}, g.defaults.viz, g.defaults.paper, defaults);
 
         vizType.vizName = function () {
             return name;

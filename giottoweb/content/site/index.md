@@ -4,7 +4,7 @@ Giotto is a javascript library under active development but not yet ready
 for anything other than that.
 
 * Built on top of [d3][]
-* Svg and, evuntually, canvas support
+* ``svg`` and, eventually, ``canvas`` support
 
 Latest development versions
 

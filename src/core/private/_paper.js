@@ -3,9 +3,12 @@
     function _initPaper (paper, p) {
         g.paper.types[p.type](paper, p);
 
-        paper.xAxis().scale().range([0, p.size[0]]);
-        paper.yaxis(2).yAxis().scale().range([0, p.size[1]]);
-        paper.yaxis(1).yAxis().scale().range([0, p.size[1]]);
+        var width = p.size[0] - p.margin.left - p.margin.right,
+            height = p.size[1] - p.margin.top - p.margin.bottom;
+
+        paper.xAxis().orient(p.xaxis.position).scale().range([0, width]);
+        paper.yaxis(2).yAxis().orient(p.yaxis2.position).scale().range([height, 0]);
+        paper.yaxis(1).yAxis().orient(p.yaxis.position).scale().range([height, 0]);
         //
         return d3.rebind(paper, p.event, 'on');
     }
