@@ -19,10 +19,12 @@
         "dest": "dist/giotto.js"
     },
     "giottoweb": {
-        "src": ["src/examples/open.js",
-                "src/examples/examples.js",
-                "src/examples/close.js"],
+        "src": ["src/giottoweb/open.js",
+                "src/giottoweb/close.js"],
         "dest": "giottoweb/media/giottoweb/giottoweb.js",
         "minify": false
+    },
+    "examples": {
+        "src": ["examples/*/*.js"]
     }
 }

@@ -6,7 +6,8 @@ module.exports = function (grunt) {
     var docco_output = '../docs/lux/html/docco',
         //docco_output = 'docs/build/html/docco',
         // All libraries
-        libs = grunt.file.readJSON('files.json');
+        libs = grunt.file.readJSON('files.json'),
+        concats = {};
     //
     function for_each(obj, callback) {
         for(var p in obj) {
@@ -22,11 +23,13 @@ module.exports = function (grunt) {
         if(options && options.banner) {
             options.banner = grunt.file.read(options.banner);
         }
+        if (this.dest)
+            concats[name] = this;
     });
     //
     function uglify_libs () {
         var result = {};
-        for_each(libs, function (name) {
+        for_each(concats, function (name) {
             if (this.minify !== false)
                 result[name] = {dest: this.dest.replace('.js', '.min.js'),
                                 src: [this.dest]};
@@ -59,7 +62,7 @@ module.exports = function (grunt) {
                 }
         };
         for_each(libs, function (name) {
-            result[name] = this.dest;
+            result[name] = this.dest || this.src;
         });
         return result;
     }
@@ -70,7 +73,7 @@ module.exports = function (grunt) {
     // Initialise Grunt with all tasks defined above
     grunt.initConfig({
         pkg: grunt.file.readJSON('package.json'),
-        concat: libs,
+        concat: concats,
         uglify: uglify_libs(),
         jshint: jshint_libs(),
         jasmine: {

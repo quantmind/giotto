@@ -31,7 +31,8 @@ LINKS = {'AngularJS': 'https://angularjs.org/',
 from os import path
 
 import lux
-from lux.extensions.static import HtmlContent, MediaBuilder, Sitemap
+from lux.extensions.static import (HtmlContent, MediaBuilder, Sitemap,
+                                   DirContent, Blog)
 
 
 class Extension(lux.Extension):
@@ -40,10 +41,11 @@ class Extension(lux.Extension):
         media_url = app.config['MEDIA_URL']
         examples = HtmlContent('/',
                                Sitemap('/sitemap.xml'),
-                               HtmlContent('/examples',
-                                           html_body_template='examples.html',
-                                           dir='giottoweb/content/examples',
-                                           drafts=False),
+                               Blog('/examples',
+                                    meta={'template': 'examples.md'},
+                                    content=DirContent,
+                                    dir='examples',
+                                    drafts=False),
                                drafts=False,
                                dir='giottoweb/content/site')
         dist = MediaBuilder(media_url+'giotto', 'dist', lux=False)

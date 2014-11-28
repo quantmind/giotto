@@ -1,7 +1,5 @@
 title: Zoomable Sunburst Partition
 
-# Zoomable Sunburst Partition
-
 <div class='row'>
   <div class='col-sm-12'>
     <div style="width: 100%; position: relative">
