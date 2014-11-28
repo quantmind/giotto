@@ -25,5 +25,6 @@
     g.constants = {
         DEFAULT_VIZ_GROUP: 'default_viz_group',
         WIDTH: 400,
-        HEIGHT: 300
+        HEIGHT: 300,
+        leaflet: 'http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css'
     };

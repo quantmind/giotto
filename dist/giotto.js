@@ -1,6 +1,6 @@
 //      Giotto - v0.1.0
 
-//      Compiled 2014-11-27.
+//      Compiled 2014-11-28.
 //      Copyright (c) 2014 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -113,119 +113,6 @@
             });
         }
     };
-
-    //
-    //  Class
-    //  ============
-
-    //  Implements javascript class inheritance
-    //  Check http://ejohn.org/blog/simple-javascript-inheritance/ for details.
-    var
-    //
-    // Test for ``_super`` method in a ``Class``.
-    //
-    fnTest = /xyz/.test(function(){var xyz;}) ? /\b_super\b/ : /.*/,
-    //
-    // Create a method for a derived Class
-    create_method = function (type, name, attr, _super) {
-        if (typeof attr === "function" && typeof _super[name] === "function" &&
-                fnTest.test(attr)) {
-            return type.new_attr(name, function() {
-                var tmp = this._super;
-                // Add a new ._super() method that is the same method
-                // but on the super-class
-                this._super = _super[name];
-                // The method only need to be bound temporarily, so we
-                // remove it when we're done executing
-                var ret = attr.apply(this, arguments);
-                this._super = tmp;
-                return ret;
-            });
-        } else {
-            return type.new_attr(name, attr);
-        }
-    },
-    //
-    //  Type
-    //  -------------
-
-    //  A Type is a factory of Classes. This is the correspondent of
-    //  python metaclasses.
-    Type = g.Type = (function (t) {
-
-        t.new_class = function (Caller, attrs) {
-            var type = this,
-                meta = Caller === type,
-                _super = meta ? Caller : Caller.prototype;
-            // Instantiate a base class
-            Caller.initialising = true;
-            var prototype = new Caller();
-            delete Caller.initialising;
-            //
-            // Copy the properties over onto the new prototype
-            for (var name in attrs) {
-                if (name !== 'Metaclass') {
-                    prototype[name] = create_method.call(Caller,
-                            type, name, attrs[name], _super);
-                }
-            }
-            if (!meta) {
-                //
-                // The dummy class constructor
-                var constructor = function () {
-                    // All construction is actually done in the init method
-                    if ( !this.constructor.initialising && this.init ) {
-                        this.init.apply(this, arguments);
-                    }
-                };
-                //
-                // Populate our constructed prototype object
-                constructor.prototype = prototype;
-                // Enforce the constructor to be what we expect
-                constructor.prototype.constructor = constructor;
-                // And make this class extendable
-                constructor.extend = Caller.extend;
-                //
-                return constructor;
-            } else {
-                for (name in _super) {
-                    if (prototype[name] === undefined) {
-                        prototype[name] = _super[name];
-                    }
-                }
-                return prototype;
-            }
-        };
-        //
-        t.new_attr = function (name, attr) {
-            return attr;
-        };
-        // Create a new Class that inherits from this class
-        t.extend = function (attrs) {
-            return t.new_class(this, attrs);
-        };
-        //
-        return t;
-    }(function(){})),
-    //
-    //  Class
-    //  -----------
-
-    //  A function representing a base class.
-    //  The `extend` method is the most important function of this function-object.
-    Class = g.Class = (function (c) {
-        c.__class__ = Type;
-        //
-        c.extend = function (attrs) {
-            var type = attrs.Metaclass || this.__class__;
-            var cls = type.new_class(this, attrs);
-            cls.__class__ = type;
-            return cls;
-        };
-        //
-        return c;
-    }(function() {}));
-
 
     function noop () {}
 
@@ -431,6 +318,15 @@
             }
         }
         return o;
+    },
+
+    //  Load a style sheet link
+    loadCss = _.loadCss = function (filename) {
+        var fileref = document.createElement("link");
+        fileref.setAttribute("rel", "stylesheet");
+        fileref.setAttribute("type", "text/css");
+        fileref.setAttribute("href", filename);
+        document.getElementsByTagName("head")[0].appendChild(fileref);
     };
 
 
@@ -514,7 +410,8 @@
     g.constants = {
         DEFAULT_VIZ_GROUP: 'default_viz_group',
         WIDTH: 400,
-        HEIGHT: 300
+        HEIGHT: 300,
+        leaflet: 'http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css'
     };
     //
     // Create a new paper for drawing stuff
@@ -827,230 +724,7 @@
         };
     };
 
-
-    g.vizRegistry = (function () {
-        var _vizMap = {};
-
-        function initializeVizGroup(group) {
-            if (!group) {
-                group = g.constants.DEFAULT_VIZ_GROUP;
-            }
-
-            if (!_vizMap[group]) {
-                _vizMap[group] = [];
-            }
-
-            return group;
-        }
-
-        return {
-            has: function (viz) {
-                for (var e in _vizMap) {
-                    if (_vizMap[e].indexOf(viz) >= 0) {
-                        return true;
-                    }
-                }
-                return false;
-            },
-
-            register: function (viz, group) {
-                group = initializeVizGroup(group);
-                _vizMap[group].push(viz);
-            },
-
-            deregister: function (viz, group) {
-                group = initializeVizGroup(group);
-                for (var i = 0; i < _vizMap[group].length; i++) {
-                    if (_vizMap[group][i].anchorName() === viz.anchorName()) {
-                        _vizMap[group].splice(i, 1);
-                        break;
-                    }
-                }
-            },
-
-            clear: function (group) {
-                if (group) {
-                    delete _vizMap[group];
-                } else {
-                    _vizMap = {};
-                }
-            },
-
-            list: function (group) {
-                group = initializeVisGroup(group);
-                return _vizMap[group];
-            }
-        };
-    }());
-
-    g.registerViz = function (viz, group) {
-        g.vizRegistry.register(viz, group);
-    };
-
-    g.deregisterViz = function (viz, group) {
-        g.vizRegistry.deregister(viz, group);
-    };
-
-    g.hasViz = function (viz) {
-        return g.vizRegistry.has(viz);
-    };
-
     var _idCounter = 0;
-    //
-    //  Vizualization Class
-    //  -------------------------------
-    //
-    //  Utility for building visualization using d3
-    //  The only method to implement is ``d3build``
-    //
-    //  ``attrs`` is an object containing optional parameters/callbacks for
-    //  the visulaization. For all visualizations the following parameters
-    //  are supported
-    //
-    //  * ``processData``: a function to invoke once data has been loaded
-    //  * ``width``: The width of the visualization, if not provided it will be evaluated
-    //    from the element of its parent
-    //  * ``height``: The height of the visualization, if not provided it will be evaluated
-    //    from the element of its parent
-    var Viz = g.Viz = Class.extend({
-        //
-        // Initialise the vizualization with a DOM element and
-        //  an object of attributes
-        init: function (element, attrs) {
-            if (!attrs && Object(element) === element) {
-                attrs = element;
-                element = null;
-            }
-            if (!element)
-                element = document.createElement('div');
-            attrs = extend({}, g.defaults.viz, g.defaults.paper, this.defaults, attrs);
-            element = d3.select(element);
-            this.element = element;
-            this.log = log(attrs.debug);
-            this.uid = ++_idCounter;
-            this.dispatch = d3.dispatch.apply(d3, attrs.events);
-            this.g = g;
-            this.attrs = this.getAttributes(attrs);
-            //
-            if (attrs.onInit)
-                this._executeCallback(attrs.onInit);
-            if (attrs.autoBuild)
-                this.build();
-        },
-        //
-        // Resize the vizualization
-        resize: function (size) {
-            if (this._paper)
-                this._paper.resize(size);
-        },
-        //
-        //  Retrieve the paper when the visualization is displayed
-        //  Create a new one if not available
-        paper: function (createNew) {
-            if (createNew || this._paper === undefined) {
-                var self = this;
-
-                if (this._paper)
-                    this._paper.destroy();
-
-                this._paper = g.paper(this.element.node(), this.attrs);
-                this._paper.on('refresh', function () {
-                    self._refresh();
-                });
-            }
-            return this._paper;
-        },
-        //
-        // Build the visualisation
-        build: function (options) {
-            if (options)
-                this.attrs = extend(this.attrs, options);
-            this.d3build();
-            this.dispatch.build(this);
-        },
-        //
-        // Same as build
-        redraw: function (options) {
-            this.build(options);
-        },
-        //
-        // This is the actual method to implement
-        d3build: function () {
-
-        },
-        //
-        // Load data
-        loadData: function (callback) {
-            var self = this,
-                src = this.attrs.src;
-            if (src) {
-                return d3.json(src, function(error, json) {
-                    if (!error) {
-                        self.setData(json, callback);
-                    }
-                });
-            }
-        },
-        //
-        getAttributes: function (attrs) {
-            return attrs;
-        },
-        //
-        // Set new data for the visualization
-        setData: function (data, callback) {
-            if (this.attrs.processData)
-                data = this.attrs.processData(data);
-            if (Object(data) === data && data.data)
-                this.attrs = extend(this.attrs, data);
-            else
-                this.attrs.data = data;
-            if (callback)
-                callback();
-        },
-        //
-        // Shortcut for this.dispatch.on(...) but chainable
-        on: function (event, callback) {
-            this.dispatch.on(event, callback);
-            return this;
-        },
-        //
-        // Fire an event if it exists
-        fire: function (event) {
-            if (this.dispatch[event])
-                this.dispatch[event].call(this);
-        },
-        //
-        // Execute a callback
-        _executeCallback: function (callback) {
-            var cbk = callback;
-            if (typeof(callback) === 'string') {
-                var obj = root,
-                    bits= callback.split('.');
-
-                for (var i=0; i<bits.length; ++i) {
-                    obj = obj[bits[i]];
-                    if (!obj) break;
-                }
-                cbk = obj;
-            }
-            if (typeof(cbk) === 'function')
-                cbk.call(this);
-            else
-                this.log.error('Cannot execute callback "' + callback + '". Not a function');
-        },
-        //
-        // Use this method to do something when a refresh event occurs
-        _refresh: function () {
-            if (this.paper().type() === 'canvas')
-                this.build();
-        }
-    });
-
-    g.isviz = function (o) {
-        return o !== Viz && o.prototype && o.prototype instanceof Viz;
-    };
-
-
     //
     g.viz = {};
     //
@@ -1822,35 +1496,46 @@
         }
     });
 
-    g.Leaflet = Viz.extend({
-        //
-        defaults: {
-            center: [41.898582, 12.476801],
-            zoom: 4,
-            maxZoom: 18,
-            zoomControl: true,
-            wheelZoom: true,
-        },
-        getAttributes: function (attrs) {
-            // switch off resizing, handled by leflet
-            attrs.resize = false;
-            return attrs;
-        },
-        //
-        d3build: function () {
-            var o = this.attrs,
-                e = this.element.node();
+
+    g.createviz('map', {
+        tile: null,
+        center: [41.898582, 12.476801],
+        zoom: 4,
+        maxZoom: 18,
+        zoomControl: true,
+        wheelZoom: true,
+    }, function (viz, opts) {
+
+        viz.start = function () {};
+
+        viz.innerMap = function () {};
+
+        viz.addLayer = function (collection, draw) {};
+
+        // Override when tile provider available
+        if (opts.tile)
+            g.viz.map.tileProviders[opts.tile](viz, opts);
+
+    }).tileProviders = {};
+
+    //
+    //  Leaflet tiles
+    g.viz.map.tileProviders.leaflet = function (viz, opts) {
+        var map,
+            callbacks = [];
+
+        // Override start
+        viz.start = function () {
             if (typeof L === 'undefined') {
-                var self = this;
-                require(['leaflet'], function () {
-                    self.d3build();
+                g._.loadCss(g.constants.leaflet);
+                g.require(['leaflet'], function () {
+                    viz.start();
                 });
             } else {
-                var opts = this.attrs,
-                    map = this.map = new L.map(e, {
-                        center: o.center,
-                        zoom: o.zoom
-                    });
+                map = new L.map(viz.element().node(), {
+                    center: opts.center,
+                    zoom: opts.zoom
+                });
                 if (opts.zoomControl) {
                     if (!opts.wheelZoom)
                         map.scrollWheelZoom.disable();
@@ -1864,73 +1549,65 @@
                     if (map.tap) map.tap.disable();
                 }
 
-                if (o.buildMap)
-                    o.buildMap.call(this);
+                // Attach the view reset callback
+                map.on("viewreset", function () {
+                    for (var i=0; i<callbacks.length; ++i)
+                        callbacks[i]();
+                });
+
+                viz.resume();
             }
-        },
-        //
-        addLayer: function (url, options) {
-            if (this.map)
-                L.tileLayer(url, options).addTo(this.map);
-        },
-        //
-        addSvgLayer: function (collection, draw) {
+        };
+
+        viz.innerMap = function () {
+            return map;
+        };
+
+        viz.addLayer = function (url, options) {
+            if (map)
+                L.tileLayer(url, options).addTo(map);
+        };
+
+        viz.addOverlay = function (collection, callback) {
             var transform = d3.geo.transform({point: ProjectPoint}),
                 path = d3.geo.path().projection(transform),
-                map = this.map,
                 svg = map ? d3.select(map.getPanes().overlayPane).append("svg") : null,
-                g = svg ? svg.append("g").attr("class", "leaflet-zoom-hide") : null;
+                g = svg ? svg.append("g").attr("class", "leaflet-zoom-hide") : null,
+                draw = function () {
+                    var bounds = path.bounds(collection),
+                        topLeft = bounds[0],
+                        bottomRight = bounds[1];
 
-            // Use Leaflet to implement a D3 geometric transformation.
-            function ProjectPoint (x, y) {
-                var point = map.latLngToLayerPoint(new L.LatLng(y, x));
-                this.stream.point(point.x, point.y);
-            }
-            //
-            // Reposition the SVG to cover the features.
-            function reset () {
-                var bounds = path.bounds(collection),
-                    topLeft = bounds[0],
-                    bottomRight = bounds[1];
+                    svg.attr("width", bottomRight[0] - topLeft[0])
+                        .attr("height", bottomRight[1] - topLeft[1])
+                        .style("left", topLeft[0] + "px")
+                        .style("top", topLeft[1] + "px");
 
-                svg.attr("width", bottomRight[0] - topLeft[0])
-                    .attr("height", bottomRight[1] - topLeft[1])
-                    .style("left", topLeft[0] + "px")
-                    .style("top", topLeft[1] + "px");
+                    g.attr("transform", "translate(" + -topLeft[0] + "," + -topLeft[1] + ")");
 
-                g.attr("transform", "translate(" + -topLeft[0] + "," + -topLeft[1] + ")");
-
-                if (draw)
-                    draw(path);
-            }
-            //
-            if (map) {
-                var svgLayer = {
-                    svg: svg,
-                    g: g,
-                    collection: collection,
-                    path: path,
-                    draw: function () {
-                        var bounds = path.bounds(collection),
-                            topLeft = bounds[0],
-                            bottomRight = bounds[1];
-
-                        svg.attr("width", bottomRight[0] - topLeft[0])
-                            .attr("height", bottomRight[1] - topLeft[1])
-                            .style("left", topLeft[0] + "px")
-                            .style("top", topLeft[1] + "px");
-
-                        g.attr("transform", "translate(" + -topLeft[0] + "," + -topLeft[1] + ")");
-
-                        if (draw)
-                            draw(svgLayer);
-                    }
+                    if (callback)
+                        callback(path);
                 };
-                map.on("viewreset", svgLayer.draw);
-                return svgLayer;
-            }
+
+            callbacks.push(draw);
+
+            return {
+                element: g,
+                collection: collection,
+                path: path,
+                draw: draw
+            };
+        };
+
+        // Use Leaflet to implement a D3 geometric transformation.
+        function ProjectPoint (x, y) {
+            var point = map.latLngToLayerPoint(new L.LatLng(y, x));
+            this.stream.point(point.x, point.y);
         }
-    });
+
+    };
+
+
 
     //
     //  Sunburst visualization
@@ -2360,31 +2037,27 @@
     });
 
 
-    g.Chart = Viz.extend({
-        serieDefaults: {
+    g.createviz('chart', {
+        serie: {
             lines: {show: true},
             points: {show: true}
-        },
+        }
+    }, function (viz, opts) {
 
-        defaults: {
-
-        },
-
-        build: function () {
-            var self = this,
-                opts = this.attrs,
+        viz._todo =  function () {
+            var opts = viz.attrs,
                 data = opts.data || [];
 
             // Loop through data and build the graph
             data.forEach(function (serie) {
                 if (isFunction (serie)) {
-                    serie = serie(self);
+                    serie = serie(viz);
                 }
-                self.addSerie(serie);
+                viz.addSerie(serie);
             });
-        },
+        };
 
-        addSerie: function (serie) {
+        viz.addSerie = function (serie) {
             // The serie is
             if (!serie) return;
 
@@ -2392,14 +2065,15 @@
                 serie = {data: serie};
             }
             if (!serie.data) return;
-            this.log.info('Add new serie to chart');
+            viz.log.info('Add new serie to chart');
 
-            copyMissing(this.serieDefaults, serie);
+            copyMissing(viz.serieDefaults, serie);
 
             if (serie.lines.show)
-                this.paper().drawLine(serie.data, serie.lines);
+                viz.paper().drawLine(serie.data, serie.lines);
 
-        }
+        };
+
     });
 var BITS = 52,
     SCALE = 2 << 51,

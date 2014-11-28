@@ -1,29 +1,25 @@
 
-    g.Chart = Viz.extend({
-        serieDefaults: {
+    g.createviz('chart', {
+        serie: {
             lines: {show: true},
             points: {show: true}
-        },
+        }
+    }, function (viz, opts) {
 
-        defaults: {
-
-        },
-
-        build: function () {
-            var self = this,
-                opts = this.attrs,
+        viz._todo =  function () {
+            var opts = viz.attrs,
                 data = opts.data || [];
 
             // Loop through data and build the graph
             data.forEach(function (serie) {
                 if (isFunction (serie)) {
-                    serie = serie(self);
+                    serie = serie(viz);
                 }
-                self.addSerie(serie);
+                viz.addSerie(serie);
             });
-        },
+        };
 
-        addSerie: function (serie) {
+        viz.addSerie = function (serie) {
             // The serie is
             if (!serie) return;
 
@@ -31,12 +27,13 @@
                 serie = {data: serie};
             }
             if (!serie.data) return;
-            this.log.info('Add new serie to chart');
+            viz.log.info('Add new serie to chart');
 
-            copyMissing(this.serieDefaults, serie);
+            copyMissing(viz.serieDefaults, serie);
 
             if (serie.lines.show)
-                this.paper().drawLine(serie.data, serie.lines);
+                viz.paper().drawLine(serie.data, serie.lines);
 
-        }
+        };
+
     });
