@@ -68,7 +68,7 @@
         });
 
 
-        // Internals
+        // INTERNALS
         function show (o, d) {
             if (o) {
                 if (o.show === undefined)

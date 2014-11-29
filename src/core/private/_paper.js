@@ -1,10 +1,10 @@
     //
     //  Initaise paper
     function _initPaper (paper, p) {
-        g.paper.types[p.type](paper, p);
+        g.paper[p.type](paper, p);
 
-        var width = p.size[0] - p.margin.left - p.margin.right,
-            height = p.size[1] - p.margin.top - p.margin.bottom;
+        var width = paper.innerWidth(),
+            height = paper.innerHeight();
 
         paper.xAxis().orient(p.xaxis.position).scale().range([0, width]);
         paper.yaxis(2).yAxis().orient(p.yaxis2.position).scale().range([height, 0]);

@@ -13,6 +13,7 @@
                 "src/canvas/*.js",
                 "src/core/canvas.js",
                 "src/viz/*.js",
+                "src/plugins/*.js",
                 "src/math/*.js",
                 "src/close.js"],
         "dest": "dist/giotto.js"

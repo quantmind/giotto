@@ -73,6 +73,14 @@
             return paper;
         };
 
+        paper.xGrid = function () {
+            return p.xGrid;
+        };
+
+        paper.yGrid = function () {
+            return p.yGrid;
+        };
+
         paper.scale = function (r) {
             var s = p.xAxis.scale();
             return s(r) - s(0);
@@ -178,6 +186,25 @@
         return _initPaper(paper, p);
     };
 
+    //
+    //  Paper can be svg or canvas
+    //  This function create a paper type with support for plugins
+    g.paper.addType = function (type, constructor) {
+        var plugins = [];
 
-    g.paper.types = {};
+        g.paper[type] = function (paper, opts) {
+            constructor(paper, opts);
 
+            // Inject plugins
+            for (var i=0; i < plugins.length; ++i)
+                plugins[i](paper, opts);
+
+            return paper;
+        };
+
+        g.paper[type].plugin = function (name, defaults, plugin) {
+            g.defaults.paper[name] = defaults;
+            plugins.push(plugin);
+        };
+
+    };

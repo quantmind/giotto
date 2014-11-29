@@ -1,5 +1,5 @@
 
-    g.paper.types.canvas = function (paper, p) {
+    g.paper.addType('canvas', function (paper, p) {
         var canvas, ctx, current;
 
         p.xAxis = d3.canvas.axis();
@@ -27,4 +27,4 @@
             current.clearRect(0, 0, p.size[0], p.size[1]);
             return paper;
         };
-    };
+    });

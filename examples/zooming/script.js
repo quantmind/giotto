@@ -1,6 +1,10 @@
 
-    examples.sigmoid = {
+    examples.zooming1 = {
         height: '80%',
+
+        grid: {
+            show: true
+        },
 
         data: function (chart) {
             var X = d3.range(-5, 5, 0.1);

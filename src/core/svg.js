@@ -2,7 +2,7 @@
     //  SVG Paper
     //  ================
     //
-    g.paper.types.svg = function (paper, p) {
+    g.paper.addType('svg', function (paper, p) {
         var svg = paper.element().append('svg')
                         .attr('class', 'giotto')
                         .attr('width', p.size[0])
@@ -10,7 +10,7 @@
                         .attr("viewBox", "0 0 " + p.size[0] + " " + p.size[1]),
             current = svg;
 
-        p.xAxis = d3.svg.axis(),
+        p.xAxis = d3.svg.axis();
         p.yAxis = [d3.svg.axis(), d3.svg.axis()];
 
         paper.refresh = function () {
@@ -209,4 +209,4 @@
                 'font-variant': opts.variant || font.variant
             });
         }
-    };
+    });

@@ -1,6 +1,6 @@
 //      Giotto - v0.1.0
 
-//      Compiled 2014-11-28.
+//      Compiled 2014-11-29.
 //      Copyright (c) 2014 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -388,7 +388,7 @@
     g.defaults.axis = {
         color: '#000',
         tickSize: 0.05,
-        minTickSize: 0.02
+        minTickSize: null
     };
 
     g.defaults.paper = {
@@ -507,6 +507,14 @@
             return paper;
         };
 
+        paper.xGrid = function () {
+            return p.xGrid;
+        };
+
+        paper.yGrid = function () {
+            return p.yGrid;
+        };
+
         paper.scale = function (r) {
             var s = p.xAxis.scale();
             return s(r) - s(0);
@@ -612,15 +620,34 @@
         return _initPaper(paper, p);
     };
 
+    //
+    //  Paper can be svg or canvas
+    //  This function create a paper type with support for plugins
+    g.paper.addType = function (type, constructor) {
+        var plugins = [];
 
-    g.paper.types = {};
+        g.paper[type] = function (paper, opts) {
+            constructor(paper, opts);
 
+            // Inject plugins
+            for (var i=0; i < plugins.length; ++i)
+                plugins[i](paper, opts);
+
+            return paper;
+        };
+
+        g.paper[type].plugin = function (name, defaults, plugin) {
+            g.defaults.paper[name] = defaults;
+            plugins.push(plugin);
+        };
+
+    };
 
     //
     //  SVG Paper
     //  ================
     //
-    g.paper.types.svg = function (paper, p) {
+    g.paper.addType('svg', function (paper, p) {
         var svg = paper.element().append('svg')
                         .attr('class', 'giotto')
                         .attr('width', p.size[0])
@@ -628,7 +655,7 @@
                         .attr("viewBox", "0 0 " + p.size[0] + " " + p.size[1]),
             current = svg;
 
-        p.xAxis = d3.svg.axis(),
+        p.xAxis = d3.svg.axis();
         p.yAxis = [d3.svg.axis(), d3.svg.axis()];
 
         paper.refresh = function () {
@@ -827,7 +854,7 @@
                 'font-variant': opts.variant || font.variant
             });
         }
-    };
+    });
 
     var _idCounter = 0;
     //
@@ -976,6 +1003,7 @@
             if (constructor)
                 constructor(viz, opts);
 
+            // Inject plugins
             for (var i=0; i < plugins.length; ++i)
                 plugins[i](viz, opts);
 
@@ -1009,10 +1037,10 @@
     //
     //  Initaise paper
     function _initPaper (paper, p) {
-        g.paper.types[p.type](paper, p);
+        g.paper[p.type](paper, p);
 
-        var width = p.size[0] - p.margin.left - p.margin.right,
-            height = p.size[1] - p.margin.top - p.margin.bottom;
+        var width = paper.innerWidth(),
+            height = paper.innerHeight();
 
         paper.xAxis().orient(p.xaxis.position).scale().range([0, width]);
         paper.yaxis(2).yAxis().orient(p.yaxis2.position).scale().range([height, 0]);
@@ -1215,7 +1243,7 @@
         selection.attr("transform", function(d) { var v0 = y0(d); return "translate(0," + (isFinite(v0) ? v0 : y1(d)) + ")"; });
     }
 
-    g.paper.types.canvas = function (paper, p) {
+    g.paper.addType('canvas', function (paper, p) {
         var canvas, ctx, current;
 
         p.xAxis = d3.canvas.axis();
@@ -1243,7 +1271,8 @@
             current.clearRect(0, 0, p.size[0], p.size[1]);
             return paper;
         };
-    };
+    });
+
 
     g.createviz('chart', {
         margin: {top: 30, right: 30, bottom: 30, left: 30},
@@ -1314,7 +1343,7 @@
         });
 
 
-        // Internals
+        // INTERNALS
         function show (o, d) {
             if (o) {
                 if (o.show === undefined)
@@ -2261,6 +2290,127 @@
                    //.style("height", this.attrs.height+"px")
                    //.style("width", this.attrs.width+"px")
                     .style("background-image", pattern.dataUrl);
+        }
+    });
+
+    //
+    //  Add grid functionality to svg paper
+    g.paper.svg.plugin('grid', {
+        color: '#333',
+        opacity: 0.3
+    },
+
+    function (paper, opts) {
+        var xGrid, yGrid;
+
+        paper.showGrid = function (options) {
+            init();
+            showhide(xGrid, paper.xAxis(), 'x', opts.xaxis.grid);
+            showhide(yGrid, paper.yAxis(), 'y', opts.yaxis.grid);
+            return paper;
+        };
+
+        paper.hideGrid = function () {
+            if (xGrid) {
+                showhide(xGrid, paper.xAxis(), 'x');
+                showhide(yGrid, paper.yAxis(), 'y');
+            }
+            return paper;
+        };
+
+        paper.xGrid = function () {
+            init();
+            return xGrid;
+        };
+
+        paper.yGrid = function () {
+            init();
+            return yGrid;
+        };
+
+        // PRIVATE FUNCTIONS
+        function init () {
+            if (!xGrid) {
+                opts.grid = extend({}, opts.grid, g.defaults.paper.grid);
+                if (opts.xaxis.grid === undefined) opts.xaxis.grid = true;
+                if (opts.yaxis.grid === undefined) opts.yaxis.grid = true;
+                xGrid = d3.svg.axis();
+                yGrid = d3.svg.axis();
+            }
+        }
+
+        function showhide(grid, axis, xy, show) {
+            var svg = paper.root().current(),
+                g = svg.select('.' + xy + '-grid');
+            if (show) {
+                grid.scale(axis.scale()).ticks(axis.ticks()).tickFormat("");
+                if(!g.node())
+                    g = paper.group().attr('class', 'grid ' + xy + '-grid')
+                            .attr('stroke', opts.grid.color)
+                            .attr('stroke-opacity', opts.grid.opacity);
+                if (xy === 'x')
+                    grid.tickSize(paper.innerHeight(), 0, 0);
+                else
+                    grid.tickSize(-paper.innerWidth(), 0, 0).orient('left');
+                g.call(grid);
+            } else
+                g.remove();
+        }
+    });
+
+    //
+    //  Add grid functionality to charts
+    g.viz.chart.plugin(function (chart, opts) {
+        opts.grid = extend({show: false}, opts.grid);
+
+        // Show grid
+        chart.showGrid = function (options) {
+            chart.paper().showGrid(options);
+            return chart;
+        };
+
+        // Hide grid
+        chart.hideGrid = function () {
+            chart.paper().hideGrid();
+            return chart;
+        };
+
+        chart.on('tick.grid', function () {
+            if (opts.grid.show)
+                chart.showGrid();
+            else
+                chart.hideGrid();
+        });
+    });
+
+    //
+    //  Add grid and zoom functionality to svg paper
+    g.paper.svg.plugin('zoom', {
+        x: true,
+        y: true,
+        extent: [1, 10]
+    },
+
+    function (paper, opts) {
+        var zoom;
+
+        paper.zoom = function (options) {
+            if (options)
+                extend(opts.zoom, options);
+            if (!zoom)
+                zoom = d3.behavior.zoom();
+            if (opts.zoom.x)
+                zoom.x(paper.xAxis().scale());
+            if (opts.zoom.y)
+                zoom.y(paper.yAxis().scale());
+            zoom.scaleExtend(opts.zoom.extent).on('zoom', zoomed);
+        };
+
+        // PRIVATE FUNCTIONS
+
+        function zoomed () {
+            paper.drawXaxis();
+            paper.drawYaxis();
         }
     });
 

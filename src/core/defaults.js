@@ -3,7 +3,7 @@
     g.defaults.axis = {
         color: '#000',
         tickSize: 0.05,
-        minTickSize: 0.02
+        minTickSize: null
     };
 
     g.defaults.paper = {

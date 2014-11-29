@@ -145,6 +145,7 @@
             if (constructor)
                 constructor(viz, opts);
 
+            // Inject plugins
             for (var i=0; i < plugins.length; ++i)
                 plugins[i](viz, opts);
 
