@@ -1,8 +1,10 @@
+    var _idCounter = 0;
     //
     // Create a new paper for drawing stuff
     g.paper = function (element, p) {
 
         var paper = {},
+            uid = ++_idCounter,
             components,
             componentMap,
             cidCounter,
@@ -22,6 +24,10 @@
         // paper type
         paper.type = function () {
             return p.type;
+        };
+
+        paper.uid = function () {
+            return uid;
         };
 
         // paper size, [width, height] in pixels

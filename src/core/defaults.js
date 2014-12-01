@@ -15,6 +15,7 @@
         yaxis: extend({position: 'left'}, g.defaults.axis),
         yaxis2: extend({position: 'right'}, g.defaults.axis),
         colors: d3.scale.category10().range(),
+        css: null,
         line: {
             interpolate: 'basis',
             width: 2

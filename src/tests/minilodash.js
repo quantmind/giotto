@@ -58,4 +58,10 @@
             expect(_.size(o.c)).toBe(1);
             expect(o.c.a).toBe('hello');
         });
+
+        it("addCss", function () {
+            expect(_.addCss('#foo', {})).toBe(undefined);
+            var style = _.addCss('#foo1', {stroke: '#f00'});
+            expect(style.tagName).toBe('STYLE');
+        });
     });

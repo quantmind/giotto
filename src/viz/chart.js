@@ -114,14 +114,13 @@
                 if (!serie.label)
                     serie.label = 'serie ' + series.length;
 
-                opts.chartTypes.forEach(function (name) {
-                    var o = serie[name];
+                opts.chartTypes.forEach(function (type) {
+                    var o = serie[type];
 
                     if (o === undefined)
-                        serie[name] = o = opts[name];
+                        serie[type] = o = opts[type];
 
-                    if (o.show)
-                        serie[name] = chartTypes[name](chart, serie.data, o);
+                    serie[type] = o.show ? chartTypes[type](chart, serie.data, o) : o;
                 });
 
                 paper.parent();
@@ -138,18 +137,18 @@
 
     var chartTypes = {
         line: function (chart, data, opts) {
-            chart.paper().path(data, opts);
+            return chart.paper().path(data, opts);
         },
 
         point: function (chart, data, opts) {
-            chart.paper().points(data, opts);
+            return chart.paper().points(data, opts);
         },
 
         bar: function (chart, data, opts) {
-            chart.paper().barchart(data, opts);
+            return chart.paper().barchart(data, opts);
         },
 
         pie: function (chart, data, opts) {
-            chart.paper().pie(data, opts);
+            return chart.paper().pie(data, opts);
         }
     };

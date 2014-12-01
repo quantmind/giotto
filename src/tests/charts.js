@@ -29,6 +29,34 @@
             expect(p.yAxis().scale().domain()[0]).toBe(-2);
             expect(p.yAxis().scale().domain()[1]).toBe(2);
         });
+
+        it('Points', function () {
+            var norm = d3.random.normal(0.5, 0.1),
+                c = chart({
+                        point: {show: true},
+                        line: {show: false}
+                    }),
+                count = 0;
+
+            c.addSerie(d3.range(800).map(function () {
+                return [Math.random(), norm()];
+            }));
+
+            c.each(function (serie) {
+                count++;
+                expect(serie.point).not.toBe(undefined);
+                expect(serie.point.symbol).toBe('circle');
+                expect(serie.point.chart).not.toBe(undefined);
+
+                expect(serie.line).not.toBe(undefined);
+                expect(serie.line.chart).toBe(undefined);
+
+                expect(serie.bar).not.toBe(undefined);
+                expect(serie.bar.chart).toBe(undefined);
+            });
+
+            expect(count).toBe(1);
+        });
     }
 
 

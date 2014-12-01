@@ -21,7 +21,7 @@
             if (!cid) {
                 brush = d3.svg.brush()
                                 .on("brushstart", brushstart)
-                                .on("brush", opts.brush.move || noop)
+                                .on("brush", brushmove)
                                 .on("brushend", brushend);
 
                 cid = paper.addComponent(function () {
@@ -50,6 +50,11 @@
                 });
             }
 
+            brushstart();
+            brushmove();
+            brushend();
+
+
             return brush;
         };
 
@@ -63,6 +68,10 @@
         function brushstart () {
             paper.root().current().classed('selecting', true);
             if (opts.brush.start) opts.brush.start();
+        }
+
+        function brushmove () {
+            if (opts.brush.move) opts.brush.move();
         }
 
         function brushend () {
@@ -82,15 +91,32 @@
             brush = opts.brush;
             if (!_.isObject(brush)) brush = {};
             brushopts = extend({}, brush);
+
             brushopts.start = function () {
                 if (brush.start) brush.start(chart);
             };
-            brushopts.move = function () {
-                chart.each(function (serie) {
 
+            brushopts.move = function () {
+                //
+                // loop through series and add selected class
+                chart.each(function (serie) {
+                    var brush = chart.paper().brush(),
+                        s = brush.extent();
+
+                    if (serie.point.chart)
+                        serie.point.chart.selectAll('.point')
+                            .classed("selected", function(d) {
+                                return s[0] <= d.x && d.x <= s[1];
+                            });
+                    if (serie.bar.chart)
+                        serie.bar.chart.selectAll('.bar')
+                            .classed("selected", function(d) {
+                                return s[0] <= d.x && d.x <= s[1];
+                            });
                 });
                 if (brush.move) brush.move(chart);
             };
+
             brushopts.end = function () {
                 if (brush.end) brush.end(chart);
             };

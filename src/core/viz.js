@@ -1,4 +1,3 @@
-    var _idCounter = 0;
     //
     g.viz = {};
     //
@@ -22,17 +21,12 @@
             opts = extend({}, vizType.defaults, opts);
 
             var viz = {},
-                uid = ++_idCounter,
                 event = d3.dispatch.apply(d3, opts.events),
                 alpha = 0,
                 loading_data = false,
                 paper;
 
             opts.event = event;
-
-            viz.uid = function () {
-                return uid;
-            };
 
             // Return the visualization type (a function)
             viz.vizType = function () {

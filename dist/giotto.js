@@ -358,6 +358,35 @@
         fileref.setAttribute("type", "text/css");
         fileref.setAttribute("href", filename);
         document.getElementsByTagName("head")[0].appendChild(fileref);
+    },
+
+    addCss = _.addCss = function (base, obj) {
+        var css = [];
+
+        accumulate(base, obj);
+
+        if (css.length) {
+            css = css.join('\n');
+            var style = document.createElement("style");
+            style.innerHTML = css;
+            document.getElementsByTagName("head")[0].appendChild(style);
+            return style;
+        }
+
+        function accumulate (s, o) {
+            var bits = [],
+                v;
+            for (var p in o)
+                if (o.hasOwnProperty(p)) {
+                    v = o[p];
+                    if (_.isObject(v))
+                        accumulate(s + ' .' + p, v);
+                    else
+                        bits.push('    ' + p + ': ' + v + ';');
+                }
+            if (bits.length)
+                css.push(s + ' {\n' + bits.join('\n') + '\n}');
+        }
     };
 
 
@@ -417,6 +446,7 @@
         yaxis: extend({position: 'left'}, g.defaults.axis),
         yaxis2: extend({position: 'right'}, g.defaults.axis),
         colors: d3.scale.category10().range(),
+        css: null,
         line: {
             interpolate: 'basis',
             width: 2
@@ -458,11 +488,13 @@
         HEIGHT: 300,
         leaflet: 'http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css'
     };
+    var _idCounter = 0;
     //
     // Create a new paper for drawing stuff
     g.paper = function (element, p) {
 
         var paper = {},
+            uid = ++_idCounter,
             components,
             componentMap,
             cidCounter,
@@ -482,6 +514,10 @@
         // paper type
         paper.type = function () {
             return p.type;
+        };
+
+        paper.uid = function () {
+            return uid;
         };
 
         // paper size, [width, height] in pixels
@@ -701,6 +737,7 @@
     g.paper.addType('svg', function (paper, p) {
         var svg = paper.element().append('svg')
                         .attr('class', 'giotto')
+                        .attr('id', 'giotto-paper-' + paper.uid())
                         .attr('width', p.size[0])
                         .attr('height', p.size[1])
                         .attr("viewBox", "0 0 " + p.size[0] + " " + p.size[1]),
@@ -781,111 +818,148 @@
         paper.path = function (data, opts) {
             opts || (opts = {});
             copyMissing(p.line, opts);
+            opts.color = opts.color || paper.pickColor();
 
-            var container = current,
-                line = opts.area ? d3.svg.area() : d3.svg.line(),
-                scalex = paper.scalex,
-                scaley = paper.scaley,
-                color = opts.color || paper.pickColor();
-
-            line.interpolate(opts.interpolate)
-                .x(function(d) {
-                    return scalex(d.x);
-                })
-                .y(function(d) {
-                    return scaley(d.y);
-                });
+            var container = current;
 
             paper.addComponent(function () {
-                var chart = container.select("path.line");
 
-                if (!chart.node()) {
+                var chart = container.select("path.line"),
+                    scalex = paper.scalex,
+                    scaley = paper.scaley,
+                    line = opts.area ? d3.svg.area() : d3.svg.line();
+
+                line.interpolate(opts.interpolate)
+                    .x(function(d) {
+                        return scalex(d.x);
+                    })
+                    .y(function(d) {
+                        return scaley(d.y);
+                    });
+
+                if (!chart.node())
                     chart = current.append('path')
-                                    .attr('class', opts.area ? 'area' : 'line')
-                                    .attr('stroke', color)
-                                    .attr('stroke-width', opts.width)
-                                    .datum(data);
-                }
-                chart.attr('d', line);
+                                    .attr('class', 'line');
+
+                chart
+                    .classed('area', opts.area)
+                    .attr('stroke', opts.color)
+                    .attr('stroke-width', opts.width)
+                    .datum(data)
+                    .attr('d', line);
+
+                opts.chart = chart;
+                return opts;
             });
+
+            return opts;
         };
 
         // Draw points
         paper.points = function (data, opts) {
             opts || (opts = {});
             copyMissing(p.point, opts);
+            opts.color = opts.color || paper.pickColor();
 
-            var container = current,
-                scalex = paper.scalex,
-                scaley = paper.scaley,
-                color = opts.color || paper.pickColor(),
-                fill = opts.fill;
-
-            if (opts.fill === true)
-                fill = d3.rgb(color).brighter();
+            var container = current;
 
             paper.addComponent(function () {
-                var chart = container.select("g.points");
+                var chart = container.select("g.points"),
+                    scalex = paper.scalex,
+                    scaley = paper.scaley,
+                    fill = opts.fill;
 
-                if (!chart.node()) {
+                if (fill === true)
+                    opts.fill = fill = d3.rgb(opts.color).brighter();
+
+                if (!chart.node())
                     chart = container.append("g")
-                        .attr('class', 'points')
-                        .attr('stroke', color)
+                                    .attr('class', 'points');
+
+                chart.attr('stroke', opts.color)
                         .attr('stroke-width', opts.width);
-                    if (fill)
-                        chart.attr('fill', fill).attr('fill-opacity', opts.fillOpacity);
-                    else
-                        chart.attr('fill', 'none');
-                }
+                if (fill)
+                    chart.attr('fill', fill).attr('fill-opacity', opts.fillOpacity);
+                else
+                    chart.attr('fill', 'none');
 
                 if (opts.symbol === 'circle') {
                     var radius = 0.5*opts.size;
-                    return chart.selectAll(".point")
+                    chart.selectAll(".point")
                                 .data(data)
                                 .enter().append("circle")
                                 .attr('class', 'point')
                                 .attr('cx', function (d) {return scalex(d.x);})
                                 .attr('cy', function (d) {return scaley(d.y);})
-                                .attr('r', function (d) {return d.radius === undefined ? radius : d.radius;});
+                                .attr('r', function (d) {return s(d.radius, radius);});
+                } else if (opts.symbol === 'square') {
+                    var size = opts.size;
+                    chart.selectAll(".point")
+                                .data(data)
+                                .enter().append("rect")
+                                .attr('class', 'point')
+                                .attr('x', function (d) {return scalex(d.x) - 0.5*s(d.size, size);})
+                                .attr('y', function (d) {return scaley(d.y) - 0.5*s(d.size, size);})
+                                .attr('height', function (d) {return  s(d.size, size);})
+                                .attr('width', function (d) {return  s(d.size, size);});
                 }
-                return chart;
+                opts.chart = chart;
+                return opts;
             });
+
+            return opts;
+
+            function s(v, d) {
+                return v === undefined ? d : v;
+            }
         };
 
-
+        // Draw a barchart
         paper.barchart = function (data, opts) {
             opts || (opts = {});
             copyMissing(p.bar, opts);
+            opts.color = opts.color || paper.pickColor();
 
-            var width = opts.width,
-                scalex = paper.scalex,
-                scaley = paper.scaley,
-                color = opts.color || paper.pickColor(),
-                stroke = opts.stroke,
-                zero = scaley(0);
+            var container = current;
 
-            if (width === 'auto')
-                width = d3.round(0.8*(paper.innerWidth() / data.length));
+            paper.addComponent(function () {
 
-            var chart = current.append("g")
-                        .attr('class', 'barchart')
-                        .attr('stroke', stroke)
-                        .attr('fill', color),
-                bar = chart.selectAll(".bar")
-                    .data(data)
-                    .enter().append("rect")
-                    .attr('class', 'bar')
-                    .attr("x", function(d) {
-                        return scalex(d.x) - width/2;
-                    })
-                    .attr("y", function(d) {return d.y < 0 ? zero : scaley(d.y); })
-                    .attr("height", function(d) { return d.y < 0 ? scaley(d.y) - zero : zero - scaley(d.y); })
-                    .attr("width", width);
+                var scalex = paper.scalex,
+                    scaley = paper.scaley,
+                    width = opts.width,
+                    zero = scaley(0),
+                    chart = container.select('g.barchart');
 
-            if (opts.radius)
-                bar.attr('rx', opts.radius).attr('ry', opts.radius);
+                if (width === 'auto')
+                    width = d3.round(0.8*(paper.innerWidth() / data.length));
 
-            return chart;
+                if (!chart.node())
+                    chart = container.append("g")
+                                .attr('class', 'barchart');
+                chart.attr('stroke', opts.stroke).attr('fill', opts.color);
+
+                var bar = chart
+                        .attr('stroke', opts.stroke)
+                        .attr('fill', opts.color)
+                        .selectAll(".bar")
+                        .data(data)
+                        .enter().append("rect")
+                        .attr('class', 'bar')
+                        .attr("x", function(d) {
+                            return scalex(d.x) - width/2;
+                        })
+                        .attr("y", function(d) {return d.y < 0 ? zero : scaley(d.y); })
+                        .attr("height", function(d) { return d.y < 0 ? scaley(d.y) - zero : zero - scaley(d.y); })
+                        .attr("width", width);
+
+                if (opts.radius)
+                    bar.attr('rx', opts.radius).attr('ry', opts.radius);
+
+                opts.chart = chart;
+                return opts;
+            });
+
+            return opts;
         };
 
         paper.drawXaxis = function () {
@@ -1033,7 +1107,6 @@
         }
     });
 
-    var _idCounter = 0;
     //
     g.viz = {};
     //
@@ -1057,17 +1130,12 @@
             opts = extend({}, vizType.defaults, opts);
 
             var viz = {},
-                uid = ++_idCounter,
                 event = d3.dispatch.apply(d3, opts.events),
                 alpha = 0,
                 loading_data = false,
                 paper;
 
             opts.event = event;
-
-            viz.uid = function () {
-                return uid;
-            };
 
             // Return the visualization type (a function)
             viz.vizType = function () {
@@ -1274,6 +1342,9 @@
         paper.yaxis(2).yAxis().orient(p.yaxis2.position).scale().range([height, 0]);
         paper.yaxis(1).yAxis().orient(p.yaxis.position).scale().range([height, 0]);
         //
+        if (p.css)
+            addCss('#giotto-paper-' + paper.uid(), p.css);
+        //
         return d3.rebind(paper, p.event, 'on');
     }
 
@@ -1330,71 +1401,6 @@
             tickFormat_;
 
         function axis (g) {
-            g.each(function() {
-            var g = d3.select(this);
-
-            // Stash a snapshot of the new scale, and retrieve the old snapshot.
-            var scale0 = this.__chart__ || scale,
-                scale1 = this.__chart__ = scale.copy();
-
-            // Ticks, or domain values for ordinal scales.
-            var ticks = tickValues === null ? (scale1.ticks ? scale1.ticks.apply(scale1, tickArguments_) : scale1.domain()) : tickValues,
-                tickFormat = tickFormat_ === null ? (scale1.tickFormat ? scale1.tickFormat.apply(scale1, tickArguments_) : d3_identity) : tickFormat_,
-                tick = g.selectAll(".tick").data(ticks, scale1),
-                tickEnter = tick.enter().insert("g", ".domain").attr("class", "tick").style("opacity", ε),
-                tickExit = d3.transition(tick.exit()).style("opacity", ε).remove(),
-                tickUpdate = d3.transition(tick.order()).style("opacity", 1),
-                tickSpacing = Math.max(innerTickSize, 0) + tickPadding,
-                tickTransform;
-
-            // Domain.
-            var range = d3_scaleRange(scale1),
-                path = g.selectAll(".domain").data([0]),
-                pathUpdate = (path.enter().append("path").attr("class", "domain"), d3.transition(path));
-
-            tickEnter.append("line");
-            tickEnter.append("text");
-
-            var lineEnter = tickEnter.select("line"),
-                lineUpdate = tickUpdate.select("line"),
-                text = tick.select("text").text(tickFormat),
-                textEnter = tickEnter.select("text"),
-                textUpdate = tickUpdate.select("text"),
-                sign = orient === "top" || orient === "left" ? -1 : 1,
-                x1, x2, y1, y2;
-
-            if (orient === "bottom" || orient === "top") {
-              tickTransform = d3_canvas_axisX, x1 = "x", y1 = "y", x2 = "x2", y2 = "y2";
-              text.attr("dy", sign < 0 ? "0em" : ".71em").style("text-anchor", "middle");
-              pathUpdate.attr("d", "M" + range[0] + "," + sign * outerTickSize + "V0H" + range[1] + "V" + sign * outerTickSize);
-            } else {
-              tickTransform = d3_canvas_axisY, x1 = "y", y1 = "x", x2 = "y2", y2 = "x2";
-              text.attr("dy", ".32em").style("text-anchor", sign < 0 ? "end" : "start");
-              pathUpdate.attr("d", "M" + sign * outerTickSize + "," + range[0] + "H0V" + range[1] + "H" + sign * outerTickSize);
-            }
-
-            lineEnter.attr(y2, sign * innerTickSize);
-            textEnter.attr(y1, sign * tickSpacing);
-            lineUpdate.attr(x2, 0).attr(y2, sign * innerTickSize);
-            textUpdate.attr(x1, 0).attr(y1, sign * tickSpacing);
-
-            // If either the new or old scale is ordinal,
-            // entering ticks are undefined in the old scale,
-            // and so can fade-in in the new scale’s position.
-            // Exiting ticks are likewise undefined in the new scale,
-            // and so can fade-out in the old scale’s position.
-            if (scale1.rangeBand) {
-              var x = scale1, dx = x.rangeBand() / 2;
-              scale0 = scale1 = function(d) { return x(d) + dx; };
-            } else if (scale0.rangeBand) {
-              scale0 = scale1;
-            } else {
-              tickExit.call(tickTransform, scale1, scale0);
-            }
-
-            tickEnter.call(tickTransform, scale0, scale1);
-            tickUpdate.call(tickTransform, scale1, scale1);
-            });
         }
 
         axis.scale = function(x) {
@@ -1621,14 +1627,13 @@
                 if (!serie.label)
                     serie.label = 'serie ' + series.length;
 
-                opts.chartTypes.forEach(function (name) {
-                    var o = serie[name];
+                opts.chartTypes.forEach(function (type) {
+                    var o = serie[type];
 
                     if (o === undefined)
-                        serie[name] = o = opts[name];
+                        serie[type] = o = opts[type];
 
-                    if (o.show)
-                        serie[name] = chartTypes[name](chart, serie.data, o);
+                    serie[type] = o.show ? chartTypes[type](chart, serie.data, o) : o;
                 });
 
                 paper.parent();
@@ -1645,19 +1650,19 @@
 
     var chartTypes = {
         line: function (chart, data, opts) {
-            chart.paper().path(data, opts);
+            return chart.paper().path(data, opts);
         },
 
         point: function (chart, data, opts) {
-            chart.paper().points(data, opts);
+            return chart.paper().points(data, opts);
         },
 
         bar: function (chart, data, opts) {
-            chart.paper().barchart(data, opts);
+            return chart.paper().barchart(data, opts);
         },
 
         pie: function (chart, data, opts) {
-            chart.paper().pie(data, opts);
+            return chart.paper().pie(data, opts);
         }
     };
 
@@ -2589,7 +2594,7 @@
             if (!cid) {
                 brush = d3.svg.brush()
                                 .on("brushstart", brushstart)
-                                .on("brush", opts.brush.move || noop)
+                                .on("brush", brushmove)
                                 .on("brushend", brushend);
 
                 cid = paper.addComponent(function () {
@@ -2618,6 +2623,11 @@
                 });
             }
 
+            brushstart();
+            brushmove();
+            brushend();
+
+
             return brush;
         };
 
@@ -2631,6 +2641,10 @@
         function brushstart () {
             paper.root().current().classed('selecting', true);
             if (opts.brush.start) opts.brush.start();
+        }
+
+        function brushmove () {
+            if (opts.brush.move) opts.brush.move();
         }
 
         function brushend () {
@@ -2650,15 +2664,32 @@
             brush = opts.brush;
             if (!_.isObject(brush)) brush = {};
             brushopts = extend({}, brush);
+
             brushopts.start = function () {
                 if (brush.start) brush.start(chart);
             };
-            brushopts.move = function () {
-                chart.each(function (serie) {
 
+            brushopts.move = function () {
+                //
+                // loop through series and add selected class
+                chart.each(function (serie) {
+                    var brush = chart.paper().brush(),
+                        s = brush.extent();
+
+                    if (serie.point.chart)
+                        serie.point.chart.selectAll('.point')
+                            .classed("selected", function(d) {
+                                return s[0] <= d.x && d.x <= s[1];
+                            });
+                    if (serie.bar.chart)
+                        serie.bar.chart.selectAll('.bar')
+                            .classed("selected", function(d) {
+                                return s[0] <= d.x && d.x <= s[1];
+                            });
                 });
                 if (brush.move) brush.move(chart);
             };
+
             brushopts.end = function () {
                 if (brush.end) brush.end(chart);
             };

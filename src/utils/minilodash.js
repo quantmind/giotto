@@ -169,4 +169,33 @@
         fileref.setAttribute("type", "text/css");
         fileref.setAttribute("href", filename);
         document.getElementsByTagName("head")[0].appendChild(fileref);
+    },
+
+    addCss = _.addCss = function (base, obj) {
+        var css = [];
+
+        accumulate(base, obj);
+
+        if (css.length) {
+            css = css.join('\n');
+            var style = document.createElement("style");
+            style.innerHTML = css;
+            document.getElementsByTagName("head")[0].appendChild(style);
+            return style;
+        }
+
+        function accumulate (s, o) {
+            var bits = [],
+                v;
+            for (var p in o)
+                if (o.hasOwnProperty(p)) {
+                    v = o[p];
+                    if (_.isObject(v))
+                        accumulate(s + ' .' + p, v);
+                    else
+                        bits.push('    ' + p + ': ' + v + ';');
+                }
+            if (bits.length)
+                css.push(s + ' {\n' + bits.join('\n') + '\n}');
+        }
     };

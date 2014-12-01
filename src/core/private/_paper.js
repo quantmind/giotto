@@ -10,6 +10,9 @@
         paper.yaxis(2).yAxis().orient(p.yaxis2.position).scale().range([height, 0]);
         paper.yaxis(1).yAxis().orient(p.yaxis.position).scale().range([height, 0]);
         //
+        if (p.css)
+            addCss('#giotto-paper-' + paper.uid(), p.css);
+        //
         return d3.rebind(paper, p.event, 'on');
     }
 
