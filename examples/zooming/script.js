@@ -1,9 +1,16 @@
 
     examples.zooming1 = {
-        height: '80%',
+
+        height: '70%',
 
         grid: {
-            show: true
+            show: true,
+            backgroundColor: '#aec7e8'
+        },
+
+        zoom: {
+            x: true,
+            y: false
         },
 
         data: function (chart) {

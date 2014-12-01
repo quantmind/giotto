@@ -2,14 +2,20 @@
     //  Add grid functionality to svg paper
     g.paper.svg.plugin('grid', {
         color: '#333',
+        background: {
+            color: '#c6dbef',
+            opacity: 0.4
+        },
         opacity: 0.3
     },
 
     function (paper, opts) {
+
         var xGrid, yGrid;
 
         paper.showGrid = function (options) {
             init();
+            addgrid();
             showhide(xGrid, paper.xAxis(), 'x', opts.xaxis.grid);
             showhide(yGrid, paper.yAxis(), 'y', opts.yaxis.grid);
             return paper;
@@ -34,6 +40,7 @@
         };
 
         // PRIVATE FUNCTIONS
+
         function init () {
             if (!xGrid) {
                 opts.grid = extend({}, opts.grid, g.defaults.paper.grid);
@@ -44,20 +51,38 @@
             }
         }
 
+        function addgrid () {
+            var r = paper.root().current().select('rect.grid');
+            if (!r.node()) {
+                r = paper.current().insert("rect", "*")
+                        .attr("class", "grid")
+                        .attr("width", paper.innerWidth())
+                        .attr("height", paper.innerHeight());
+            }
+            paper.setBackground(r, opts.grid.background);
+        }
+
         function showhide(grid, axis, xy, show) {
-            var svg = paper.root().current(),
-                g = svg.select('.' + xy + '-grid');
+            var g = paper.root().current()
+                            .select('.' + xy + '-grid');
             if (show) {
-                grid.scale(axis.scale()).ticks(axis.ticks()).tickFormat("");
-                if(!g.node())
+                if(!g.node()) {
+                    grid.scale(axis.scale()).ticks(axis.ticks()).tickFormat("");
                     g = paper.group().attr('class', 'grid ' + xy + '-grid')
                             .attr('stroke', opts.grid.color)
                             .attr('stroke-opacity', opts.grid.opacity);
-                if (xy === 'x')
-                    grid.tickSize(paper.innerHeight(), 0, 0);
-                else
-                    grid.tickSize(-paper.innerWidth(), 0, 0).orient('left');
-                g.call(grid);
+                    if (opts.grid.background)
+                        g.attr('fill', opts.grid.backgroundColor);
+
+                    if (xy === 'x')
+                        grid.tickSize(paper.innerHeight(), 0, 0);
+                    else
+                        grid.tickSize(-paper.innerWidth(), 0, 0).orient('left');
+
+                    paper.addComponent(function () {
+                        g.call(grid);
+                    });
+                }
             } else
                 g.remove();
         }

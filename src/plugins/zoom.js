@@ -1,5 +1,5 @@
     //
-    //  Add grid and zoom functionality to svg paper
+    //  Add zoom functionality to an svg paper
     g.paper.svg.plugin('zoom', {
         x: true,
         y: true,
@@ -10,21 +10,38 @@
         var zoom;
 
         paper.zoom = function (options) {
+            init();
             if (options)
                 extend(opts.zoom, options);
-            if (!zoom)
-                zoom = d3.behavior.zoom();
             if (opts.zoom.x)
                 zoom.x(paper.xAxis().scale());
             if (opts.zoom.y)
                 zoom.y(paper.yAxis().scale());
-            zoom.scaleExtend(opts.zoom.extent).on('zoom', zoomed);
+            if (opts.zoom.extent)
+                zoom.scaleExtent(opts.zoom.extent);
+            zoom.on('zoom', paper.render);
+            var g = paper.root().current();
+            g.call(zoom);
+            paper.showGrid();
         };
 
         // PRIVATE FUNCTIONS
 
-        function zoomed () {
-            paper.drawXaxis();
-            paper.drawYaxis();
+        function init () {
+            if (!zoom) {
+                zoom = d3.behavior.zoom();
+                opts.zoom = extend({}, opts.zoom, g.defaults.paper.zoom);
+            }
         }
     });
+
+    //
+    //  Add grid functionality to charts
+    g.viz.chart.plugin(function (chart, opts) {
+
+        chart.on('tick.zoom', function () {
+            if (opts.zoom)
+                chart.paper().zoom(opts.zoom);
+        });
+    });
+

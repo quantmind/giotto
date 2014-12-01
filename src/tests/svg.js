@@ -8,7 +8,7 @@
             expect(_.isObject(paper)).toBe(true);
             expect(paper.type()).toBe('svg');
             var current = paper.current();
-            expect(current.node().tagName).toBe('svg');
+            expect(current.node().tagName).toBe('g');
             expect(paper.parent().current()).toBe(current);
 
             // Default size

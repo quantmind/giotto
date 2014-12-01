@@ -3,7 +3,10 @@
     g.paper = function (element, p) {
 
         var paper = {},
-            color = 0;
+            components,
+            componentMap,
+            cidCounter,
+            color;
 
         if (isObject(element)) {
             p = element;
@@ -16,15 +19,12 @@
 
         p = _newPaperAttr(element, p);
 
-        paper.destroy = function () {
-            element.selectAll('*').remove();
-            return paper;
-        };
-
+        // paper type
         paper.type = function () {
             return p.type;
         };
 
+        // paper size, [width, height] in pixels
         paper.size = function () {
             return [p.size[0], p.size[1]];
         };
@@ -71,14 +71,6 @@
             if (!arguments.length) return p.yAxis[p.yaxisNumber-1];
             p.yAxis[p.yaxisNumber-1] = x;
             return paper;
-        };
-
-        paper.xGrid = function () {
-            return p.xGrid;
-        };
-
-        paper.yGrid = function () {
-            return p.yGrid;
         };
 
         paper.scale = function (r) {
@@ -163,6 +155,43 @@
                 color = 0;
             }
             return c;
+        };
+
+        //
+        // Add a new component to the paper and return the component id
+        paper.addComponent = function (callback) {
+            var cid = ++cidCounter;
+            components.push(callback);
+            componentMap[cid] = callback;
+            callback();
+            return cid;
+        };
+
+        paper.removeComponent = function (cid) {
+            if (!cid) return;
+            var callback = componentMap[cid];
+            if (callback) {
+                delete componentMap[cid];
+                var index = components.indexOf(callback);
+                if (index > -1)
+                    return components.splice(index, 1)[0];
+            }
+        };
+
+        paper.render = function () {
+            components.forEach(function (callback) {
+                callback();
+            });
+        };
+
+        // Clear the paper from all compoents
+        // It erases everything
+        paper.clear = function () {
+            components = [];
+            componentMap = {};
+            cidCounter = 0;
+            color = 0;
+            return paper;
         };
 
         // Auto resize the paper

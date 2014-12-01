@@ -7,22 +7,38 @@
     _ = g._ = {},
     //  Simple extend function
     //
-    extend = g.extend = function () {
+    extend = g.extend = _.extend = function () {
         var length = arguments.length,
-            object = arguments[0];
-
-        if (!object || length < 2) {
-            return object;
-        }
-        var index = 0,
+            object = arguments[0],
+            index = 0,
+            deep = false,
             obj;
+
+        if (object === true) {
+            deep = true;
+            object = arguments[1];
+            index++;
+        }
+
+        if (!object || length < index + 2)
+            return object;
 
         while (++index < length) {
             obj = arguments[index];
             if (Object(obj) === obj) {
                 for (var prop in obj) {
-                    if (obj.hasOwnProperty(prop))
-                        object[prop] = obj[prop];
+                    if (obj.hasOwnProperty(prop)) {
+                        if (deep) {
+                            if (_.isObject(obj[prop]))
+                                if (_.isObject(object[prop]))
+                                    extend(true, object[prop], obj[prop]);
+                                else
+                                    object[prop] = extend(true, {}, obj[prop]);
+                            else
+                                object[prop] = obj[prop];
+                        } else
+                            object[prop] = obj[prop];
+                    }
                 }
             }
         }
@@ -68,6 +84,21 @@
                 keys.push(key);
         }
         return keys;
+    },
+
+    size = _.size = function (obj) {
+        if (!obj)
+            return 0;
+        else if (obj.length !== undefined)
+            return obj.length;
+        else if (_.isObject(obj)) {
+            var n = 0;
+            for (var key in obj)
+                if (obj.hasOwnProperty(key)) n++;
+            return n;
+        }
+        else
+            return 0;
     },
     //
     pick = _.pick = function (obj, callback) {

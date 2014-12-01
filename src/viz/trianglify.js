@@ -53,10 +53,11 @@
                 gradient = tri.gradient(opts.gradient),
                 x_gradient = tri.gradient(opts.x_gradient) || gradient,
                 y_gradient = tri.gradient(opts.y_gradient) || gradient,
-                paper = tri.paper().destroy(),
+                paper = tri.paper().clear(),
                 element = paper.element(),
                 size = tri.paper().size();
 
+            element.selectAll('*').remove();
             if (!t)
                 t = new Trianglify();
 

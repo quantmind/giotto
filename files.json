@@ -9,6 +9,7 @@
                 "src/core/paper.js",
                 "src/core/svg.js",
                 "src/core/viz.js",
+                "src/core/data.js",
                 "src/core/private/*.js",
                 "src/canvas/*.js",
                 "src/core/canvas.js",

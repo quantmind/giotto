@@ -8,7 +8,8 @@
                         .attr('width', p.size[0])
                         .attr('height', p.size[1])
                         .attr("viewBox", "0 0 " + p.size[0] + " " + p.size[1]),
-            current = svg;
+            clear = paper.clear,
+            current;
 
         p.xAxis = d3.svg.axis();
         p.yAxis = [d3.svg.axis(), d3.svg.axis()];
@@ -21,9 +22,11 @@
         };
 
         paper.clear = function () {
-            current = svg;
             svg.selectAll('*').remove();
-            return paper;
+            current = svg.append('g')
+                        .attr("transform", "translate(" + p.margin.left + "," + p.margin.top + ")")
+                        .attr('class', 'paper');
+            return clear();
         };
 
         // return the current svg element
@@ -33,21 +36,20 @@
 
         // set the current element to be the root svg element and returns the paper
         paper.root = function () {
-            current = svg;
+            current = svg.select('g.paper');
             return paper;
         };
 
         // set the current element to be the parent and returns the paper
         paper.parent = function () {
-            var node = current.node();
+            var node = current.node().parentNode;
             if (node !== svg.node())
-                current = d3.select(node.parentNode);
+                current = d3.select(node);
             return paper;
         };
 
         paper.group = function () {
-            current = current.append('g')
-                            .attr("transform", "translate(" + p.margin.left + "," + p.margin.top + ")");
+            current = current.append('g');
             return current;
         };
 
@@ -82,7 +84,7 @@
         // Draw a path or an area, data must be an xy array [[x1,y1], [x2, y2], ...]
         paper.path = function (data, opts) {
             opts || (opts = {});
-            copyMissing(p.lines, opts);
+            copyMissing(p.line, opts);
 
             var line = opts.area ? d3.svg.area() : d3.svg.line(),
                 scalex = paper.scalex,
@@ -105,24 +107,129 @@
                                 .attr('d', line);
         };
 
+        // Draw points
+        paper.points = function (data, opts) {
+            opts || (opts = {});
+            copyMissing(p.point, opts);
+
+            var container = current,
+                scalex = paper.scalex,
+                scaley = paper.scaley,
+                color = opts.color || paper.pickColor(),
+                fill = opts.fill;
+
+            if (opts.fill === true)
+                fill = d3.rgb(color).brighter();
+
+
+            paper.addComponent(function () {
+                var chart = container.select("g.points");
+
+                if (!chart.node()) {
+                    chart = container.append("g")
+                        .attr('class', 'points')
+                        .attr('stroke', color)
+                        .attr('stroke-width', opts.width);
+                    if (fill)
+                        chart.attr('fill', fill).attr('fill-opacity', opts.fillOpacity);
+                    else
+                        chart.attr('fill', 'none');
+                }
+
+                if (opts.symbol === 'circle') {
+                    var radius = 0.5*opts.size;
+                    return chart.selectAll(".point")
+                                .data(data)
+                                .enter().append("circle")
+                                .attr('class', 'point')
+                                .attr('cx', function (d) {return scalex(d.x);})
+                                .attr('cy', function (d) {return scaley(d.y);})
+                                .attr('r', function (d) {return d.radius === undefined ? radius : d.radius;});
+                }
+                return chart;
+            });
+        };
+
+
+        paper.barchart = function (data, opts) {
+            opts || (opts = {});
+            copyMissing(p.bar, opts);
+
+            var width = opts.width,
+                scalex = paper.scalex,
+                scaley = paper.scaley,
+                color = opts.color || paper.pickColor(),
+                stroke = opts.stroke,
+                zero = scaley(0);
+
+            if (width === 'auto')
+                width = d3.round(0.8*(paper.innerWidth() / data.length));
+
+            var chart = current.append("g")
+                        .attr('class', 'barchart')
+                        .attr('stroke', stroke)
+                        .attr('fill', color),
+                bar = chart.selectAll(".bar")
+                    .data(data)
+                    .enter().append("rect")
+                    .attr('class', 'bar')
+                    .attr("x", function(d) {
+                        return scalex(d.x) - width/2;
+                    })
+                    .attr("y", function(d) {return d.y < 0 ? zero : scaley(d.y); })
+                    .attr("height", function(d) { return d.y < 0 ? scaley(d.y) - zero : zero - scaley(d.y); })
+                    .attr("width", width);
+
+            if (opts.radius)
+                bar.attr('rx', opts.radius).attr('ry', opts.radius);
+
+            return chart;
+        };
+
         paper.drawXaxis = function () {
             var opts = p.xaxis,
-                py = opts.position === 'top' ? p.margin.top : p.size[1] - p.margin.bottom;
-            return _axis(svg.append("g")
-                .attr("class", "axis x-axis")
-                .attr("transform", "translate(" + p.margin.left + "," + py + ")")
-                .call(p.xAxis), opts);
+                py = opts.position === 'top' ? 0 : paper.innerHeight();
+            return _axis(p.xAxis, 'x-axis', 0, py, opts);
         };
 
         paper.drawYaxis = function () {
             var yaxis = paper.yaxis(),
                 opts = yaxis === 1 ? p.yaxis : p.yaxis2,
-                px = opts.position === 'left' ? p.margin.left : p.size[0] - p.margin.right,
-                yAxis = paper.yAxis();
-            return _axis(svg.append("g")
-                    .attr("class", "axis y-axis-" + yaxis)
-                    .attr("transform", "translate(" + px + "," + p.margin.top + ")")
-                    .call(yAxis), opts);
+                px = opts.position === 'left' ? 0 : paper.innerWidth();
+            return _axis(paper.yAxis(), 'y-axis-' + yaxis, px, 0, opts);
+        };
+
+        paper.setBackground = function (o, background) {
+            if (_.isObject(background)) {
+                if (background.opacity !== undefined)
+                    o.attr('fill-opacity', background.opacity);
+                background = background.color;
+            }
+            if (_.isString(background))
+                o.attr('fill', background);
+
+            return paper;
+        };
+
+        // Create a gradient element to use by scg elements
+        paper.gradient = function (id, color1, color2) {
+            var svg = d3.select("body").append("svg"),
+                gradient = svg.append('linearGradient')
+                            .attr("x1", "0%")
+                            .attr("x2", "100%")
+                            .attr("y1", "0%")
+                            .attr("y2", "100%")
+                            .attr("id", id)
+                            .attr("gradientUnits", "userSpaceOnUse");
+            gradient
+                .append("stop")
+                .attr("offset", "0")
+                .attr("stop-color", color1);
+
+            gradient
+                .append("stop")
+                .attr("offset", "0.5")
+                .attr("stop-color", color2);
         };
 
         paper.encode = function () {
@@ -192,10 +299,23 @@
             }
         };
 
-        function _axis(axis, opts) {
-            var font = opts.font;
-            axis.attr('stroke', opts.color);
-            return _font(axis, opts.font);
+        // Setup the svg paper
+        paper.clear();
+
+        // PRIVATE FUNCTIONS
+
+        function _axis(axis, cn, px, py, opts) {
+            var font = opts.font,
+                g = paper.root().current().select('g.' + cn);
+            if (!g.node()) {
+                g = _font(paper.current().append('g')
+                            .attr("class", "axis " + cn)
+                            .attr("transform", "translate(" + px + "," + py + ")")
+                            .attr('stroke', opts.color), opts.font);
+                paper.addComponent(function () {
+                    g.call(axis);
+                });
+            }
         }
 
         function _font(element, opts) {

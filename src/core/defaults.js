@@ -15,12 +15,21 @@
         yaxis: extend({position: 'left'}, g.defaults.axis),
         yaxis2: extend({position: 'right'}, g.defaults.axis),
         colors: d3.scale.category10().range(),
-        lines: {
+        line: {
             interpolate: 'basis',
             width: 2
         },
-        nodes: {
-            symbol: 'circle'
+        point: {
+            symbol: 'circle',
+            size: 8,
+            fill: true,
+            fillOpacity: 0.5,
+            width: 1
+        },
+        bar: {
+            width: 'auto',
+            stroke: 'none',
+            radius: 4
         },
         font: {
             size: 11,

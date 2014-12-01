@@ -28,7 +28,7 @@
         else
             cfg = {};
 
-        var p = extend({}, g.defaults.paper, cfg);
+        var p = extend(true, {}, g.defaults.paper, cfg);
 
         if (!width) {
             width = getWidth(element);
