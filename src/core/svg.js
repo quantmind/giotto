@@ -86,7 +86,8 @@
             opts || (opts = {});
             copyMissing(p.line, opts);
 
-            var line = opts.area ? d3.svg.area() : d3.svg.line(),
+            var container = current,
+                line = opts.area ? d3.svg.area() : d3.svg.line(),
                 scalex = paper.scalex,
                 scaley = paper.scaley,
                 color = opts.color || paper.pickColor();
@@ -99,12 +100,18 @@
                     return scaley(d.y);
                 });
 
-            return current.append('path')
-                                .attr('class', opts.area ? 'area' : 'line')
-                                .attr('stroke', color)
-                                .attr('stroke-width', opts.width)
-                                .datum(data)
-                                .attr('d', line);
+            paper.addComponent(function () {
+                var chart = container.select("path.line");
+
+                if (!chart.node()) {
+                    chart = current.append('path')
+                                    .attr('class', opts.area ? 'area' : 'line')
+                                    .attr('stroke', color)
+                                    .attr('stroke-width', opts.width)
+                                    .datum(data);
+                }
+                chart.attr('d', line);
+            });
         };
 
         // Draw points
@@ -120,7 +127,6 @@
 
             if (opts.fill === true)
                 fill = d3.rgb(color).brighter();
-
 
             paper.addComponent(function () {
                 var chart = container.select("g.points");

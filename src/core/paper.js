@@ -62,15 +62,11 @@
         };
 
         paper.xAxis = function (x) {
-            if (!arguments.length) return p.xAxis;
-            p.xAxis = x;
-            return paper;
+            return p.xAxis;
         };
 
-        paper.yAxis = function (x) {
-            if (!arguments.length) return p.yAxis[p.yaxisNumber-1];
-            p.yAxis[p.yaxisNumber-1] = x;
-            return paper;
+        paper.yAxis = function () {
+            return p.yAxis[p.yaxisNumber-1];
         };
 
         paper.scale = function (r) {

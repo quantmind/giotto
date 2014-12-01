@@ -536,15 +536,11 @@
         };
 
         paper.xAxis = function (x) {
-            if (!arguments.length) return p.xAxis;
-            p.xAxis = x;
-            return paper;
+            return p.xAxis;
         };
 
-        paper.yAxis = function (x) {
-            if (!arguments.length) return p.yAxis[p.yaxisNumber-1];
-            p.yAxis[p.yaxisNumber-1] = x;
-            return paper;
+        paper.yAxis = function () {
+            return p.yAxis[p.yaxisNumber-1];
         };
 
         paper.scale = function (r) {
@@ -800,7 +796,8 @@
             opts || (opts = {});
             copyMissing(p.line, opts);
 
-            var line = opts.area ? d3.svg.area() : d3.svg.line(),
+            var container = current,
+                line = opts.area ? d3.svg.area() : d3.svg.line(),
                 scalex = paper.scalex,
                 scaley = paper.scaley,
                 color = opts.color || paper.pickColor();
@@ -813,12 +810,18 @@
                     return scaley(d.y);
                 });
 
-            return current.append('path')
-                                .attr('class', opts.area ? 'area' : 'line')
-                                .attr('stroke', color)
-                                .attr('stroke-width', opts.width)
-                                .datum(data)
-                                .attr('d', line);
+            paper.addComponent(function () {
+                var chart = container.select("path.line");
+
+                if (!chart.node()) {
+                    chart = current.append('path')
+                                    .attr('class', opts.area ? 'area' : 'line')
+                                    .attr('stroke', color)
+                                    .attr('stroke-width', opts.width)
+                                    .datum(data);
+                }
+                chart.attr('d', line);
+            });
         };
 
         // Draw points
@@ -834,7 +837,6 @@
 
             if (opts.fill === true)
                 fill = d3.rgb(color).brighter();
-
 
             paper.addComponent(function () {
                 var chart = container.select("g.points");
@@ -1530,7 +1532,16 @@
 
     function (chart, opts) {
 
-        var paper = chart.paper();
+        var paper = chart.paper(),
+            series = [];
+
+        // iterator over each serie
+        chart.each = function (callback) {
+            series.forEach(callback);
+            return chart;
+        };
+
+        chart.forEach = chart.each;
 
         chart.addSeries = function (series) {
             // Loop through data and build the graph
@@ -1616,20 +1627,24 @@
             if (!serie) return;
 
             if (add) {
-                paper.group();
+                paper.group({'class': 'serie'});
 
                 g.log.info('Add new serie to chart');
 
-                paper.group();
+                series.push(serie);
+                if (!serie.label)
+                    serie.label = 'serie ' + series.length;
 
                 opts.chartTypes.forEach(function (name) {
                     var o = serie[name];
+
                     if (o === undefined)
                         serie[name] = o = opts[name];
-                    if (o.show) {
-                        chartTypes[name](chart, serie.data, o);
-                    }
+
+                    if (o.show)
+                        serie[name] = chartTypes[name](chart, serie.data, o);
                 });
+
                 paper.parent();
             } else {
 
@@ -1659,6 +1674,7 @@
             chart.paper().pie(data, opts);
         }
     };
+
     //
     //
     // Force layout example
@@ -2567,33 +2583,55 @@
     //
     //  Add brush functionality to svg paper
     g.paper.svg.plugin('brush', {
-        axis: 'x'
+        axis: 'x',
+        opacity: 0.125,
+        fill: '#000'
     },
 
     function (paper, opts) {
         var cid, brush;
 
+        paper.brush = function () {
+            return brush;
+        };
+
         // Add a brush to the chart if not already available
-        paper.addBrush = function () {
-            if (cid) return brush;
-            brush = d3.svg.brush()
-                            .on("brushstart", brushstart)
-                            .on("brush", brushmove)
-                            .on("brushend", brushend);
+        paper.addBrush = function (options) {
+            if (_.isObject(options))
+                extend(opts.brush, options);
 
-            cid = paper.addComponent(function () {
-                if (!brush) return;
+            if (!cid) {
+                brush = d3.svg.brush()
+                                .on("brushstart", brushstart)
+                                .on("brush", opts.brush.move || noop)
+                                .on("brushend", brushend);
 
-                var current = paper.root().current(),
-                    gBrush = current.select('g.brush'),
-                    scale = opts.brush.axis === 'y' ? paper.yAxis().scale() : paper.xAxis().scale();
+                cid = paper.addComponent(function () {
+                    if (!brush) return;
 
-                if (!gBrush.node())
-                    gBrush = current.append('g').attr("class", "brush");
+                    var current = paper.root().current(),
+                        gBrush = current.select('g.brush');
 
-                brush.scale(scale);
-                gBrush.call(brush);
-            });
+                    if (opts.brush.axis === 'x') brush.x(paper.xAxis().scale());
+
+                    if (!gBrush.node()) {
+                        gBrush = current.append('g');
+
+                        var rect = gBrush.call(brush).selectAll("rect")
+                                            .attr('fill', opts.brush.fill)
+                                            .attr('fill-opacity', opts.brush.opacity);
+
+                        if (opts.brush.axis === 'x') {
+                            gBrush.attr("class", "brush x-brush");
+                            rect.attr("y", -6).attr("height", paper.innerHeight() + 7);
+                        }
+                    }
+
+                });
+            }
+
+            if (opts.extent)
+                brush.extent(opts.extent);
 
             return brush;
         };
@@ -2604,14 +2642,42 @@
             brush = null;
         };
 
+
+        function brushstart () {
+            paper.root().current().classed('selecting', true);
+            if (opts.brush.start) opts.brush.start();
+        }
+
+        function brushend () {
+            paper.root().current().classed('selecting', false);
+            if (opts.brush.end) opts.brush.end();
+        }
     });
 
 
     //
-    //  Add crossfilter functionality to charts
+    //  Add brush functionality to charts
     g.viz.chart.plugin(function (chart, opts) {
         var dimension,
-            brush;
+            brush, brushopts;
+
+        if (opts.brush) {
+            brush = opts.brush;
+            if (!_.isObject(brush)) brush = {};
+            brushopts = extend({}, brush);
+            brushopts.start = function () {
+                if (brush.start) brush.start(chart);
+            };
+            brushopts.move = function () {
+                chart.each(function (serie) {
+
+                });
+                if (brush.move) brush.move(chart);
+            };
+            brushopts.end = function () {
+                if (brush.end) brush.end(chart);
+            };
+        }
 
         chart.dimension = function (x) {
             init();
@@ -2619,6 +2685,11 @@
             dimension = x;
             return chart;
         };
+
+        chart.on('tick.brush', function () {
+            if (brushopts)
+                chart.paper().addBrush(brushopts);
+        });
 
     });
     //

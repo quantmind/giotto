@@ -11,7 +11,16 @@
 
     function (chart, opts) {
 
-        var paper = chart.paper();
+        var paper = chart.paper(),
+            series = [];
+
+        // iterator over each serie
+        chart.each = function (callback) {
+            series.forEach(callback);
+            return chart;
+        };
+
+        chart.forEach = chart.each;
 
         chart.addSeries = function (series) {
             // Loop through data and build the graph
@@ -97,20 +106,24 @@
             if (!serie) return;
 
             if (add) {
-                paper.group();
+                paper.group({'class': 'serie'});
 
                 g.log.info('Add new serie to chart');
 
-                paper.group();
+                series.push(serie);
+                if (!serie.label)
+                    serie.label = 'serie ' + series.length;
 
                 opts.chartTypes.forEach(function (name) {
                     var o = serie[name];
+
                     if (o === undefined)
                         serie[name] = o = opts[name];
-                    if (o.show) {
-                        chartTypes[name](chart, serie.data, o);
-                    }
+
+                    if (o.show)
+                        serie[name] = chartTypes[name](chart, serie.data, o);
                 });
+
                 paper.parent();
             } else {
 
