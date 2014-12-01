@@ -37,17 +37,3 @@
             parent = parent.parentNode;
         }
     }
-
-    function generateResize () {
-        var resizeFunctions = [];
-        function callResizeFunctions() {
-            resizeFunctions.forEach(function (f) {
-                f();
-            });
-        }
-        callResizeFunctions.add = function (f) {
-            resizeFunctions.push(f);
-        };
-        return callResizeFunctions;
-    }
-

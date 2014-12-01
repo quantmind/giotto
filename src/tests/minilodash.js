@@ -30,6 +30,7 @@
             expect(_.size([3, 4])).toBe(2);
             expect(_.size('ciao')).toBe(4);
             expect(_.size({a:1, b:3})).toBe(2);
+            expect(_.size(78)).toBe(0);
         });
 
         it("Check keys", function () {

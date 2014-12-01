@@ -22,4 +22,20 @@
             expect(node.tagName).toBe('g');
             expect(node).toBe(p.current().select('g.x-brush').node());
         });
+
+        it("Test extent", function () {
+            var p = g.paper();
+
+            var brush = p.addBrush({extent: [0.45, 0.62]});
+            expect(_.isFunction(brush)).toBe(true);
+            var extent = brush.extent();
+            expect(_.isArray(extent)).toBe(true);
+            expect(extent.length).toBe(2);
+            expect(extent[0]).toBe(0.45);
+            expect(extent[1]).toBe(0.62);
+            expect(p.brush()).toBe(brush);
+
+            p.removeBrush();
+            expect(p.brush()).toBe(null);
+        });
     });

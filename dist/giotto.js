@@ -400,20 +400,6 @@
         }
     }
 
-    function generateResize () {
-        var resizeFunctions = [];
-        function callResizeFunctions() {
-            resizeFunctions.forEach(function (f) {
-                f();
-            });
-        }
-        callResizeFunctions.add = function (f) {
-            resizeFunctions.push(f);
-        };
-        return callResizeFunctions;
-    }
-
-
     g.defaults = {};
 
     g.defaults.axis = {
@@ -667,7 +653,7 @@
         // Auto resize the paper
         if (p.resize) {
             //
-            d3.select(window).on('resize', function () {
+            d3.select(window).on('resize.paper', function () {
                 if (!p._resizing) {
                     if (p.resizeDelay) {
                         p._resizing = true;
@@ -2595,7 +2581,7 @@
             return brush;
         };
 
-        // Add a brush to the chart if not already available
+        // Add a brush to the paper if not already available
         paper.addBrush = function (options) {
             if (_.isObject(options))
                 extend(opts.brush, options);
@@ -2615,6 +2601,8 @@
                     if (opts.brush.axis === 'x') brush.x(paper.xAxis().scale());
 
                     if (!gBrush.node()) {
+                        if (opts.brush.extent)
+                            brush.extent(opts.brush.extent);
                         gBrush = current.append('g');
 
                         var rect = gBrush.call(brush).selectAll("rect")
@@ -2629,9 +2617,6 @@
 
                 });
             }
-
-            if (opts.extent)
-                brush.extent(opts.extent);
 
             return brush;
         };

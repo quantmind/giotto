@@ -193,7 +193,7 @@
         // Auto resize the paper
         if (p.resize) {
             //
-            d3.select(window).on('resize', function () {
+            d3.select(window).on('resize.paper', function () {
                 if (!p._resizing) {
                     if (p.resizeDelay) {
                         p._resizing = true;

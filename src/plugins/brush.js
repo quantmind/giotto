@@ -13,7 +13,7 @@
             return brush;
         };
 
-        // Add a brush to the chart if not already available
+        // Add a brush to the paper if not already available
         paper.addBrush = function (options) {
             if (_.isObject(options))
                 extend(opts.brush, options);
@@ -33,6 +33,8 @@
                     if (opts.brush.axis === 'x') brush.x(paper.xAxis().scale());
 
                     if (!gBrush.node()) {
+                        if (opts.brush.extent)
+                            brush.extent(opts.brush.extent);
                         gBrush = current.append('g');
 
                         var rect = gBrush.call(brush).selectAll("rect")
@@ -47,9 +49,6 @@
 
                 });
             }
-
-            if (opts.extent)
-                brush.extent(opts.extent);
 
             return brush;
         };

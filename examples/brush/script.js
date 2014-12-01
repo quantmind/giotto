@@ -9,7 +9,7 @@
         },
 
         brush: {
-            extend: [0.4, 0.6]
+            extent: [0.4, 0.6]
         },
 
         data: function (chart) {
