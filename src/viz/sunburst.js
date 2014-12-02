@@ -1,16 +1,11 @@
     //
     //  Sunburst visualization
     //
-    //  In addition to standard Viz parameters:
-    //      labels: display labels or not (default false)
-    //      padding: padding of sunburst (default 10)
     g.createviz('sunBurst', {
         // Show labels
         labels: true,
-        // sunburst padding
-        addorder: false,
         // Add the order of labels if available in the data
-        padding: 10,
+        addorder: false,
         // speed in transitions
         transition: 750,
         //
@@ -88,8 +83,7 @@
 
         // Calculate the text size to use from dimensions
         function calcTextSize () {
-            var size = paper.size(),
-                dim = Math.min(size[0], size[1]);
+            var dim = Math.min(paper.innerWidth(), paper.innerHeight());
             if (dim < 400)
                 return Math.round(100 - 0.15*(500-dim));
             else
@@ -140,9 +134,8 @@
         //
         function build () {
 
-            var size = paper.clear().size(),
-                width = size[0]/2,
-                height = size[1]/2,
+            var width = 0.5*paper.innerWidth(),
+                height = 0.5*paper.innerHeight(),
                 // Create the partition layout
                 partition = d3.layout.partition()
                     .value(function(d) { return d.size; })
@@ -151,7 +144,7 @@
                           .attr("transform", "translate(" + width + "," + height + ")"),
                 sunburst = svg.append('g').attr('class', 'sunburst');
 
-            radius = Math.min(width, height) - opts.padding;
+            radius = Math.min(width, height);
             y = scale(radius);  // radial position
             depth = 0;
             current = opts.data;

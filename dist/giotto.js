@@ -108,6 +108,8 @@
             //
             // Loop through d3 extensions and create directives
             // for each Visualization class
+            g.log.info('Adding giotto visualization directives');
+
             angular.forEach(g.viz, function (vizType, name) {
                 g.angular.directive(angular, name, vizType, moduleName, injects);
             });
@@ -176,16 +178,6 @@
     };
 
     g.log = log(root.debug);
-
-
-    g.xyfunction = function (X, funy) {
-        var xy = [];
-        if (isArray(X))
-            X.forEach(function (x) {
-                xy.push([x, funy(x)]);
-            });
-        return xy;
-    };
 
 
     var
@@ -621,19 +613,19 @@
                     ymax = y > ymax ? y : ymax;
                     return y;
                 };
+            var xydata = [];
             if (isArray(xy[0]) && xy[0].length === 2) {
-                var xydata = [];
                 xy.forEach(function (xy) {
                     xydata.push({x: x(xy[0]), y: y(xy[1])});
                 });
-                xy = xydata;
             } else {
+                var xl = data.xlabel || 'x',
+                    yl = data.ylabel || 'y';
                 xy.forEach(function (xy) {
-                    xy.x = x(xy.x);
-                    xy.y = y(xy.y);
+                    xydata.push({x: x(xy[xl]), y: y(xy[yl])});
                 });
             }
-            data.data = xy;
+            data.data = xydata;
             data.xrange = [xmin, xmax];
             data.yrange = [ymin, ymax];
             return data;
@@ -670,10 +662,16 @@
             }
         };
 
-        paper.render = function () {
-            components.forEach(function (callback) {
-                callback();
-            });
+        //  Render the paper by executing all components
+        //  If a component id is provided, render only the matching
+        //  component
+        paper.render = function (cid) {
+            if (!arguments.length)
+                components.forEach(function (callback) {
+                    callback();
+                });
+            else if (componentMap[cid])
+                componentMap[cid]();
         };
 
         // Clear the paper from all compoents
@@ -684,6 +682,11 @@
             cidCounter = 0;
             color = 0;
             return paper;
+        };
+
+        // Access internal options
+        paper.options = function () {
+            return p;
         };
 
         // Auto resize the paper
@@ -1246,7 +1249,7 @@
                 return opts;
             };
 
-            viz.xyfunction = g.xyfunction;
+            viz.xyfunction = g.math.xyfunction;
 
             d3.rebind(viz, event, 'on');
 
@@ -1286,9 +1289,10 @@
 
 
     g.crossfilter = function (options) {
-        var cf = {},
-            dimensions = {},
-            cfdata;
+        var cf = {
+            dims: {},
+            tolerance: options.tolerance === undefined ? g.crossfilter.tolerance : options.tolerance
+        };
 
         // Add a new dimension to the crossfilter
         cf.addDimension = function (name, callback) {
@@ -1297,11 +1301,69 @@
                     return d[name];
                 };
             }
-            dimensions[name] = cfdata.dimension(callback);
+            cf.dims[name] = cf.data.dimension(callback);
         };
 
-        cf.data = function () {
-            return cfdata;
+        // Reduce the number of points by using a K-mean clustering algorithm
+        cf.reduceDensity = function (dimension, points, start, end) {
+            var count = 0,
+                dim = cf.dims[dimension],
+                group;
+
+            if (!dim)
+                throw Error('Cross filter dimension "' + dimension + '"" not available. Add it with the addDimension method');
+
+            if (start === undefined) start = null;
+            if (end === undefined) end = null;
+
+            if (start === null && end === null)
+                group = dim.filter();
+            else
+                group = dim.filter(function (d) {
+                    if (start !== null && d < start) return;
+                    if (end !== null && d > end) return;
+                    return true;
+                });
+
+            var all = group.bottom(Infinity);
+
+            if (all.length > cf.tolerance*points) {
+                var km = g.math.kmeans(),
+                    reduced = [],
+                    cl = [],
+                    centroids = [],
+                    r = all.length / points,
+                    index, i, c;
+
+                // Create the input for the k-means algorithm
+                for (i=0; i<all.length; i++)
+                    cl.push([all[i][dimension]]);
+
+                for (i=0; i<points; i++) {
+                    centroids.push(cl[Math.round(i*r)]);
+                }
+
+                km.centroids(centroids).maxIters(10);
+
+                cl = km.cluster(cl).sort(function (a, b) {
+                    return a.centroid[0] - b.centroid[0];
+                });
+
+                cl.forEach(function (d) {
+                    index = d.indices[0];
+                    c = d.points[0];
+                    for (i=1; i<d.points.length; ++i) {
+                        if (d.points[i] > c) {
+                            index = d.indices[i];
+                            c = d.points[i];
+                        }
+                    }
+                    reduced.push(all[index]);
+                });
+                all = reduced;
+            }
+
+            return all;
         };
 
 
@@ -1309,7 +1371,7 @@
             if (!g.crossfilter.lib)
                 throw Error('Could not find crossfilter library');
 
-            cfdata = g.crossfilter.lib(options.data);
+            cf.data = g.crossfilter.lib(options.data);
 
             if (g._.isArray(options.dimensions))
                 options.dimensions.forEach(function (o) {
@@ -1335,6 +1397,9 @@
         build();
         return cf;
     };
+
+    g.crossfilter.tolerance = 1.1;
+
     //
     //  Initaise paper
     function _initPaper (paper, p) {
@@ -1537,6 +1602,10 @@
         var paper = chart.paper(),
             series = [];
 
+        chart.numSeries = function () {
+            return series.length;
+        };
+
         // iterator over each serie
         chart.each = function (callback) {
             series.forEach(callback);
@@ -1549,13 +1618,13 @@
             // Loop through data and build the graph
             var xrange = [Infinity, -Infinity],
                 yrange = [Infinity, -Infinity],
+                wasempty = chart.numSeries() === 0,
                 data = [];
 
             series.forEach(function (serie) {
 
-                if (isFunction (serie)) {
+                if (isFunction(serie))
                     serie = serie(chart);
-                }
 
                 serie = addSerie(serie);
 
@@ -1574,6 +1643,15 @@
             data.forEach(function (serie) {
                 addSerie(serie, true);
             });
+
+            if (wasempty)
+                if (show(opts.xaxis))
+                    paper.drawXaxis();
+                if (show(opts.yaxis))
+                    paper.drawYaxis();
+                if (show(opts.yaxis2, false))
+                    paper.drawYaxis();
+
             return chart;
         };
 
@@ -1588,16 +1666,8 @@
             if (g._.isFunction(data))
                 data = data(chart);
 
-            if (data) {
+            if (data)
                 chart.addSeries(data);
-
-                if (show(opts.xaxis))
-                    paper.drawXaxis();
-                if (show(opts.yaxis))
-                    paper.drawYaxis();
-                if (show(opts.yaxis2, false))
-                    paper.drawYaxis();
-            }
         };
 
 
@@ -2156,16 +2226,11 @@
     //
     //  Sunburst visualization
     //
-    //  In addition to standard Viz parameters:
-    //      labels: display labels or not (default false)
-    //      padding: padding of sunburst (default 10)
     g.createviz('sunBurst', {
         // Show labels
         labels: true,
-        // sunburst padding
-        addorder: false,
         // Add the order of labels if available in the data
-        padding: 10,
+        addorder: false,
         // speed in transitions
         transition: 750,
         //
@@ -2243,8 +2308,7 @@
 
         // Calculate the text size to use from dimensions
         function calcTextSize () {
-            var size = paper.size(),
-                dim = Math.min(size[0], size[1]);
+            var dim = Math.min(paper.innerWidth(), paper.innerHeight());
             if (dim < 400)
                 return Math.round(100 - 0.15*(500-dim));
             else
@@ -2295,9 +2359,8 @@
         //
         function build () {
 
-            var size = paper.clear().size(),
-                width = size[0]/2,
-                height = size[1]/2,
+            var width = 0.5*paper.innerWidth(),
+                height = 0.5*paper.innerHeight(),
                 // Create the partition layout
                 partition = d3.layout.partition()
                     .value(function(d) { return d.size; })
@@ -2306,7 +2369,7 @@
                           .attr("transform", "translate(" + width + "," + height + ")"),
                 sunburst = svg.append('g').attr('class', 'sunburst');
 
-            radius = Math.min(width, height) - opts.padding;
+            radius = Math.min(width, height);
             y = scale(radius);  // radial position
             depth = 0;
             current = opts.data;
@@ -2596,47 +2659,56 @@
             return brush;
         };
 
+        // get/set the extent for the brush
+        // When set, it re-renders in the paper
+        paper.extent = function (x) {
+            if (!arguments.length) return brush ? brush.extent() : null;
+            if (brush) {
+                brush.extent(x);
+                paper.render(cid);
+            }
+        };
+
         // Add a brush to the paper if not already available
         paper.addBrush = function (options) {
+            if (cid) return paper;
+
             if (_.isObject(options))
                 extend(opts.brush, options);
 
-            if (!cid) {
-                brush = d3.svg.brush()
-                                .on("brushstart", brushstart)
-                                .on("brush", brushmove)
-                                .on("brushend", brushend);
+            brush = d3.svg.brush()
+                            .on("brushstart", brushstart)
+                            .on("brush", brushmove)
+                            .on("brushend", brushend);
 
-                cid = paper.addComponent(function () {
-                    if (!brush) return;
+            cid = paper.addComponent(function () {
+                if (!brush) return;
 
-                    var current = paper.root().current(),
-                        gBrush = current.select('g.brush');
+                var current = paper.root().current(),
+                    gBrush = current.select('g.brush');
 
-                    if (opts.brush.axis === 'x') brush.x(paper.xAxis().scale());
+                if (opts.brush.axis === 'x') brush.x(paper.xAxis().scale());
 
-                    if (!gBrush.node()) {
-                        if (opts.brush.extent)
-                            brush.extent(opts.brush.extent);
-                        gBrush = current.append('g');
+                if (!gBrush.node()) {
+                    if (opts.brush.extent)
+                        brush.extent(opts.brush.extent);
+                    gBrush = current.append('g');
 
-                        var rect = gBrush.call(brush).selectAll("rect")
-                                            .attr('fill', opts.brush.fill)
-                                            .attr('fill-opacity', opts.brush.opacity);
+                    var rect = gBrush.call(brush).selectAll("rect")
+                                        .attr('fill', opts.brush.fill)
+                                        .attr('fill-opacity', opts.brush.opacity);
 
-                        if (opts.brush.axis === 'x') {
-                            gBrush.attr("class", "brush x-brush");
-                            rect.attr("y", -6).attr("height", paper.innerHeight() + 7);
-                        }
+                    if (opts.brush.axis === 'x') {
+                        gBrush.attr("class", "brush x-brush");
+                        rect.attr("y", -6).attr("height", paper.innerHeight() + 7);
                     }
+                } else
+                    gBrush.call(brush);
 
-                });
-            }
-
-            brushstart();
-            brushmove();
-            brushend();
-
+                brushstart();
+                brushmove();
+                brushend();
+            });
 
             return brush;
         };
@@ -2881,95 +2953,230 @@
     });
 
 
-var BITS = 52,
-    SCALE = 2 << 51,
-    MAX_DIMENSION = 21201,
-    COEFFICIENTS = [
-        'd       s       a       m_i',
-        '2       1       0       1',
-        '3       2       1       1 3',
-        '4       3       1       1 3 1',
-        '5       3       2       1 1 1',
-        '6       4       1       1 1 3 3',
-        '7       4       4       1 3 5 13',
-        '8       5       2       1 1 5 5 17',
-        '9       5       4       1 1 5 5 5',
-        '10      5       7       1 1 7 11 1'
-    ];
+
+    g.math.distances = {
+
+        euclidean: function(v1, v2) {
+            var total = 0;
+            for (var i = 0; i < v1.length; i++) {
+                total += Math.pow(v2[i] - v1[i], 2);
+            }
+            return Math.sqrt(total);
+        }
+    };
+    //
+    //  K-means clustering
+    g.math.kmeans = function (centroids, max_iter, distance) {
+        var km = {};
+
+        max_iter = max_iter || 300;
+        distance = distance || "euclidean";
+        if (typeof distance == "string")
+            distance = g.math.distances[distance];
+
+        km.centroids = function (x) {
+            if (!arguments.length) return centroids;
+            centroids = x;
+            return km;
+        };
+
+        km.maxIters = function (x) {
+            if (!arguments.length) return max_iter;
+            max_iter = +x;
+            return km;
+        };
+
+        // create a set of random centroids from a set of points
+        km.randomCentroids = function (points, K) {
+            var means = points.slice(0); // copy
+            means.sort(function() {
+                return Math.round(Math.random()) - 0.5;
+            });
+            return means.slice(0, K);
+        };
+
+        km.classify = function (point) {
+            var min = Infinity,
+                index = 0,
+                i, dist;
+            for (i = 0; i < centroids.length; i++) {
+                dist = distance(point, centroids[i]);
+                if (dist < min) {
+                    min = dist;
+                    index = i;
+                }
+           }
+           return index;
+        };
+
+        km.cluster = function (points, callback) {
+
+            var iterations = 0,
+                movement = true,
+                N = points.length,
+                K = centroids.length,
+                clusters = new Array(K),
+                newCentroids,
+                n, k;
+
+            if (N < K)
+                throw Error('Number of points less than the number of clusters in K-means classification');
+
+            while (movement && iterations < max_iter) {
+                movement = false;
+                ++iterations;
+
+                // Assignments
+                for (k = 0; k < K; ++k)
+                    clusters[k] = {centroid: centroids[k], points: [], indices: []};
+
+                for (n = 0; n < N; n++) {
+                    k = km.classify(points[n]);
+                    clusters[k].points.push(points[n]);
+                    clusters[k].indices.push(n);
+                }
+
+                // Update centroids
+                newCentroids = [];
+                for (k = 0; k < K; ++k) {
+                    if (clusters[k].points.length)
+                        newCentroids.push(g.math.mean(clusters[k].points));
+                    else {
+                        // A centroid with no points, randomly re-initialise it
+                        newCentroids = km.randomCentroids(points, K);
+                        break;
+                    }
+                }
+
+                for (k = 0; k < K; ++k) {
+                    if (newCentroids[k] != centroids[k]) {
+                        centroids = newCentroids;
+                        movement = true;
+                        break;
+                    }
+                }
+
+                if (callback)
+                    callback(clusters, iterations);
+            }
+
+            return clusters;
+        };
+
+        return km;
+    };
+
+    g.math.xyfunction = function (X, funy) {
+        var xy = [];
+        if (isArray(X))
+            X.forEach(function (x) {
+                xy.push([x, funy(x)]);
+            });
+        return xy;
+    };
+
+    // The arithmetic average of a array of points
+    g.math.mean = function (points) {
+        var mean = points[0].slice(0), // copy the first point
+            point, i, j;
+        for (i=1; i<points.length; ++i) {
+            point = points[i];
+            for (j=0; j<mean.length; ++j)
+                mean[j] += point[j];
+        }
+        for (j=0; j<mean.length; ++j)
+            mean[j] /= points.length;
+        return mean;
+    };
+    var BITS = 52,
+        SCALE = 2 << 51,
+        MAX_DIMENSION = 21201,
+        COEFFICIENTS = [
+            'd       s       a       m_i',
+            '2       1       0       1',
+            '3       2       1       1 3',
+            '4       3       1       1 3 1',
+            '5       3       2       1 1 1',
+            '6       4       1       1 1 3 3',
+            '7       4       4       1 3 5 13',
+            '8       5       2       1 1 5 5 17',
+            '9       5       4       1 1 5 5 5',
+            '10      5       7       1 1 7 11 1'
+        ];
 
 
-g.math.sobol = function (dim) {
-    if (dim < 1 || dim > MAX_DIMENSION) throw new Error("Out of range dimension");
-    var sobol = {},
-        count = 0,
-        direction = [],
-        x = [],
-        zero = [],
-        lines,
-        i;
+    g.math.sobol = function (dim) {
+        if (dim < 1 || dim > MAX_DIMENSION) throw new Error("Out of range dimension");
+        var sobol = {},
+            count = 0,
+            direction = [],
+            x = [],
+            zero = [],
+            lines,
+            i;
 
-    sobol.next = function() {
-        var v = [];
-        if (count === 0) {
+        sobol.next = function() {
+            var v = [];
+            if (count === 0) {
+                count++;
+                return zero.slice();
+            }
+            var c = 1;
+            var value = count - 1;
+            while ((value & 1) == 1) {
+                value >>= 1;
+                c++;
+            }
+            for (i = 0; i < dim; i++) {
+                x[i] ^= direction[i][c];
+                v[i] = x[i] / SCALE;
+            }
             count++;
-            return zero.slice();
-        }
-        var c = 1;
-        var value = count - 1;
-        while ((value & 1) == 1) {
-            value >>= 1;
-            c++;
-        }
+            return v;
+        };
+
+        sobol.dimension = function () {
+            return dim;
+        };
+
+        sobol.count = function () {
+            return count;
+        };
+
+
+        var tmp = [];
+        for (i = 0; i <= BITS; i++) tmp.push(0);
         for (i = 0; i < dim; i++) {
-            x[i] ^= direction[i][c];
-            v[i] = x[i] / SCALE;
+            direction[i] = tmp.slice();
+            x[i] = 0;
+            zero[i] = 0;
         }
-        count++;
-        return v;
-    };
 
-    sobol.dimension = function () {
-        return dim;
-    };
-
-    sobol.count = function () {
-        return count;
-    };
-
-
-    var tmp = [];
-    for (i = 0; i <= BITS; i++) tmp.push(0);
-    for (i = 0; i < dim; i++) {
-        direction[i] = tmp.slice();
-        x[i] = 0;
-        zero[i] = 0;
-    }
-
-    if (dim > COEFFICIENTS.length) {
-        throw new Error("Out of range dimension");
-        //var data = fs.readFileSync(file);
-        //lines = ("" + data).split("\n");
-    }
-    else
-        lines = COEFFICIENTS;
-
-    for (i = 1; i <= BITS; i++) direction[0][i] = 1 << (BITS - i);
-    for (var d = 1; d < dim; d++) {
-        var cells = lines[d].split(/\s+/);
-        var s = +cells[1];
-        var a = +cells[2];
-        var m = [0];
-        for (i = 0; i < s; i++) m.push(+cells[3 + i]);
-        for (i = 1; i <= s; i++) direction[d][i] = m[i] << (BITS - i);
-        for (i = s + 1; i <= BITS; i++) {
-            direction[d][i] = direction[d][i - s] ^ (direction[d][i - s] >> s);
-            for (var k = 1; k <= s - 1; k++)
-            direction[d][i] ^= ((a >> (s - 1 - k)) & 1) * direction[d][i - k];
+        if (dim > COEFFICIENTS.length) {
+            throw new Error("Out of range dimension");
+            //var data = fs.readFileSync(file);
+            //lines = ("" + data).split("\n");
         }
-    }
+        else
+            lines = COEFFICIENTS;
 
-    return sobol;
-};
+        for (i = 1; i <= BITS; i++) direction[0][i] = 1 << (BITS - i);
+        for (var d = 1; d < dim; d++) {
+            var cells = lines[d].split(/\s+/);
+            var s = +cells[1];
+            var a = +cells[2];
+            var m = [0];
+            for (i = 0; i < s; i++) m.push(+cells[3 + i]);
+            for (i = 1; i <= s; i++) direction[d][i] = m[i] << (BITS - i);
+            for (i = s + 1; i <= BITS; i++) {
+                direction[d][i] = direction[d][i - s] ^ (direction[d][i - s] >> s);
+                for (var k = 1; k <= s - 1; k++)
+                direction[d][i] ^= ((a >> (s - 1 - k)) & 1) * direction[d][i - k];
+            }
+        }
+
+        return sobol;
+    };
 
 
     return d3;

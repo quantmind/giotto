@@ -14,6 +14,10 @@
         var paper = chart.paper(),
             series = [];
 
+        chart.numSeries = function () {
+            return series.length;
+        };
+
         // iterator over each serie
         chart.each = function (callback) {
             series.forEach(callback);
@@ -26,13 +30,13 @@
             // Loop through data and build the graph
             var xrange = [Infinity, -Infinity],
                 yrange = [Infinity, -Infinity],
+                wasempty = chart.numSeries() === 0,
                 data = [];
 
             series.forEach(function (serie) {
 
-                if (isFunction (serie)) {
+                if (isFunction(serie))
                     serie = serie(chart);
-                }
 
                 serie = addSerie(serie);
 
@@ -51,6 +55,15 @@
             data.forEach(function (serie) {
                 addSerie(serie, true);
             });
+
+            if (wasempty)
+                if (show(opts.xaxis))
+                    paper.drawXaxis();
+                if (show(opts.yaxis))
+                    paper.drawYaxis();
+                if (show(opts.yaxis2, false))
+                    paper.drawYaxis();
+
             return chart;
         };
 
@@ -65,16 +78,8 @@
             if (g._.isFunction(data))
                 data = data(chart);
 
-            if (data) {
+            if (data)
                 chart.addSeries(data);
-
-                if (show(opts.xaxis))
-                    paper.drawXaxis();
-                if (show(opts.yaxis))
-                    paper.drawYaxis();
-                if (show(opts.yaxis2, false))
-                    paper.drawYaxis();
-            }
         };
 
 

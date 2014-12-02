@@ -1,5 +1,5 @@
 
-    examples.barchart = {
+    gexamples.barchart = {
         height: '80%',
 
         line: {show: true},

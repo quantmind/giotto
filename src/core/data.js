@@ -1,8 +1,9 @@
 
     g.crossfilter = function (options) {
-        var cf = {},
-            dimensions = {},
-            cfdata;
+        var cf = {
+            dims: {},
+            tolerance: options.tolerance === undefined ? g.crossfilter.tolerance : options.tolerance
+        };
 
         // Add a new dimension to the crossfilter
         cf.addDimension = function (name, callback) {
@@ -11,11 +12,69 @@
                     return d[name];
                 };
             }
-            dimensions[name] = cfdata.dimension(callback);
+            cf.dims[name] = cf.data.dimension(callback);
         };
 
-        cf.data = function () {
-            return cfdata;
+        // Reduce the number of points by using a K-mean clustering algorithm
+        cf.reduceDensity = function (dimension, points, start, end) {
+            var count = 0,
+                dim = cf.dims[dimension],
+                group;
+
+            if (!dim)
+                throw Error('Cross filter dimension "' + dimension + '"" not available. Add it with the addDimension method');
+
+            if (start === undefined) start = null;
+            if (end === undefined) end = null;
+
+            if (start === null && end === null)
+                group = dim.filter();
+            else
+                group = dim.filter(function (d) {
+                    if (start !== null && d < start) return;
+                    if (end !== null && d > end) return;
+                    return true;
+                });
+
+            var all = group.bottom(Infinity);
+
+            if (all.length > cf.tolerance*points) {
+                var km = g.math.kmeans(),
+                    reduced = [],
+                    cl = [],
+                    centroids = [],
+                    r = all.length / points,
+                    index, i, c;
+
+                // Create the input for the k-means algorithm
+                for (i=0; i<all.length; i++)
+                    cl.push([all[i][dimension]]);
+
+                for (i=0; i<points; i++) {
+                    centroids.push(cl[Math.round(i*r)]);
+                }
+
+                km.centroids(centroids).maxIters(10);
+
+                cl = km.cluster(cl).sort(function (a, b) {
+                    return a.centroid[0] - b.centroid[0];
+                });
+
+                cl.forEach(function (d) {
+                    index = d.indices[0];
+                    c = d.points[0];
+                    for (i=1; i<d.points.length; ++i) {
+                        if (d.points[i] > c) {
+                            index = d.indices[i];
+                            c = d.points[i];
+                        }
+                    }
+                    reduced.push(all[index]);
+                });
+                all = reduced;
+            }
+
+            return all;
         };
 
 
@@ -23,7 +82,7 @@
             if (!g.crossfilter.lib)
                 throw Error('Could not find crossfilter library');
 
-            cfdata = g.crossfilter.lib(options.data);
+            cf.data = g.crossfilter.lib(options.data);
 
             if (g._.isArray(options.dimensions))
                 options.dimensions.forEach(function (o) {
@@ -49,3 +108,5 @@
         build();
         return cf;
     };
+
+    g.crossfilter.tolerance = 1.1;

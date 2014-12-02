@@ -1,21 +1,40 @@
     //Check this example http://dc-js.github.io/dc.js/docs/stock.html
 
-    examples.randomwalkMain = {
+    gexamples.randomwalkMain = {
         height: '55%',
         points: {show: true},
 
     };
 
-    examples.randomwalkBrush = {
+    gexamples.randomwalkBrush = {
         height: '15%',
+
+        brush: {
+            axis: 'x'
+        },
 
         data: function (chart) {
 
+            // Setup a crossfilter with some random data
             d3.giotto.crossfilter({
+
                 data: randomPath(3000),
 
+                dimensions: ['time'],
+
+                // Callback when crossfilter is ready
                 callback: function (cf) {
-                    chart.setData(cf);
+                    var f = cf.dims.time.filter(),
+                        end = f.top(1)[0].time,
+                        start = f.bottom(1)[0].time,
+                        extent = [end-0.3*(end-start), end];
+                    var data = cf.reduceDensity('time', 300);
+                    chart.addSerie({
+                        data: data,
+                        xlabel: 'time',
+                        ylabel: 'value'
+                    });
+                    chart.paper().extent(extent);
                 }
             });
         }

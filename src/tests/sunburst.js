@@ -9,15 +9,18 @@
             expect(sunb.alpha()).toBe(0);
             expect(sunb.vizType()).toBe(g.viz.sunBurst);
             expect(sunb.vizName()).toBe('sunBurst');
-            expect(sunb.options().padding).toBe(10);
+            expect(sunb.options().margin.left).toBe(20);
         });
 
         it("Check agile development src", function() {
             var sunb = g.viz.sunBurst({
-                    padding: '30',
+                    margin: {top: 30},
                     src: src
-                });
-            expect(sunb.options().padding).toBe('30');
+                }),
+                paper = sunb.paper();
+
+            expect(paper.options().margin.top).toBe(30);
+            expect(paper.options().margin.left).toBe(20);
             expect(sunb.options().src).toBe(src);
             expect(sunb.options().resize).toBe(true);
         });

@@ -1,5 +1,5 @@
 
-    examples.force1 = {
+    gexamples.force1 = {
         nodes: 100,
         maxRadius: 0.04,
         minRadius: 0.01,

@@ -1,5 +1,5 @@
 
-    examples.bitcoin1 = {
+    gexamples.bitcoin1 = {
 
         xaxis: {
             type: 'time'

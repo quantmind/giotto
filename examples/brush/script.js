@@ -1,5 +1,5 @@
 
-    examples.brush1 = {
+    gexamples.brush1 = {
         height: '20%',
 
         css: {

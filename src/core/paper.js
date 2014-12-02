@@ -131,19 +131,19 @@
                     ymax = y > ymax ? y : ymax;
                     return y;
                 };
+            var xydata = [];
             if (isArray(xy[0]) && xy[0].length === 2) {
-                var xydata = [];
                 xy.forEach(function (xy) {
                     xydata.push({x: x(xy[0]), y: y(xy[1])});
                 });
-                xy = xydata;
             } else {
+                var xl = data.xlabel || 'x',
+                    yl = data.ylabel || 'y';
                 xy.forEach(function (xy) {
-                    xy.x = x(xy.x);
-                    xy.y = y(xy.y);
+                    xydata.push({x: x(xy[xl]), y: y(xy[yl])});
                 });
             }
-            data.data = xy;
+            data.data = xydata;
             data.xrange = [xmin, xmax];
             data.yrange = [ymin, ymax];
             return data;
@@ -180,10 +180,16 @@
             }
         };
 
-        paper.render = function () {
-            components.forEach(function (callback) {
-                callback();
-            });
+        //  Render the paper by executing all components
+        //  If a component id is provided, render only the matching
+        //  component
+        paper.render = function (cid) {
+            if (!arguments.length)
+                components.forEach(function (callback) {
+                    callback();
+                });
+            else if (componentMap[cid])
+                componentMap[cid]();
         };
 
         // Clear the paper from all compoents
@@ -194,6 +200,11 @@
             cidCounter = 0;
             color = 0;
             return paper;
+        };
+
+        // Access internal options
+        paper.options = function () {
+            return p;
         };
 
         // Auto resize the paper

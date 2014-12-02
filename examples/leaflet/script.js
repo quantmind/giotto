@@ -1,4 +1,4 @@
-    examples.leaflet1 = {
+    gexamples.leaflet1 = {
 
         tile: 'leaflet',
 

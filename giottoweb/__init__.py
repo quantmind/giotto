@@ -8,7 +8,7 @@ HTML_TITLE = 'GiottoJs Examples'
 STATIC_LOCATION = '../docs/giotto'
 CONTEXT_LOCATION = 'giottoweb/content/context'
 MEDIA_URL = '/media/'
-ANGULAR_UI_ROUTER = True
+ANGULAR_UI_ROUTER = False
 STATIC_API = 'ng'
 MINIFIED_MEDIA = True
 EXTENSIONS = ['lux.extensions.base',
@@ -52,7 +52,10 @@ class Extension(lux.Extension):
         return [dist, examples]
 
     def on_html_document(self, app, request, doc):
-        doc.head.embedded_js.append('var examples = {};')
+        doc.head.embedded_js.append('var gexamples = {};\n')
+
+    def context(self, request, context):
+        context['html_html'] = ''
 
 
 def add_css(all):

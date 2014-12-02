@@ -58,6 +58,8 @@
             //
             // Loop through d3 extensions and create directives
             // for each Visualization class
+            g.log.info('Adding giotto visualization directives');
+
             angular.forEach(g.viz, function (vizType, name) {
                 g.angular.directive(angular, name, vizType, moduleName, injects);
             });

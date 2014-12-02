@@ -132,7 +132,7 @@
                 return opts;
             };
 
-            viz.xyfunction = g.xyfunction;
+            viz.xyfunction = g.math.xyfunction;
 
             d3.rebind(viz, event, 'on');
 

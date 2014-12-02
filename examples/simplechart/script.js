@@ -1,5 +1,5 @@
 
-    examples.sigmoid = {
+    gsexamples.sigmoid = {
         height: '80%',
 
         data: function (chart) {

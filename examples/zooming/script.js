@@ -1,5 +1,5 @@
 
-    examples.zooming1 = {
+    gexamples.zooming1 = {
 
         height: '70%',
 

@@ -13,47 +13,56 @@
             return brush;
         };
 
+        // get/set the extent for the brush
+        // When set, it re-renders in the paper
+        paper.extent = function (x) {
+            if (!arguments.length) return brush ? brush.extent() : null;
+            if (brush) {
+                brush.extent(x);
+                paper.render(cid);
+            }
+        };
+
         // Add a brush to the paper if not already available
         paper.addBrush = function (options) {
+            if (cid) return paper;
+
             if (_.isObject(options))
                 extend(opts.brush, options);
 
-            if (!cid) {
-                brush = d3.svg.brush()
-                                .on("brushstart", brushstart)
-                                .on("brush", brushmove)
-                                .on("brushend", brushend);
+            brush = d3.svg.brush()
+                            .on("brushstart", brushstart)
+                            .on("brush", brushmove)
+                            .on("brushend", brushend);
 
-                cid = paper.addComponent(function () {
-                    if (!brush) return;
+            cid = paper.addComponent(function () {
+                if (!brush) return;
 
-                    var current = paper.root().current(),
-                        gBrush = current.select('g.brush');
+                var current = paper.root().current(),
+                    gBrush = current.select('g.brush');
 
-                    if (opts.brush.axis === 'x') brush.x(paper.xAxis().scale());
+                if (opts.brush.axis === 'x') brush.x(paper.xAxis().scale());
 
-                    if (!gBrush.node()) {
-                        if (opts.brush.extent)
-                            brush.extent(opts.brush.extent);
-                        gBrush = current.append('g');
+                if (!gBrush.node()) {
+                    if (opts.brush.extent)
+                        brush.extent(opts.brush.extent);
+                    gBrush = current.append('g');
 
-                        var rect = gBrush.call(brush).selectAll("rect")
-                                            .attr('fill', opts.brush.fill)
-                                            .attr('fill-opacity', opts.brush.opacity);
+                    var rect = gBrush.call(brush).selectAll("rect")
+                                        .attr('fill', opts.brush.fill)
+                                        .attr('fill-opacity', opts.brush.opacity);
 
-                        if (opts.brush.axis === 'x') {
-                            gBrush.attr("class", "brush x-brush");
-                            rect.attr("y", -6).attr("height", paper.innerHeight() + 7);
-                        }
+                    if (opts.brush.axis === 'x') {
+                        gBrush.attr("class", "brush x-brush");
+                        rect.attr("y", -6).attr("height", paper.innerHeight() + 7);
                     }
+                } else
+                    gBrush.call(brush);
 
-                });
-            }
-
-            brushstart();
-            brushmove();
-            brushend();
-
+                brushstart();
+                brushmove();
+                brushend();
+            });
 
             return brush;
         };

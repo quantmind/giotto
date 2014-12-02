@@ -1,5 +1,5 @@
 
-    examples.trianglify = {
+    gexamples.trianglify = {
 
         height: '60%',
 
