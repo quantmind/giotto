@@ -1,6 +1,6 @@
 //      Giotto - v0.1.0
 
-//      Compiled 2014-12-01.
+//      Compiled 2014-12-02.
 //      Copyright (c) 2014 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -747,6 +747,11 @@
         p.xAxis = d3.svg.axis();
         p.yAxis = [d3.svg.axis(), d3.svg.axis()];
 
+        paper.destroy = function () {
+            svg = current = null;
+            paper.element().selectAll('*').remove();
+        };
+
         paper.refresh = function () {
             svg.attr('width', p.size[0])
                .attr('height', p.size[1]);
@@ -1483,6 +1488,11 @@
 
         p.xAxis = d3.canvas.axis();
         p.yAxis = [d3.canvas.axis(), d3.canvas.axis()];
+
+        paper.destroy = function () {
+            current = null;
+            element.selectAll('*').remove();
+        };
 
         paper.refresh = function () {
             clearCanvas();

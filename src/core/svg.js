@@ -15,6 +15,11 @@
         p.xAxis = d3.svg.axis();
         p.yAxis = [d3.svg.axis(), d3.svg.axis()];
 
+        paper.destroy = function () {
+            svg = current = null;
+            paper.element().selectAll('*').remove();
+        };
+
         paper.refresh = function () {
             svg.attr('width', p.size[0])
                .attr('height', p.size[1]);

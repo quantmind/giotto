@@ -6,6 +6,11 @@
         p.xAxis = d3.canvas.axis();
         p.yAxis = [d3.canvas.axis(), d3.canvas.axis()];
 
+        paper.destroy = function () {
+            current = null;
+            element.selectAll('*').remove();
+        };
+
         paper.refresh = function () {
             clearCanvas();
             paper.render();

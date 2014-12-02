@@ -4,7 +4,7 @@
 
         css: {
             selected: {
-                stroke: '#f00',
+                stroke: '#444',
                 'stroke-width': '1.5px'
             }
         },

@@ -57,6 +57,34 @@
 
             expect(count).toBe(1);
         });
+
+        it('bars', function () {
+            var norm = d3.random.normal(0.5, 0.1),
+                c = chart({
+                        bar: {show: true},
+                        line: {show: false}
+                    }),
+                count = 0;
+
+            c.addSerie(d3.range(30).map(function () {
+                return [Math.random(), norm()];
+            }));
+
+            c.each(function (serie) {
+                count++;
+                expect(serie.point).not.toBe(undefined);
+                expect(serie.point.chart).toBe(undefined);
+
+                expect(serie.line).not.toBe(undefined);
+                expect(serie.line.chart).toBe(undefined);
+
+                expect(serie.bar).not.toBe(undefined);
+                expect(serie.bar.radius).toBe(4);
+                expect(serie.bar.chart).not.toBe(undefined);
+            });
+
+            expect(count).toBe(1);
+        });
     }
 
 

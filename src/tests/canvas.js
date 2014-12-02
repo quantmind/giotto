@@ -45,4 +45,15 @@
             expect(paper.clear()).toBe(paper);
         });
 
+        it("Axis", function () {
+            var paper = g.paper({type: 'canvas'}),
+                xaxis = paper.xAxis(),
+                yaxis = paper.yAxis();
+
+            expect(_.isFunction(xaxis.scale())).toBe(true);
+            expect(xaxis.orient()).toBe('bottom');
+            expect(yaxis.orient()).toBe('left');
+            expect(paper.yaxis(2).yAxis().orient()).toBe('right');
+        });
+
     });
