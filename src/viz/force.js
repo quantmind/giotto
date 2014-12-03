@@ -2,9 +2,6 @@
     //
     // Force layout example
     g.createviz('force', {
-        nodes: 0,
-        minRadius: 0.01,
-        maxRadius: 0.03,
         theta: 0.8,
         friction: 0.9
     }, function (force, opts) {

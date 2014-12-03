@@ -10,6 +10,7 @@
             expect(v.alpha()).toBe(0);
             expect(v.vizType()).toBe(g.viz.dummy);
             expect(v.vizName()).toBe('dummy');
+            expect(v.paper().element().node()).toBe(v.element().node());
         });
 
         it("Check axis properties", function() {

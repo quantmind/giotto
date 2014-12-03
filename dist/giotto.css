@@ -2,7 +2,7 @@
 /*
 ------------------------------------------------------------------
 Created by lux in 0.0 seconds
-Date: 2014-12-03 15:15:57
+Date: 2014-12-03 16:34:55
 
 http://quantmind.github.io/lux/
 ------------------------------------------------------------------ */
@@ -12,13 +12,13 @@ http://quantmind.github.io/lux/
 }
 
 .giotto .sunburst path {
-    fill-rule: evenodd;
     stroke: #fff;
+    fill-rule: evenodd;
 }
 
 .giotto .axis {
-    fill: none;
     shape-rendering: crispEdges;
+    fill: none;
 }
 
 .giotto .line {

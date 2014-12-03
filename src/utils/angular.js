@@ -3,10 +3,12 @@
     //
     g.angular = {
         module: function (angular, moduleName, deps) {
-            moduleName = moduleName || 'giotto';
-            deps = deps || [];
 
-            return angular.module(moduleName, deps)
+            if (!g.angular._module) {
+                moduleName = moduleName || 'giotto';
+                deps = deps || [];
+
+                g.angular._module = angular.module(moduleName, deps)
 
                     .directive('jstats', function () {
                         return {
@@ -21,12 +23,21 @@
                             }
                         };
                     });
+            }
+            return g.angular._module;
         },
 
-        directive: function (angular, name, vizType, moduleName, injects) {
-            moduleName = moduleName || 'giotto';
+        directive: function (vizType, name, injects) {
+            var mod = g.angular._module;
+
+            if (!mod)
+                g.log.warning('No angular module, cannot add directive');
+
             injects = injects ? injects.slice() : [];
-            var dname = moduleName.toLowerCase() + name.substring(0,1).toUpperCase() + name.substring(1);
+            if (!name) {
+                name = vizType.vizName();
+                name = mod.name.toLowerCase() + name.substring(0,1).toUpperCase() + name.substring(1);
+            }
 
             injects.push(function () {
                 var injected = arguments;
@@ -36,12 +47,12 @@
                     restrict: 'AE',
                     //
                     link: function (scope, element, attrs) {
-                        var viz = element.data(dname);
+                        var viz = element.data(name);
                         if (!viz) {
                             var options = getOptions(attrs);
                             options.scope = scope;
                             viz = vizType(element[0], options);
-                            element.data(dname, viz);
+                            element.data(name, viz);
                             scope.$emit('giotto-viz', viz);
                             viz.start();
                         }
@@ -49,19 +60,20 @@
                 };
             });
 
-            angular.module(moduleName).directive(dname, injects);
+            return mod.directive(name, injects);
         },
         //
         //  Load all visualizations into angular 'giotto' module
-        addAll: function (angular, moduleName, deps, injects) {
-            g.angular.module(angular, moduleName, deps);
+        addAll: function (angular, injects) {
+            // make sure the module exists
+            g.angular.module(angular);
             //
             // Loop through d3 extensions and create directives
             // for each Visualization class
             g.log.info('Adding giotto visualization directives');
 
-            angular.forEach(g.viz, function (vizType, name) {
-                g.angular.directive(angular, name, vizType, moduleName, injects);
+            angular.forEach(g.viz, function (vizType) {
+                g.angular.directive(vizType, null, injects);
             });
         }
     };

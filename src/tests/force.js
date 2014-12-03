@@ -13,7 +13,15 @@
             expect(force.gravity(0.5).gravity()).toBe(0.5);
             expect(force.nodes().length).toBe(0);
 
-            expect(force.options().nodes).toBe(0);
+            expect(force.friction(0.8).friction()).toBe(0.8);
+            expect(force.theta(0.7).theta()).toBe(0.7);
+
+            // Add node
+            expect(force.addNode({radius: 80})).toBe(force);
+            expect(force.nodes().length).toBe(1);
+            var node = force.nodes()[0];
+            expect(node.index).toBe(0);
+            expect(node.radius).toBe(80);
         });
 
         it("Check nodes", function(done) {
