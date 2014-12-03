@@ -102,6 +102,18 @@
             p._resizing = false;
         };
 
+        // x coordinate in the input domain
+        paper.x = function (u) {
+            var d = paper.xAxis().scale().domain();
+            return u*(d[d.length-1] - d[0]) + d[0];
+        };
+
+        // y coordinate in the input domain
+        paper.y = function (u) {
+            var d = paper.yAxis().scale().domain();
+            return u*(d[d.length-1] - d[0]) + d[0];
+        };
+
         paper.boundingBox = function () {
             var w = p.elwidth ? getWidth(p.elwidth) : p.size[0],
                 h;
@@ -165,8 +177,10 @@
             var cid = ++cidCounter;
             components.push(callback);
             componentMap[cid] = callback;
-            callback();
-            return cid;
+            var o = callback();
+            if (!o) o = {};
+            o.cid = cid;
+            return o;
         };
 
         paper.removeComponent = function (cid) {

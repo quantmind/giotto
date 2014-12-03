@@ -95,7 +95,7 @@
 
             var container = current;
 
-            paper.addComponent(function () {
+            return paper.addComponent(function () {
 
                 var chart = container.select("path.line"),
                     scalex = paper.scalex,
@@ -124,8 +124,6 @@
                 opts.chart = chart;
                 return opts;
             });
-
-            return opts;
         };
 
         // Draw points
@@ -136,18 +134,36 @@
 
             var container = current;
 
-            paper.addComponent(function () {
+            return paper.addComponent(function () {
                 var chart = container.select("g.points"),
                     scalex = paper.scalex,
                     scaley = paper.scaley,
-                    fill = opts.fill;
+                    scale = paper.scale,
+                    fill = opts.fill,
+                    points;
 
                 if (fill === true)
                     opts.fill = fill = d3.rgb(opts.color).brighter();
 
-                if (!chart.node())
+                if (!chart.node()) {
                     chart = container.append("g")
                                     .attr('class', 'points');
+
+                    if (opts.symbol === 'circle')
+                        points = chart.selectAll("circle.point")
+                                    .data(data)
+                                    .enter()
+                                    .append("circle")
+                                    .attr('class', 'point');
+                    else if (opts.symbol === 'square')
+                        points = chart.selectAll("rect.point")
+                                    .data(data)
+                                    .enter()
+                                    .append("rect");
+                    points.attr('class', 'point');
+
+                } else
+                    points = chart.selectAll("circle.point");
 
                 chart.attr('stroke', opts.color)
                         .attr('stroke-width', opts.width);
@@ -158,33 +174,24 @@
 
                 if (opts.symbol === 'circle') {
                     var radius = 0.5*opts.size;
-                    chart.selectAll(".point")
-                                .data(data)
-                                .enter().append("circle")
-                                .attr('class', 'point')
-                                .attr('cx', function (d) {return scalex(d.x);})
-                                .attr('cy', function (d) {return scaley(d.y);})
-                                .attr('r', function (d) {return s(d.radius, radius);});
+                    points.attr('cx', function (d) {return scalex(d.x);})
+                            .attr('cy', function (d) {return scaley(d.y);})
+                            .attr('r', function (d) {return s(d.radius, radius);})
+                            .style("fill", function(d) { return d.fill; });
                 } else if (opts.symbol === 'square') {
                     var size = opts.size;
-                    chart.selectAll(".point")
-                                .data(data)
-                                .enter().append("rect")
-                                .attr('class', 'point')
-                                .attr('x', function (d) {return scalex(d.x) - 0.5*s(d.size, size);})
-                                .attr('y', function (d) {return scaley(d.y) - 0.5*s(d.size, size);})
-                                .attr('height', function (d) {return  s(d.size, size);})
-                                .attr('width', function (d) {return  s(d.size, size);});
+                    points.attr('x', function (d) {return scalex(d.x) - 0.5*s(d.size, size);})
+                            .attr('y', function (d) {return scaley(d.y) - 0.5*s(d.size, size);})
+                            .attr('height', function (d) {return  s(d.size, size);})
+                            .attr('width', function (d) {return  s(d.size, size);});
                 }
                 opts.chart = chart;
                 return opts;
+
+                function s(v, d) {
+                    return v === undefined ? d : scale(v);
+                }
             });
-
-            return opts;
-
-            function s(v, d) {
-                return v === undefined ? d : v;
-            }
         };
 
         // Draw a barchart
@@ -195,7 +202,7 @@
 
             var container = current;
 
-            paper.addComponent(function () {
+            return paper.addComponent(function () {
 
                 var scalex = paper.scalex,
                     scaley = paper.scaley,
@@ -231,8 +238,6 @@
                 opts.chart = chart;
                 return opts;
             });
-
-            return opts;
         };
 
         paper.drawXaxis = function () {

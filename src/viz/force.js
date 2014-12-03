@@ -3,14 +3,24 @@
     // Force layout example
     g.createviz('force', {
         nodes: 0,
-        minRadius: 0.02,
-        maxRadius: 0.08,
+        minRadius: 0.01,
+        maxRadius: 0.03,
         theta: 0.8,
         friction: 0.9
     }, function (force, opts) {
-        var nodes = [],
+
+        var paper = force.paper(),
+            nodes = [],
+            forces = [],
             neighbors, friction,
             q, i, j, o, l, s, t, x, y, k;
+
+        // TODO
+        // Force layout does not work well when the doamin scale is
+        // different from the pixel scale. Not sure where the problem is.
+        // For now, just make them the same.
+        paper.xAxis().scale().domain([0, paper.innerWidth()]);
+        paper.yAxis().scale().domain([0, paper.innerHeight()]);
 
         force.nodes = function(x) {
             if (!arguments.length) return nodes;
@@ -21,9 +31,11 @@
             return force;
         };
 
+        // Add a new node to the force layout and return the force object
         force.addNode = function (o) {
             o.index = nodes.length;
             nodes.push(initNode(o));
+            return force;
         };
 
         force.theta = function(x) {
@@ -38,48 +50,39 @@
             return force;
         };
 
-        force.quadtree = function () {
-            if (!q)
-                q = d3.geom.quadtree(nodes);
+        force.quadtree = function (force) {
+            if (!q || force)
+                q = paper.quadtree()(nodes);
+                //q = paper.quadtree().x(function (d) {return d.x;})
+                //                    .y(function (d) {return d.y;})
+                //                    (nodes);
             return q;
         };
 
-        // Create a node with random radius
-        force.randomNode = function () {
-            var minRadius = +opts.minRadius,
-                maxRadius = +opts.maxRadius,
-                dr = maxRadius > minRadius ? maxRadius - minRadius : 0;
-            return {radius: Math.random() * dr + minRadius};
+        force.addForce = function (callback) {
+            forces.push(callback);
         };
 
-        force.drawCircles = function (color) {
-            if (!color)
-                color = d3.scale.category10();
-            var paper = force.paper(),
-                N = color.range().length;
+        // Draw points in the paper
+        force.drawPoints = function () {
+            var colors = paper.options().colors;
 
-            if (paper.type() === 'svg') {
-                var svg = paper.clear().current();
-                return svg.selectAll("circle")
-                            .data(nodes)
-                            .enter().append("svg:circle")
-                            .attr("r", function (d) {
-                                var r = paper.scale(d.radius);
-                                return r > 2 ? r - 2 : 0;
-                            })
-                            .attr("cx", function (d) {
-                                return paper.scalex(d.x);
-                            })
-                            .attr("cy", function (d) {
-                                return paper.scaley(d.y);
-                            })
-                            .style("fill", function(d, i) { return color(i % N); });
-            }
+            for (i=0; i<nodes.length; i++)
+                nodes[i].fill = colors[i % colors.length];
+
+            return paper.points(nodes);
         };
 
-        force.on("tick.main", function(e) {
+        force.drawQuadTree = function (options) {
+            return paper.drawQuadTree(force.quadtree, options);
+        };
+
+        force.on('tick.main', function() {
             q = null;
-            force.quadtree();
+            // Apply forces
+            for (i=0; i<forces.length; ++i)
+                forces[i]();
+
             friction = force.friction();
             i = -1; while (++i < nodes.length) {
                 o = nodes[i];
@@ -90,47 +93,13 @@
                     o.x -= (o.px - (o.px = o.x)) * friction;
                     o.y -= (o.py - (o.py = o.y)) * friction;
                 }
-                q.visit(collide(nodes[i]));
             }
         });
 
-        function collide (node) {
-            var r = node.radius + 0.05,
-                nx1 = node.x - r,
-                nx2 = node.x + r,
-                ny1 = node.y - r,
-                ny2 = node.y + r;
-
-            return function(quad, x1, y1, x2, y2) {
-                if (quad.point && (quad.point !== node)) {
-                    var x = node.x - quad.point.x,
-                        y = node.y - quad.point.y,
-                        l = Math.sqrt(x * x + y * y),
-                        r = node.radius + quad.point.radius;
-                    if (l < r) {
-                        l = (l - r) / l * 0.5;
-                        node.x -= x *= l;
-                        node.y -= y *= l;
-                        quad.point.x += x;
-                        quad.point.y += y;
-                    }
-                }
-                return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
-            };
-        }
-
-        // INTERNALS
-        if (+opts.nodes) {
-            // Add a set of random nodes if required
-            force.nodes(d3.range(+opts.nodes).map(function() {
-                return force.randomNode();
-            }));
-        }
-
         function initNode (o) {
             o.weight = 0;
-            if (isNaN(o.x)) o.x = Math.random();
-            if (isNaN(o.y)) o.y = Math.random();
+            if (isNaN(o.x)) o.x = paper.x(Math.random());
+            if (isNaN(o.y)) o.y = paper.y(Math.random());
             if (isNaN(o.px)) o.px = o.x;
             if (isNaN(o.py)) o.py = o.y;
             return o;
@@ -158,7 +127,7 @@
             return force;
         };
 
-        force.on('tick.links', function () {
+        force.addForce(function () {
             if (!distances)
                 _init();
 
@@ -229,16 +198,18 @@
             return force;
         };
 
-        force.on('tick.gravity', function () {
+        force.addForce(function () {
             k = force.alpha() * opts.gravity;
             nodes = force.nodes();
 
             if (k) {
+                var xc = force.paper().x(0.5),
+                    yc = force.paper().y(0.5);
                 for (i = 0; i < nodes.length; ++i) {
                     o = nodes[i];
                     if (!o.fixed) {
-                        o.x += (0.5 - o.x) * k;
-                        o.y += (0.5 - o.y) * k;
+                        o.x += (xc - o.x) * k;
+                        o.y += (yc - o.y) * k;
                     }
                 }
             }
@@ -248,7 +219,8 @@
     //
     // Charge plugin
     g.viz.force.plugin(function (force, opts) {
-        var charges,
+        var paper = force.paper(),
+            charges,
             charge, nodes, q, i, k, o,
             chargeDistance2;
 
@@ -267,7 +239,7 @@
             return force;
         };
 
-        force.on('tick.charge', function () {
+        force.addForce(function () {
             // compute quadtree center of mass and apply charge forces
             nodes = force.nodes();
             charge = force.charge();
@@ -302,7 +274,7 @@
                 theta2 = theta*theta;
 
             return function(quad, x1, _, x2) {
-                if (quad.point !== node) {
+                if (quad.point !== node && quad.charge) {
                     var dx = quad.cx - node.x,
                         dy = quad.cy - node.y,
                         dw = x2 - x1,
@@ -349,15 +321,15 @@
             if (quad.point) {
                 // jitter internal nodes that are coincident
                 if (!quad.leaf) {
-                  quad.point.x += Math.random() - 0.5;
-                  quad.point.y += Math.random() - 0.5;
+                    quad.point.x += paper.x(Math.random()) - paper.x(0.5);
+                    quad.point.y += paper.y(Math.random()) - paper.y(0.5);
                 }
                 var k = alpha * charges[quad.point.index];
                 quad.charge += quad.pointCharge = k;
                 cx += k * quad.point.x;
                 cy += k * quad.point.y;
             }
-            quad.cx = cx / quad.charge;
-            quad.cy = cy / quad.charge;
+            quad.cx = quad.charge ? cx / quad.charge : 0;
+            quad.cy = quad.charge ? cy / quad.charge : 0;
         }
     });

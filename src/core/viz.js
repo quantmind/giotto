@@ -147,7 +147,7 @@
             if (opts.onInit) {
                 var init = getObject(opts.onInit);
                 if (isFunction(init))
-                    init(viz);
+                    init(viz, opts);
                 else
                     g.log.error('Could not locate onInit function ' + opts.onInit);
             }

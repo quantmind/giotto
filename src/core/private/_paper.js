@@ -4,11 +4,19 @@
         g.paper[p.type](paper, p);
 
         var width = paper.innerWidth(),
-            height = paper.innerHeight();
+            height = paper.innerHeight(),
+            allAxis = [{axis: paper.xAxis(), o: p.xaxis, range: [0, width]},
+                       {axis: paper.yaxis(2).yAxis(), o: p.yaxis2, range: [height, 0]},
+                       {axis: paper.yaxis(1).yAxis(), o: p.yaxis, range: [height, 0]}];
 
-        paper.xAxis().orient(p.xaxis.position).scale().range([0, width]);
-        paper.yaxis(2).yAxis().orient(p.yaxis2.position).scale().range([height, 0]);
-        paper.yaxis(1).yAxis().orient(p.yaxis.position).scale().range([height, 0]);
+        allAxis.forEach(function (a) {
+            var axis = a.axis, o = a.o;
+            axis.orient(o.position).scale().range(a.range);
+            if (o.min !== null && o.max !== null)
+                axis.scale().domain([o.min, o.max]);
+            else
+                o.auto = true;
+        });
         //
         if (p.css)
             addCss('#giotto-paper-' + paper.uid(), p.css);
