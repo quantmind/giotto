@@ -14,6 +14,8 @@
             // Default size
             expect(paper.width()).toBe(g.constants.WIDTH);
             expect(paper.height()).toBe(g.constants.HEIGHT);
+            //
+            expect(paper.destroy().current()).toBe(null);
         });
 
         it("Check axis linear scale", function () {

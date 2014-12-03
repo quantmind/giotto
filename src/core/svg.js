@@ -18,6 +18,7 @@
         paper.destroy = function () {
             svg = current = null;
             paper.element().selectAll('*').remove();
+            return paper;
         };
 
         paper.refresh = function () {

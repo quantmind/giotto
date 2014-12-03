@@ -7,11 +7,9 @@
 
             g.require(['angular'], function (angular) {
 
-                var mod = g.angular.module(angular);
+                var mod = g.angular.module(angular).addAll().module();
 
                 expect(mod.name).toBe('giotto');
-
-                g.angular.addAll(angular);
 
                 done();
             });

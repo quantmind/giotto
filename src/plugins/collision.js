@@ -33,10 +33,20 @@
                         d = 0.5 * (r - d) / d;
                         dx *= d;
                         dy *= d;
-                        node.x += dx;
-                        node.y += dy;
-                        quad.point.x -= dx;
-                        quad.point.y -= dy;
+                        if (node.fixed || quad.point.fixed) {
+                            if (node.fixed) {
+                                quad.point.x -= 2*dx;
+                                quad.point.y -= 2*dy;
+                            } else {
+                                node.x += 2*dx;
+                                node.y += 2*dy;
+                            }
+                        } else {
+                            node.x += dx;
+                            node.y += dy;
+                            quad.point.x -= dx;
+                            quad.point.y -= dy;
+                        }
                     }
                 }
                 return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;

@@ -48,86 +48,6 @@
         return g;
     };
 
-    //
-    //  Create an angular module for visualizations
-    //
-    g.angular = {
-        module: function (angular, moduleName, deps) {
-
-            if (!g.angular._module) {
-                moduleName = moduleName || 'giotto';
-                deps = deps || [];
-
-                g.angular._module = angular.module(moduleName, deps)
-
-                    .directive('jstats', function () {
-                        return {
-                            link: function (scope, element, attrs) {
-                                var mode = attrs.mode ? +attrs.mode : 1;
-                                require(rcfg.min(['stats']), function () {
-                                    var stats = new Stats();
-                                    stats.setMode(mode);
-                                    scope.stats = stats;
-                                    element.append(angular.element(stats.domElement));
-                                });
-                            }
-                        };
-                    });
-            }
-            return g.angular._module;
-        },
-
-        directive: function (vizType, name, injects) {
-            var mod = g.angular._module;
-
-            if (!mod)
-                g.log.warning('No angular module, cannot add directive');
-
-            injects = injects ? injects.slice() : [];
-            if (!name) {
-                name = vizType.vizName();
-                name = mod.name.toLowerCase() + name.substring(0,1).toUpperCase() + name.substring(1);
-            }
-
-            injects.push(function () {
-                var injected = arguments;
-                return {
-                    //
-                    // Create via element tag or attribute
-                    restrict: 'AE',
-                    //
-                    link: function (scope, element, attrs) {
-                        var viz = element.data(name);
-                        if (!viz) {
-                            var options = getOptions(attrs);
-                            options.scope = scope;
-                            viz = vizType(element[0], options);
-                            element.data(name, viz);
-                            scope.$emit('giotto-viz', viz);
-                            viz.start();
-                        }
-                    }
-                };
-            });
-
-            return mod.directive(name, injects);
-        },
-        //
-        //  Load all visualizations into angular 'giotto' module
-        addAll: function (angular, injects) {
-            // make sure the module exists
-            g.angular.module(angular);
-            //
-            // Loop through d3 extensions and create directives
-            // for each Visualization class
-            g.log.info('Adding giotto visualization directives');
-
-            angular.forEach(g.viz, function (vizType) {
-                g.angular.directive(vizType, null, injects);
-            });
-        }
-    };
-
     function noop () {}
 
     var log = function (debug) {
@@ -781,6 +701,7 @@
         paper.destroy = function () {
             svg = current = null;
             paper.element().selectAll('*').remove();
+            return paper;
         };
 
         paper.refresh = function () {
@@ -1589,15 +1510,17 @@
     }
 
     g.paper.addType('canvas', function (paper, p) {
-        var current,
+        var canvas, current,
             clear = paper.clear;
 
         p.xAxis = d3.canvas.axis();
         p.yAxis = [d3.canvas.axis(), d3.canvas.axis()];
 
         paper.destroy = function () {
+            canvas = null;
             current = null;
-            element.selectAll('*').remove();
+            paper.element().selectAll('*').remove();
+            return paper;
         };
 
         paper.refresh = function () {
@@ -1619,9 +1542,11 @@
         function clearCanvas() {
             var element = paper.element();
             element.selectAll('*').remove();
-            current = paper.element().append("canvas")
+            canvas = paper.element().append("canvas")
                             .attr("width", p.size[0])
                             .attr("height", p.size[1]);
+            current = canvas.node().getContext('2d');
+            current.translate(p.margin.left, p.margin.top);
         }
 
         paper.clear();
@@ -2835,10 +2760,20 @@
                         d = 0.5 * (r - d) / d;
                         dx *= d;
                         dy *= d;
-                        node.x += dx;
-                        node.y += dy;
-                        quad.point.x -= dx;
-                        quad.point.y -= dy;
+                        if (node.fixed || quad.point.fixed) {
+                            if (node.fixed) {
+                                quad.point.x -= 2*dx;
+                                quad.point.y -= 2*dy;
+                            } else {
+                                node.x += 2*dx;
+                                node.y += 2*dy;
+                            }
+                        } else {
+                            node.x += dx;
+                            node.y += dy;
+                            quad.point.x -= dx;
+                            quad.point.y -= dy;
+                        }
                     }
                 }
                 return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
@@ -3042,6 +2977,55 @@
                 }
             });
             return nodes;
+        }
+    });
+
+    g.viz.force.plugin(function (force, opts) {
+        var xc = 0,
+            yc = 1;
+
+        if (opts.velocity === undefined)
+            opts.velocity = 0;
+
+        force.velocity = function (x) {
+            if (!arguments.length) return typeof opts.velocity === "function" ? opts.velocity : +opts.velocity;
+            opts.velocity = x;
+            return force;
+        };
+
+        force.velocity_x = function (x) {
+            if (!arguments.length) return xc;
+            xc = x;
+            return force;
+        };
+
+        force.velocity_y = function (y) {
+            if (!arguments.length) return yc;
+            yc = y;
+            return force;
+        };
+
+        force.addForce(function () {
+            var velocity = force.velocity();
+            if (!velocity) return;
+            var nodes = force.nodes(),
+                node, v;
+
+            if (typeof opts.velocity !== "function")
+                velocity = asFunction(velocity);
+
+            for (var i=0; i<nodes.length; ++i) {
+                node = nodes[i];
+                if (!node.fixed) {
+                    v = velocity(node);
+                    node.x += v[xc];
+                    node.y += v[yc];
+                }
+            }
+        });
+
+        function asFunction (value) {
+            return function (d) {return value;};
         }
     });
     //
@@ -3316,6 +3300,128 @@
 
         return sobol;
     };
+
+    //
+    //  Optional Angular Integration
+    //  ==================================
+    //
+    //  To create the angular module containing giotto directive:
+    //
+    //      d3.giotto.angular.module(angular)
+    //
+    //  To add all visualizations to the module
+    //
+    //      d3.giotto.angular.addAll()
+    //
+    //  To register the module and add all viausizations
+    //
+    //      d3.giotto.angular.module(angular).addAll();
+    //
+    g.angular = (function () {
+        var ag = {},
+            mod;
+
+        ag.module = function (angular, moduleName, deps) {
+
+            if (!arguments.length) return mod;
+
+            if (!mod) {
+                moduleName = moduleName || 'giotto';
+                deps = deps || [];
+
+                mod = angular.module(moduleName, deps);
+
+                mod.config(['$compileProvider', function (compileProvider) {
+
+                        mod.directive = function (name, factory) {
+                            compileProvider.directive(name, factory);
+                            return (this);
+                        };
+
+                    }])
+
+                    .directive('jstats', function () {
+                        return {
+                            link: function (scope, element, attrs) {
+                                var mode = attrs.mode ? +attrs.mode : 1;
+                                require(rcfg.min(['stats']), function () {
+                                    var stats = new Stats();
+                                    stats.setMode(mode);
+                                    scope.stats = stats;
+                                    element.append(angular.element(stats.domElement));
+                                });
+                            }
+                        };
+                    });
+            }
+            return ag;
+        };
+
+        ag.directive = function (vizType, name, injects) {
+
+            if (!mod) {
+                g.log.warn('No angular module, cannot add directive');
+                return;
+            }
+
+            injects = injects ? injects.slice() : [];
+            if (!name) {
+                name = vizType.vizName();
+                name = mod.name.toLowerCase() + name.substring(0,1).toUpperCase() + name.substring(1);
+            }
+
+            function startViz(scope, element, options) {
+                options.scope = scope;
+                var viz = vizType(element[0], options);
+                element.data(name, viz);
+                scope.$emit('giotto-viz', viz);
+                viz.start();
+            }
+
+            injects.push(function () {
+                var injected = arguments;
+                return {
+                    //
+                    // Create via element tag or attribute
+                    restrict: 'AE',
+                    //
+                    link: function (scope, element, attrs) {
+                        var viz = element.data(name);
+                        if (!viz) {
+                            var options = getOptions(attrs),
+                                require = options.require;
+                            if (require) {
+                                if (!g._.isArray(require)) require = [require];
+                                g.require(require, function (opts) {
+                                    extend(options, opts);
+                                    startViz(scope, element, options);
+                                });
+                            } else
+                                startViz(scope, element, options);
+                        }
+                    }
+                };
+            });
+
+            return mod.directive(name, injects);
+        };
+
+        //  Load all visualizations into angular 'giotto' module
+        ag.addAll = function (injects) {
+            //
+            // Loop through d3 extensions and create directives
+            // for each Visualization class
+            g.log.info('Adding giotto visualization directives');
+
+            angular.forEach(g.viz, function (vizType) {
+                g.angular.directive(vizType, null, injects);
+            });
+
+            return ag;
+        };
+
+        return ag;
+    }());
 
 
     return d3;

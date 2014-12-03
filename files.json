@@ -16,6 +16,7 @@
                 "src/viz/*.js",
                 "src/plugins/*.js",
                 "src/math/*.js",
+                "src/integration/*.js",
                 "src/close.js"],
         "dest": "dist/giotto.js"
     },
