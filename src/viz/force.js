@@ -62,10 +62,15 @@
 
         // Draw points in the paper
         force.drawPoints = function () {
-            var colors = paper.options().colors;
+            var colors = paper.options().colors,
+                j = 0;
 
-            for (i=0; i<nodes.length; i++)
-                nodes[i].fill = colors[i % colors.length];
+            for (i=0; i<nodes.length; i++) {
+                if (!nodes[i].fill) {
+                    nodes[i].fill = colors[j % colors.length];
+                    j++;
+                }
+            }
 
             return paper.points(nodes);
         };
