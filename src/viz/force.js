@@ -3,21 +3,13 @@
     // Force layout example
     g.createviz('force', {
         theta: 0.8,
-        friction: 0.9
+        friction: 0.9,
     }, function (force, opts) {
 
-        var paper = force.paper(),
-            nodes = [],
+        var nodes = [],
             forces = [],
             neighbors, friction,
             q, i, j, o, l, s, t, x, y, k;
-
-        // TODO
-        // Force layout does not work well when the doamin scale is
-        // different from the pixel scale. Not sure where the problem is.
-        // For now, just make them the same.
-        paper.xAxis().scale().domain([0, paper.innerWidth()]);
-        paper.yAxis().scale().domain([0, paper.innerHeight()]);
 
         force.nodes = function(x) {
             if (!arguments.length) return nodes;
@@ -47,9 +39,9 @@
             return force;
         };
 
-        force.quadtree = function (force) {
-            if (!q || force)
-                q = paper.quadtree()(nodes);
+        force.quadtree = function (createNew) {
+            if (!q || createNew)
+                q = force.paper().quadtree()(nodes);
                 //q = paper.quadtree().x(function (d) {return d.x;})
                 //                    .y(function (d) {return d.y;})
                 //                    (nodes);
@@ -62,7 +54,7 @@
 
         // Draw points in the paper
         force.drawPoints = function () {
-            var colors = paper.options().colors,
+            var colors = force.paper().options().colors,
                 j = 0;
 
             for (i=0; i<nodes.length; i++) {
@@ -72,16 +64,21 @@
                 }
             }
 
-            return paper.points(nodes);
+            return force.paper().points(nodes);
         };
 
         force.drawQuadTree = function (options) {
-            return paper.drawQuadTree(force.quadtree, options);
+            return force.paper().drawQuadTree(force.quadtree, options);
         };
 
         force.on('tick.main', function() {
             q = null;
-            // Apply forces
+            i = -1; while (++i < nodes.length) {
+                o = nodes[i];
+                o.px = o.x;
+                o.py = o.y;
+            }
+
             for (i=0; i<forces.length; ++i)
                 forces[i]();
 
@@ -91,19 +88,18 @@
                 if (o.fixed) {
                     o.x = o.px;
                     o.y = o.py;
-                } else {
-                    o.x -= (o.px - (o.px = o.x)) * friction;
-                    o.y -= (o.py - (o.py = o.y)) * friction;
+                } else  {
+                    o.x -= (o.px - o.x) * friction;
+                    o.y -= (o.py - o.y) * friction;
                 }
             }
         });
 
         function initNode (o) {
+            var paper = force.paper();
             o.weight = 0;
             if (isNaN(o.x)) o.x = paper.x(Math.random());
             if (isNaN(o.y)) o.y = paper.y(Math.random());
-            if (isNaN(o.px)) o.px = o.x;
-            if (isNaN(o.py)) o.py = o.y;
             return o;
         }
     });
@@ -204,15 +200,13 @@
             k = force.alpha() * opts.gravity;
             nodes = force.nodes();
 
-            if (k) {
-                var xc = force.paper().x(0.5),
-                    yc = force.paper().y(0.5);
-                for (i = 0; i < nodes.length; ++i) {
-                    o = nodes[i];
-                    if (!o.fixed) {
-                        o.x += (xc - o.x) * k;
-                        o.y += (yc - o.y) * k;
-                    }
+            var xc = force.paper().x(0.5),
+                yc = force.paper().y(0.5);
+            for (i = 0; i < nodes.length; ++i) {
+                o = nodes[i];
+                if (!o.fixed) {
+                    o.x += (xc - o.x) * k;
+                    o.y += (yc - o.y) * k;
                 }
             }
         });
@@ -231,6 +225,8 @@
         force.charge = function (x) {
             if (!arguments.length) return typeof opts.charge === "function" ? opts.charge : +opts.charge;
             opts.charge = x;
+            if (charges)
+                _init();
             return force;
         };
 
@@ -251,9 +247,8 @@
 
                 d3_layout_forceAccumulate(q = force.quadtree(), force.alpha(), charges);
                 i = -1; while (++i < nodes.length) {
-                    if (!(o = nodes[i]).fixed) {
-                        q.visit(repulse(o));
-                    }
+                    o = nodes[i];
+                    if (!o.fixed) q.visit(repulse(o));
                 }
             }
         });
@@ -323,6 +318,7 @@
             if (quad.point) {
                 // jitter internal nodes that are coincident
                 if (!quad.leaf) {
+                    var paper = force.paper();
                     quad.point.x += paper.x(Math.random()) - paper.x(0.5);
                     quad.point.y += paper.y(Math.random()) - paper.y(0.5);
                 }

@@ -41,11 +41,7 @@
                 if (createNew || paper === undefined) {
                     if (paper)
                         paper.destroy();
-
                     paper = g.paper(element, opts);
-                    paper.on('refresh', function () {
-                        viz.refresh();
-                    });
                 }
                 return paper;
             };
@@ -78,6 +74,9 @@
             };
 
             viz.tick = function() {
+                if (opts.scope && opts.scope.stats)
+                    opts.scope.stats.begin();
+
                 // simulated annealing, basically
                 if ((alpha *= 0.99) < 0.005) {
                     event.end({type: "end", alpha: alpha = 0});
@@ -85,20 +84,14 @@
                 }
 
                 event.tick({type: "tick", alpha: alpha});
+
+                if (opts.scope && opts.scope.stats)
+                    opts.scope.stats.end();
             };
 
             // Starts the visualization
             viz.start = function () {
                 return viz.resume();
-            };
-
-            // refresh the visualization
-            // By default it does nothing unless the paper is canvas in which case
-            // it start the visualization
-            viz.refresh = function () {
-                if (paper && paper.type() === 'canvas')
-                    this.start();
-                return viz;
             };
 
             viz.loadData = function (callback) {
@@ -136,10 +129,11 @@
 
             d3.rebind(viz, event, 'on');
 
+            // If constructor available, call it first
             if (constructor)
                 constructor(viz, opts);
 
-            // Inject plugins
+            // Inject visualization plugins
             for (var i=0; i < plugins.length; ++i)
                 plugins[i](viz, opts);
 

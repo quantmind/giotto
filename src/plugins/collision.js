@@ -1,20 +1,44 @@
 
     g.viz.force.plugin(function (force, opts) {
-        var collide = circleCollide;
+        g._.copyMissing({collidePadding: 0.002, collideBuffer: 0.02}, opts);
 
         force.collide = function () {
-            var q = force.quadtree(true),
+            var snodes = [],
                 nodes = force.nodes(),
                 paper = force.paper(),
-                scale = paper.xAxis().scale(),
-                buffer = paper.x(0.05) - paper.x(0),
-                padding = scale.invert(4) - scale.invert(0);
+                scalex = paper.scalex,
+                scaley = paper.scaley,
+                invertx = paper.xAxis().scale().invert,
+                inverty = paper.yAxis().scale().invert,
+                scale = paper.scale,
+                buffer = scale(paper.dim(opts.collideBuffer)),
+                padding = paper.dim(opts.collidePadding),
+                node;
 
-            for (var i=0; i<nodes.length; ++i)
-                q.visit(collide(nodes[i], buffer, padding));
+            for (var i=0; i<nodes.length; ++i) {
+                node = nodes[i];
+                if (node.radius)
+                    snodes.push({
+                        x: scalex(node.x),
+                        y: scaley(node.y),
+                        index: node.index,
+                        radius: scale(node.radius + padding)
+                    });
+            }
+
+            var q = d3.geom.quadtree(snodes);
+
+            for (i=0; i<snodes.length; ++i)
+                q.visit(circleCollide(snodes[i], buffer));
+
+            for (i=0; i<snodes.length; ++i) {
+                node = snodes[i];
+                nodes[node.index].x = invertx(node.x);
+                nodes[node.index].y = inverty(node.y);
+            }
         };
 
-        function circleCollide (node, buffer, padding) {
+        function circleCollide (node, buffer) {
 
             var r = node.radius + buffer,
                 nx1 = node.x - r,
@@ -28,7 +52,7 @@
                     dx = node.x - quad.point.x;
                     dy = node.y - quad.point.y;
                     d = Math.sqrt(dx * dx + dy * dy);
-                    r = node.radius + quad.point.radius + padding;
+                    r = node.radius + quad.point.radius;
                     if (d < r) {
                         d = 0.5 * (r - d) / d;
                         dx *= d;

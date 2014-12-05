@@ -52,7 +52,7 @@ require(rcfg.min(['lux/lux', 'giotto/giotto', 'angular-ui-router', 'angular-stra
         g = d3.giotto;
 
 
-    d3.giotto.angular.addAll(angular);
+    d3.giotto.angular.module(angular).addAll();
 
     lux.bootstrap('giottoExamples', ['lux.nav', 'giotto']);
 });

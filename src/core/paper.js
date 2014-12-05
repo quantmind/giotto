@@ -5,9 +5,6 @@
 
         var paper = {},
             uid = ++_idCounter,
-            components,
-            componentMap,
-            cidCounter,
             color;
 
         if (isObject(element)) {
@@ -31,10 +28,6 @@
         };
 
         // paper size, [width, height] in pixels
-        paper.size = function () {
-            return [p.size[0], p.size[1]];
-        };
-
         paper.width = function () {
             return p.size[0];
         };
@@ -49,6 +42,10 @@
 
         paper.innerHeight = function () {
             return p.size[1] - p.margin.top - p.margin.bottom;
+        };
+
+        paper.size = function () {
+            return [paper.width(), paper.height()];
         };
 
         paper.aspectRatio = function () {
@@ -77,7 +74,7 @@
 
         paper.scale = function (r) {
             var s = p.xAxis.scale();
-            return s(r) - s(0);
+            return Math.max(0, s(r) - s(0));
         };
 
         paper.scalex = function (x) {
@@ -88,6 +85,14 @@
             return paper.yAxis().scale()(y);
         };
 
+        paper.xfromPX = function (px) {
+            return p.xAxis.scale().invert(px);
+        };
+
+        paper.yfromPX = function (px) {
+            return paper.yAxis().scale().invert(px);
+        };
+
         // Resize the paper and fire the resize event if resizing was performed
         paper.resize = function (size) {
             p._resizing = true;
@@ -96,10 +101,24 @@
             }
             if (p.size[0] !== size[0] || p.size[1] !== size[1]) {
                 g.log.info('Resizing paper');
-                p.size = size;
-                paper.refresh();
+                paper.refresh(size);
             }
             p._resizing = false;
+        };
+
+        // dimension in the input domain from a 0 <= x <= 1
+        // assume a continuous domain
+        // TODO allow for multiple domain points
+        paper.dim = function (x) {
+            var v = +x;
+            // assume input is in pixels
+            if (isNaN(v))
+                return paper.xfromPX(x.substring(0, x.length));
+            // otherwise assume it is a value between 0 and 1 defined as percentage of the x axis length
+            else {
+                var d = paper.xAxis().scale().domain();
+                return v*(d[d.length-1] - d[0]);
+            }
         };
 
         // x coordinate in the input domain
@@ -171,47 +190,7 @@
             return c;
         };
 
-        //
-        // Add a new component to the paper and return the component id
-        paper.addComponent = function (callback) {
-            var cid = ++cidCounter;
-            components.push(callback);
-            componentMap[cid] = callback;
-            var o = callback();
-            if (!o) o = {};
-            o.cid = cid;
-            return o;
-        };
-
-        paper.removeComponent = function (cid) {
-            if (!cid) return;
-            var callback = componentMap[cid];
-            if (callback) {
-                delete componentMap[cid];
-                var index = components.indexOf(callback);
-                if (index > -1)
-                    return components.splice(index, 1)[0];
-            }
-        };
-
-        //  Render the paper by executing all components
-        //  If a component id is provided, render only the matching
-        //  component
-        paper.render = function (cid) {
-            if (!arguments.length)
-                components.forEach(function (callback) {
-                    callback();
-                });
-            else if (componentMap[cid])
-                componentMap[cid]();
-        };
-
-        // Clear the paper from all compoents
-        // It erases everything
         paper.clear = function () {
-            components = [];
-            componentMap = {};
-            cidCounter = 0;
             color = 0;
             return paper;
         };

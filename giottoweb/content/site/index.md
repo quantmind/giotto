@@ -6,6 +6,9 @@ for anything other than that.
 * Built on top of [d3][]
 * ``svg`` and, eventually, ``canvas`` support
 
+* [Charts](/chart)
+* [API](/api)
+
 Latest development versions
 
 * [giotto.js](http://quantmind.github.io/giotto/media/giotto/giotto.js)

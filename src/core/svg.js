@@ -10,6 +10,9 @@
                         .attr('height', p.size[1])
                         .attr("viewBox", "0 0 " + p.size[0] + " " + p.size[1]),
             clear = paper.clear,
+            components,
+            componentMap,
+            cidCounter,
             current;
 
         p.xAxis = d3.svg.axis();
@@ -21,18 +24,36 @@
             return paper;
         };
 
-        paper.refresh = function () {
-            svg.attr('width', p.size[0])
-               .attr('height', p.size[1]);
-            p.event.refresh({type: 'refresh', size: p.size.slice(0)});
+        paper.refresh = function (size) {
+            if (size) {
+                p.size = size;
+                svg.attr('width', p.size[0])
+                   .attr('height', p.size[1]);
+            }
             return paper;
         };
 
+        //  Render the paper by executing all components
+        //  If a component id is provided, render only the matching
+        //  component
+        paper.render = function (cid) {
+            if (!arguments.length)
+                components.forEach(function (callback) {
+                    callback();
+                });
+            else if (componentMap[cid])
+                componentMap[cid]();
+        };
+
         paper.clear = function () {
+            components = [];
+            componentMap = {};
+            cidCounter = 0;
             svg.selectAll('*').remove();
             current = svg.append('g')
                         .attr("transform", "translate(" + p.margin.left + "," + p.margin.top + ")")
                         .attr('class', 'paper');
+            //_reset_axis(paper);
             return clear();
         };
 
@@ -52,6 +73,13 @@
             var node = current.node().parentNode;
             if (node !== svg.node())
                 current = d3.select(node);
+            return paper;
+        };
+
+        paper.on = function (event, callback) {
+            current.on(event, function () {
+                callback.call(this);
+            });
             return paper;
         };
 
@@ -141,6 +169,7 @@
                     scaley = paper.scaley,
                     scale = paper.scale,
                     fill = opts.fill,
+                    size = paper.dim(opts.size),
                     points;
 
                 if (fill === true)
@@ -174,13 +203,12 @@
                     chart.attr('fill', 'none');
 
                 if (opts.symbol === 'circle') {
-                    var radius = 0.5*opts.size;
+                    size *= 0.5;
                     points.attr('cx', function (d) {return scalex(d.x);})
                             .attr('cy', function (d) {return scaley(d.y);})
-                            .attr('r', function (d) {return s(d.radius, radius);})
+                            .attr('r', function (d) {return s(d.radius, size);})
                             .style("fill", function(d) { return d.fill; });
                 } else if (opts.symbol === 'square') {
-                    var size = opts.size;
                     points.attr('x', function (d) {return scalex(d.x) - 0.5*s(d.size, size);})
                             .attr('y', function (d) {return scaley(d.y) - 0.5*s(d.size, size);})
                             .attr('height', function (d) {return  s(d.size, size);})
@@ -189,8 +217,8 @@
                 opts.chart = chart;
                 return opts;
 
-                function s(v, d) {
-                    return v === undefined ? d : scale(v);
+                function s(v, defo) {
+                    return scale(v === undefined ? defo : v);
                 }
             });
         };
@@ -354,8 +382,29 @@
             }
         };
 
-        // Setup the svg paper
-        paper.clear();
+        // LOW LEVEL FUNCTIONS - MAYBE THEY SHOULD BE PRIVATE?
+
+        // Add a new component to the paper and return the component id
+        paper.addComponent = function (callback) {
+            var cid = ++cidCounter;
+            components.push(callback);
+            componentMap[cid] = callback;
+            var o = callback();
+            if (!o) o = {};
+            o.cid = cid;
+            return o;
+        };
+
+        paper.removeComponent = function (cid) {
+            if (!cid) return;
+            var callback = componentMap[cid];
+            if (callback) {
+                delete componentMap[cid];
+                var index = components.indexOf(callback);
+                if (index > -1)
+                    return components.splice(index, 1)[0];
+            }
+        };
 
         // PRIVATE FUNCTIONS
 

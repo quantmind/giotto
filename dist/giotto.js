@@ -1,6 +1,6 @@
 //      Giotto - v0.1.0
 
-//      Compiled 2014-12-03.
+//      Compiled 2014-12-05.
 //      Copyright (c) 2014 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -47,6 +47,20 @@
         require(deps, callback);
         return g;
     };
+
+
+    function d3_identity(d) {
+        return d;
+    }
+
+    function d3_scaleExtent(domain) {
+        var start = domain[0], stop = domain[domain.length - 1];
+        return start < stop ? [ start, stop ] : [ stop, start ];
+    }
+
+    function d3_scaleRange(scale) {
+        return scale.rangeExtent ? scale.rangeExtent() : d3_scaleExtent(scale.range());
+    }
 
     function noop () {}
 
@@ -421,9 +435,6 @@
 
         var paper = {},
             uid = ++_idCounter,
-            components,
-            componentMap,
-            cidCounter,
             color;
 
         if (isObject(element)) {
@@ -447,10 +458,6 @@
         };
 
         // paper size, [width, height] in pixels
-        paper.size = function () {
-            return [p.size[0], p.size[1]];
-        };
-
         paper.width = function () {
             return p.size[0];
         };
@@ -465,6 +472,10 @@
 
         paper.innerHeight = function () {
             return p.size[1] - p.margin.top - p.margin.bottom;
+        };
+
+        paper.size = function () {
+            return [paper.width(), paper.height()];
         };
 
         paper.aspectRatio = function () {
@@ -493,7 +504,7 @@
 
         paper.scale = function (r) {
             var s = p.xAxis.scale();
-            return s(r) - s(0);
+            return Math.max(0, s(r) - s(0));
         };
 
         paper.scalex = function (x) {
@@ -504,6 +515,14 @@
             return paper.yAxis().scale()(y);
         };
 
+        paper.xfromPX = function (px) {
+            return p.xAxis.scale().invert(px);
+        };
+
+        paper.yfromPX = function (px) {
+            return paper.yAxis().scale().invert(px);
+        };
+
         // Resize the paper and fire the resize event if resizing was performed
         paper.resize = function (size) {
             p._resizing = true;
@@ -512,10 +531,24 @@
             }
             if (p.size[0] !== size[0] || p.size[1] !== size[1]) {
                 g.log.info('Resizing paper');
-                p.size = size;
-                paper.refresh();
+                paper.refresh(size);
             }
             p._resizing = false;
+        };
+
+        // dimension in the input domain from a 0 <= x <= 1
+        // assume a continuous domain
+        // TODO allow for multiple domain points
+        paper.dim = function (x) {
+            var v = +x;
+            // assume input is in pixels
+            if (isNaN(v))
+                return paper.xfromPX(x.substring(0, x.length));
+            // otherwise assume it is a value between 0 and 1 defined as percentage of the x axis length
+            else {
+                var d = paper.xAxis().scale().domain();
+                return v*(d[d.length-1] - d[0]);
+            }
         };
 
         // x coordinate in the input domain
@@ -587,47 +620,7 @@
             return c;
         };
 
-        //
-        // Add a new component to the paper and return the component id
-        paper.addComponent = function (callback) {
-            var cid = ++cidCounter;
-            components.push(callback);
-            componentMap[cid] = callback;
-            var o = callback();
-            if (!o) o = {};
-            o.cid = cid;
-            return o;
-        };
-
-        paper.removeComponent = function (cid) {
-            if (!cid) return;
-            var callback = componentMap[cid];
-            if (callback) {
-                delete componentMap[cid];
-                var index = components.indexOf(callback);
-                if (index > -1)
-                    return components.splice(index, 1)[0];
-            }
-        };
-
-        //  Render the paper by executing all components
-        //  If a component id is provided, render only the matching
-        //  component
-        paper.render = function (cid) {
-            if (!arguments.length)
-                components.forEach(function (callback) {
-                    callback();
-                });
-            else if (componentMap[cid])
-                componentMap[cid]();
-        };
-
-        // Clear the paper from all compoents
-        // It erases everything
         paper.clear = function () {
-            components = [];
-            componentMap = {};
-            cidCounter = 0;
             color = 0;
             return paper;
         };
@@ -693,6 +686,9 @@
                         .attr('height', p.size[1])
                         .attr("viewBox", "0 0 " + p.size[0] + " " + p.size[1]),
             clear = paper.clear,
+            components,
+            componentMap,
+            cidCounter,
             current;
 
         p.xAxis = d3.svg.axis();
@@ -704,18 +700,36 @@
             return paper;
         };
 
-        paper.refresh = function () {
-            svg.attr('width', p.size[0])
-               .attr('height', p.size[1]);
-            p.event.refresh({type: 'refresh', size: p.size.slice(0)});
+        paper.refresh = function (size) {
+            if (size) {
+                p.size = size;
+                svg.attr('width', p.size[0])
+                   .attr('height', p.size[1]);
+            }
             return paper;
         };
 
+        //  Render the paper by executing all components
+        //  If a component id is provided, render only the matching
+        //  component
+        paper.render = function (cid) {
+            if (!arguments.length)
+                components.forEach(function (callback) {
+                    callback();
+                });
+            else if (componentMap[cid])
+                componentMap[cid]();
+        };
+
         paper.clear = function () {
+            components = [];
+            componentMap = {};
+            cidCounter = 0;
             svg.selectAll('*').remove();
             current = svg.append('g')
                         .attr("transform", "translate(" + p.margin.left + "," + p.margin.top + ")")
                         .attr('class', 'paper');
+            //_reset_axis(paper);
             return clear();
         };
 
@@ -735,6 +749,13 @@
             var node = current.node().parentNode;
             if (node !== svg.node())
                 current = d3.select(node);
+            return paper;
+        };
+
+        paper.on = function (event, callback) {
+            current.on(event, function () {
+                callback.call(this);
+            });
             return paper;
         };
 
@@ -824,6 +845,7 @@
                     scaley = paper.scaley,
                     scale = paper.scale,
                     fill = opts.fill,
+                    size = paper.dim(opts.size),
                     points;
 
                 if (fill === true)
@@ -857,13 +879,12 @@
                     chart.attr('fill', 'none');
 
                 if (opts.symbol === 'circle') {
-                    var radius = 0.5*opts.size;
+                    size *= 0.5;
                     points.attr('cx', function (d) {return scalex(d.x);})
                             .attr('cy', function (d) {return scaley(d.y);})
-                            .attr('r', function (d) {return s(d.radius, radius);})
+                            .attr('r', function (d) {return s(d.radius, size);})
                             .style("fill", function(d) { return d.fill; });
                 } else if (opts.symbol === 'square') {
-                    var size = opts.size;
                     points.attr('x', function (d) {return scalex(d.x) - 0.5*s(d.size, size);})
                             .attr('y', function (d) {return scaley(d.y) - 0.5*s(d.size, size);})
                             .attr('height', function (d) {return  s(d.size, size);})
@@ -872,8 +893,8 @@
                 opts.chart = chart;
                 return opts;
 
-                function s(v, d) {
-                    return v === undefined ? d : scale(v);
+                function s(v, defo) {
+                    return scale(v === undefined ? defo : v);
                 }
             });
         };
@@ -1037,8 +1058,29 @@
             }
         };
 
-        // Setup the svg paper
-        paper.clear();
+        // LOW LEVEL FUNCTIONS - MAYBE THEY SHOULD BE PRIVATE?
+
+        // Add a new component to the paper and return the component id
+        paper.addComponent = function (callback) {
+            var cid = ++cidCounter;
+            components.push(callback);
+            componentMap[cid] = callback;
+            var o = callback();
+            if (!o) o = {};
+            o.cid = cid;
+            return o;
+        };
+
+        paper.removeComponent = function (cid) {
+            if (!cid) return;
+            var callback = componentMap[cid];
+            if (callback) {
+                delete componentMap[cid];
+                var index = components.indexOf(callback);
+                if (index > -1)
+                    return components.splice(index, 1)[0];
+            }
+        };
 
         // PRIVATE FUNCTIONS
 
@@ -1112,11 +1154,7 @@
                 if (createNew || paper === undefined) {
                     if (paper)
                         paper.destroy();
-
                     paper = g.paper(element, opts);
-                    paper.on('refresh', function () {
-                        viz.refresh();
-                    });
                 }
                 return paper;
             };
@@ -1149,6 +1187,9 @@
             };
 
             viz.tick = function() {
+                if (opts.scope && opts.scope.stats)
+                    opts.scope.stats.begin();
+
                 // simulated annealing, basically
                 if ((alpha *= 0.99) < 0.005) {
                     event.end({type: "end", alpha: alpha = 0});
@@ -1156,20 +1197,14 @@
                 }
 
                 event.tick({type: "tick", alpha: alpha});
+
+                if (opts.scope && opts.scope.stats)
+                    opts.scope.stats.end();
             };
 
             // Starts the visualization
             viz.start = function () {
                 return viz.resume();
-            };
-
-            // refresh the visualization
-            // By default it does nothing unless the paper is canvas in which case
-            // it start the visualization
-            viz.refresh = function () {
-                if (paper && paper.type() === 'canvas')
-                    this.start();
-                return viz;
             };
 
             viz.loadData = function (callback) {
@@ -1207,10 +1242,11 @@
 
             d3.rebind(viz, event, 'on');
 
+            // If constructor available, call it first
             if (constructor)
                 constructor(viz, opts);
 
-            // Inject plugins
+            // Inject visualization plugins
             for (var i=0; i < plugins.length; ++i)
                 plugins[i](viz, opts);
 
@@ -1357,17 +1393,23 @@
     //
     //  Initaise paper
     function _initPaper (paper, p) {
+        //
+        // Apply paper type
         g.paper[p.type](paper, p);
+
+        // clear the paper
+        paper.clear();
+        _reset_axis(paper);
 
         var width = paper.innerWidth(),
             height = paper.innerHeight(),
-            allAxis = [{axis: paper.xAxis(), o: p.xaxis, range: [0, width]},
-                       {axis: paper.yaxis(2).yAxis(), o: p.yaxis2, range: [height, 0]},
-                       {axis: paper.yaxis(1).yAxis(), o: p.yaxis, range: [height, 0]}];
+            allAxis = [{axis: paper.xAxis(), o: p.xaxis},
+                       {axis: paper.yaxis(2).yAxis(), o: p.yaxis2},
+                       {axis: paper.yaxis(1).yAxis(), o: p.yaxis}];
 
         allAxis.forEach(function (a) {
             var axis = a.axis, o = a.o;
-            axis.orient(o.position).scale().range(a.range);
+            axis.orient(o.position);
             if (o.min !== null && o.max !== null)
                 axis.scale().domain([o.min, o.max]);
             else
@@ -1377,7 +1419,15 @@
         if (p.css)
             addCss('#giotto-paper-' + paper.uid(), p.css);
         //
-        return d3.rebind(paper, p.event, 'on');
+        return paper;
+    }
+
+    function _reset_axis (paper) {
+        var yaxis = paper.yaxis();
+        paper.xAxis().scale().range([0, paper.innerWidth()]);
+        paper.yaxis(2).yAxis().scale().range([paper.innerHeight(), 0]);
+        paper.yaxis(1).yAxis().scale().range([paper.innerHeight(), 0]);
+        return paper.yaxis(yaxis);
     }
 
 
@@ -1418,7 +1468,6 @@
         }
 
         p.size = [width, height];
-        p.event = d3.dispatch('refresh');
         return p;
     }
 
@@ -1430,9 +1479,54 @@
             tickPadding = 3,
             tickArguments_ = [10],
             tickValues = null,
-            tickFormat_;
+            tickFormat_ = null,
+            lineColor_,
+            lineWidth = 1,
+            font = g.defaults.paper.font;
 
-        function axis (g) {
+        function axis (canvas) {
+            canvas.each(function() {
+                var ctx = this.canvas.getContext('2d');
+
+                var scale0 = this.__chart__ || scale,
+                    scale1 = this.__chart__ = scale.copy();
+
+                // Ticks, or domain values for ordinal scales.
+                var ticks = tickValues === null ? (scale1.ticks ? scale1.ticks.apply(scale1, tickArguments_) : scale1.domain()) : tickValues,
+                    tickFormat = tickFormat_ === null ? (scale1.tickFormat ? scale1.tickFormat.apply(scale1, tickArguments_) : d3_identity) : tickFormat_,
+                    tick = g.selectAll(".tick").data(ticks, scale1),
+                    tickSpacing = Math.max(innerTickSize, 0) + tickPadding,
+                    lineColor = lineColor_ || font.color,
+                    tickTransform;
+
+                // Domain.
+                var range = d3_scaleRange(scale1);
+
+                ctx.fillStyle = font.color;
+                ctx.font = font.family;
+                // Apply axis labels on major ticks
+                if (orient === "bottom" || orient === "top") {
+                    ticks.forEach(function (tick, index) {
+                        ctx.beginPath();
+                        ctx.lineWidth = lineWidth;
+                        ctx.strokeStyle = lineColor;
+                        ctx.moveTo(xStart, linePositionY);
+                        ctx.lineTo(this.width, linePositionY);
+                        ctx.stroke();
+                        ctx.closePath();
+                    });
+                } else {
+                    ticks.forEach(function (tick, index) {
+                        ctx.beginPath();
+                        ctx.lineWidth = lineWidth;
+                        ctx.strokeStyle = lineColor;
+                        ctx.moveTo(xStart, linePositionY);
+                        ctx.lineTo(this.width, linePositionY);
+                        ctx.stroke();
+                        ctx.closePath();
+                    });
+                }
+            });
         }
 
         axis.scale = function(x) {
@@ -1509,47 +1603,244 @@
         selection.attr("transform", function(d) { var v0 = y0(d); return "translate(0," + (isFinite(v0) ? v0 : y1(d)) + ")"; });
     }
 
+
+    d3.canvas.retinaScale = function(ctx, width, height){
+        ctx.canvas.width = width;
+        ctx.canvas.height = height;
+
+        if (window.devicePixelRatio) {
+            ctx.canvas.style.width = width + "px";
+            ctx.canvas.style.height = height + "px";
+            ctx.canvas.width = width * window.devicePixelRatio;
+            ctx.canvas.height = height * window.devicePixelRatio;
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        }
+        return window.devicePixelRatio || 1;
+    };
+    //
+    //  Canvas based Paper
+    //  ======================
+    //
     g.paper.addType('canvas', function (paper, p) {
-        var canvas, current,
-            clear = paper.clear;
+        var clear = paper.clear,
+            components,
+            componentMap,
+            cidCounter,
+            factor = 1,
+            cid = null,
+            container = paper.element().append('div')
+                            .attr('class', 'canvas-container')
+                            .style('position', 'relative');
 
         p.xAxis = d3.canvas.axis();
         p.yAxis = [d3.canvas.axis(), d3.canvas.axis()];
 
         paper.destroy = function () {
-            canvas = null;
-            current = null;
-            paper.element().selectAll('*').remove();
+            _clear();
             return paper;
         };
 
-        paper.refresh = function () {
-            clearCanvas();
+        paper.refresh = function (size) {
+            if (size) {
+                var oldsize = p.size;
+                p.size = size;
+                _apply(function (ctx) {
+                    _clearCanvas(ctx, oldsize);
+                    _scaleCanvas(ctx);
+                });
+            }
             paper.render();
-            p.event.refresh({type: 'refresh', size: p.size.slice(0)});
+            return paper;
+        };
+
+        paper.width = function () {
+            return factor*p.size[0];
+        };
+
+        paper.height = function () {
+            return factor*p.size[1];
+        };
+
+        paper.innerWidth = function () {
+            return factor*(p.size[0] - p.margin.left - p.margin.right);
+        };
+
+        paper.innerHeight = function () {
+            return factor*(p.size[1] - p.margin.top - p.margin.bottom);
+        };
+
+        paper.factor = function (x) {
+            if (!arguments.length) return factor;
+            factor = +x;
+            return paper;
+        };
+
+        // Re-render on or all the canvas in this paper
+        paper.render = function (_cid) {
+            if (!arguments.length)
+                _apply(_render);
+            else
+                _apply(_render, _cid);
             return paper;
         };
 
         paper.clear = function () {
-            clearCanvas();
+            _clear();
+            _addCanvas();
             return clear();
         };
 
-        paper.current = function () {
-            return current;
+        paper.on = function (event, callback) {
+            paper.element().on(event, function () {
+                callback.call(this);
+            });
+            return paper;
         };
 
-        function clearCanvas() {
-            var element = paper.element();
-            element.selectAll('*').remove();
-            canvas = paper.element().append("canvas")
-                            .attr("width", p.size[0])
-                            .attr("height", p.size[1]);
-            current = canvas.node().getContext('2d');
-            current.translate(p.margin.left, p.margin.top);
+        paper.current = function () {
+            return cid !== null ? componentMap[cid].canvas.getContext('2d') : null;
+        };
+
+        paper.xfromPX = function (px) {
+            return p.xAxis.scale().invert(factor*px);
+        };
+
+        paper.yfromPX = function (px) {
+            return paper.yAxis().scale().invert(factor*px);
+        };
+
+        paper.circle = function (cx, cy, r) {
+            var ctx = paper.current();
+            ctx.beginPath();
+            cx = paper.scalex(cx);
+            cy = paper.scaley(cy);
+            r = paper.scale(r);
+            ctx.arc(cx, cy, r, 0, Math.PI * 2, false);
+            ctx.endPath();
+        };
+
+        paper.points = function (data, opts) {
+            opts || (opts = {});
+            copyMissing(p.point, opts);
+            opts.color = opts.color || paper.pickColor();
+
+            return _addComponent(function (ctx) {
+                var scalex = paper.scalex,
+                    scaley = paper.scaley,
+                    scale = paper.scale,
+                    fill = opts.fill,
+                    size = paper.dim(opts.size),
+                    d, i;
+
+                if (fill === true)
+                    opts.fill = fill = d3.rgb(opts.color).brighter();
+
+                ctx.save();
+
+                if (fill)
+                    ctx.fillStyle = fill;
+
+                if (opts.symbol === 'circle') {
+                    var PI2 = Math.PI * 2;
+                    size *= 0.5;
+
+                    for (i=0; i<data.length; ++i) {
+                        d = data[i];
+                        ctx.beginPath();
+                        ctx.fillStyle = d.fill || fill;
+                        ctx.strokeStyle = d.color || opts.color;
+                        ctx.lineWidth = d.lineWidth || opts.width;
+                        ctx.arc(scalex(d.x), scaley(d.y), scale(d.radius === undefined ? size : d.radius), 0, PI2, false);
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.stroke();
+                    }
+                } else
+                    g.log.error('Not implemented');
+
+                ctx.restore();
+            });
+
+        };
+
+        // INTERNALS
+        function _clear () {
+            components = [];
+            componentMap = {};
+            cidCounter = 0;
+            cid = null;
+            container.selectAll('canvas.giotto').remove();
         }
 
-        paper.clear();
+        function _addCanvas() {
+            cid = ++cidCounter;
+
+            var canvas = container.append("canvas")
+                            .attr("class", "giotto")
+                            .attr("id", "giottoCanvas-" + paper.uid() + "-" + cid).node(),
+                ctx = _scaleCanvas(canvas.getContext('2d'));
+
+            var component = {
+                    cid: cid,
+                    canvas: canvas,
+                    callbacks: []
+                };
+
+            if (components.length)
+                canvas.style({"position": "absolute", "top": "0", "left": "0"});
+
+            components.push(component);
+            componentMap[cid] = component;
+        }
+
+        function _addComponent (callback) {
+            componentMap[cid].callbacks.push(callback);
+            var o = callback(paper.current());
+            if (!o) o = {};
+            o.cid = cid;
+            o.chart = d3.select(componentMap[cid].canvas);
+            return o;
+        }
+
+        function _render (ctx, canvas) {
+            _clearCanvas(ctx, p.size);
+            //
+            // translate the axis range
+            ctx.translate(factor*p.margin.left, factor*p.margin.top);
+            //
+            // apply components
+            componentMap[cid].callbacks.forEach(function (callback) {
+                callback(ctx);
+            });
+        }
+
+        function _apply (callback, _cid) {
+            var current = cid;
+            if (!_cid)
+                components.forEach(function (component) {
+                    cid = component.cid;
+                    callback(component.canvas.getContext('2d'), component.canvas);
+                });
+            else if (componentMap[_cid]) {
+                var component = omponentMap[_cid];
+                cid = component.cid;
+                callback(component.canvas.getContext('2d'), component.canvas);
+            }
+            cid = current;
+        }
+
+        function _clearCanvas(ctx, size) {
+            // clear previous stuff
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.clearRect (0 , 0, factor*size[0], factor*size[1]);
+            return ctx;
+        }
+
+        function _scaleCanvas(ctx) {
+            factor = d3.canvas.retinaScale(ctx, p.size[0], p.size[1]);
+            _reset_axis(paper);
+        }
+
     });
 
 
@@ -1717,21 +2008,13 @@
     // Force layout example
     g.createviz('force', {
         theta: 0.8,
-        friction: 0.9
+        friction: 0.9,
     }, function (force, opts) {
 
-        var paper = force.paper(),
-            nodes = [],
+        var nodes = [],
             forces = [],
             neighbors, friction,
             q, i, j, o, l, s, t, x, y, k;
-
-        // TODO
-        // Force layout does not work well when the doamin scale is
-        // different from the pixel scale. Not sure where the problem is.
-        // For now, just make them the same.
-        paper.xAxis().scale().domain([0, paper.innerWidth()]);
-        paper.yAxis().scale().domain([0, paper.innerHeight()]);
 
         force.nodes = function(x) {
             if (!arguments.length) return nodes;
@@ -1761,9 +2044,9 @@
             return force;
         };
 
-        force.quadtree = function (force) {
-            if (!q || force)
-                q = paper.quadtree()(nodes);
+        force.quadtree = function (createNew) {
+            if (!q || createNew)
+                q = force.paper().quadtree()(nodes);
                 //q = paper.quadtree().x(function (d) {return d.x;})
                 //                    .y(function (d) {return d.y;})
                 //                    (nodes);
@@ -1776,7 +2059,7 @@
 
         // Draw points in the paper
         force.drawPoints = function () {
-            var colors = paper.options().colors,
+            var colors = force.paper().options().colors,
                 j = 0;
 
             for (i=0; i<nodes.length; i++) {
@@ -1786,16 +2069,21 @@
                 }
             }
 
-            return paper.points(nodes);
+            return force.paper().points(nodes);
         };
 
         force.drawQuadTree = function (options) {
-            return paper.drawQuadTree(force.quadtree, options);
+            return force.paper().drawQuadTree(force.quadtree, options);
         };
 
         force.on('tick.main', function() {
             q = null;
-            // Apply forces
+            i = -1; while (++i < nodes.length) {
+                o = nodes[i];
+                o.px = o.x;
+                o.py = o.y;
+            }
+
             for (i=0; i<forces.length; ++i)
                 forces[i]();
 
@@ -1805,19 +2093,18 @@
                 if (o.fixed) {
                     o.x = o.px;
                     o.y = o.py;
-                } else {
-                    o.x -= (o.px - (o.px = o.x)) * friction;
-                    o.y -= (o.py - (o.py = o.y)) * friction;
+                } else  {
+                    o.x -= (o.px - o.x) * friction;
+                    o.y -= (o.py - o.y) * friction;
                 }
             }
         });
 
         function initNode (o) {
+            var paper = force.paper();
             o.weight = 0;
             if (isNaN(o.x)) o.x = paper.x(Math.random());
             if (isNaN(o.y)) o.y = paper.y(Math.random());
-            if (isNaN(o.px)) o.px = o.x;
-            if (isNaN(o.py)) o.py = o.y;
             return o;
         }
     });
@@ -1918,15 +2205,13 @@
             k = force.alpha() * opts.gravity;
             nodes = force.nodes();
 
-            if (k) {
-                var xc = force.paper().x(0.5),
-                    yc = force.paper().y(0.5);
-                for (i = 0; i < nodes.length; ++i) {
-                    o = nodes[i];
-                    if (!o.fixed) {
-                        o.x += (xc - o.x) * k;
-                        o.y += (yc - o.y) * k;
-                    }
+            var xc = force.paper().x(0.5),
+                yc = force.paper().y(0.5);
+            for (i = 0; i < nodes.length; ++i) {
+                o = nodes[i];
+                if (!o.fixed) {
+                    o.x += (xc - o.x) * k;
+                    o.y += (yc - o.y) * k;
                 }
             }
         });
@@ -1945,6 +2230,8 @@
         force.charge = function (x) {
             if (!arguments.length) return typeof opts.charge === "function" ? opts.charge : +opts.charge;
             opts.charge = x;
+            if (charges)
+                _init();
             return force;
         };
 
@@ -1965,9 +2252,8 @@
 
                 d3_layout_forceAccumulate(q = force.quadtree(), force.alpha(), charges);
                 i = -1; while (++i < nodes.length) {
-                    if (!(o = nodes[i]).fixed) {
-                        q.visit(repulse(o));
-                    }
+                    o = nodes[i];
+                    if (!o.fixed) q.visit(repulse(o));
                 }
             }
         });
@@ -2037,6 +2323,7 @@
             if (quad.point) {
                 // jitter internal nodes that are coincident
                 if (!quad.leaf) {
+                    var paper = force.paper();
                     quad.point.x += paper.x(Math.random()) - paper.x(0.5);
                     quad.point.y += paper.y(Math.random()) - paper.y(0.5);
                 }
@@ -2732,21 +3019,45 @@
     });
 
     g.viz.force.plugin(function (force, opts) {
-        var collide = circleCollide;
+        g._.copyMissing({collidePadding: 0.002, collideBuffer: 0.02}, opts);
 
         force.collide = function () {
-            var q = force.quadtree(true),
+            var snodes = [],
                 nodes = force.nodes(),
                 paper = force.paper(),
-                scale = paper.xAxis().scale(),
-                buffer = paper.x(0.05) - paper.x(0),
-                padding = scale.invert(4) - scale.invert(0);
+                scalex = paper.scalex,
+                scaley = paper.scaley,
+                invertx = paper.xAxis().scale().invert,
+                inverty = paper.yAxis().scale().invert,
+                scale = paper.scale,
+                buffer = scale(paper.dim(opts.collideBuffer)),
+                padding = paper.dim(opts.collidePadding),
+                node;
 
-            for (var i=0; i<nodes.length; ++i)
-                q.visit(collide(nodes[i], buffer, padding));
+            for (var i=0; i<nodes.length; ++i) {
+                node = nodes[i];
+                if (node.radius)
+                    snodes.push({
+                        x: scalex(node.x),
+                        y: scaley(node.y),
+                        index: node.index,
+                        radius: scale(node.radius + padding)
+                    });
+            }
+
+            var q = d3.geom.quadtree(snodes);
+
+            for (i=0; i<snodes.length; ++i)
+                q.visit(circleCollide(snodes[i], buffer));
+
+            for (i=0; i<snodes.length; ++i) {
+                node = snodes[i];
+                nodes[node.index].x = invertx(node.x);
+                nodes[node.index].y = inverty(node.y);
+            }
         };
 
-        function circleCollide (node, buffer, padding) {
+        function circleCollide (node, buffer) {
 
             var r = node.radius + buffer,
                 nx1 = node.x - r,
@@ -2760,7 +3071,7 @@
                     dx = node.x - quad.point.x;
                     dy = node.y - quad.point.y;
                     d = Math.sqrt(dx * dx + dy * dy);
-                    r = node.radius + quad.point.radius + padding;
+                    r = node.radius + quad.point.radius;
                     if (d < r) {
                         d = 0.5 * (r - d) / d;
                         dx *= d;
@@ -2901,89 +3212,106 @@
         });
     });
 
-
-    g.paper.svg.plugin("quadtree", {
+    var quadDefaults = {
         color: '#ccc',
         opacity: 1,
         width: 1,
         fill: 'none',
         fillOpacity: 0.5,
-    },
+    };
 
-    function (paper, opts) {
 
-        paper.quadtree = function () {
-            //var sx = paper.xAxis().scale(),
-            //    sy = paper.yAxis().scale(),
-            //    x0 = sx.invert(-1),
-            //    y1 = sy.invert(-1),
-            //    x1 = sx.invert(paper.innerWidth()+1),
-            //    y0 = sy.invert(paper.innerHeight()+1);
-            //return d3.geom.quadtree().extent([[x0, y0], [x1, y1]]);
-            return d3.geom.quadtree;
-        };
+    g.paper.svg.plugin("quadtree",
 
-        // Draw a quad tree on the paper
-        paper.drawQuadTree = function (factory, options) {
-            g.extend(opts.quadtree, options);
+        quadDefaults,
 
-            var container = paper.current(),
-                o = opts.quadtree;
+        function (paper, opts) {
 
-            return paper.addComponent(function () {
-                var gc = container.select('g.quadtree'),
-                    quadtree = factory();
+            paper.quadtree = function () {
+                //var sx = paper.xAxis().scale(),
+                //    sy = paper.yAxis().scale(),
+                //    x0 = sx.invert(-1),
+                //    y1 = sy.invert(-1),
+                //    x1 = sx.invert(paper.innerWidth()+1),
+                //    y0 = sy.invert(paper.innerHeight()+1);
+                //return d3.geom.quadtree().extent([[x0, y0], [x1, y1]]);
+                return d3.geom.quadtree;
+            };
 
-                if (!gc.node())
-                    gc = container.append('g')
-                                    .attr('class', 'quadtree')
-                                    .attr('stroke', o.color)
-                                    .attr('stroke-width', o.width)
-                                    .attr('stroke-opacity', o.opacity)
-                                    .attr('fill', o.fill)
-                                    .attr('fill-opacity', o.fillOpacity)
-                                    .style('shape-rendering', 'crispEdges');
-                else
-                    gc.selectAll(".quad-node").remove();
+            // Draw a quad tree on the paper
+            paper.drawQuadTree = function (factory, options) {
+                g.extend(opts.quadtree, options);
 
-                gc.selectAll(".quad-node")
-                    .data(qnodes(quadtree))
-                    .enter().append("rect")
-                    .attr("class", "quad-node")
-                    .attr("x", function(d) { return d.x1; })
-                    .attr("y", function(d) { return d.y1; })
-                    .attr("width", function(d) { return d.x2 - d.x1; })
-                    .attr("height", function(d) { return d.y2 - d.y1; });
+                var container = paper.current(),
+                    o = opts.quadtree;
 
-                return {chart: gc};
-            });
-        };
+                return paper.addComponent(function () {
+                    var gc = container.select('g.quadtree'),
+                        quadtree = factory();
 
-        function nice (s, maxs) {
-            return s <= 0 ? 0 : s >= maxs ? maxs : s;
-        }
+                    if (!gc.node())
+                        gc = container.append('g')
+                                        .attr('class', 'quadtree')
+                                        .attr('stroke', o.color)
+                                        .attr('stroke-width', o.width)
+                                        .attr('stroke-opacity', o.opacity)
+                                        .attr('fill', o.fill)
+                                        .attr('fill-opacity', o.fillOpacity)
+                                        .style('shape-rendering', 'crispEdges');
+                    else
+                        gc.selectAll(".quad-node").remove();
 
-        function qnodes (quadtree) {
-            var nodes = [],
-                scalex = paper.scalex,
-                scaley = paper.scaley,
-                width = paper.innerWidth(),
-                height = paper.innerHeight();
+                    gc.selectAll(".quad-node")
+                        .data(qnodes(quadtree))
+                        .enter().append("rect")
+                        .attr("class", "quad-node")
+                        .attr("x", function(d) { return d.x1; })
+                        .attr("y", function(d) { return d.y1; })
+                        .attr("width", function(d) { return d.x2 - d.x1; })
+                        .attr("height", function(d) { return d.y2 - d.y1; });
 
-            quadtree.depth = 0; // root
-            quadtree.visit(function(node, x1, y1, x2, y2) {
-                node.x1 = nice(scalex(x1), width);
-                node.y1 = nice(scaley(y2), height);
-                node.x2 = nice(scalex(x2), width);
-                node.y2 = nice(scaley(y1), height);
-                nodes.push(node);
-                for (var i=0; i<4; i++) {
-                    if (node.nodes[i]) node.nodes[i].depth = node.depth+1;
-                }
-            });
-            return nodes;
-        }
-    });
+                    return {chart: gc};
+                });
+            };
+
+            function nice (s, maxs) {
+                return s <= 0 ? 0 : s >= maxs ? maxs : s;
+            }
+
+            function qnodes (quadtree) {
+                var nodes = [],
+                    scalex = paper.scalex,
+                    scaley = paper.scaley,
+                    width = paper.innerWidth(),
+                    height = paper.innerHeight();
+
+                quadtree.depth = 0; // root
+                quadtree.visit(function(node, x1, y1, x2, y2) {
+                    node.x1 = nice(scalex(x1), width);
+                    node.y1 = nice(scaley(y2), height);
+                    node.x2 = nice(scalex(x2), width);
+                    node.y2 = nice(scaley(y1), height);
+                    nodes.push(node);
+                    for (var i=0; i<4; i++) {
+                        if (node.nodes[i]) node.nodes[i].depth = node.depth+1;
+                    }
+                });
+                return nodes;
+            }
+        });
+
+    g.paper.canvas.plugin("quadtree",
+
+        quadDefaults,
+
+        function (paper, opts) {
+
+            paper.quadtree = function () {
+                return d3.geom.quadtree;
+            };
+
+        });
+
 
     g.viz.force.plugin(function (force, opts) {
         var xc = 0,
@@ -3349,7 +3677,7 @@
                         return {
                             link: function (scope, element, attrs) {
                                 var mode = attrs.mode ? +attrs.mode : 1;
-                                require(rcfg.min(['stats']), function () {
+                                g.require(['stats'], function () {
                                     var stats = new Stats();
                                     stats.setMode(mode);
                                     scope.stats = stats;
@@ -3378,7 +3706,12 @@
             function startViz(scope, element, options) {
                 options.scope = scope;
                 var viz = vizType(element[0], options);
+                options = viz.options();
                 element.data(name, viz);
+
+                if (_.isFunction(options.angular))
+                    options.angular(viz, options);
+
                 scope.$emit('giotto-viz', viz);
                 viz.start();
             }

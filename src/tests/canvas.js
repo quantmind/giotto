@@ -12,7 +12,7 @@
             // Default size
             expect(paper.width()).toBe(g.constants.WIDTH);
             expect(paper.height()).toBe(g.constants.HEIGHT);
-
+            expect(paper.factor() >=1 ).toBe(true);
             //
             expect(paper.destroy().current()).toBe(null);
         });
@@ -56,7 +56,18 @@
             expect(_.isFunction(xaxis.scale())).toBe(true);
             expect(xaxis.orient()).toBe('bottom');
             expect(yaxis.orient()).toBe('left');
+            expect(paper.scaley(0)).toBe(paper.innerHeight());
+            expect(paper.scaley(1)).toBe(0);
             expect(paper.yaxis(2).yAxis().orient()).toBe('right');
+        });
+
+        it("test retina", function () {
+            var paper = g.paper({type: 'canvas'}),
+                innerWidth = paper.innerWidth(),
+                innerHeight = paper.innerHeight(),
+                factor = paper.factor(),
+                size = paper.size();
+            expect(paper.factor(2*factor).factor()).toBe(2*factor);
         });
 
     });

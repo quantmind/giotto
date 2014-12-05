@@ -41,7 +41,7 @@
                         return {
                             link: function (scope, element, attrs) {
                                 var mode = attrs.mode ? +attrs.mode : 1;
-                                require(rcfg.min(['stats']), function () {
+                                g.require(['stats'], function () {
                                     var stats = new Stats();
                                     stats.setMode(mode);
                                     scope.stats = stats;
@@ -70,7 +70,12 @@
             function startViz(scope, element, options) {
                 options.scope = scope;
                 var viz = vizType(element[0], options);
+                options = viz.options();
                 element.data(name, viz);
+
+                if (_.isFunction(options.angular))
+                    options.angular(viz, options);
+
                 scope.$emit('giotto-viz', viz);
                 viz.start();
             }
