@@ -28,11 +28,15 @@ Chart object can subsequently be created via the ``Chart`` factory function:
 The visualization base implementation expose most of the functionality needed for
 dealing with the [Paper API]
 
-## viz.paper([createNew])
+### # viz.paper([createNew]) {#viz-paper}
 
 Returns the [paper][] of the visualization. If ``createView`` is positive a new paper
 is created.
 
+### # viz.render() {#vizrender}
+
+Render the visualization by calling the [paper.render]($site_url/api/paper#paper-render)
+method.
 
 
 

@@ -78,11 +78,11 @@
         };
 
         paper.scalex = function (x) {
-            return p.xAxis.scale()(x);
+            return Math.round(p.xAxis.scale()(x), 1);
         };
 
         paper.scaley = function (y) {
-            return paper.yAxis().scale()(y);
+            return Math.round(paper.yAxis().scale()(y), 1);
         };
 
         paper.xfromPX = function (px) {
@@ -113,7 +113,7 @@
             var v = +x;
             // assume input is in pixels
             if (isNaN(v))
-                return paper.xfromPX(x.substring(0, x.length));
+                return paper.xfromPX(x.substring(0, x.length-2));
             // otherwise assume it is a value between 0 and 1 defined as percentage of the x axis length
             else {
                 var d = paper.xAxis().scale().domain();

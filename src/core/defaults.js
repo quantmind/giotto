@@ -19,19 +19,22 @@
         colors: d3.scale.category10().range(),
         css: null,
         line: {
-            interpolate: 'basis',
-            width: 2
+            interpolate: 'cardinal',
+            lineWidth: 2
         },
         point: {
             symbol: 'circle',
-            size: 8,
+            size: '8px',
             fill: true,
-            fillOpacity: 0.5,
-            width: 1
+            fillOpacity: 1,
+            lineWidth: 1
         },
         bar: {
             width: 'auto',
-            stroke: 'none',
+            color: null,
+            fill: true,
+            lineWidth: 1,
+            // Radius in pixels of rounded corners. Set to 0 for no rounded corners
             radius: 4
         },
         font: {

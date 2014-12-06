@@ -52,6 +52,24 @@ Height in pixels of the paper excluding top and bottom margins. Equivalent to:
     var o = paper.options();
     paper.size()[1] - o.margin.top - o.margin.bottom;
 
+### # paper.dim(value)
+
+Convert ``value`` into the x-axis internal range. There are two possible conversions:
+
+* Convert from a 0 to 1 range - The input must be a number between 0 and 1
+* Convert from pixels - The input must be a string ending with ``"px"``
+
+For example, lets assume the internal
+range is ``[-5, 5]`` and the [paper.innerWidth()](#paperinnerwidth) is ``500px``:
+
+    paper.dim(0) === -5
+    paper.dim(1) === 5
+    paper.dim(0.5) === 0
+    paper.dim('250px') = 0
+    paper.dim('500px') = 5
+
+
+
 
 ## Options
 

@@ -50,6 +50,11 @@
                 return viz.paper().element();
             };
 
+            viz.clear = function () {
+                viz.paper().clear();
+                return viz;
+            };
+
             viz.alpha = function(x) {
                 if (!arguments.length) return alpha;
 
@@ -92,6 +97,12 @@
             // Starts the visualization
             viz.start = function () {
                 return viz.resume();
+            };
+
+            // render the visualization by invoking the render method of the paper
+            viz.render = function () {
+                paper.render();
+                return viz;
             };
 
             viz.loadData = function (callback) {

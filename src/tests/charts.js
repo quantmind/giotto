@@ -1,5 +1,5 @@
 
-    function testCharts(type) {
+    function testCharts (type) {
         var g = d3.giotto;
 
         function chart(opts) {

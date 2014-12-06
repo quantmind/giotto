@@ -11,8 +11,7 @@
 
     function (chart, opts) {
 
-        var paper = chart.paper(),
-            series = [];
+        var series = [];
 
         chart.numSeries = function () {
             return series.length;
@@ -31,6 +30,7 @@
             var xrange = [Infinity, -Infinity],
                 yrange = [Infinity, -Infinity],
                 wasempty = chart.numSeries() === 0,
+                paper = chart.paper(),
                 data = [];
 
             series.forEach(function (serie) {
@@ -71,15 +71,25 @@
             return chart.addSeries([serie]);
         };
 
+        chart.clear = function () {
+            chart.paper().clear();
+            series = [];
+            return chart;
+        };
+
         chart.draw = function () {
             var data = opts.data;
             if (data === undefined && opts.src)
                 return chart.loadData(chart.draw);
             if (g._.isFunction(data))
-                data = data(chart);
+                data = opts.data = data(chart);
 
-            if (data)
+            chart.clear();
+            if (data) {
                 chart.addSeries(data);
+                chart.render();
+            }
+
         };
 
 
@@ -110,14 +120,17 @@
             // The serie is
             if (!serie) return;
 
-            if (add) {
-                paper.group({'class': 'serie'});
+            var paper = chart.paper(),
+                color;
 
+            if (add) {
                 g.log.info('Add new serie to chart');
 
                 series.push(serie);
                 if (!serie.label)
                     serie.label = 'serie ' + series.length;
+
+                paper.group({'class': 'serie ' + slugify(serie.label)});
 
                 opts.chartTypes.forEach(function (type) {
                     var o = serie[type];
@@ -125,7 +138,16 @@
                     if (o === undefined)
                         serie[type] = o = opts[type];
 
-                    serie[type] = o.show ? chartTypes[type](chart, serie.data, o) : o;
+                    if (o.show) {
+                        if (!o.color) {
+                            if (!color)
+                                color = paper.pickColor();
+                            o.color = color;
+                        }
+                        chartTypes[type](chart, serie.data, o);
+                    }
+
+                    serie[type] = o;
                 });
 
                 paper.parent();
@@ -141,16 +163,17 @@
     });
 
     var chartTypes = {
+
+        bar: function (chart, data, opts) {
+            return chart.paper().barchart(data, opts);
+        },
+
         line: function (chart, data, opts) {
             return chart.paper().path(data, opts);
         },
 
         point: function (chart, data, opts) {
             return chart.paper().points(data, opts);
-        },
-
-        bar: function (chart, data, opts) {
-            return chart.paper().barchart(data, opts);
         },
 
         pie: function (chart, data, opts) {

@@ -3,6 +3,7 @@
     //  ======================
     //
     g.paper.addType('canvas', function (paper, p) {
+
         var clear = paper.clear,
             components,
             componentMap,
@@ -56,7 +57,7 @@
             return paper;
         };
 
-        // Re-render on or all the canvas in this paper
+        // Re-render the canvas/es in this paper
         paper.render = function (_cid) {
             if (!arguments.length)
                 _apply(_render);
@@ -71,6 +72,13 @@
             return clear();
         };
 
+        paper.group = function (attr) {
+            var canvas = _addCanvas();
+            if (attr)
+                canvas.attr(attr);
+            return paper.current();
+        };
+
         paper.on = function (event, callback) {
             paper.element().on(event, function () {
                 callback.call(this);
@@ -80,6 +88,20 @@
 
         paper.current = function () {
             return cid !== null ? componentMap[cid].canvas.getContext('2d') : null;
+        };
+
+        // set the current element to be the root svg element and returns the paper
+        paper.root = function () {
+            if (components)
+                cid = components[0];
+            return paper;
+        };
+
+        // set the current element to be the parent and returns the paper
+        paper.parent = function () {
+            var index = components.indexOf(cid);
+            cid = Math.max(0, index-1);
+            return paper;
         };
 
         paper.xfromPX = function (px) {
@@ -100,12 +122,48 @@
             ctx.endPath();
         };
 
+        paper.drawXaxis = function () {
+        };
+
+        paper.drawYaxis = function () {
+        };
+
+        // Draw a path or an area
+        paper.path = function (data, opts) {
+            opts || (opts = {});
+            copyMissing(p.line, opts);
+
+            return _addComponent(function (ctx) {
+
+                var scalex = paper.scalex,
+                    scaley = paper.scaley,
+                    line = opts.area ? d3.canvas.area() : d3.canvas.line();
+
+                if (!opts.color)
+                    opts.color = paper.pickColor();
+
+                ctx.strokeStyle = opts.color;
+                ctx.lineWidth = factor*opts.lineWidth;
+
+                line.interpolate(opts.interpolate)
+                    .x(function(d) {
+                        return scalex(d.x);
+                    })
+                    .y(function(d) {
+                        return scaley(d.y);
+                    }).context(ctx)(data);
+
+                ctx.stroke();
+            });
+        };
+
         paper.points = function (data, opts) {
             opts || (opts = {});
             copyMissing(p.point, opts);
             opts.color = opts.color || paper.pickColor();
 
             return _addComponent(function (ctx) {
+
                 var scalex = paper.scalex,
                     scaley = paper.scaley,
                     scale = paper.scale,
@@ -116,11 +174,6 @@
                 if (fill === true)
                     opts.fill = fill = d3.rgb(opts.color).brighter();
 
-                ctx.save();
-
-                if (fill)
-                    ctx.fillStyle = fill;
-
                 if (opts.symbol === 'circle') {
                     var PI2 = Math.PI * 2;
                     size *= 0.5;
@@ -130,18 +183,70 @@
                         ctx.beginPath();
                         ctx.fillStyle = d.fill || fill;
                         ctx.strokeStyle = d.color || opts.color;
-                        ctx.lineWidth = d.lineWidth || opts.width;
+                        ctx.lineWidth = factor*(d.lineWidth || opts.width);
                         ctx.arc(scalex(d.x), scaley(d.y), scale(d.radius === undefined ? size : d.radius), 0, PI2, false);
                         ctx.closePath();
                         ctx.fill();
                         ctx.stroke();
                     }
-                } else
-                    g.log.error('Not implemented');
+                } else if (opts.symbol === 'square') {
+                    var x, y;
+                    for (i=0; i<data.length; ++i) {
+                        d = data[i];
+                        x = scalex(d.x);
+                        y = scaley(d.y);
+                        s = scale(d.size === undefined ? size : d.size);
+                        ctx.beginPath();
+                        ctx.fillStyle = d.fill || fill;
+                        ctx.strokeStyle = d.color || opts.color;
+                        ctx.lineWidth = factor*(d.lineWidth || opts.width);
+                        ctx.rect(x-0.5*s, y-0.5*s, s, s);
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.stroke();
+                    }
+                } else {
 
-                ctx.restore();
+                }
+
+                function s(v, defo) {
+                    return scale(v === undefined ? defo : v);
+                }
+
             });
 
+        };
+
+        paper.barchart = function (data, opts) {
+            opts || (opts = {});
+            copyMissing(p.point, opts);
+
+            return _addComponent(function (ctx) {
+
+                var scalex = paper.scalex,
+                    scaley = paper.scaley,
+                    fill = opts.fill,
+                    width = barWidth(paper, data, opts),
+                    zero = scaley(0),
+                    chart = container.select('g.barchart'),
+                    y0 = scaley(0),
+                    radius = factor*opts.radius,
+                    x, y, d, i;
+
+                for (i=0; i<data.length; ++i) {
+                    d = data[i];
+                    ctx.beginPath();
+                    ctx.fillStyle = d.fill || opts.fill;
+                    ctx.strokeStyle = d.color || opts.color;
+                    ctx.lineWidth = factor*(d.lineWidth || opts.lineWidth);
+                    x = scalex(d.x) - width;
+                    y = scaley(d.y);
+                    drawPolygon(ctx, [[x,y0], [x+width,y0], [x+width,y], [x, y]], radius);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+                }
+            });
         };
 
         // INTERNALS
@@ -150,7 +255,7 @@
             componentMap = {};
             cidCounter = 0;
             cid = null;
-            container.selectAll('canvas.giotto').remove();
+            container.selectAll('*').remove();
         }
 
         function _addCanvas() {
@@ -158,29 +263,27 @@
 
             var canvas = container.append("canvas")
                             .attr("class", "giotto")
-                            .attr("id", "giottoCanvas-" + paper.uid() + "-" + cid).node(),
-                ctx = _scaleCanvas(canvas.getContext('2d'));
+                            .attr("id", "giottoCanvas-" + paper.uid() + "-" + cid),
+                element = canvas.node(),
+                ctx = _scaleCanvas(element.getContext('2d'));
 
             var component = {
                     cid: cid,
-                    canvas: canvas,
+                    canvas: element,
                     callbacks: []
                 };
 
             if (components.length)
                 canvas.style({"position": "absolute", "top": "0", "left": "0"});
 
-            components.push(component);
+            components.push(cid);
             componentMap[cid] = component;
+            return canvas;
         }
 
         function _addComponent (callback) {
             componentMap[cid].callbacks.push(callback);
-            var o = callback(paper.current());
-            if (!o) o = {};
-            o.cid = cid;
-            o.chart = d3.select(componentMap[cid].canvas);
-            return o;
+            return cid;
         }
 
         function _render (ctx, canvas) {
@@ -196,15 +299,17 @@
         }
 
         function _apply (callback, _cid) {
-            var current = cid;
+            var current = cid,
+                component;
             if (!_cid)
-                components.forEach(function (component) {
-                    cid = component.cid;
+                components.forEach(function (_cid) {
+                    cid = _cid;
+                    component = componentMap[cid];
                     callback(component.canvas.getContext('2d'), component.canvas);
                 });
             else if (componentMap[_cid]) {
-                var component = omponentMap[_cid];
                 cid = component.cid;
+                component = componentMap[cid];
                 callback(component.canvas.getContext('2d'), component.canvas);
             }
             cid = current;
@@ -223,3 +328,47 @@
         }
 
     });
+
+
+    function drawPolygon (ctx, pts, radius) {
+        if (radius > 0)
+            pts = getRoundedPoints(pts, radius);
+        var i, pt, len = pts.length;
+        ctx.beginPath();
+        for (i = 0; i < len; i++) {
+            pt = pts[i];
+            if (i === 0)
+                ctx.moveTo(pt[0], pt[1]);
+            else
+                ctx.lineTo(pt[0], pt[1]);
+            if (radius > 0)
+                ctx.quadraticCurveTo(pt[2], pt[3], pt[4], pt[5]);
+        }
+        ctx.closePath();
+    }
+
+    function getRoundedPoints(pts, radius) {
+        var i1, i2, i3, p1, p2, p3, prevPt, nextPt,
+            len = pts.length,
+            res = new Array(len);
+        for (i2 = 0; i2 < len; i2++) {
+            i1 = i2-1;
+            i3 = i2+1;
+            if (i1 < 0)
+                i1 = len - 1;
+            if (i3 === len) i3 = 0;
+            p1 = pts[i1];
+            p2 = pts[i2];
+            p3 = pts[i3];
+            prevPt = getRoundedPoint(p1[0], p1[1], p2[0], p2[1], radius, false);
+            nextPt = getRoundedPoint(p2[0], p2[1], p3[0], p3[1], radius, true);
+            res[i2] = [prevPt[0], prevPt[1], p2[0], p2[1], nextPt[0], nextPt[1]];
+        }
+      return res;
+    }
+
+    function getRoundedPoint(x1, y1, x2, y2, radius, first) {
+        var total = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2)),
+            idx = first ? radius / total : (total - radius) / total;
+        return [x1 + (idx * (x2 - x1)), y1 + (idx * (y2 - y1))];
+    }

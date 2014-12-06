@@ -1,13 +1,14 @@
-    //
-    //  Add grid functionality to svg paper
-    g.paper.svg.plugin('grid', {
+    var gridDefaults = {
         color: '#333',
         background: {
             color: '#c6dbef',
             opacity: 0.4
         },
         opacity: 0.3
-    },
+    };
+    //
+    //  Add grid functionality to svg paper
+    g.paper.svg.plugin('grid', gridDefaults,
 
     function (paper, opts) {
 
@@ -88,6 +89,19 @@
         }
     });
 
+    g.paper.canvas.plugin('grid', gridDefaults,
+
+    function (paper, opts) {
+
+        paper.showGrid = function (options) {
+            return paper;
+        };
+
+        paper.hideGrid = function () {
+            return paper;
+        };
+
+     });
     //
     //  Add grid functionality to charts
     g.viz.chart.plugin(function (chart, opts) {

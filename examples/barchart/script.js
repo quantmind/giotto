@@ -14,7 +14,7 @@
                     })];
         },
 
-        // Callback when angular directive
+        // Callback for angular directive
         angular: function (chart, opts) {
 
             opts.scope.$on('formFieldChange', function (e, model) {

@@ -1,6 +1,6 @@
 //      Giotto - v0.1.0
 
-//      Compiled 2014-12-05.
+//      Compiled 2014-12-06.
 //      Copyright (c) 2014 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -53,6 +53,12 @@
         return d;
     }
 
+    function d3_functor (v) {
+        return typeof v === "function" ? v : function() {
+            return v;
+        };
+    }
+
     function d3_scaleExtent(domain) {
         var start = domain[0], stop = domain[domain.length - 1];
         return start < stop ? [ start, stop ] : [ stop, start ];
@@ -62,6 +68,17 @@
         return scale.rangeExtent ? scale.rangeExtent() : d3_scaleExtent(scale.range());
     }
 
+    function d3_geom_pointX(d) {
+        return d[0];
+    }
+
+    function d3_geom_pointY(d) {
+        return d[1];
+    }
+
+    function d3_true() {
+        return true;
+    }
     function noop () {}
 
     var log = function (debug) {
@@ -325,6 +342,25 @@
             if (bits.length)
                 css.push(s + ' {\n' + bits.join('\n') + '\n}');
         }
+    },
+
+        // Simple Slugify function
+    slugify = _.slugify = function (str) {
+        str = str.replace(/^\s+|\s+$/g, ''); // trim
+        str = str.toLowerCase();
+
+        // remove accents, swap ñ for n, etc
+        var from = "àáäâèéëêìíïîòóöôùúüûñç·/_,:;";
+        var to   = "aaaaeeeeiiiioooouuuunc------";
+        for (var i=0, l=from.length ; i<l ; i++) {
+            str = str.replace(new RegExp(from.charAt(i), 'g'), to.charAt(i));
+        }
+
+        str = str.replace(/[^a-z0-9 -]/g, '') // remove invalid chars
+            .replace(/\s+/g, '-') // collapse whitespace and replace by -
+            .replace(/-+/g, '-'); // collapse dashes
+
+        return str;
     };
 
 
@@ -388,19 +424,22 @@
         colors: d3.scale.category10().range(),
         css: null,
         line: {
-            interpolate: 'basis',
-            width: 2
+            interpolate: 'cardinal',
+            lineWidth: 2
         },
         point: {
             symbol: 'circle',
-            size: 8,
+            size: '8px',
             fill: true,
-            fillOpacity: 0.5,
-            width: 1
+            fillOpacity: 1,
+            lineWidth: 1
         },
         bar: {
             width: 'auto',
-            stroke: 'none',
+            color: null,
+            fill: true,
+            lineWidth: 1,
+            // Radius in pixels of rounded corners. Set to 0 for no rounded corners
             radius: 4
         },
         font: {
@@ -508,11 +547,11 @@
         };
 
         paper.scalex = function (x) {
-            return p.xAxis.scale()(x);
+            return Math.round(p.xAxis.scale()(x), 1);
         };
 
         paper.scaley = function (y) {
-            return paper.yAxis().scale()(y);
+            return Math.round(paper.yAxis().scale()(y), 1);
         };
 
         paper.xfromPX = function (px) {
@@ -543,7 +582,7 @@
             var v = +x;
             // assume input is in pixels
             if (isNaN(v))
-                return paper.xfromPX(x.substring(0, x.length));
+                return paper.xfromPX(x.substring(0, x.length-2));
             // otherwise assume it is a value between 0 and 1 defined as percentage of the x axis length
             else {
                 var d = paper.xAxis().scale().domain();
@@ -729,7 +768,6 @@
             current = svg.append('g')
                         .attr("transform", "translate(" + p.margin.left + "," + p.margin.top + ")")
                         .attr('class', 'paper');
-            //_reset_axis(paper);
             return clear();
         };
 
@@ -759,8 +797,10 @@
             return paper;
         };
 
-        paper.group = function () {
+        paper.group = function (attr) {
             current = current.append('g');
+            if (attr)
+                current.attr(attr);
             return current;
         };
 
@@ -796,7 +836,6 @@
         paper.path = function (data, opts) {
             opts || (opts = {});
             copyMissing(p.line, opts);
-            opts.color = opts.color || paper.pickColor();
 
             var container = current;
 
@@ -807,6 +846,9 @@
                     scaley = paper.scaley,
                     line = opts.area ? d3.svg.area() : d3.svg.line();
 
+                if (!opts.color)
+                    opts.color = paper.pickColor();
+
                 line.interpolate(opts.interpolate)
                     .x(function(d) {
                         return scalex(d.x);
@@ -816,13 +858,13 @@
                     });
 
                 if (!chart.node())
-                    chart = current.append('path')
-                                    .attr('class', 'line');
+                    chart = container.append('path')
+                                        .attr('class', 'line');
 
                 chart
                     .classed('area', opts.area)
                     .attr('stroke', opts.color)
-                    .attr('stroke-width', opts.width)
+                    .attr('stroke-width', opts.lineWidth)
                     .datum(data)
                     .attr('d', line);
 
@@ -835,7 +877,6 @@
         paper.points = function (data, opts) {
             opts || (opts = {});
             copyMissing(p.point, opts);
-            opts.color = opts.color || paper.pickColor();
 
             var container = current;
 
@@ -844,12 +885,10 @@
                     scalex = paper.scalex,
                     scaley = paper.scaley,
                     scale = paper.scale,
-                    fill = opts.fill,
                     size = paper.dim(opts.size),
                     points;
 
-                if (fill === true)
-                    opts.fill = fill = d3.rgb(opts.color).brighter();
+                chartColors(paper, data, opts);
 
                 if (!chart.node()) {
                     chart = container.append("g")
@@ -859,24 +898,27 @@
                         points = chart.selectAll("circle.point")
                                     .data(data)
                                     .enter()
-                                    .append("circle")
-                                    .attr('class', 'point');
+                                    .append("circle");
                     else if (opts.symbol === 'square')
                         points = chart.selectAll("rect.point")
                                     .data(data)
                                     .enter()
                                     .append("rect");
+                    else if (opts.symbol === 'triangle')
+                        points = chart.selectAll("triangle.point")
+                                    .data(data)
+                                    .enter()
+                                    .append("polygon");
+
                     points.attr('class', 'point');
 
                 } else
                     points = chart.selectAll("circle.point");
 
                 chart.attr('stroke', opts.color)
-                        .attr('stroke-width', opts.width);
-                if (fill)
-                    chart.attr('fill', fill).attr('fill-opacity', opts.fillOpacity);
-                else
-                    chart.attr('fill', 'none');
+                        .attr('stroke-width', opts.lineWidth)
+                        .attr('fill', opts.fill)
+                        .attr('fill-opacity', opts.fillOpacity);
 
                 if (opts.symbol === 'circle') {
                     size *= 0.5;
@@ -889,7 +931,20 @@
                             .attr('y', function (d) {return scaley(d.y) - 0.5*s(d.size, size);})
                             .attr('height', function (d) {return  s(d.size, size);})
                             .attr('width', function (d) {return  s(d.size, size);});
+                } else if (opts.symbol === 'triangle') {
+                    var s32 = d3.round(0.5*Math.sqrt(3), 1);
+                    size *= 0.6;
+                    points.attr('points', function (d) {
+                              var r = s(d.size, size),
+                                  dx = r*s32,
+                                  x = scalex(d.x),
+                                  y = scaley(d.y),
+                                  yl = y + 0.5*r;
+
+                              return x + ',' + (y-r) + ' ' + (x-dx) + ',' + yl + ' ' + (x+dx) + ',' + yl;
+                          });
                 }
+
                 opts.chart = chart;
                 return opts;
 
@@ -903,7 +958,6 @@
         paper.barchart = function (data, opts) {
             opts || (opts = {});
             copyMissing(p.bar, opts);
-            opts.color = opts.color || paper.pickColor();
 
             var container = current;
 
@@ -911,21 +965,17 @@
 
                 var scalex = paper.scalex,
                     scaley = paper.scaley,
-                    width = opts.width,
+                    width = barWidth(paper, data, opts),
                     zero = scaley(0),
                     chart = container.select('g.barchart');
-
-                if (width === 'auto')
-                    width = d3.round(0.8*(paper.innerWidth() / data.length));
 
                 if (!chart.node())
                     chart = container.append("g")
                                 .attr('class', 'barchart');
-                chart.attr('stroke', opts.stroke).attr('fill', opts.color);
 
                 var bar = chart
-                        .attr('stroke', opts.stroke)
-                        .attr('fill', opts.color)
+                        .attr('stroke', opts.color)
+                        .attr('fill', opts.fill)
                         .selectAll(".bar")
                         .data(data)
                         .enter().append("rect")
@@ -937,7 +987,7 @@
                         .attr("height", function(d) { return d.y < 0 ? scaley(d.y) - zero : zero - scaley(d.y); })
                         .attr("width", width);
 
-                if (opts.radius)
+                if (opts.radius > 0)
                     bar.attr('rx', opts.radius).attr('ry', opts.radius);
 
                 opts.chart = chart;
@@ -1065,10 +1115,7 @@
             var cid = ++cidCounter;
             components.push(callback);
             componentMap[cid] = callback;
-            var o = callback();
-            if (!o) o = {};
-            o.cid = cid;
-            return o;
+            return cid;
         };
 
         paper.removeComponent = function (cid) {
@@ -1163,6 +1210,11 @@
                 return viz.paper().element();
             };
 
+            viz.clear = function () {
+                viz.paper().clear();
+                return viz;
+            };
+
             viz.alpha = function(x) {
                 if (!arguments.length) return alpha;
 
@@ -1205,6 +1257,12 @@
             // Starts the visualization
             viz.start = function () {
                 return viz.resume();
+            };
+
+            // render the visualization by invoking the render method of the paper
+            viz.render = function () {
+                paper.render();
+                return viz;
             };
 
             viz.loadData = function (callback) {
@@ -1390,6 +1448,24 @@
 
     g.crossfilter.tolerance = 1.1;
 
+
+    function chartColors (paper, data, opts) {
+        if (!opts.color)
+            opts.color = paper.pickColor();
+
+        if (opts.fill === true)
+            opts.fill = d3.rgb(opts.color).brighter();
+    }
+
+    function barWidth (paper, data, opts) {
+        chartColors(paper, data, opts);
+
+        if (opts.width === 'auto')
+            return d3.round(0.8*(paper.innerWidth() / data.length));
+        else
+            return opts.width;
+    }
+
     //
     //  Initaise paper
     function _initPaper (paper, p) {
@@ -1470,6 +1546,7 @@
         p.size = [width, height];
         return p;
     }
+
 
     d3.canvas.axis = function() {
         var scale = d3.scale.linear(),
@@ -1617,11 +1694,174 @@
         }
         return window.devicePixelRatio || 1;
     };
+
+    // same as d3.svg.line... but for canvas
+    d3.canvas.line = function() {
+        return d3_canvas_line(d3_identity);
+    };
+
+
+    function d3_canvas_line (projection) {
+        var x = d3_geom_pointX,
+            y = d3_geom_pointY,
+            defined = d3_true,
+            interpolate = d3_canvas_lineLinear,
+            interpolateKey = interpolate.key,
+            tension = 0.7,
+            ctx;
+
+        function line (data) {
+            if (!ctx) return;
+
+            var segments = [],
+                points = [],
+                i = -1,
+                n = data.length,
+                d,
+                fx = d3_functor(x),
+                fy = d3_functor(y);
+
+            function segment () {
+                interpolate(ctx, projection(points), tension);
+            }
+
+            while (++i < n) {
+                if (defined.call(line, d = data[i], i)) {
+                    points.push([+fx.call(line, d, i), +fy.call(line, d, i)]);
+                } else if (points.length) {
+                    segment();
+                    points = [];
+                }
+            }
+
+            if (points.length) segment();
+
+            return segments.length ? segments.join("") : null;
+        }
+
+        line.context = function (_) {
+            if (!arguments.length) return ctx;
+            ctx = _;
+            return line;
+        };
+
+        line.x = function(_) {
+            if (!arguments.length) return x;
+            x = _;
+            return line;
+        };
+
+        line.y = function(_) {
+            if (!arguments.length) return y;
+            y = _;
+            return line;
+        };
+
+        line.defined  = function(_) {
+            if (!arguments.length) return defined;
+            defined = _;
+            return line;
+        };
+
+        line.interpolate = function(_) {
+            if (!arguments.length) return interpolateKey;
+            if (typeof _ === "function") interpolateKey = interpolate = _;
+            else interpolateKey = (interpolate = d3_canvas_lineInterpolators.get(_) || d3_canvas_lineLinear).key;
+            return line;
+        };
+
+        line.tension = function(_) {
+            if (!arguments.length) return tension;
+            tension = _;
+            return line;
+        };
+
+        return line;
+    }
+
+
+    var d3_canvas_lineInterpolators = d3.map({
+        "linear": d3_canvas_lineLinear,
+        "linear-closed": d3_canvas_lineLinearClosed,
+        "step": d3_canvas_lineStep,
+        "step-before": d3_canvas_lineStepBefore,
+        "step-after": d3_canvas_lineStepAfter,
+        "basis": d3_canvas_lineBasis
+        //"basis-open": d3_svg_lineBasisOpen,
+        //"basis-closed": d3_svg_lineBasisClosed,
+        //"bundle": d3_svg_lineBundle,
+        //"cardinal": d3_svg_lineCardinal,
+        //"cardinal-open": d3_svg_lineCardinalOpen,
+        //"cardinal-closed": d3_svg_lineCardinalClosed,
+        //"monotone": d3_svg_lineMonotone
+    });
+
+    function d3_canvas_lineLinear(ctx, points) {
+        var p = points[0];
+        ctx.beginPath();
+        ctx.moveTo(p[0], p[1]);
+        for (var i=1; i<points.length; ++i) {
+            p = points[i];
+            ctx.lineTo(p[0], p[1]);
+        }
+    }
+
+    function d3_canvas_lineLinearClosed(ctx, points) {
+        d3_canvas_lineLinear(ctx, points);
+        ctx.closePath();
+    }
+
+    function d3_canvas_lineStep(ctx, points) {
+        var pn = points[1], p = points[0],
+            x = 0.5*(pn[0] + p[0]);
+        ctx.beginPath();
+        ctx.moveTo(p[0], p[1]);
+        ctx.lineTo(x, p[1]);
+        ctx.lineTo(x, pn[1]);
+        for (var i=2; i<points.length; ++i) {
+            p = pn;
+            pn = points[i];
+            x = 0.5*(pn[0] + p[0]);
+            ctx.lineTo(x, p[1]);
+            ctx.lineTo(x, pn[1]);
+        }
+        ctx.lineTo(pn[0], pn[1]);
+    }
+
+    function d3_canvas_lineStepBefore(ctx, points) {
+        var pn = points[0], p;
+        ctx.beginPath();
+        ctx.moveTo(pn[0], pn[1]);
+        for (var i=1; i<points.length; ++i) {
+            p = pn;
+            pn = points[i];
+            ctx.lineTo(p[0], pn[1]);
+            ctx.lineTo(pn[0], pn[1]);
+        }
+    }
+
+    function d3_canvas_lineStepAfter(ctx, points) {
+        var pn = points[0], p;
+        ctx.beginPath();
+        ctx.moveTo(pn[0], pn[1]);
+        for (var i=1; i<points.length; ++i) {
+            p = pn;
+            pn = points[i];
+            ctx.lineTo(pn[0], p[1]);
+            ctx.lineTo(pn[0], pn[1]);
+        }
+    }
+
+    function d3_canvas_lineBasis(ctx, points) {
+
+    }
+
     //
     //  Canvas based Paper
     //  ======================
     //
     g.paper.addType('canvas', function (paper, p) {
+
         var clear = paper.clear,
             components,
             componentMap,
@@ -1675,7 +1915,7 @@
             return paper;
         };
 
-        // Re-render on or all the canvas in this paper
+        // Re-render the canvas/es in this paper
         paper.render = function (_cid) {
             if (!arguments.length)
                 _apply(_render);
@@ -1690,6 +1930,13 @@
             return clear();
         };
 
+        paper.group = function (attr) {
+            var canvas = _addCanvas();
+            if (attr)
+                canvas.attr(attr);
+            return paper.current();
+        };
+
         paper.on = function (event, callback) {
             paper.element().on(event, function () {
                 callback.call(this);
@@ -1699,6 +1946,20 @@
 
         paper.current = function () {
             return cid !== null ? componentMap[cid].canvas.getContext('2d') : null;
+        };
+
+        // set the current element to be the root svg element and returns the paper
+        paper.root = function () {
+            if (components)
+                cid = components[0];
+            return paper;
+        };
+
+        // set the current element to be the parent and returns the paper
+        paper.parent = function () {
+            var index = components.indexOf(cid);
+            cid = Math.max(0, index-1);
+            return paper;
         };
 
         paper.xfromPX = function (px) {
@@ -1719,12 +1980,48 @@
             ctx.endPath();
         };
 
+        paper.drawXaxis = function () {
+        };
+
+        paper.drawYaxis = function () {
+        };
+
+        // Draw a path or an area
+        paper.path = function (data, opts) {
+            opts || (opts = {});
+            copyMissing(p.line, opts);
+
+            return _addComponent(function (ctx) {
+
+                var scalex = paper.scalex,
+                    scaley = paper.scaley,
+                    line = opts.area ? d3.canvas.area() : d3.canvas.line();
+
+                if (!opts.color)
+                    opts.color = paper.pickColor();
+
+                ctx.strokeStyle = opts.color;
+                ctx.lineWidth = factor*opts.lineWidth;
+
+                line.interpolate(opts.interpolate)
+                    .x(function(d) {
+                        return scalex(d.x);
+                    })
+                    .y(function(d) {
+                        return scaley(d.y);
+                    }).context(ctx)(data);
+
+                ctx.stroke();
+            });
+        };
+
         paper.points = function (data, opts) {
             opts || (opts = {});
             copyMissing(p.point, opts);
             opts.color = opts.color || paper.pickColor();
 
             return _addComponent(function (ctx) {
+
                 var scalex = paper.scalex,
                     scaley = paper.scaley,
                     scale = paper.scale,
@@ -1735,11 +2032,6 @@
                 if (fill === true)
                     opts.fill = fill = d3.rgb(opts.color).brighter();
 
-                ctx.save();
-
-                if (fill)
-                    ctx.fillStyle = fill;
-
                 if (opts.symbol === 'circle') {
                     var PI2 = Math.PI * 2;
                     size *= 0.5;
@@ -1749,18 +2041,70 @@
                         ctx.beginPath();
                         ctx.fillStyle = d.fill || fill;
                         ctx.strokeStyle = d.color || opts.color;
-                        ctx.lineWidth = d.lineWidth || opts.width;
+                        ctx.lineWidth = factor*(d.lineWidth || opts.width);
                         ctx.arc(scalex(d.x), scaley(d.y), scale(d.radius === undefined ? size : d.radius), 0, PI2, false);
                         ctx.closePath();
                         ctx.fill();
                         ctx.stroke();
                     }
-                } else
-                    g.log.error('Not implemented');
+                } else if (opts.symbol === 'square') {
+                    var x, y;
+                    for (i=0; i<data.length; ++i) {
+                        d = data[i];
+                        x = scalex(d.x);
+                        y = scaley(d.y);
+                        s = scale(d.size === undefined ? size : d.size);
+                        ctx.beginPath();
+                        ctx.fillStyle = d.fill || fill;
+                        ctx.strokeStyle = d.color || opts.color;
+                        ctx.lineWidth = factor*(d.lineWidth || opts.width);
+                        ctx.rect(x-0.5*s, y-0.5*s, s, s);
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.stroke();
+                    }
+                } else {
 
-                ctx.restore();
+                }
+
+                function s(v, defo) {
+                    return scale(v === undefined ? defo : v);
+                }
+
             });
 
+        };
+
+        paper.barchart = function (data, opts) {
+            opts || (opts = {});
+            copyMissing(p.point, opts);
+
+            return _addComponent(function (ctx) {
+
+                var scalex = paper.scalex,
+                    scaley = paper.scaley,
+                    fill = opts.fill,
+                    width = barWidth(paper, data, opts),
+                    zero = scaley(0),
+                    chart = container.select('g.barchart'),
+                    y0 = scaley(0),
+                    radius = factor*opts.radius,
+                    x, y, d, i;
+
+                for (i=0; i<data.length; ++i) {
+                    d = data[i];
+                    ctx.beginPath();
+                    ctx.fillStyle = d.fill || opts.fill;
+                    ctx.strokeStyle = d.color || opts.color;
+                    ctx.lineWidth = factor*(d.lineWidth || opts.lineWidth);
+                    x = scalex(d.x) - width;
+                    y = scaley(d.y);
+                    drawPolygon(ctx, [[x,y0], [x+width,y0], [x+width,y], [x, y]], radius);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+                }
+            });
         };
 
         // INTERNALS
@@ -1769,7 +2113,7 @@
             componentMap = {};
             cidCounter = 0;
             cid = null;
-            container.selectAll('canvas.giotto').remove();
+            container.selectAll('*').remove();
         }
 
         function _addCanvas() {
@@ -1777,29 +2121,27 @@
 
             var canvas = container.append("canvas")
                             .attr("class", "giotto")
-                            .attr("id", "giottoCanvas-" + paper.uid() + "-" + cid).node(),
-                ctx = _scaleCanvas(canvas.getContext('2d'));
+                            .attr("id", "giottoCanvas-" + paper.uid() + "-" + cid),
+                element = canvas.node(),
+                ctx = _scaleCanvas(element.getContext('2d'));
 
             var component = {
                     cid: cid,
-                    canvas: canvas,
+                    canvas: element,
                     callbacks: []
                 };
 
             if (components.length)
                 canvas.style({"position": "absolute", "top": "0", "left": "0"});
 
-            components.push(component);
+            components.push(cid);
             componentMap[cid] = component;
+            return canvas;
         }
 
         function _addComponent (callback) {
             componentMap[cid].callbacks.push(callback);
-            var o = callback(paper.current());
-            if (!o) o = {};
-            o.cid = cid;
-            o.chart = d3.select(componentMap[cid].canvas);
-            return o;
+            return cid;
         }
 
         function _render (ctx, canvas) {
@@ -1815,15 +2157,17 @@
         }
 
         function _apply (callback, _cid) {
-            var current = cid;
+            var current = cid,
+                component;
             if (!_cid)
-                components.forEach(function (component) {
-                    cid = component.cid;
+                components.forEach(function (_cid) {
+                    cid = _cid;
+                    component = componentMap[cid];
                     callback(component.canvas.getContext('2d'), component.canvas);
                 });
             else if (componentMap[_cid]) {
-                var component = omponentMap[_cid];
                 cid = component.cid;
+                component = componentMap[cid];
                 callback(component.canvas.getContext('2d'), component.canvas);
             }
             cid = current;
@@ -1844,6 +2188,50 @@
     });
 
 
+    function drawPolygon (ctx, pts, radius) {
+        if (radius > 0)
+            pts = getRoundedPoints(pts, radius);
+        var i, pt, len = pts.length;
+        ctx.beginPath();
+        for (i = 0; i < len; i++) {
+            pt = pts[i];
+            if (i === 0)
+                ctx.moveTo(pt[0], pt[1]);
+            else
+                ctx.lineTo(pt[0], pt[1]);
+            if (radius > 0)
+                ctx.quadraticCurveTo(pt[2], pt[3], pt[4], pt[5]);
+        }
+        ctx.closePath();
+    }
+
+    function getRoundedPoints(pts, radius) {
+        var i1, i2, i3, p1, p2, p3, prevPt, nextPt,
+            len = pts.length,
+            res = new Array(len);
+        for (i2 = 0; i2 < len; i2++) {
+            i1 = i2-1;
+            i3 = i2+1;
+            if (i1 < 0)
+                i1 = len - 1;
+            if (i3 === len) i3 = 0;
+            p1 = pts[i1];
+            p2 = pts[i2];
+            p3 = pts[i3];
+            prevPt = getRoundedPoint(p1[0], p1[1], p2[0], p2[1], radius, false);
+            nextPt = getRoundedPoint(p2[0], p2[1], p3[0], p3[1], radius, true);
+            res[i2] = [prevPt[0], prevPt[1], p2[0], p2[1], nextPt[0], nextPt[1]];
+        }
+      return res;
+    }
+
+    function getRoundedPoint(x1, y1, x2, y2, radius, first) {
+        var total = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2)),
+            idx = first ? radius / total : (total - radius) / total;
+        return [x1 + (idx * (x2 - x1)), y1 + (idx * (y2 - y1))];
+    }
+
+
     g.createviz('chart', {
         margin: {top: 30, right: 30, bottom: 30, left: 30},
         chartTypes: ['bar', 'line', 'point', 'pie'],
@@ -1856,8 +2244,7 @@
 
     function (chart, opts) {
 
-        var paper = chart.paper(),
-            series = [];
+        var series = [];
 
         chart.numSeries = function () {
             return series.length;
@@ -1876,6 +2263,7 @@
             var xrange = [Infinity, -Infinity],
                 yrange = [Infinity, -Infinity],
                 wasempty = chart.numSeries() === 0,
+                paper = chart.paper(),
                 data = [];
 
             series.forEach(function (serie) {
@@ -1916,15 +2304,25 @@
             return chart.addSeries([serie]);
         };
 
+        chart.clear = function () {
+            chart.paper().clear();
+            series = [];
+            return chart;
+        };
+
         chart.draw = function () {
             var data = opts.data;
             if (data === undefined && opts.src)
                 return chart.loadData(chart.draw);
             if (g._.isFunction(data))
-                data = data(chart);
+                data = opts.data = data(chart);
 
-            if (data)
+            chart.clear();
+            if (data) {
                 chart.addSeries(data);
+                chart.render();
+            }
+
         };
 
 
@@ -1955,14 +2353,17 @@
             // The serie is
             if (!serie) return;
 
-            if (add) {
-                paper.group({'class': 'serie'});
+            var paper = chart.paper(),
+                color;
 
+            if (add) {
                 g.log.info('Add new serie to chart');
 
                 series.push(serie);
                 if (!serie.label)
                     serie.label = 'serie ' + series.length;
+
+                paper.group({'class': 'serie ' + slugify(serie.label)});
 
                 opts.chartTypes.forEach(function (type) {
                     var o = serie[type];
@@ -1970,7 +2371,16 @@
                     if (o === undefined)
                         serie[type] = o = opts[type];
 
-                    serie[type] = o.show ? chartTypes[type](chart, serie.data, o) : o;
+                    if (o.show) {
+                        if (!o.color) {
+                            if (!color)
+                                color = paper.pickColor();
+                            o.color = color;
+                        }
+                        chartTypes[type](chart, serie.data, o);
+                    }
+
+                    serie[type] = o;
                 });
 
                 paper.parent();
@@ -1986,16 +2396,17 @@
     });
 
     var chartTypes = {
+
+        bar: function (chart, data, opts) {
+            return chart.paper().barchart(data, opts);
+        },
+
         line: function (chart, data, opts) {
             return chart.paper().path(data, opts);
         },
 
         point: function (chart, data, opts) {
             return chart.paper().points(data, opts);
-        },
-
-        bar: function (chart, data, opts) {
-            return chart.paper().barchart(data, opts);
         },
 
         pie: function (chart, data, opts) {
@@ -3097,16 +3508,17 @@
         }
 
     });
-    //
-    //  Add grid functionality to svg paper
-    g.paper.svg.plugin('grid', {
+    var gridDefaults = {
         color: '#333',
         background: {
             color: '#c6dbef',
             opacity: 0.4
         },
         opacity: 0.3
-    },
+    };
+    //
+    //  Add grid functionality to svg paper
+    g.paper.svg.plugin('grid', gridDefaults,
 
     function (paper, opts) {
 
@@ -3187,6 +3599,19 @@
         }
     });
 
+    g.paper.canvas.plugin('grid', gridDefaults,
+
+    function (paper, opts) {
+
+        paper.showGrid = function (options) {
+            return paper;
+        };
+
+        paper.hideGrid = function () {
+            return paper;
+        };
+
+     });
     //
     //  Add grid functionality to charts
     g.viz.chart.plugin(function (chart, opts) {
