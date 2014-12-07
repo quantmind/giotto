@@ -160,57 +160,33 @@
         paper.points = function (data, opts) {
             opts || (opts = {});
             copyMissing(p.point, opts);
-            opts.color = opts.color || paper.pickColor();
 
             return _addComponent(function (ctx) {
 
                 var scalex = paper.scalex,
                     scaley = paper.scaley,
-                    scale = paper.scale,
                     fill = opts.fill,
-                    size = paper.dim(opts.size),
+                    symbol = d3.canvas.symbol().type(function (d) {
+                        return d.symbol || opts.symbol;
+                    }).size(pointSize(paper, opts)),
                     d, i;
+
+                chartColors(paper, data, opts);
 
                 if (fill === true)
                     opts.fill = fill = d3.rgb(opts.color).brighter();
 
-                if (opts.symbol === 'circle') {
-                    var PI2 = Math.PI * 2;
-                    size *= 0.5;
-
-                    for (i=0; i<data.length; ++i) {
-                        d = data[i];
-                        ctx.beginPath();
-                        ctx.fillStyle = d.fill || fill;
-                        ctx.strokeStyle = d.color || opts.color;
-                        ctx.lineWidth = factor*(d.lineWidth || opts.width);
-                        ctx.arc(scalex(d.x), scaley(d.y), scale(d.radius === undefined ? size : d.radius), 0, PI2, false);
-                        ctx.closePath();
-                        ctx.fill();
-                        ctx.stroke();
-                    }
-                } else if (opts.symbol === 'square') {
-                    var x, y;
-                    for (i=0; i<data.length; ++i) {
-                        d = data[i];
-                        x = scalex(d.x);
-                        y = scaley(d.y);
-                        s = scale(d.size === undefined ? size : d.size);
-                        ctx.beginPath();
-                        ctx.fillStyle = d.fill || fill;
-                        ctx.strokeStyle = d.color || opts.color;
-                        ctx.lineWidth = factor*(d.lineWidth || opts.width);
-                        ctx.rect(x-0.5*s, y-0.5*s, s, s);
-                        ctx.closePath();
-                        ctx.fill();
-                        ctx.stroke();
-                    }
-                } else {
-
-                }
-
-                function s(v, defo) {
-                    return scale(v === undefined ? defo : v);
+                for (i=0; i<data.length; ++i) {
+                    d = data[i];
+                    ctx.save();
+                    ctx.translate(scalex(d.x), scaley(d.y));
+                    ctx.fillStyle = d.fill || fill;
+                    ctx.strokeStyle = d.color || opts.color;
+                    ctx.lineWidth = factor*(d.lineWidth || opts.width);
+                    symbol(ctx, d, i);
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.restore();
                 }
 
             });

@@ -78,11 +78,11 @@
         };
 
         paper.scalex = function (x) {
-            return Math.round(p.xAxis.scale()(x), 1);
+            return p.xAxis.scale()(x);
         };
 
         paper.scaley = function (y) {
-            return Math.round(paper.yAxis().scale()(y), 1);
+            return paper.yAxis().scale()(y);
         };
 
         paper.xfromPX = function (px) {

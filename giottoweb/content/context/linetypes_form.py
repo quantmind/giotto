@@ -4,7 +4,8 @@ lines = ('linear', 'linear-closed', 'step', 'step-before', 'step-after',
          'basis', 'basis-open', 'basis-closed', 'bundle', 'cardinal',
          'cardinal-open', 'cardinal-closed', 'monotone')
 
-symbols = ('circle', 'square', 'triangle')
+symbols = ('circle', 'cross', 'diamond', 'square', 'triangle-down',
+           'triangle-up')
 
 class LineTypeForm(forms.Form):
     '''Form for the Trianglify page'''

@@ -1,6 +1,6 @@
 //      Giotto - v0.1.0
 
-//      Compiled 2014-12-06.
+//      Compiled 2014-12-07.
 //      Copyright (c) 2014 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -79,6 +79,111 @@
     function d3_true() {
         return true;
     }
+
+    // Matrix to transform basis (b-spline) control points to bezier
+    // control points. Derived from FvD 11.2.8.
+    var d3_svg_lineBasisBezier1 = [0, 2/3, 1/3, 0],
+        d3_svg_lineBasisBezier2 = [0, 1/3, 2/3, 0],
+        d3_svg_lineBasisBezier3 = [0, 1/6, 2/3, 1/6];
+
+    // Computes the slope from points p0 to p1.
+    function d3_svg_lineSlope(p0, p1) {
+        return (p1[1] - p0[1]) / (p1[0] - p0[0]);
+    }
+
+    // Returns the dot product of the given four-element vectors.
+    function d3_svg_lineDot4(a, b) {
+        return a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3];
+    }
+
+    // Generates tangents for a cardinal spline.
+    function d3_svg_lineCardinalTangents(points, tension) {
+        var tangents = [],
+            a = (1 - tension) / 2,
+            p0,
+            p1 = points[0],
+            p2 = points[1],
+            i = 1,
+            n = points.length;
+        while (++i < n) {
+            p0 = p1;
+            p1 = p2;
+            p2 = points[i];
+            tangents.push([a * (p2[0] - p0[0]), a * (p2[1] - p0[1])]);
+        }
+        return tangents;
+    }
+
+    // Compute three-point differences for the given points.
+    // http://en.wikipedia.org/wiki/Cubic_Hermite_spline#Finite_difference
+    function d3_svg_lineFiniteDifferences(points) {
+        var i = 0,
+          j = points.length - 1,
+          m = [],
+          p0 = points[0],
+          p1 = points[1],
+          d = m[0] = d3_svg_lineSlope(p0, p1);
+        while (++i < j) {
+            m[i] = (d + (d = d3_svg_lineSlope(p0 = p1, p1 = points[i + 1]))) / 2;
+        }
+        m[i] = d;
+        return m;
+    }
+
+    // Interpolates the given points using Fritsch-Carlson Monotone cubic Hermite
+    // interpolation. Returns an array of tangent vectors. For details, see
+    // http://en.wikipedia.org/wiki/Monotone_cubic_interpolation
+    function d3_svg_lineMonotoneTangents(points) {
+        var tangents = [],
+          d,
+          a,
+          b,
+          s,
+          m = d3_svg_lineFiniteDifferences(points),
+          i = -1,
+          j = points.length - 1;
+
+        // The first two steps are done by computing finite-differences:
+        // 1. Compute the slopes of the secant lines between successive points.
+        // 2. Initialize the tangents at every point as the average of the secants.
+
+        // Then, for each segment…
+        while (++i < j) {
+            d = d3_svg_lineSlope(points[i], points[i + 1]);
+
+            // 3. If two successive yk = y{k + 1} are equal (i.e., d is zero), then set
+            // mk = m{k + 1} = 0 as the spline connecting these points must be flat to
+            // preserve monotonicity. Ignore step 4 and 5 for those k.
+
+            if (abs(d) < ε) {
+                m[i] = m[i + 1] = 0;
+            } else {
+                // 4. Let ak = mk / dk and bk = m{k + 1} / dk.
+                a = m[i] / d;
+                b = m[i + 1] / d;
+
+                // 5. Prevent overshoot and ensure monotonicity by restricting the
+                // magnitude of vector <ak, bk> to a circle of radius 3.
+                s = a * a + b * b;
+                if (s > 9) {
+                    s = d * 3 / Math.sqrt(s);
+                    m[i] = s * a;
+                    m[i + 1] = s * b;
+                }
+            }
+        }
+
+        // Compute the normalized tangent vector from the slopes. Note that if x is
+        // not monotonic, it's possible that the slope will be infinite, so we protect
+        // against NaN by setting the coordinate to zero.
+        i = -1; while (++i <= j) {
+            s = (points[Math.min(j, i + 1)][0] - points[Math.max(0, i - 1)][0]) / (6 * (1 + m[i] * m[i]));
+            tangents.push([s || 0, m[i] * s || 0]);
+        }
+
+        return tangents;
+    }
+
     function noop () {}
 
     var log = function (debug) {
@@ -403,6 +508,240 @@
         }
     }
 
+
+    g.math.distances = {
+
+        euclidean: function(v1, v2) {
+            var total = 0;
+            for (var i = 0; i < v1.length; i++) {
+                total += Math.pow(v2[i] - v1[i], 2);
+            }
+            return Math.sqrt(total);
+        }
+    };
+    //
+    //  K-means clustering
+    g.math.kmeans = function (centroids, max_iter, distance) {
+        var km = {};
+
+        max_iter = max_iter || 300;
+        distance = distance || "euclidean";
+        if (typeof distance == "string")
+            distance = g.math.distances[distance];
+
+        km.centroids = function (x) {
+            if (!arguments.length) return centroids;
+            centroids = x;
+            return km;
+        };
+
+        km.maxIters = function (x) {
+            if (!arguments.length) return max_iter;
+            max_iter = +x;
+            return km;
+        };
+
+        // create a set of random centroids from a set of points
+        km.randomCentroids = function (points, K) {
+            var means = points.slice(0); // copy
+            means.sort(function() {
+                return Math.round(Math.random()) - 0.5;
+            });
+            return means.slice(0, K);
+        };
+
+        km.classify = function (point) {
+            var min = Infinity,
+                index = 0,
+                i, dist;
+            for (i = 0; i < centroids.length; i++) {
+                dist = distance(point, centroids[i]);
+                if (dist < min) {
+                    min = dist;
+                    index = i;
+                }
+           }
+           return index;
+        };
+
+        km.cluster = function (points, callback) {
+
+            var iterations = 0,
+                movement = true,
+                N = points.length,
+                K = centroids.length,
+                clusters = new Array(K),
+                newCentroids,
+                n, k;
+
+            if (N < K)
+                throw Error('Number of points less than the number of clusters in K-means classification');
+
+            while (movement && iterations < max_iter) {
+                movement = false;
+                ++iterations;
+
+                // Assignments
+                for (k = 0; k < K; ++k)
+                    clusters[k] = {centroid: centroids[k], points: [], indices: []};
+
+                for (n = 0; n < N; n++) {
+                    k = km.classify(points[n]);
+                    clusters[k].points.push(points[n]);
+                    clusters[k].indices.push(n);
+                }
+
+                // Update centroids
+                newCentroids = [];
+                for (k = 0; k < K; ++k) {
+                    if (clusters[k].points.length)
+                        newCentroids.push(g.math.mean(clusters[k].points));
+                    else {
+                        // A centroid with no points, randomly re-initialise it
+                        newCentroids = km.randomCentroids(points, K);
+                        break;
+                    }
+                }
+
+                for (k = 0; k < K; ++k) {
+                    if (newCentroids[k] != centroids[k]) {
+                        centroids = newCentroids;
+                        movement = true;
+                        break;
+                    }
+                }
+
+                if (callback)
+                    callback(clusters, iterations);
+            }
+
+            return clusters;
+        };
+
+        return km;
+    };
+    var ε = 1e-6,
+        ε2 = ε * ε,
+        π = Math.PI,
+        τ = 2 * π,
+        τε = τ - ε,
+        halfπ = π / 2,
+        d3_radians = π / 180,
+        d3_degrees = 180 / π,
+        abs = Math.abs;
+
+    g.math.xyfunction = function (X, funy) {
+        var xy = [];
+        if (isArray(X))
+            X.forEach(function (x) {
+                xy.push([x, funy(x)]);
+            });
+        return xy;
+    };
+
+    // The arithmetic average of a array of points
+    g.math.mean = function (points) {
+        var mean = points[0].slice(0), // copy the first point
+            point, i, j;
+        for (i=1; i<points.length; ++i) {
+            point = points[i];
+            for (j=0; j<mean.length; ++j)
+                mean[j] += point[j];
+        }
+        for (j=0; j<mean.length; ++j)
+            mean[j] /= points.length;
+        return mean;
+    };
+    var BITS = 52,
+        SCALE = 2 << 51,
+        MAX_DIMENSION = 21201,
+        COEFFICIENTS = [
+            'd       s       a       m_i',
+            '2       1       0       1',
+            '3       2       1       1 3',
+            '4       3       1       1 3 1',
+            '5       3       2       1 1 1',
+            '6       4       1       1 1 3 3',
+            '7       4       4       1 3 5 13',
+            '8       5       2       1 1 5 5 17',
+            '9       5       4       1 1 5 5 5',
+            '10      5       7       1 1 7 11 1'
+        ];
+
+
+    g.math.sobol = function (dim) {
+        if (dim < 1 || dim > MAX_DIMENSION) throw new Error("Out of range dimension");
+        var sobol = {},
+            count = 0,
+            direction = [],
+            x = [],
+            zero = [],
+            lines,
+            i;
+
+        sobol.next = function() {
+            var v = [];
+            if (count === 0) {
+                count++;
+                return zero.slice();
+            }
+            var c = 1;
+            var value = count - 1;
+            while ((value & 1) == 1) {
+                value >>= 1;
+                c++;
+            }
+            for (i = 0; i < dim; i++) {
+                x[i] ^= direction[i][c];
+                v[i] = x[i] / SCALE;
+            }
+            count++;
+            return v;
+        };
+
+        sobol.dimension = function () {
+            return dim;
+        };
+
+        sobol.count = function () {
+            return count;
+        };
+
+
+        var tmp = [];
+        for (i = 0; i <= BITS; i++) tmp.push(0);
+        for (i = 0; i < dim; i++) {
+            direction[i] = tmp.slice();
+            x[i] = 0;
+            zero[i] = 0;
+        }
+
+        if (dim > COEFFICIENTS.length) {
+            throw new Error("Out of range dimension");
+            //var data = fs.readFileSync(file);
+            //lines = ("" + data).split("\n");
+        }
+        else
+            lines = COEFFICIENTS;
+
+        for (i = 1; i <= BITS; i++) direction[0][i] = 1 << (BITS - i);
+        for (var d = 1; d < dim; d++) {
+            var cells = lines[d].split(/\s+/);
+            var s = +cells[1];
+            var a = +cells[2];
+            var m = [0];
+            for (i = 0; i < s; i++) m.push(+cells[3 + i]);
+            for (i = 1; i <= s; i++) direction[d][i] = m[i] << (BITS - i);
+            for (i = s + 1; i <= BITS; i++) {
+                direction[d][i] = direction[d][i - s] ^ (direction[d][i - s] >> s);
+                for (var k = 1; k <= s - 1; k++)
+                direction[d][i] ^= ((a >> (s - 1 - k)) & 1) * direction[d][i - k];
+            }
+        }
+
+        return sobol;
+    };
+
     g.defaults = {};
 
     g.defaults.axis = {
@@ -425,6 +764,7 @@
         css: null,
         line: {
             interpolate: 'cardinal',
+            fill: false,
             lineWidth: 2
         },
         point: {
@@ -432,13 +772,13 @@
             size: '8px',
             fill: true,
             fillOpacity: 1,
-            lineWidth: 1
+            lineWidth: 2
         },
         bar: {
             width: 'auto',
             color: null,
             fill: true,
-            lineWidth: 1,
+            lineWidth: 2,
             // Radius in pixels of rounded corners. Set to 0 for no rounded corners
             radius: 4
         },
@@ -547,11 +887,11 @@
         };
 
         paper.scalex = function (x) {
-            return Math.round(p.xAxis.scale()(x), 1);
+            return p.xAxis.scale()(x);
         };
 
         paper.scaley = function (y) {
-            return Math.round(paper.yAxis().scale()(y), 1);
+            return paper.yAxis().scale()(y);
         };
 
         paper.xfromPX = function (px) {
@@ -884,8 +1224,9 @@
                 var chart = container.select("g.points"),
                     scalex = paper.scalex,
                     scaley = paper.scaley,
-                    scale = paper.scale,
-                    size = paper.dim(opts.size),
+                    symbol = d3.svg.symbol().type(function (d) {
+                        return d.symbol || opts.symbol;
+                    }).size(pointSize(paper, opts)),
                     points;
 
                 chartColors(paper, data, opts);
@@ -894,63 +1235,28 @@
                     chart = container.append("g")
                                     .attr('class', 'points');
 
-                    if (opts.symbol === 'circle')
-                        points = chart.selectAll("circle.point")
-                                    .data(data)
-                                    .enter()
-                                    .append("circle");
-                    else if (opts.symbol === 'square')
-                        points = chart.selectAll("rect.point")
-                                    .data(data)
-                                    .enter()
-                                    .append("rect");
-                    else if (opts.symbol === 'triangle')
-                        points = chart.selectAll("triangle.point")
-                                    .data(data)
-                                    .enter()
-                                    .append("polygon");
-
-                    points.attr('class', 'point');
+                    points = chart.selectAll("path.point")
+                                .data(data)
+                                .enter()
+                                .append("path")
+                                .attr('class', 'point');
 
                 } else
-                    points = chart.selectAll("circle.point");
+                    points = chart.selectAll("path.point");
 
                 chart.attr('stroke', opts.color)
                         .attr('stroke-width', opts.lineWidth)
                         .attr('fill', opts.fill)
                         .attr('fill-opacity', opts.fillOpacity);
 
-                if (opts.symbol === 'circle') {
-                    size *= 0.5;
-                    points.attr('cx', function (d) {return scalex(d.x);})
-                            .attr('cy', function (d) {return scaley(d.y);})
-                            .attr('r', function (d) {return s(d.radius, size);})
-                            .style("fill", function(d) { return d.fill; });
-                } else if (opts.symbol === 'square') {
-                    points.attr('x', function (d) {return scalex(d.x) - 0.5*s(d.size, size);})
-                            .attr('y', function (d) {return scaley(d.y) - 0.5*s(d.size, size);})
-                            .attr('height', function (d) {return  s(d.size, size);})
-                            .attr('width', function (d) {return  s(d.size, size);});
-                } else if (opts.symbol === 'triangle') {
-                    var s32 = d3.round(0.5*Math.sqrt(3), 1);
-                    size *= 0.6;
-                    points.attr('points', function (d) {
-                              var r = s(d.size, size),
-                                  dx = r*s32,
-                                  x = scalex(d.x),
-                                  y = scaley(d.y),
-                                  yl = y + 0.5*r;
-
-                              return x + ',' + (y-r) + ' ' + (x-dx) + ',' + yl + ' ' + (x+dx) + ',' + yl;
-                          });
-                }
+                points
+                    .attr("transform", function(d) {
+                        return "translate(" + scalex(d.x) + "," + scaley(d.y) + ")";
+                    })
+                    .attr('d', symbol);
 
                 opts.chart = chart;
                 return opts;
-
-                function s(v, defo) {
-                    return scale(v === undefined ? defo : v);
-                }
             });
         };
 
@@ -975,6 +1281,7 @@
 
                 var bar = chart
                         .attr('stroke', opts.color)
+                        .attr('stroke-width', opts.lineWidth)
                         .attr('fill', opts.fill)
                         .selectAll(".bar")
                         .data(data)
@@ -1466,6 +1773,28 @@
             return opts.width;
     }
 
+    function pointSize (paper, opts) {
+        var scale = paper.scale,
+            size = paper.dim(opts.size),
+            fraction = {
+                circle: 0.7,
+                cross: 0.7,
+                diamond: 0.7,
+                "triangle-up": 0.6,
+                "triangle-down": 0.6
+            }, type, s;
+
+        return function (d) {
+            type = d.symbol || opts.symbol;
+            s = d.size === undefined ? size : d.size;
+
+            if (type === 'circle' && d.radius !== undefined)
+                s = 2*d.radius;
+            s = scale(s);
+            return s*s*(fraction[type] || 1);
+        };
+    }
+
     //
     //  Initaise paper
     function _initPaper (paper, p) {
@@ -1786,20 +2115,22 @@
         "step": d3_canvas_lineStep,
         "step-before": d3_canvas_lineStepBefore,
         "step-after": d3_canvas_lineStepAfter,
-        "basis": d3_canvas_lineBasis
-        //"basis-open": d3_svg_lineBasisOpen,
-        //"basis-closed": d3_svg_lineBasisClosed,
-        //"bundle": d3_svg_lineBundle,
-        //"cardinal": d3_svg_lineCardinal,
-        //"cardinal-open": d3_svg_lineCardinalOpen,
-        //"cardinal-closed": d3_svg_lineCardinalClosed,
-        //"monotone": d3_svg_lineMonotone
+        "basis": d3_canvas_lineBasis,
+        "basis-open": d3_canvas_lineBasisOpen,
+        "basis-closed": d3_canvas_lineBasisClosed,
+        "bundle": d3_canvas_lineBundle,
+        "cardinal": d3_canvas_lineCardinal,
+        "cardinal-open": d3_canvas_lineCardinalOpen,
+        "cardinal-closed": d3_canvas_lineCardinalClosed,
+        "monotone": d3_canvas_lineMonotone
     });
 
-    function d3_canvas_lineLinear(ctx, points) {
+    function d3_canvas_lineLinear(ctx, points, _, started) {
         var p = points[0];
-        ctx.beginPath();
-        ctx.moveTo(p[0], p[1]);
+        if (!started) {
+            ctx.beginPath();
+            ctx.moveTo(p[0], p[1]);
+        }
         for (var i=1; i<points.length; ++i) {
             p = points[i];
             ctx.lineTo(p[0], p[1]);
@@ -1853,8 +2184,296 @@
     }
 
     function d3_canvas_lineBasis(ctx, points) {
+        if (points.length < 3) return d3_canvas_lineLinear(ctx, points);
+        var i = 1,
+            n = points.length,
+            pi = points[0],
+            x0 = pi[0],
+            y0 = pi[1],
+            px = [x0, x0, x0, (pi = points[1])[0]],
+            py = [y0, y0, y0, pi[1]];
 
+        ctx.beginPath();
+        ctx.moveTo(x0, y0);
+        ctx.lineTo(d3_svg_lineDot4(d3_svg_lineBasisBezier3, px),
+                   d3_svg_lineDot4(d3_svg_lineBasisBezier3, py));
+
+        points.push(points[n - 1]);
+        while (++i <= n) {
+            pi = points[i];
+            px.shift();
+            px.push(pi[0]);
+            py.shift();
+            py.push(pi[1]);
+            d3_canvas_lineBasisBezier(ctx, px, py);
+        }
+        points.pop();
+        ctx.lineTo(pi[0], pi[1]);
     }
+
+    // Open B-spline interpolation; generates "C" commands.
+    function d3_canvas_lineBasisOpen(ctx, points) {
+        if (points.length < 4) return d3_canvas_lineLinear(points);
+        var path = [],
+            i = -1,
+            n = points.length,
+            pi,
+            px = [0],
+            py = [0];
+        while (++i < 3) {
+            pi = points[i];
+            px.push(pi[0]);
+            py.push(pi[1]);
+        }
+        ctx.beginPath();
+        ctx.moveTo(d3_svg_lineDot4(d3_svg_lineBasisBezier3, px),
+                   d3_svg_lineDot4(d3_svg_lineBasisBezier3, py));
+        --i; while (++i < n) {
+            pi = points[i];
+            px.shift(); px.push(pi[0]);
+            py.shift(); py.push(pi[1]);
+            d3_canvas_lineBasisBezier(ctx, px, py);
+        }
+    }
+
+    // Closed B-spline interpolation; generates "C" commands.
+    function d3_canvas_lineBasisClosed(ctx, points) {
+        var path,
+            i = -1,
+            n = points.length,
+            m = n + 4,
+            pi,
+            px = [],
+            py = [];
+        while (++i < 4) {
+            pi = points[i % n];
+            px.push(pi[0]);
+            py.push(pi[1]);
+        }
+        ctx.beginPath();
+        ctx.moveTo(d3_svg_lineDot4(d3_svg_lineBasisBezier3, px),
+                   d3_svg_lineDot4(d3_svg_lineBasisBezier3, py));
+        --i; while (++i < m) {
+            pi = points[i % n];
+            px.shift(); px.push(pi[0]);
+            py.shift(); py.push(pi[1]);
+            d3_canvas_lineBasisBezier(ctx, px, py);
+        }
+    }
+
+    function d3_canvas_lineBundle(ctx, points, tension) {
+        var n = points.length - 1;
+        if (n) {
+            var x0 = points[0][0],
+                y0 = points[0][1],
+                dx = points[n][0] - x0,
+                dy = points[n][1] - y0,
+                i = -1,
+                p,
+                t;
+            while (++i <= n) {
+                p = points[i];
+                t = i / n;
+                p[0] = tension * p[0] + (1 - tension) * (x0 + t * dx);
+                p[1] = tension * p[1] + (1 - tension) * (y0 + t * dy);
+            }
+        }
+        return d3_canvas_lineBasis(ctx, points);
+    }
+
+    function d3_canvas_lineCardinal(ctx, points, tension) {
+        if (points.length < 3)
+            d3_canvas_lineLinear(ctx, points);
+        else {
+            ctx.beginPath();
+            ctx.moveTo(points[0][0], points[0][1]);
+            d3_canvas_lineHermite(ctx, points, d3_svg_lineCardinalTangents(points, tension));
+        }
+    }
+
+    // Open cardinal spline interpolation; generates "C" commands.
+    function d3_canvas_lineCardinalOpen(ctx, points, tension) {
+        if (points.length < 4)
+            d3_canvas_lineLinear(ctx, points);
+        else {
+            ctx.beginPath();
+            ctx.moveTo(points[1][0], points[1][1]);
+            d3_canvas_lineHermite(ctx, points.slice(1, -1), d3_svg_lineCardinalTangents(points, tension));
+        }
+    }
+
+    // Closed cardinal spline interpolation; generates "C" commands.
+    function d3_canvas_lineCardinalClosed(ctx, points, tension) {
+        if (points.length < 3)
+            d3_canvas_lineLinear(ctx, points);
+        else {
+            ctx.beginPath();
+            ctx.moveTo(points[0][0], points[0][1]);
+            d3_canvas_lineHermite(ctx, (points.push(points[0]), points),
+                d3_svg_lineCardinalTangents([points[points.length - 2]].concat(points, [points[1]]), tension));
+        }
+    }
+
+    function d3_canvas_lineMonotone(ctx, points) {
+        if (points.length < 3)
+            d3_canvas_lineLinear(ctx, points);
+        else {
+            ctx.beginPath();
+            ctx.moveTo(points[0][0], points[0][1]);
+            d3_canvas_lineHermite(ctx, points, d3_svg_lineMonotoneTangents(points));
+        }
+    }
+
+
+    function d3_canvas_lineBasisBezier(ctx, x, y) {
+        ctx.bezierCurveTo(d3_svg_lineDot4(d3_svg_lineBasisBezier1, x),
+                          d3_svg_lineDot4(d3_svg_lineBasisBezier1, y),
+                          d3_svg_lineDot4(d3_svg_lineBasisBezier2, x),
+                          d3_svg_lineDot4(d3_svg_lineBasisBezier2, y),
+                          d3_svg_lineDot4(d3_svg_lineBasisBezier3, x),
+                          d3_svg_lineDot4(d3_svg_lineBasisBezier3, y));
+    }
+
+
+    function d3_canvas_lineHermite(ctx, points, tangents) {
+        if (tangents.length < 1 ||
+            (points.length != tangents.length && points.length != tangents.length + 2))
+            return d3_canvas_lineLinear(ctx, points, null, true);
+
+        var quad = points.length != tangents.length,
+            p0 = points[0],
+            p = points[1],
+            t0 = tangents[0],
+            t = t0,
+            pi = 1,
+            xc, yc;
+
+        if (quad) {
+            ctx.quadraticCurveTo((p[0] - t0[0] * 2 / 3), (p[1] - t0[1] * 2 / 3), p[0], p[1]);
+            p0 = points[1];
+            pi = 2;
+        }
+
+        if (tangents.length > 1) {
+            t = tangents[1];
+            p = points[pi];
+            pi++;
+            ctx.bezierCurveTo(p0[0] + t0[0], p0[1] + t0[1],
+                              p[0] - t[0], p[1] - t[1],
+                              p[0], p[1]);
+            for (var i = 2; i < tangents.length; i++, pi++) {
+                xc = p[0] + t[0];
+                yc = p[1] + t[1];
+                p = points[pi];
+                t = tangents[i];
+                ctx.bezierCurveTo(xc, yc,
+                                  p[0] - t[0], p[1] - t[1],
+                                  p[0], p[1]);
+            }
+        }
+
+        if (quad) {
+            var lp = points[pi];
+            ctx.quadraticCurveTo((p[0] + t[0] * 2 / 3), (p[1] + t[1] * 2 / 3), lp[0], lp[1]);
+        }
+    }
+
+
+    d3.canvas.symbol = function() {
+        var svg = d3.svg.symbol(),
+            type = svg.type(),
+            size = svg.size(),
+            ctx;
+
+        function symbol (ctx, d, i) {
+            return (d3_canvas_symbols.get(type.call(symbol, d, i)) || d3_canvas_symbolCircle)(ctx, size.call(symbol, d, i));
+        }
+
+        symbol.type = function (x) {
+            if (!arguments.length) return type;
+            type = d3_functor(x);
+            return symbol;
+        };
+
+        // size of symbol in square pixels
+        symbol.size = function (x) {
+            if (!arguments.length) return size;
+            size = d3_functor(x);
+            return symbol;
+        };
+
+        return symbol;
+    };
+
+
+    function d3_canvas_symbolCircle(ctx, size) {
+        var r = Math.sqrt(size / π);
+        ctx.beginPath();
+        ctx.arc(0, 0, r, 0, τ, false);
+        ctx.closePath();
+    }
+
+    var d3_canvas_symbols = d3.map({
+        "circle": d3_canvas_symbolCircle,
+        "cross": function(ctx, size) {
+            var r = Math.sqrt(size / 5) / 2,
+                r3 = 3*r;
+            ctx.beginPath();
+            ctx.moveTo(-r3, -r);
+            ctx.lineTo(-r, -r);
+            ctx.lineTo(-r, -r3);
+            ctx.lineTo(r, -r3);
+            ctx.lineTo(r, -r);
+            ctx.lineTo(r3, -r);
+            ctx.lineTo(r3, r);
+            ctx.lineTo(r, r);
+            ctx.lineTo(r, r3);
+            ctx.lineTo(-r, r3);
+            ctx.lineTo(-r, r);
+            ctx.lineTo(-r3, r);
+            ctx.closePath();
+        },
+        "diamond": function(ctx, size) {
+            var ry = Math.sqrt(size / (2 * d3_svg_symbolTan30)),
+                rx = ry * d3_svg_symbolTan30;
+            ctx.beginPath();
+            ctx.moveTo(0, -ry);
+            ctx.lineTo(rx, 0);
+            ctx.lineTo(0, ry);
+            ctx.lineTo(-rx, 0);
+            ctx.closePath();
+        },
+        "square": function(ctx, size) {
+            var s = Math.sqrt(size);
+            ctx.beginPath();
+            ctx.rect(-0.5*s, -0.5*s, s, s);
+            ctx.closePath();
+        },
+        "triangle-down": function(ctx, size) {
+            var rx = Math.sqrt(size / d3_svg_symbolSqrt3),
+                ry = rx * d3_svg_symbolSqrt3 / 2;
+            ctx.beginPath();
+            ctx.moveTo(0, ry);
+            ctx.lineTo(rx, -ry);
+            ctx.lineTo(-rx, -ry);
+            ctx.closePath();
+        },
+        "triangle-up": function(ctx, size) {
+            var rx = Math.sqrt(size / d3_svg_symbolSqrt3),
+                ry = rx * d3_svg_symbolSqrt3 / 2;
+            ctx.beginPath();
+            ctx.moveTo(0, -ry);
+            ctx.lineTo(rx, ry);
+            ctx.lineTo(-rx, ry);
+            ctx.closePath();
+        }
+    });
+
+    d3.canvas.symbolTypes = d3_canvas_symbols.keys();
+
+
+    var d3_svg_symbolSqrt3 = Math.sqrt(3),
+        d3_svg_symbolTan30 = Math.tan(30 * d3_radians);
 
     //
     //  Canvas based Paper
@@ -2018,57 +2637,33 @@
         paper.points = function (data, opts) {
             opts || (opts = {});
             copyMissing(p.point, opts);
-            opts.color = opts.color || paper.pickColor();
 
             return _addComponent(function (ctx) {
 
                 var scalex = paper.scalex,
                     scaley = paper.scaley,
-                    scale = paper.scale,
                     fill = opts.fill,
-                    size = paper.dim(opts.size),
+                    symbol = d3.canvas.symbol().type(function (d) {
+                        return d.symbol || opts.symbol;
+                    }).size(pointSize(paper, opts)),
                     d, i;
+
+                chartColors(paper, data, opts);
 
                 if (fill === true)
                     opts.fill = fill = d3.rgb(opts.color).brighter();
 
-                if (opts.symbol === 'circle') {
-                    var PI2 = Math.PI * 2;
-                    size *= 0.5;
-
-                    for (i=0; i<data.length; ++i) {
-                        d = data[i];
-                        ctx.beginPath();
-                        ctx.fillStyle = d.fill || fill;
-                        ctx.strokeStyle = d.color || opts.color;
-                        ctx.lineWidth = factor*(d.lineWidth || opts.width);
-                        ctx.arc(scalex(d.x), scaley(d.y), scale(d.radius === undefined ? size : d.radius), 0, PI2, false);
-                        ctx.closePath();
-                        ctx.fill();
-                        ctx.stroke();
-                    }
-                } else if (opts.symbol === 'square') {
-                    var x, y;
-                    for (i=0; i<data.length; ++i) {
-                        d = data[i];
-                        x = scalex(d.x);
-                        y = scaley(d.y);
-                        s = scale(d.size === undefined ? size : d.size);
-                        ctx.beginPath();
-                        ctx.fillStyle = d.fill || fill;
-                        ctx.strokeStyle = d.color || opts.color;
-                        ctx.lineWidth = factor*(d.lineWidth || opts.width);
-                        ctx.rect(x-0.5*s, y-0.5*s, s, s);
-                        ctx.closePath();
-                        ctx.fill();
-                        ctx.stroke();
-                    }
-                } else {
-
-                }
-
-                function s(v, defo) {
-                    return scale(v === undefined ? defo : v);
+                for (i=0; i<data.length; ++i) {
+                    d = data[i];
+                    ctx.save();
+                    ctx.translate(scalex(d.x), scaley(d.y));
+                    ctx.fillStyle = d.fill || fill;
+                    ctx.strokeStyle = d.color || opts.color;
+                    ctx.lineWidth = factor*(d.lineWidth || opts.width);
+                    symbol(ctx, d, i);
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.restore();
                 }
 
             });
@@ -3786,13 +4381,14 @@
             return function (d) {return value;};
         }
     });
-    //
-    //  Add zoom functionality to an svg paper
-    g.paper.svg.plugin('zoom', {
+    var zoomDefaults = {
         x: true,
         y: true,
         extent: [1, 10]
-    },
+    };
+    //
+    //  Add zoom functionality to an svg paper
+    g.paper.svg.plugin('zoom', zoomDefaults,
 
     function (paper, opts) {
         var zoom;
@@ -3823,6 +4419,37 @@
         }
     });
 
+    g.paper.canvas.plugin('zoom', zoomDefaults,
+
+    function (paper, opts) {
+        var zoom;
+
+        paper.zoom = function (options) {
+            init();
+            if (options)
+                extend(opts.zoom, options);
+            if (opts.zoom.x)
+                zoom.x(paper.xAxis().scale());
+            if (opts.zoom.y)
+                zoom.y(paper.yAxis().scale());
+            if (opts.zoom.extent)
+                zoom.scaleExtent(opts.zoom.extent);
+            //zoom.on('zoom', paper.render);
+            //var g = paper.root().current();
+            //g.call(zoom);
+            paper.showGrid();
+        };
+
+        // PRIVATE FUNCTIONS
+
+        function init () {
+            if (!zoom) {
+                zoom = d3.behavior.zoom();
+                opts.zoom = extend({}, opts.zoom, g.defaults.paper.zoom);
+            }
+        }
+    });
+
     //
     //  Add grid functionality to charts
     g.viz.chart.plugin(function (chart, opts) {
@@ -3833,231 +4460,6 @@
         });
     });
 
-
-
-    g.math.distances = {
-
-        euclidean: function(v1, v2) {
-            var total = 0;
-            for (var i = 0; i < v1.length; i++) {
-                total += Math.pow(v2[i] - v1[i], 2);
-            }
-            return Math.sqrt(total);
-        }
-    };
-    //
-    //  K-means clustering
-    g.math.kmeans = function (centroids, max_iter, distance) {
-        var km = {};
-
-        max_iter = max_iter || 300;
-        distance = distance || "euclidean";
-        if (typeof distance == "string")
-            distance = g.math.distances[distance];
-
-        km.centroids = function (x) {
-            if (!arguments.length) return centroids;
-            centroids = x;
-            return km;
-        };
-
-        km.maxIters = function (x) {
-            if (!arguments.length) return max_iter;
-            max_iter = +x;
-            return km;
-        };
-
-        // create a set of random centroids from a set of points
-        km.randomCentroids = function (points, K) {
-            var means = points.slice(0); // copy
-            means.sort(function() {
-                return Math.round(Math.random()) - 0.5;
-            });
-            return means.slice(0, K);
-        };
-
-        km.classify = function (point) {
-            var min = Infinity,
-                index = 0,
-                i, dist;
-            for (i = 0; i < centroids.length; i++) {
-                dist = distance(point, centroids[i]);
-                if (dist < min) {
-                    min = dist;
-                    index = i;
-                }
-           }
-           return index;
-        };
-
-        km.cluster = function (points, callback) {
-
-            var iterations = 0,
-                movement = true,
-                N = points.length,
-                K = centroids.length,
-                clusters = new Array(K),
-                newCentroids,
-                n, k;
-
-            if (N < K)
-                throw Error('Number of points less than the number of clusters in K-means classification');
-
-            while (movement && iterations < max_iter) {
-                movement = false;
-                ++iterations;
-
-                // Assignments
-                for (k = 0; k < K; ++k)
-                    clusters[k] = {centroid: centroids[k], points: [], indices: []};
-
-                for (n = 0; n < N; n++) {
-                    k = km.classify(points[n]);
-                    clusters[k].points.push(points[n]);
-                    clusters[k].indices.push(n);
-                }
-
-                // Update centroids
-                newCentroids = [];
-                for (k = 0; k < K; ++k) {
-                    if (clusters[k].points.length)
-                        newCentroids.push(g.math.mean(clusters[k].points));
-                    else {
-                        // A centroid with no points, randomly re-initialise it
-                        newCentroids = km.randomCentroids(points, K);
-                        break;
-                    }
-                }
-
-                for (k = 0; k < K; ++k) {
-                    if (newCentroids[k] != centroids[k]) {
-                        centroids = newCentroids;
-                        movement = true;
-                        break;
-                    }
-                }
-
-                if (callback)
-                    callback(clusters, iterations);
-            }
-
-            return clusters;
-        };
-
-        return km;
-    };
-
-    g.math.xyfunction = function (X, funy) {
-        var xy = [];
-        if (isArray(X))
-            X.forEach(function (x) {
-                xy.push([x, funy(x)]);
-            });
-        return xy;
-    };
-
-    // The arithmetic average of a array of points
-    g.math.mean = function (points) {
-        var mean = points[0].slice(0), // copy the first point
-            point, i, j;
-        for (i=1; i<points.length; ++i) {
-            point = points[i];
-            for (j=0; j<mean.length; ++j)
-                mean[j] += point[j];
-        }
-        for (j=0; j<mean.length; ++j)
-            mean[j] /= points.length;
-        return mean;
-    };
-    var BITS = 52,
-        SCALE = 2 << 51,
-        MAX_DIMENSION = 21201,
-        COEFFICIENTS = [
-            'd       s       a       m_i',
-            '2       1       0       1',
-            '3       2       1       1 3',
-            '4       3       1       1 3 1',
-            '5       3       2       1 1 1',
-            '6       4       1       1 1 3 3',
-            '7       4       4       1 3 5 13',
-            '8       5       2       1 1 5 5 17',
-            '9       5       4       1 1 5 5 5',
-            '10      5       7       1 1 7 11 1'
-        ];
-
-
-    g.math.sobol = function (dim) {
-        if (dim < 1 || dim > MAX_DIMENSION) throw new Error("Out of range dimension");
-        var sobol = {},
-            count = 0,
-            direction = [],
-            x = [],
-            zero = [],
-            lines,
-            i;
-
-        sobol.next = function() {
-            var v = [];
-            if (count === 0) {
-                count++;
-                return zero.slice();
-            }
-            var c = 1;
-            var value = count - 1;
-            while ((value & 1) == 1) {
-                value >>= 1;
-                c++;
-            }
-            for (i = 0; i < dim; i++) {
-                x[i] ^= direction[i][c];
-                v[i] = x[i] / SCALE;
-            }
-            count++;
-            return v;
-        };
-
-        sobol.dimension = function () {
-            return dim;
-        };
-
-        sobol.count = function () {
-            return count;
-        };
-
-
-        var tmp = [];
-        for (i = 0; i <= BITS; i++) tmp.push(0);
-        for (i = 0; i < dim; i++) {
-            direction[i] = tmp.slice();
-            x[i] = 0;
-            zero[i] = 0;
-        }
-
-        if (dim > COEFFICIENTS.length) {
-            throw new Error("Out of range dimension");
-            //var data = fs.readFileSync(file);
-            //lines = ("" + data).split("\n");
-        }
-        else
-            lines = COEFFICIENTS;
-
-        for (i = 1; i <= BITS; i++) direction[0][i] = 1 << (BITS - i);
-        for (var d = 1; d < dim; d++) {
-            var cells = lines[d].split(/\s+/);
-            var s = +cells[1];
-            var a = +cells[2];
-            var m = [0];
-            for (i = 0; i < s; i++) m.push(+cells[3 + i]);
-            for (i = 1; i <= s; i++) direction[d][i] = m[i] << (BITS - i);
-            for (i = s + 1; i <= BITS; i++) {
-                direction[d][i] = direction[d][i - s] ^ (direction[d][i - s] >> s);
-                for (var k = 1; k <= s - 1; k++)
-                direction[d][i] ^= ((a >> (s - 1 - k)) & 1) * direction[d][i - k];
-            }
-        }
-
-        return sobol;
-    };
 
     //
     //  Optional Angular Integration

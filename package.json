@@ -12,7 +12,12 @@
     },
     "description": "Giotto - d3 visualization extensions",
     "title": "Giotto",
-    "keywords": ["visualization"],
+    "keywords": [
+        "visualization",
+        "svg",
+        "canvas",
+        "animation"
+    ],
     "licenses": [
         {
             "type": "BSD"

@@ -20,6 +20,7 @@
         css: null,
         line: {
             interpolate: 'cardinal',
+            fill: false,
             lineWidth: 2
         },
         point: {
@@ -27,13 +28,13 @@
             size: '8px',
             fill: true,
             fillOpacity: 1,
-            lineWidth: 1
+            lineWidth: 2
         },
         bar: {
             width: 'auto',
             color: null,
             fill: true,
-            lineWidth: 1,
+            lineWidth: 2,
             // Radius in pixels of rounded corners. Set to 0 for no rounded corners
             radius: 4
         },

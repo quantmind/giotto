@@ -169,8 +169,9 @@
                 var chart = container.select("g.points"),
                     scalex = paper.scalex,
                     scaley = paper.scaley,
-                    scale = paper.scale,
-                    size = paper.dim(opts.size),
+                    symbol = d3.svg.symbol().type(function (d) {
+                        return d.symbol || opts.symbol;
+                    }).size(pointSize(paper, opts)),
                     points;
 
                 chartColors(paper, data, opts);
@@ -179,63 +180,28 @@
                     chart = container.append("g")
                                     .attr('class', 'points');
 
-                    if (opts.symbol === 'circle')
-                        points = chart.selectAll("circle.point")
-                                    .data(data)
-                                    .enter()
-                                    .append("circle");
-                    else if (opts.symbol === 'square')
-                        points = chart.selectAll("rect.point")
-                                    .data(data)
-                                    .enter()
-                                    .append("rect");
-                    else if (opts.symbol === 'triangle')
-                        points = chart.selectAll("triangle.point")
-                                    .data(data)
-                                    .enter()
-                                    .append("polygon");
-
-                    points.attr('class', 'point');
+                    points = chart.selectAll("path.point")
+                                .data(data)
+                                .enter()
+                                .append("path")
+                                .attr('class', 'point');
 
                 } else
-                    points = chart.selectAll("circle.point");
+                    points = chart.selectAll("path.point");
 
                 chart.attr('stroke', opts.color)
                         .attr('stroke-width', opts.lineWidth)
                         .attr('fill', opts.fill)
                         .attr('fill-opacity', opts.fillOpacity);
 
-                if (opts.symbol === 'circle') {
-                    size *= 0.5;
-                    points.attr('cx', function (d) {return scalex(d.x);})
-                            .attr('cy', function (d) {return scaley(d.y);})
-                            .attr('r', function (d) {return s(d.radius, size);})
-                            .style("fill", function(d) { return d.fill; });
-                } else if (opts.symbol === 'square') {
-                    points.attr('x', function (d) {return scalex(d.x) - 0.5*s(d.size, size);})
-                            .attr('y', function (d) {return scaley(d.y) - 0.5*s(d.size, size);})
-                            .attr('height', function (d) {return  s(d.size, size);})
-                            .attr('width', function (d) {return  s(d.size, size);});
-                } else if (opts.symbol === 'triangle') {
-                    var s32 = d3.round(0.5*Math.sqrt(3), 1);
-                    size *= 0.6;
-                    points.attr('points', function (d) {
-                              var r = s(d.size, size),
-                                  dx = r*s32,
-                                  x = scalex(d.x),
-                                  y = scaley(d.y),
-                                  yl = y + 0.5*r;
-
-                              return x + ',' + (y-r) + ' ' + (x-dx) + ',' + yl + ' ' + (x+dx) + ',' + yl;
-                          });
-                }
+                points
+                    .attr("transform", function(d) {
+                        return "translate(" + scalex(d.x) + "," + scaley(d.y) + ")";
+                    })
+                    .attr('d', symbol);
 
                 opts.chart = chart;
                 return opts;
-
-                function s(v, defo) {
-                    return scale(v === undefined ? defo : v);
-                }
             });
         };
 
@@ -260,6 +226,7 @@
 
                 var bar = chart
                         .attr('stroke', opts.color)
+                        .attr('stroke-width', opts.lineWidth)
                         .attr('fill', opts.fill)
                         .selectAll(".bar")
                         .data(data)
