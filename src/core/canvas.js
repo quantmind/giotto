@@ -245,7 +245,7 @@
                         //.padAngle(opts.padAngle),
                     arc = d3.canvas.arc()
                             //.padRadius(radius)
-                            //.cornerRadius(cornerRadius)
+                            .cornerRadius(cornerRadius)
                             .innerRadius(innerRadius)
                             .outerRadius(radius)
                             .context(ctx),
