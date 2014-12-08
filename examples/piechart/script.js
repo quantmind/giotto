@@ -27,11 +27,14 @@
                     opts.type = value;
                     chart.paper(true);
                     chart.resume();
-                }
-                else if (model.field === 'innerRadius') {
+                } else if (model.field === 'innerRadius') {
                     opts.innerRadius = value;
                     chart.resume();
+                } else if (model.field === 'cornerRadius') {
+                    opts.cornerRadius = value;
+                    chart.resume();
                 }
+
             });
         }
     };
