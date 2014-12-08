@@ -247,6 +247,57 @@
             });
         };
 
+        paper.pie = function (data, opts) {
+            opts || (opts = {});
+            copyMissing(p.pie, opts);
+
+            var container = current;
+
+            return paper.addComponent(function () {
+
+                var scalex = paper.scalex,
+                    scaley = paper.scaley,
+                    width = paper.innerWidth(),
+                    height = paper.innerHeight(),
+                    radius = 0.5*Math.min(width, height),
+                    innerRadius = opts.innerRadius*radius,
+                    cornerRadius = paper.dim(opts.cornerRadius),
+                    pie = d3.layout.pie()
+                        .value(function (d, i) {
+                            return d.length > 1 ? d[1] : d[0];
+                        }),
+                        //.padAngle(opts.padAngle),
+                    chart = container.select('g.pie'),
+                    arc = d3.svg.arc()
+                            //.padRadius(radius)
+                            //.cornerRadius(cornerRadius)
+                            .innerRadius(innerRadius)
+                            .outerRadius(radius),
+                    c;
+
+                if (!chart.node())
+                    chart = container.append("g")
+                                .attr('class', 'pie')
+                                //.style('shape-rendering', 'crispEdges')
+                                .attr("transform", "translate(" + width/2 + "," + height/2 + ")");
+
+                var piechart = chart
+                        .attr('stroke-width', opts.lineWidth)
+                        .attr('fill-opacity', opts.fillOpacity)
+                        .selectAll(".slice")
+                        .data(pie(data))
+                        .enter().append("path")
+                        .attr('class', 'slice')
+                        .attr('stroke', function (d, i) {
+                            return paper.pickColor(i, 1);
+                        })
+                        .attr('fill', function (d, i) {
+                            return paper.pickColor(i);
+                        })
+                        .attr('d', arc);
+            });
+        };
+
         paper.drawXaxis = function () {
             var opts = p.xaxis,
                 py = opts.position === 'top' ? 0 : paper.innerHeight();

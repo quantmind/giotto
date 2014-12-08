@@ -181,12 +181,19 @@
         };
 
         // pick a unique color, never picked before
-        paper.pickColor = function () {
-            var c = p.colors[color++];
-            if (color === p.colors.length) {
-                // TODO: lighetn the colors maybe?
-                color = 0;
+        paper.pickColor = function (index, darker) {
+            if (arguments.length === 0) index = color++;
+            var dk = 1,
+                k = 0;
+            while (index >= p.colors.length) {
+                index -= p.colors.length;
+                k += dk;
             }
+            var c = p.colors[index];
+            if (darker)
+                c = d3.rgb(c).darker(darker);
+            if (k)
+                c = d3.rgb(c).brighter(k);
             return c;
         };
 

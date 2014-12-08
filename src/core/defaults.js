@@ -38,6 +38,13 @@
             // Radius in pixels of rounded corners. Set to 0 for no rounded corners
             radius: 4
         },
+        pie: {
+            lineWidth: 1,
+            padAngle: 0,
+            cornerRadius: 0,
+            fillOpacity: 1,
+            innerRadius: 0
+        },
         font: {
             size: 11,
             weight: 'bold',

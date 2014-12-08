@@ -174,9 +174,5 @@
 
         point: function (chart, data, opts) {
             return chart.paper().points(data, opts);
-        },
-
-        pie: function (chart, data, opts) {
-            return chart.paper().pie(data, opts);
         }
     };

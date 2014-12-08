@@ -1,6 +1,6 @@
 //      Giotto - v0.1.0
 
-//      Compiled 2014-12-07.
+//      Compiled 2014-12-08.
 //      Copyright (c) 2014 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -49,8 +49,15 @@
     };
 
 
+    // D3 internal functions used by GiottoJS
+    // These are copied from d3.js
+
     function d3_identity(d) {
         return d;
+    }
+
+    function d3_zero() {
+        return 0;
     }
 
     function d3_functor (v) {
@@ -182,6 +189,83 @@
         }
 
         return tangents;
+    }
+
+    function d3_geom_polygonIntersect(c, d, a, b) {
+        var x1 = c[0], x3 = a[0], x21 = d[0] - x1, x43 = b[0] - x3, y1 = c[1], y3 = a[1], y21 = d[1] - y1, y43 = b[1] - y3, ua = (x43 * (y1 - y3) - y43 * (x1 - x3)) / (y43 * x21 - x43 * y21);
+        return [ x1 + ua * x21, y1 + ua * y21 ];
+    }
+
+    function d3_asin(x) {
+        return x > 1 ? halfπ : x < -1 ? -halfπ : Math.asin(x);
+    }
+
+    // ARCS
+
+    var d3_svg_arcAuto = "auto";
+
+    function d3_svg_arcInnerRadius(d) {
+        return d.innerRadius;
+    }
+
+    function d3_svg_arcOuterRadius(d) {
+        return d.outerRadius;
+    }
+
+    function d3_svg_arcStartAngle(d) {
+        return d.startAngle;
+    }
+
+    function d3_svg_arcEndAngle(d) {
+        return d.endAngle;
+    }
+
+    function d3_svg_arcPadAngle(d) {
+        return d && d.padAngle;
+    }
+
+    // Note: similar to d3_cross2d, d3_geom_polygonInside
+    function d3_svg_arcSweep(x0, y0, x1, y1) {
+        return (x0 - x1) * y0 - (y0 - y1) * x0 > 0 ? 0 : 1;
+    }
+
+    // Compute perpendicular offset line of length rc.
+    // http://mathworld.wolfram.com/Circle-LineIntersection.html
+    function d3_svg_arcCornerTangents(p0, p1, r1, rc, cw) {
+        var x01 = p0[0] - p1[0],
+            y01 = p0[1] - p1[1],
+            lo = (cw ? rc : -rc) / Math.sqrt(x01 * x01 + y01 * y01),
+            ox = lo * y01,
+            oy = -lo * x01,
+            x1 = p0[0] + ox,
+            y1 = p0[1] + oy,
+            x2 = p1[0] + ox,
+            y2 = p1[1] + oy,
+            x3 = (x1 + x2) / 2,
+            y3 = (y1 + y2) / 2,
+            dx = x2 - x1,
+            dy = y2 - y1,
+            d2 = dx * dx + dy * dy,
+            r = r1 - rc,
+            D = x1 * y2 - x2 * y1,
+            d = (dy < 0 ? -1 : 1) * Math.sqrt(r * r * d2 - D * D),
+            cx0 = (D * dy - dx * d) / d2,
+            cy0 = (-D * dx - dy * d) / d2,
+            cx1 = (D * dy + dx * d) / d2,
+            cy1 = (-D * dx + dy * d) / d2,
+            dx0 = cx0 - x3,
+            dy0 = cy0 - y3,
+            dx1 = cx1 - x3,
+            dy1 = cy1 - y3;
+
+        // Pick the closer of the two intersection points.
+        // TODO Is there a faster way to determine which intersection to use?
+        if (dx0 * dx0 + dy0 * dy0 > dx1 * dx1 + dy1 * dy1) cx0 = cx1, cy0 = cy1;
+
+        return [
+            [cx0 - ox, cy0 - oy],
+            [cx0 * r1 / r, cy0 * r1 / r]
+        ];
     }
 
     function noop () {}
@@ -782,6 +866,13 @@
             // Radius in pixels of rounded corners. Set to 0 for no rounded corners
             radius: 4
         },
+        pie: {
+            lineWidth: 1,
+            padAngle: 0,
+            cornerRadius: 0,
+            fillOpacity: 1,
+            innerRadius: 0
+        },
         font: {
             size: 11,
             weight: 'bold',
@@ -990,12 +1081,19 @@
         };
 
         // pick a unique color, never picked before
-        paper.pickColor = function () {
-            var c = p.colors[color++];
-            if (color === p.colors.length) {
-                // TODO: lighetn the colors maybe?
-                color = 0;
+        paper.pickColor = function (index, darker) {
+            if (arguments.length === 0) index = color++;
+            var dk = 1,
+                k = 0;
+            while (index >= p.colors.length) {
+                index -= p.colors.length;
+                k += dk;
             }
+            var c = p.colors[index];
+            if (darker)
+                c = d3.rgb(c).darker(darker);
+            if (k)
+                c = d3.rgb(c).brighter(k);
             return c;
         };
 
@@ -1299,6 +1397,57 @@
 
                 opts.chart = chart;
                 return opts;
+            });
+        };
+
+        paper.pie = function (data, opts) {
+            opts || (opts = {});
+            copyMissing(p.pie, opts);
+
+            var container = current;
+
+            return paper.addComponent(function () {
+
+                var scalex = paper.scalex,
+                    scaley = paper.scaley,
+                    width = paper.innerWidth(),
+                    height = paper.innerHeight(),
+                    radius = 0.5*Math.min(width, height),
+                    innerRadius = opts.innerRadius*radius,
+                    cornerRadius = paper.dim(opts.cornerRadius),
+                    pie = d3.layout.pie()
+                        .value(function (d, i) {
+                            return d.length > 1 ? d[1] : d[0];
+                        }),
+                        //.padAngle(opts.padAngle),
+                    chart = container.select('g.pie'),
+                    arc = d3.svg.arc()
+                            //.padRadius(radius)
+                            //.cornerRadius(cornerRadius)
+                            .innerRadius(innerRadius)
+                            .outerRadius(radius),
+                    c;
+
+                if (!chart.node())
+                    chart = container.append("g")
+                                .attr('class', 'pie')
+                                //.style('shape-rendering', 'crispEdges')
+                                .attr("transform", "translate(" + width/2 + "," + height/2 + ")");
+
+                var piechart = chart
+                        .attr('stroke-width', opts.lineWidth)
+                        .attr('fill-opacity', opts.fillOpacity)
+                        .selectAll(".slice")
+                        .data(pie(data))
+                        .enter().append("path")
+                        .attr('class', 'slice')
+                        .attr('stroke', function (d, i) {
+                            return paper.pickColor(i, 1);
+                        })
+                        .attr('fill', function (d, i) {
+                            return paper.pickColor(i);
+                        })
+                        .attr('d', arc);
             });
         };
 
@@ -1876,6 +2025,257 @@
         return p;
     }
 
+    var drawArc = d3.canvas.drawArc = function (ctx, xyfrom, xyto, radius, laf, sweep) {
+        var dx = xyfrom[0] - xyto[0],
+            dy = xyfrom[1] - xyto[1],
+            q2 = dx*dx + dy*dy,
+            q = Math.sqrt(q2),
+            xc = 0.5*(xyfrom[0] + xyto[0]),
+            yc = 0.5*(xyfrom[1] + xyto[1]),
+            l =  Math.sqrt(radius*radius - 0.25*q2);
+        if (sweep > 0) {
+            xc += l*dy/q;
+            yc -= l*dx/q;
+        } else {
+            xc -= l*dy/q;
+            yc += l*dx/q;
+        }
+        var a1 = Math.atan2(xyfrom[1]-yc, xyfrom[0]-xc),
+            a2 = Math.atan2(xyto[1]-yc, xyto[0]-xc);
+        ctx.arc(xc, yc, radius, a1, a2, sweep<=0);
+    };
+
+    // same as d3.svg.arc... but for canvas
+    d3.canvas.arc = function() {
+        var innerRadius = d3_svg_arcInnerRadius,
+        outerRadius = d3_svg_arcOuterRadius,
+        cornerRadius = d3_zero,
+        padRadius = d3_svg_arcAuto,
+        startAngle = d3_svg_arcStartAngle,
+        endAngle = d3_svg_arcEndAngle,
+        padAngle = d3_svg_arcPadAngle,
+        ctx;
+
+        function arc () {
+            var r0 = Math.max(0, +innerRadius.apply(arc, arguments)),
+                r1 = Math.max(0, +outerRadius.apply(arc, arguments)),
+                a0 = startAngle.apply(arc, arguments) - halfπ,
+                a1 = endAngle.apply(arc, arguments) - halfπ,
+                da = Math.abs(a1 - a0),
+                cw = a0 > a1 ? 0 : 1;
+
+            // Ensure that the outer radius is always larger than the inner radius.
+            if (r1 < r0) rc = r1, r1 = r0, r0 = rc;
+
+            ctx.beginPath();
+
+            // Special case for an arc that spans the full circle.
+            if (da >= τε) {
+                ctx.arc(0, 0, r1, 0, τ, false);
+                if (r0)
+                    ctx.arc(0, 0, r0, 0, τ, true);
+                ctx.closePath();
+                return;
+            }
+
+            var rc,
+                cr,
+                rp,
+                laf,
+                l0,
+                l1,
+                ap = (+padAngle.apply(arc, arguments) || 0) / 2,
+                p0 = 0,
+                p1 = 0,
+                x0 = null,
+                y0 = null,
+                x1 = null,
+                y1 = null,
+                x2 = null,
+                y2 = null,
+                x3 = null,
+                y3 = null,
+                path = [];
+
+            // The recommended minimum inner radius when using padding is outerRadius *
+            // padAngle / sin(θ), where θ is the angle of the smallest arc (without
+            // padding). For example, if the outerRadius is 200 pixels and the padAngle
+            // is 0.02 radians, a reasonable θ is 0.04 radians, and a reasonable
+            // innerRadius is 100 pixels.
+
+            if (ap) {
+                rp = padRadius === d3_svg_arcAuto ? Math.sqrt(r0 * r0 + r1 * r1) : +padRadius.apply(arc, arguments);
+                if (!cw) p1 *= -1;
+                if (r1) p1 = d3_asin(rp / r1 * Math.sin(ap));
+                if (r0) p0 = d3_asin(rp / r0 * Math.sin(ap));
+            }
+
+            // Compute the two outer corners.
+            if (r1) {
+                x0 = r1 * Math.cos(a0 + p1);
+                y0 = r1 * Math.sin(a0 + p1);
+                x1 = r1 * Math.cos(a1 - p1);
+                y1 = r1 * Math.sin(a1 - p1);
+
+                // Detect whether the outer corners are collapsed.
+                l1 = Math.abs(a1 - a0 - 2 * p1) <= π ? 0 : 1;
+                if (p1 && d3_svg_arcSweep(x0, y0, x1, y1) === cw ^ l1) {
+                    var h1 = (a0 + a1) / 2;
+                    x0 = r1 * Math.cos(h1);
+                    y0 = r1 * Math.sin(h1);
+                    x1 = y1 = null;
+                }
+            } else {
+                x0 = y0 = 0;
+            }
+
+            // Compute the two inner corners.
+            if (r0) {
+                x2 = r0 * Math.cos(a1 - p0);
+                y2 = r0 * Math.sin(a1 - p0);
+                x3 = r0 * Math.cos(a0 + p0);
+                y3 = r0 * Math.sin(a0 + p0);
+
+                // Detect whether the inner corners are collapsed.
+                l0 = Math.abs(a0 - a1 + 2 * p0) <= π ? 0 : 1;
+                if (p0 && d3_svg_arcSweep(x2, y2, x3, y3) === (1 - cw) ^ l0) {
+                    var h0 = (a0 + a1) / 2;
+                    x2 = r0 * Math.cos(h0);
+                    y2 = r0 * Math.sin(h0);
+                    x3 = y3 = null;
+                }
+            } else
+                x2 = y2 = 0;
+
+            // Compute the rounded corners.
+            if ((rc = Math.min(Math.abs(r1 - r0) / 2, +cornerRadius.apply(arc, arguments))) > 1e-3) {
+                cr = r0 < r1 ^ cw ? 0 : 1;
+
+                // Compute the angle of the sector formed by the two sides of the arc.
+                var oc = x3 === null ? [x2, y2] : x1 === null ? [x0, y0] : d3_geom_polygonIntersect([x0, y0], [x3, y3], [x1, y1], [x2, y2]),
+                    ax = x0 - oc[0],
+                    ay = y0 - oc[1],
+                    bx = x1 - oc[0],
+                    by = y1 - oc[1],
+                    kc = 1 / Math.sin(Math.acos((ax * bx + ay * by) / (Math.sqrt(ax * ax + ay * ay) * Math.sqrt(bx * bx + by * by))) / 2),
+                    lc = Math.sqrt(oc[0] * oc[0] + oc[1] * oc[1]);
+
+                // Compute the outer corners.
+                if (x1 !== null) {
+                    var rc1 = Math.min(rc, (r1 - lc) / (kc + 1)),
+                        t30 = d3_svg_arcCornerTangents(x3 === null ? [x2, y2] : [x3, y3], [x0, y0], r1, rc1, cw),
+                        t12 = d3_svg_arcCornerTangents([x1, y1], [x2, y2], r1, rc1, cw);
+
+                    // Detect whether the outer edge is fully circular.
+                    if (rc === rc1) {
+                        laf = (1 - cw) ^ d3_svg_arcSweep(t30[1][0], t30[1][1], t12[1][0], t12[1][1]);
+                        drawArc(ctx, t30[0], t30[1], rc1, 0, cr);
+                        drawArc(ctx, t30[1], t12[1], r1, laf, cw);
+                        drawArc(ctx, t12[1], t12[0], rc1, 0, cr);
+                        ctx.moveTo(t12[0][0], t12[0][1]);
+                    } else {
+                        drawArc(ctx, t30[0], t12[0], rc1, 1, cr);
+                        ctx.moveTo(t12[0][0], t12[0][1]);
+                    }
+                } else
+                    ctx.moveTo(x0, y0);
+
+                // Compute the inner corners.
+                if (x3 !== null) {
+                    var rc0 = Math.min(rc, (r0 - lc) / (kc - 1)),
+                        t03 = d3_svg_arcCornerTangents([x0, y0], [x3, y3], r0, -rc0, cw),
+                        t21 = d3_svg_arcCornerTangents([x2, y2], x1 === null ? [x0, y0] : [x1, y1], r0, -rc0, cw);
+
+                    // Detect whether the inner edge is fully circular.
+                    ctx.lineTo(t21[0][0], t21[0][1]);
+                    if (rc === rc0) {
+                        laf = cw ^ d3_svg_arcSweep(t21[1][0], t21[1][1], t03[1][0], t03[1][1]);
+                        ctx.lineTo(t21[0][0], t21[0][1]);
+                        drawArc(ctx, t21[0], t21[1], rc0, 0, cr);
+                        drawArc(ctx, t21[1], t03[1], r0, laf, 1 - cw);
+                        drawArc(ctx, t03[1], t03[0], rc0, 0, cr);
+                    } else
+                        drawArc(ctx, t21[0], t03[0], rc0, 0, cr);
+                    ctx.moveTo(t03[0][0], t03[0][1]);
+                } else
+                    ctx.lineTo(x2, y2);
+            }
+
+            // Compute straight corners.
+            else {
+                //ctx.moveTo(x0, y0);
+                if (x1 !== null) {
+                    drawArc(ctx, [x0, y0], [x1, y1], r1, l1, cw);
+                    //ctx.moveTo(x1, y1);
+                }
+                ctx.lineTo(x2, y2);
+                if (x3 !== null) {
+                    drawArc(ctx, [x2, y2], [x3, y3], r0, l0, 1 - cw);
+                    //ctx.moveTo(x3, y3);
+                }
+            }
+
+            ctx.closePath();
+        }
+
+        arc.context = function (_) {
+            if (!arguments.length) return ctx;
+            ctx = _;
+            return arc;
+        };
+
+        arc.innerRadius = function (v) {
+            if (!arguments.length) return innerRadius;
+            innerRadius = d3_functor(v);
+            return arc;
+        };
+
+        arc.outerRadius = function (v) {
+            if (!arguments.length) return outerRadius;
+            outerRadius = d3_functor(v);
+            return arc;
+        };
+
+        arc.cornerRadius = function (v) {
+            if (!arguments.length) return cornerRadius;
+            cornerRadius = d3_functor(v);
+            return arc;
+        };
+
+        arc.padRadius = function (v) {
+            if (!arguments.length) return padRadius;
+            padRadius = v == d3_svg_arcAuto ? d3_svg_arcAuto : d3_functor(v);
+            return arc;
+        };
+
+        arc.startAngle = function(v) {
+            if (!arguments.length) return startAngle;
+            startAngle = d3_functor(v);
+            return arc;
+        };
+
+        arc.endAngle = function(v) {
+            if (!arguments.length) return endAngle;
+            endAngle = d3_functor(v);
+            return arc;
+        };
+
+        arc.padAngle = function(v) {
+            if (!arguments.length) return padAngle;
+            padAngle = d3_functor(v);
+            return arc;
+        };
+
+        arc.centroid = function() {
+            var r = (+innerRadius.apply(arc, arguments) + outerRadius.apply(arc, arguments)) / 2,
+                a = (+startAngle.apply(arc, arguments) + endAngle.apply(arc, arguments)) / 2 - halfπ;
+            return [Math.cos(a) * r, Math.sin(a) * r];
+        };
+
+        return arc;
+    };
+
+
 
     d3.canvas.axis = function() {
         var scale = d3.scale.linear(),
@@ -2379,6 +2779,7 @@
     }
 
 
+    // same as d3.svg.symbol... but for canvas
     d3.canvas.symbol = function() {
         var svg = d3.svg.symbol(),
             type = svg.type(),
@@ -2702,6 +3103,49 @@
             });
         };
 
+        paper.pie = function (data, opts) {
+            opts || (opts = {});
+            copyMissing(p.pie, opts);
+
+            return _addComponent(function (ctx) {
+
+                var scalex = paper.scalex,
+                    scaley = paper.scaley,
+                    width = paper.innerWidth(),
+                    height = paper.innerHeight(),
+                    radius = 0.5*Math.min(width, height),
+                    innerRadius = opts.innerRadius*radius,
+                    cornerRadius = paper.dim(opts.cornerRadius),
+                    pie = d3.layout.pie()
+                        .value(function (d, i) {
+                            return d.length > 1 ? d[1] : d[0];
+                        }),
+                        //.padAngle(opts.padAngle),
+                    arc = d3.canvas.arc()
+                            //.padRadius(radius)
+                            //.cornerRadius(cornerRadius)
+                            .innerRadius(innerRadius)
+                            .outerRadius(radius)
+                            .context(ctx),
+                    arcs = pie(data),
+                    j = -1, d;
+
+                ctx.save();
+                ctx.translate(width/2, height/2);
+
+                for (var i=0; i<data.length; ++i) {
+                    d = data[i];
+                    ctx.fillStyle = d.fill || paper.pickColor(++j);
+                    ctx.strokeStyle = d.color || paper.pickColor(j, 1);
+                    ctx.lineWidth = factor*(d.lineWidth || opts.lineWidth);
+                    arc(arcs[i]);
+                    ctx.fill();
+                    ctx.stroke();
+                }
+                ctx.restore();
+            });
+        };
+
         // INTERNALS
         function _clear () {
             components = [];
@@ -3002,10 +3446,6 @@
 
         point: function (chart, data, opts) {
             return chart.paper().points(data, opts);
-        },
-
-        pie: function (chart, data, opts) {
-            return chart.paper().pie(data, opts);
         }
     };
 
@@ -3455,6 +3895,31 @@
     };
 
 
+
+
+    g.createviz('pie', {},
+
+    function (chart, opts) {
+
+        chart.draw = function () {
+            if (opts.data === undefined && opts.src)
+                return chart.loadData(chart.draw);
+            if (g._.isFunction(opts.data))
+                opts.data = data(chart);
+
+            chart.clear();
+            if (opts.data) {
+                chart.paper().pie(opts.data, opts);
+                chart.render();
+            }
+        };
+
+        chart.on('tick.main', function () {
+            // Chart don't need ticking unless explicitly required (real time updates for example)
+            chart.stop();
+            chart.draw();
+        });
+    });
 
     //
     //  Sunburst visualization

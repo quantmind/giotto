@@ -225,6 +225,49 @@
             });
         };
 
+        paper.pie = function (data, opts) {
+            opts || (opts = {});
+            copyMissing(p.pie, opts);
+
+            return _addComponent(function (ctx) {
+
+                var scalex = paper.scalex,
+                    scaley = paper.scaley,
+                    width = paper.innerWidth(),
+                    height = paper.innerHeight(),
+                    radius = 0.5*Math.min(width, height),
+                    innerRadius = opts.innerRadius*radius,
+                    cornerRadius = paper.dim(opts.cornerRadius),
+                    pie = d3.layout.pie()
+                        .value(function (d, i) {
+                            return d.length > 1 ? d[1] : d[0];
+                        }),
+                        //.padAngle(opts.padAngle),
+                    arc = d3.canvas.arc()
+                            //.padRadius(radius)
+                            //.cornerRadius(cornerRadius)
+                            .innerRadius(innerRadius)
+                            .outerRadius(radius)
+                            .context(ctx),
+                    arcs = pie(data),
+                    j = -1, d;
+
+                ctx.save();
+                ctx.translate(width/2, height/2);
+
+                for (var i=0; i<data.length; ++i) {
+                    d = data[i];
+                    ctx.fillStyle = d.fill || paper.pickColor(++j);
+                    ctx.strokeStyle = d.color || paper.pickColor(j, 1);
+                    ctx.lineWidth = factor*(d.lineWidth || opts.lineWidth);
+                    arc(arcs[i]);
+                    ctx.fill();
+                    ctx.stroke();
+                }
+                ctx.restore();
+            });
+        };
+
         // INTERNALS
         function _clear () {
             components = [];
