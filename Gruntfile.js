@@ -51,7 +51,6 @@ module.exports = function (grunt) {
                         console: true,
                         DOMParser: true,
                         Showdown: true,
-                        prettyPrint: true,
                         module: true,
                         ok: true,
                         equal: true,

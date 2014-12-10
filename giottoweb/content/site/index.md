@@ -1,7 +1,7 @@
 title: GiottoJs
+template: index.html
 
-Giotto is a javascript library under active development but not yet ready
-for anything other than that.
+Giotto is a javascript library under active development.
 
 * Built on top of [d3][]
 * ``svg`` and, eventually, ``canvas`` support

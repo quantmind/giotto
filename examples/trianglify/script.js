@@ -1,7 +1,6 @@
 
     gexamples.trianglify = {
-
-        height: '60%',
+        height: 400,
 
         onInit: function (viz) {
 

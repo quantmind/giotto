@@ -18,32 +18,58 @@
         yaxis2: extend({position: 'right'}, g.defaults.axis),
         colors: d3.scale.category10().range(),
         css: null,
+        activeEvents: ["mousemove", "touchstart", "touchmove", "mouseout"],
         line: {
             interpolate: 'cardinal',
-            fill: false,
-            lineWidth: 2
+            fill: 'none',
+            fillOpacity: 1,
+            colorOpacity: 1,
+            lineWidth: 2,
+            active: {
+                color: 'darker',
+                // Multiplier for lineWidth, set to 1 for no change
+                lineWidth: 1
+            }
         },
         point: {
             symbol: 'circle',
             size: '8px',
             fill: true,
             fillOpacity: 1,
-            lineWidth: 2
+            colorOpacity: 1,
+            lineWidth: 2,
+            active: {
+                fill: 'darker',
+                color: 'brighter',
+                // Multiplier for size, set to 1 for no change
+                size: 1.2
+            }
         },
         bar: {
             width: 'auto',
             color: null,
             fill: true,
+            fillOpacity: 1,
+            colorOpacity: 1,
             lineWidth: 2,
             // Radius in pixels of rounded corners. Set to 0 for no rounded corners
-            radius: 4
+            radius: 4,
+            active: {
+                fill: 'darker',
+                color: 'brighter'
+            }
         },
         pie: {
             lineWidth: 1,
             padAngle: 0,
             cornerRadius: 0,
-            fillOpacity: 1,
-            innerRadius: 0
+            fillOpacity: 0.7,
+            colorOpacity: 1,
+            innerRadius: 0,
+            active: {
+                fill: 'darker',
+                color: 'brighter'
+            }
         },
         font: {
             size: 11,

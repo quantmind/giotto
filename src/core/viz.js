@@ -1,5 +1,11 @@
     //
     g.viz = {};
+    // Plugins for all visualization classes
+    g.vizplugins = [];
+    //
+    g.vizplugin = function (callback) {
+        g.vizplugins.push(callback);
+    };
     //
     // Factory of Giotto visualization factories
     //  name: name of the visualization constructor, the constructor is
@@ -136,6 +142,10 @@
                 return opts;
             };
 
+            viz.download = function () {
+                return paper.download();
+            };
+
             viz.xyfunction = g.math.xyfunction;
 
             d3.rebind(viz, event, 'on');
@@ -143,6 +153,10 @@
             // If constructor available, call it first
             if (constructor)
                 constructor(viz, opts);
+
+            // Inject plugins for all visualizations
+            for (i=0; i < g.vizplugins.length; ++i)
+                g.vizplugins[i](viz, opts);
 
             // Inject visualization plugins
             for (var i=0; i < plugins.length; ++i)

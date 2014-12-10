@@ -10,6 +10,7 @@
                         .attr('height', p.size[1])
                         .attr("viewBox", "0 0 " + p.size[0] + " " + p.size[1]),
             clear = paper.clear,
+            events = d3.dispatch('activein', 'activeout'),
             components,
             componentMap,
             cidCounter,
@@ -76,10 +77,19 @@
         };
 
         paper.on = function (event, callback) {
-            current.on(event, function () {
-                callback.call(this);
-            });
+            if (events[event])
+                events.on(event, function (elem) {
+                    callback.call(elem, this);
+                });
+            else
+                current.on(event, function (e) {
+                    callback.call(this, e);
+                });
             return paper;
+        };
+
+        paper.data = function (el) {
+            return _.isFunction(el.data) ? el.data() : el.__data__;
         };
 
         paper.group = function (attr) {
@@ -120,138 +130,161 @@
         // Draw a path or an area, data must be an xy array [[x1,y1], [x2, y2], ...]
         paper.path = function (data, opts) {
             opts || (opts = {});
-            copyMissing(p.line, opts);
+            data = data.slice();  // copy
+            chartColors(paper, copyMissing(p.line, opts));
 
-            var container = current;
+            var container = current,
+                scalex = paper.scalex,
+                scaley = paper.scaley,
+                d;
+
+            function draw (selection) {
+                return selection
+                    .attr('stroke', data[0].color)
+                    .attr('stroke-opacity', data[0].colorOpacity)
+                    .attr('stroke-width', data[0].lineWidth);
+            }
+
+            for (var i=0; i<data.length; i++) {
+                d = {values: data[i]};
+                if (!i) {
+                    d = paperData(paper, opts, d).reset();
+                    d.draw = draw;
+                }
+                data[i] = d;
+            }
 
             return paper.addComponent(function () {
 
                 var chart = container.select("path.line"),
-                    scalex = paper.scalex,
-                    scaley = paper.scaley,
                     line = opts.area ? d3.svg.area() : d3.svg.line();
 
-                if (!opts.color)
-                    opts.color = paper.pickColor();
-
                 line.interpolate(opts.interpolate)
-                    .x(function(d) {
-                        return scalex(d.x);
-                    })
-                    .y(function(d) {
-                        return scaley(d.y);
-                    });
+                    .x(function(d) {return scalex(d.values.x);})
+                    .y(function(d) {return scaley(d.values.y);});
 
                 if (!chart.node())
                     chart = container.append('path')
                                         .attr('class', 'line');
 
-                chart
-                    .classed('area', opts.area)
-                    .attr('stroke', opts.color)
-                    .attr('stroke-width', opts.lineWidth)
-                    .datum(data)
-                    .attr('d', line);
+                draw(chart
+                        .classed('area', opts.area)
+                        .datum(data)
+                        .attr('d', line));
 
-                opts.chart = chart;
-                return opts;
+                _events(chart);
             });
         };
 
         // Draw points
+        // Data is an array of {x: value, y: value} objects
         paper.points = function (data, opts) {
             opts || (opts = {});
-            copyMissing(p.point, opts);
+            data = data.slice();  // copy
+            chartColors(paper, copyMissing(p.point, opts));
 
-            var container = current;
+            var size = paper.scale(paper.dim(opts.size)),
+                scalex = paper.scalex,
+                scaley = paper.scaley,
+                symbol = d3.svg.symbol().type(function (d) {return d.symbol;})
+                                        .size(function (d) {return d.size();}),
+                container = current,
+                d;
+
+            function draw (selection) {
+                return _draw(selection).attr('d', symbol);
+            }
+
+            for (var i=0; i<data.length; i++) {
+                d = paperData(paper, opts, {values: data[i]});
+                d.size(size);
+                d.draw = draw;
+                data[i] = d.reset();
+            }
 
             return paper.addComponent(function () {
-                var chart = container.select("g.points"),
-                    scalex = paper.scalex,
-                    scaley = paper.scaley,
-                    symbol = d3.svg.symbol().type(function (d) {
-                        return d.symbol || opts.symbol;
-                    }).size(pointSize(paper, opts)),
-                    points;
+                var chart = container.select("g.points");
 
-                chartColors(paper, data, opts);
-
-                if (!chart.node()) {
+                if (!chart.node())
                     chart = container.append("g")
                                     .attr('class', 'points');
 
-                    points = chart.selectAll("path.point")
+                _events(draw(chart.selectAll("path.point")
                                 .data(data)
                                 .enter()
                                 .append("path")
-                                .attr('class', 'point');
-
-                } else
-                    points = chart.selectAll("path.point");
-
-                chart.attr('stroke', opts.color)
-                        .attr('stroke-width', opts.lineWidth)
-                        .attr('fill', opts.fill)
-                        .attr('fill-opacity', opts.fillOpacity);
-
-                points
-                    .attr("transform", function(d) {
-                        return "translate(" + scalex(d.x) + "," + scaley(d.y) + ")";
-                    })
-                    .attr('d', symbol);
-
-                opts.chart = chart;
-                return opts;
+                                .attr('class', 'point')
+                                .attr("transform", function(d) {
+                                    return "translate(" + scalex(d.values.x) + "," + scaley(d.values.y) + ")";
+                                })));
             });
         };
 
         // Draw a barchart
         paper.barchart = function (data, opts) {
             opts || (opts = {});
-            copyMissing(p.bar, opts);
+            data = data.slice();  // copy
+            chartColors(paper, copyMissing(p.bar, opts));
 
-            var container = current;
+            var size = barWidth(paper, data, opts),
+                scalex = paper.scalex,
+                scaley = paper.scaley,
+                container = current,
+                d;
+
+            function draw (selection) {
+                return _draw(selection).attr("width", function (d) {return d.size();});
+            }
+
+            for (var i=0; i<data.length; i++) {
+                d = paperData(paper, opts, {values: data[i]});
+                d.size(size);
+                d.draw = draw;
+                data[i] = d.reset();
+            }
 
             return paper.addComponent(function () {
 
-                var scalex = paper.scalex,
-                    scaley = paper.scaley,
-                    width = barWidth(paper, data, opts),
-                    zero = scaley(0),
-                    chart = container.select('g.barchart');
+                var zero = scaley(0),
+                    chart = container.select('g.barchart'),
+                    bar;
 
                 if (!chart.node())
                     chart = container.append("g")
                                 .attr('class', 'barchart');
 
-                var bar = chart
-                        .attr('stroke', opts.color)
-                        .attr('stroke-width', opts.lineWidth)
-                        .attr('fill', opts.fill)
+                bar = draw(chart
                         .selectAll(".bar")
                         .data(data)
                         .enter().append("rect")
                         .attr('class', 'bar')
                         .attr("x", function(d) {
-                            return scalex(d.x) - width/2;
+                            return scalex(d.values.x) - 0.5*d.size();
                         })
-                        .attr("y", function(d) {return d.y < 0 ? zero : scaley(d.y); })
-                        .attr("height", function(d) { return d.y < 0 ? scaley(d.y) - zero : zero - scaley(d.y); })
-                        .attr("width", width);
+                        .attr("y", function(d) {return d.values.y < 0 ? zero : scaley(d.values.y); })
+                        .attr("height", function(d) {
+                            return d.values.y < 0 ? scaley(d.values.y) - zero : zero - scaley(d.values.y);
+                        }));
 
                 if (opts.radius > 0)
                     bar.attr('rx', opts.radius).attr('ry', opts.radius);
 
-                opts.chart = chart;
-                return opts;
+                _events(bar);
             });
         };
 
         paper.pie = function (data, opts) {
             opts || (opts = {});
+            data = data.slice();  // copy
             copyMissing(p.pie, opts);
+            var container = current,
+                d, dd;
 
-            var container = current;
+            for (var i=0; i<data.length; i++) {
+                d = pieData(paper, opts, data[i]);
+                d.draw = _draw;
+                data[i] = d.reset();
+            }
 
             return paper.addComponent(function () {
 
@@ -261,40 +294,37 @@
                     height = paper.innerHeight(),
                     radius = 0.5*Math.min(width, height),
                     innerRadius = opts.innerRadius*radius,
-                    cornerRadius = paper.dim(opts.cornerRadius),
-                    pie = d3.layout.pie()
-                        .value(function (d, i) {
-                            return d.length > 1 ? d[1] : d[0];
-                        }),
-                        //.padAngle(opts.padAngle),
+                    cornerRadius = paper.scale(paper.dim(opts.cornerRadius)),
                     chart = container.select('g.pie'),
+                    pie = d3.layout.pie()
+                                    .value(function (d, i) {return d.value;})
+                                    .padAngle(d3_radians*opts.padAngle)(data),
                     arc = d3.svg.arc()
-                            //.padRadius(radius)
-                            //.cornerRadius(cornerRadius)
+                            .cornerRadius(cornerRadius)
                             .innerRadius(innerRadius)
                             .outerRadius(radius),
                     c;
 
+                for (i=0; i<pie.length; i++) {
+                    d = pie[i];
+                    dd = d.data;
+                    delete d.data;
+                    extend(dd, d);
+                    dd.draw = _draw;
+                    pie[i] = dd;
+                }
+
                 if (!chart.node())
                     chart = container.append("g")
                                 .attr('class', 'pie')
-                                //.style('shape-rendering', 'crispEdges')
                                 .attr("transform", "translate(" + width/2 + "," + height/2 + ")");
 
-                var piechart = chart
-                        .attr('stroke-width', opts.lineWidth)
-                        .attr('fill-opacity', opts.fillOpacity)
+                _events(_draw(chart
                         .selectAll(".slice")
-                        .data(pie(data))
+                        .data(pie)
                         .enter().append("path")
                         .attr('class', 'slice')
-                        .attr('stroke', function (d, i) {
-                            return paper.pickColor(i, 1);
-                        })
-                        .attr('fill', function (d, i) {
-                            return paper.pickColor(i);
-                        })
-                        .attr('d', arc);
+                        .attr('d', arc)));
             });
         };
 
@@ -352,64 +382,12 @@
         };
 
         paper.downloadSVG = function (e) {
-            var data = "data:image/svg+xml;charset=utf-8;base64," + paper.encode();
-            d3.select(e.target).attr("href", data);
+            var data = "data:image/svg+xml;charset=utf-8;base64," + paper.encode(),
+                target = e ? e.target : document;
+            d3.select(target).attr("href", data);
         };
 
-        paper.downloadPNG = function (e) {
-            if (!g.cloudConvertApiKey)
-                return;
-
-            var params = {
-                apikey: g.cloudConvertApiKey,
-                inputformat: 'svg',
-                outputformat: 'png'
-            };
-
-            var blob = new Blob(['base64,',paper.encode()], {type : 'image/svg+xml;charset=utf-8'});
-
-            d3.xhr('https://api.cloudconvert.org/process?' + encodeObject(params))
-                .header('content-type', 'multipart/form-data')
-                .post(submit);
-
-            function submit(_, request) {
-                if (!request || request.status !== 200)
-                    return;
-                var data = JSON.parse(request.responseText);
-                d3.xhr(data.url)
-                    .post(encodeObject({
-                        input: 'upload',
-                        file: blob
-                    }, 'multipart/form-data'), function (r, request) {
-                        if (!request || request.status !== 200)
-                            return;
-                        data = JSON.parse(request.responseText);
-                        wait_for_data(data);
-                    });
-            }
-
-            function wait_for_data (data) {
-                d3.xhr(data.url, function (r, request) {
-                    if (!request || request.status !== 200)
-                        return;
-                    data = JSON.parse(request.responseText);
-                    if (data.step === 'finished')
-                        download(data.output);
-                    else if (data.step === 'error')
-                        error(data);
-                    else
-                        wait_for_data(data);
-                });
-            }
-
-            function error (data) {
-
-            }
-
-            function download(data) {
-                d3.select(e.target).attr("href", data.url + '?inline');
-            }
-        };
+        paper.download = paper.downloadSVG;
 
         // LOW LEVEL FUNCTIONS - MAYBE THEY SHOULD BE PRIVATE?
 
@@ -448,7 +426,7 @@
             }
         }
 
-        function _font(element, opts) {
+        function _font (element, opts) {
             var font = p.font;
             opts || (opts = {});
             return element.style({
@@ -458,5 +436,25 @@
                 'font-family': opts.family || font.family,
                 'font-variant': opts.variant || font.variant
             });
+        }
+
+        function _draw (selection) {
+            return selection
+                    .attr('stroke', function (d) {return d.color;})
+                    .attr('stroke-width', function (d) {return d.lineWidth;})
+                    .attr('fill', function (d) {return d.fill;})
+                    .attr('fill-opacity', function (d) {return d.fillOpacity;});
+        }
+
+        function _events (selection) {
+            p.activeEvents.forEach(function (event) {
+                selection.on(event + '.paper-active', function () {
+                    if (d3.event.type === 'mouseout')
+                        events.activeout(this);
+                    else
+                        events.activein(this);
+                });
+            });
+            return selection;
         }
     });

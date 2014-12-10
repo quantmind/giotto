@@ -2,6 +2,14 @@
     gexamples.piecharts = {
         height: '80%',
 
+        // Rightclick menu
+        contextmenu: [{
+            label: 'Save Image As',
+            callback: function (chart) {
+                chart.download();
+            }
+        }],
+
         data: [['Italy', 42772],
                ['France', 50764],
                ['Spain', 33397],
@@ -32,6 +40,9 @@
                     chart.resume();
                 } else if (model.field === 'cornerRadius') {
                     opts.cornerRadius = value;
+                    chart.resume();
+                } else if (model.field === 'padding') {
+                    opts.padAngle = value;
                     chart.resume();
                 }
 

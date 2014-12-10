@@ -1,7 +1,7 @@
     //
     //  Sunburst visualization
     //
-    g.createviz('sunBurst', {
+    g.createviz('sunburst', {
         // Show labels
         labels: true,
         // Add the order of labels if available in the data

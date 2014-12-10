@@ -1,16 +1,15 @@
 
-    gexamples.sunburst = {
-        src: "https://gist.githubusercontent.com/lsbardel/f3d21f35a685a96706bf/raw",
+    gexamples.sunburst1 = {
+        height: '80%',
 
-        height: '70%',
+        src: "https://gist.githubusercontent.com/lsbardel/f3d21f35a685a96706bf/raw",
 
         addorder: true,
 
-        margin: {top: 40, left:30, right: 30, bottom: 40},
+        margin: {top: 40, left:20, right: 20, bottom: 40},
 
-        onInit: function (viz) {
-            var scope = viz.options().scope;
-            scope.$on('formFieldChange', function (e, o, value) {
+        angular: function (chart, opts) {
+            opts.scope.$on('formFieldChange', function (e, o, value) {
                 if (o && o.field === 'scale')
                     viz.scale(o.form.scale);
             });

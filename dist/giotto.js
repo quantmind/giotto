@@ -1,6 +1,6 @@
 //      Giotto - v0.1.0
 
-//      Compiled 2014-12-08.
+//      Compiled 2014-12-10.
 //      Copyright (c) 2014 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -592,6 +592,441 @@
         }
     }
 
+    function getSVGNode (el) {
+        if(el.tagName.toLowerCase() === 'svg')
+            return el;
+
+        return el.ownerSVGElement;
+    }
+
+    // Given a shape on the screen, will return an SVGPoint for the directions
+    // n(north), s(south), e(east), w(west), ne(northeast), se(southeast), nw(northwest),
+    // sw(southwest).
+    //
+    //    +-+-+
+    //    |   |
+    //    +   +
+    //    |   |
+    //    +-+-+
+    //
+    // Returns an Object {n, s, e, w, nw, sw, ne, se}
+    function getScreenBBox (target) {
+
+        var bbox = {},
+            matrix = target.getScreenCTM(),
+            svg = getSVGNode(target),
+            point = svg.createSVGPoint(),
+            tbbox = target.getBBox(),
+            width = tbbox.width,
+            height = tbbox.height,
+            x = tbbox.x,
+            y = tbbox.y;
+
+        point.x = x;
+        point.y = y;
+        bbox.nw = point.matrixTransform(matrix);
+        point.x += width;
+        bbox.ne = point.matrixTransform(matrix);
+        point.y += height;
+        bbox.se = point.matrixTransform(matrix);
+        point.x -= width;
+        bbox.sw = point.matrixTransform(matrix);
+        point.y -= height / 2;
+        bbox.w = point.matrixTransform(matrix);
+        point.x += width;
+        bbox.e = point.matrixTransform(matrix);
+        point.x -= width / 2;
+        point.y -= height / 2;
+        bbox.n = point.matrixTransform(matrix);
+        point.y += height;
+        bbox.s = point.matrixTransform(matrix);
+
+        return bbox;
+    }
+
+
+    g.slider = function () {
+        // Public variables width default settings
+        var min = 0,
+            max = 100,
+            step = 0.01,
+            animate = true,
+            orientation = "horizontal",
+            axis = false,
+            margin = 50,
+            value,
+            active = 1,
+            snap = false,
+            scale;
+
+        // Private variables
+        var axisScale,
+            dispatch = d3.dispatch("slide", "slideend"),
+            formatPercent = d3.format(".2%"),
+            tickFormat = d3.format(".0"),
+            handle1,
+            handle2 = null,
+            sliderLength;
+
+        function slider (selection) {
+
+            selection.each(function() {
+
+                // Create scale if not defined by user
+                if (!scale) {
+                    scale = d3.scale.linear().domain([min, max]);
+                }
+
+                // Start value
+                value = value || scale.domain()[0];
+
+                // DIV container
+                var div = d3.select(this).classed("d3-slider d3-slider-" + orientation, true);
+
+                var drag = d3.behavior.drag();
+                drag.on('dragend', function() {
+                    dispatch.slideend(d3.event, value);
+                });
+
+                // Slider handle
+                //if range slider, create two
+                var divRange;
+
+                if (value.length == 2) {
+                    handle1 = div.append("a")
+                        .classed("d3-slider-handle", true)
+                        .attr("xlink:href", "#")
+                        .attr('id', "handle-one")
+                        .on("click", stopPropagation)
+                        .call(drag);
+                    handle2 = div.append("a")
+                        .classed("d3-slider-handle", true)
+                        .attr('id', "handle-two")
+                        .attr("xlink:href", "#")
+                        .on("click", stopPropagation)
+                        .call(drag);
+                } else {
+                    handle1 = div.append("a")
+                        .classed("d3-slider-handle", true)
+                        .attr("xlink:href", "#")
+                        .attr('id', "handle-one")
+                        .on("click", stopPropagation)
+                        .call(drag);
+                }
+
+                // Horizontal slider
+                if (orientation === "horizontal") {
+
+                    div.on("click", onClickHorizontal);
+
+                    if (value.length == 2) {
+                        divRange = d3.select(this).append('div').classed("d3-slider-range", true);
+
+                        handle1.style("left", formatPercent(scale(value[0])));
+                        divRange.style("left", formatPercent(scale(value[0])));
+                        drag.on("drag", onDragHorizontal);
+
+                        var width = 100 - parseFloat(formatPercent(scale(value[1])));
+                        handle2.style("left", formatPercent(scale(value[1])));
+                        divRange.style("right", width + "%");
+                        drag.on("drag", onDragHorizontal);
+
+                    } else {
+                        handle1.style("left", formatPercent(scale(value)));
+                        drag.on("drag", onDragHorizontal);
+                    }
+
+                    sliderLength = parseInt(div.style("width"), 10);
+
+                } else { // Vertical
+
+                    div.on("click", onClickVertical);
+                    drag.on("drag", onDragVertical);
+                    if (value.length == 2) {
+                        divRange = d3.select(this).append('div').classed("d3-slider-range-vertical", true);
+
+                        handle1.style("bottom", formatPercent(scale(value[0])));
+                        divRange.style("bottom", formatPercent(scale(value[0])));
+                        drag.on("drag", onDragVertical);
+
+                        var top = 100 - parseFloat(formatPercent(scale(value[1])));
+                        handle2.style("bottom", formatPercent(scale(value[1])));
+                        divRange.style("top", top + "%");
+                        drag.on("drag", onDragVertical);
+
+                    } else {
+                        handle1.style("bottom", formatPercent(scale(value)));
+                        drag.on("drag", onDragVertical);
+                    }
+
+                    sliderLength = parseInt(div.style("height"), 10);
+
+                }
+
+                if (axis) {
+                    createAxis(div);
+                }
+
+
+                function createAxis(dom) {
+
+                    // Create axis if not defined by user
+                    if (typeof axis === "boolean") {
+
+                        axis = d3.svg.axis()
+                            .ticks(Math.round(sliderLength / 100))
+                            .tickFormat(tickFormat)
+                            .orient((orientation === "horizontal") ? "bottom" : "right");
+
+                    }
+
+                    // Copy slider scale to move from percentages to pixels
+                    axisScale = scale.copy().range([0, sliderLength]);
+                    axis.scale(axisScale);
+
+                    // Create SVG axis container
+                    var svg = dom.append("svg")
+                        .classed("d3-slider-axis d3-slider-axis-" + axis.orient(), true)
+                        .on("click", stopPropagation);
+
+                    var g = svg.append("g");
+
+                    // Horizontal axis
+                    if (orientation === "horizontal") {
+
+                        svg.style("margin-left", - margin + "px");
+
+                        svg.attr({
+                            width: sliderLength + margin * 2,
+                            height: margin
+                        });
+
+                        if (axis.orient() === "top") {
+                            svg.style("top", - margin + "px");
+                            g.attr("transform", "translate(" + margin + "," + margin + ")");
+                        } else { // bottom
+                            g.attr("transform", "translate(" + margin + ",0)");
+                        }
+
+                    } else { // Vertical
+
+                        svg.style("top", - margin + "px");
+
+                        svg.attr({
+                            width: margin,
+                            height: sliderLength + margin * 2
+                        });
+
+                        if (axis.orient() === "left") {
+                            svg.style("left", - margin + "px");
+                            g.attr("transform", "translate(" + margin + "," + margin + ")");
+                        } else { // right
+                            g.attr("transform", "translate(" + 0 + "," + margin + ")");
+                        }
+
+                    }
+
+                    g.call(axis);
+
+                }
+
+                function onClickHorizontal() {
+                    if (!value.length) {
+                        var pos = Math.max(0, Math.min(sliderLength, d3.event.offsetX || d3.event.layerX));
+                        moveHandle(stepValue(scale.invert(pos / sliderLength)));
+                    }
+                }
+
+                function onClickVertical() {
+                    if (!value.length) {
+                        var pos = sliderLength - Math.max(0, Math.min(sliderLength, d3.event.offsetY || d3.event.layerY));
+                        moveHandle(stepValue(scale.invert(pos / sliderLength)));
+                    }
+                }
+
+                function onDragHorizontal() {
+                    if (d3.event.sourceEvent.target.id === "handle-one") {
+                        active = 1;
+                    } else if (d3.event.sourceEvent.target.id == "handle-two") {
+                        active = 2;
+                    }
+                    var pos = Math.max(0, Math.min(sliderLength, d3.event.x));
+                    moveHandle(stepValue(scale.invert(pos / sliderLength)));
+                }
+
+                function onDragVertical() {
+                    if (d3.event.sourceEvent.target.id === "handle-one") {
+                        active = 1;
+                    } else if (d3.event.sourceEvent.target.id == "handle-two") {
+                        active = 2;
+                    }
+                    var pos = sliderLength - Math.max(0, Math.min(sliderLength, d3.event.y));
+                    moveHandle(stepValue(scale.invert(pos / sliderLength)));
+                }
+
+                function stopPropagation() {
+                    d3.event.stopPropagation();
+                }
+
+            });
+
+        }
+
+        // Move slider handle on click/drag
+        function moveHandle (newValue) {
+            var currentValue = value.length ? value[active - 1] : value,
+                oldPos = formatPercent(scale(stepValue(currentValue))),
+                newPos = formatPercent(scale(stepValue(newValue))),
+                position = (orientation === "horizontal") ? "left" : "bottom";
+            if (oldPos !== newPos) {
+
+                if (value.length === 2) {
+                    value[active - 1] = newValue;
+                    if (d3.event)
+                        dispatch.slide(d3.event, value);
+                } else if (d3.event)
+                    dispatch.slide(d3.event.sourceEvent || d3.event, value = newValue);
+
+                if (value[0] >= value[1]) return;
+                if (active === 1) {
+                    if (value.length === 2) {
+                        (position === "left") ? divRange.style("left", newPos) : divRange.style("bottom", newPos);
+                    }
+
+                    if (animate) {
+                        handle1.transition()
+                            .styleTween(position, function() {
+                            return d3.interpolate(oldPos, newPos);
+                        })
+                            .duration((typeof animate === "number") ? animate : 250);
+                    } else {
+                        handle1.style(position, newPos);
+                    }
+                } else {
+
+                    var width = 100 - parseFloat(newPos);
+                    var top = 100 - parseFloat(newPos);
+
+                    (position === "left") ? divRange.style("right", width + "%") : divRange.style("top", top + "%");
+
+                    if (animate) {
+                        handle2.transition()
+                            .styleTween(position, function() {
+                            return d3.interpolate(oldPos, newPos);
+                        })
+                            .duration((typeof animate === "number") ? animate : 250);
+                    } else {
+                        handle2.style(position, newPos);
+                    }
+                }
+            }
+        }
+
+        // Calculate nearest step value
+        function stepValue (val) {
+
+            if (val === scale.domain()[0] || val === scale.domain()[1]) {
+                return val;
+            }
+
+            var alignValue = val;
+            if (snap) {
+                var val_i = scale(val);
+                var dist = scale.ticks().map(function(d) {
+                    return val_i - scale(d);
+                });
+                var i = -1,
+                    index = 0,
+                    r = scale.range()[1];
+                do {
+                    i++;
+                    if (Math.abs(dist[i]) < r) {
+                        r = Math.abs(dist[i]);
+                        index = i;
+                    }
+                } while (dist[i] > 0 && i < dist.length - 1);
+                alignValue = scale.ticks()[index];
+            } else {
+                var valModStep = (val - scale.domain()[0]) % step;
+                alignValue = val - valModStep;
+
+                if (Math.abs(valModStep) * 2 >= step) {
+                    alignValue += (valModStep > 0) ? step : -step;
+                }
+            }
+
+            return alignValue;
+
+        }
+
+        // Getter/setter functions
+        slider.min = function(_) {
+            if (!arguments.length) return min;
+            min = _;
+            return slider;
+        };
+
+        slider.max = function(_) {
+            if (!arguments.length) return max;
+            max = _;
+            return slider;
+        };
+
+        slider.step = function(_) {
+            if (!arguments.length) return step;
+            step = _;
+            return slider;
+        };
+
+        slider.animate = function(_) {
+            if (!arguments.length) return animate;
+            animate = _;
+            return slider;
+        };
+
+        slider.orientation = function(_) {
+            if (!arguments.length) return orientation;
+            orientation = _;
+            return slider;
+        };
+
+        slider.axis = function(_) {
+            if (!arguments.length) return axis;
+            axis = _;
+            return slider;
+        };
+
+        slider.margin = function(_) {
+            if (!arguments.length) return margin;
+            margin = _;
+            return slider;
+        };
+
+        slider.value = function(_) {
+            if (!arguments.length) return value;
+            if (value)
+                moveHandle(stepValue(_));
+            value = _;
+            return slider;
+        };
+
+        slider.snap = function(_) {
+            if (!arguments.length) return snap;
+            snap = _;
+            return slider;
+        };
+
+        slider.scale = function(_) {
+            if (!arguments.length) return scale;
+            scale = _;
+            return slider;
+        };
+
+        d3.rebind(slider, dispatch, "on");
+
+        return slider;
+    };
+
 
     g.math.distances = {
 
@@ -846,32 +1281,58 @@
         yaxis2: extend({position: 'right'}, g.defaults.axis),
         colors: d3.scale.category10().range(),
         css: null,
+        activeEvents: ["mousemove", "touchstart", "touchmove", "mouseout"],
         line: {
             interpolate: 'cardinal',
-            fill: false,
-            lineWidth: 2
+            fill: 'none',
+            fillOpacity: 1,
+            colorOpacity: 1,
+            lineWidth: 2,
+            active: {
+                color: 'darker',
+                // Multiplier for lineWidth, set to 1 for no change
+                lineWidth: 1
+            }
         },
         point: {
             symbol: 'circle',
             size: '8px',
             fill: true,
             fillOpacity: 1,
-            lineWidth: 2
+            colorOpacity: 1,
+            lineWidth: 2,
+            active: {
+                fill: 'darker',
+                color: 'brighter',
+                // Multiplier for size, set to 1 for no change
+                size: 1.2
+            }
         },
         bar: {
             width: 'auto',
             color: null,
             fill: true,
+            fillOpacity: 1,
+            colorOpacity: 1,
             lineWidth: 2,
             // Radius in pixels of rounded corners. Set to 0 for no rounded corners
-            radius: 4
+            radius: 4,
+            active: {
+                fill: 'darker',
+                color: 'brighter'
+            }
         },
         pie: {
             lineWidth: 1,
             padAngle: 0,
             cornerRadius: 0,
-            fillOpacity: 1,
-            innerRadius: 0
+            fillOpacity: 0.7,
+            colorOpacity: 1,
+            innerRadius: 0,
+            active: {
+                fill: 'darker',
+                color: 'brighter'
+            }
         },
         font: {
             size: 11,
@@ -1163,6 +1624,7 @@
                         .attr('height', p.size[1])
                         .attr("viewBox", "0 0 " + p.size[0] + " " + p.size[1]),
             clear = paper.clear,
+            events = d3.dispatch('activein', 'activeout'),
             components,
             componentMap,
             cidCounter,
@@ -1229,10 +1691,19 @@
         };
 
         paper.on = function (event, callback) {
-            current.on(event, function () {
-                callback.call(this);
-            });
+            if (events[event])
+                events.on(event, function (elem) {
+                    callback.call(elem, this);
+                });
+            else
+                current.on(event, function (e) {
+                    callback.call(this, e);
+                });
             return paper;
+        };
+
+        paper.data = function (el) {
+            return _.isFunction(el.data) ? el.data() : el.__data__;
         };
 
         paper.group = function (attr) {
@@ -1273,138 +1744,161 @@
         // Draw a path or an area, data must be an xy array [[x1,y1], [x2, y2], ...]
         paper.path = function (data, opts) {
             opts || (opts = {});
-            copyMissing(p.line, opts);
+            data = data.slice();  // copy
+            chartColors(paper, copyMissing(p.line, opts));
 
-            var container = current;
+            var container = current,
+                scalex = paper.scalex,
+                scaley = paper.scaley,
+                d;
+
+            function draw (selection) {
+                return selection
+                    .attr('stroke', data[0].color)
+                    .attr('stroke-opacity', data[0].colorOpacity)
+                    .attr('stroke-width', data[0].lineWidth);
+            }
+
+            for (var i=0; i<data.length; i++) {
+                d = {values: data[i]};
+                if (!i) {
+                    d = paperData(paper, opts, d).reset();
+                    d.draw = draw;
+                }
+                data[i] = d;
+            }
 
             return paper.addComponent(function () {
 
                 var chart = container.select("path.line"),
-                    scalex = paper.scalex,
-                    scaley = paper.scaley,
                     line = opts.area ? d3.svg.area() : d3.svg.line();
 
-                if (!opts.color)
-                    opts.color = paper.pickColor();
-
                 line.interpolate(opts.interpolate)
-                    .x(function(d) {
-                        return scalex(d.x);
-                    })
-                    .y(function(d) {
-                        return scaley(d.y);
-                    });
+                    .x(function(d) {return scalex(d.values.x);})
+                    .y(function(d) {return scaley(d.values.y);});
 
                 if (!chart.node())
                     chart = container.append('path')
                                         .attr('class', 'line');
 
-                chart
-                    .classed('area', opts.area)
-                    .attr('stroke', opts.color)
-                    .attr('stroke-width', opts.lineWidth)
-                    .datum(data)
-                    .attr('d', line);
+                draw(chart
+                        .classed('area', opts.area)
+                        .datum(data)
+                        .attr('d', line));
 
-                opts.chart = chart;
-                return opts;
+                _events(chart);
             });
         };
 
         // Draw points
+        // Data is an array of {x: value, y: value} objects
         paper.points = function (data, opts) {
             opts || (opts = {});
-            copyMissing(p.point, opts);
+            data = data.slice();  // copy
+            chartColors(paper, copyMissing(p.point, opts));
 
-            var container = current;
+            var size = paper.scale(paper.dim(opts.size)),
+                scalex = paper.scalex,
+                scaley = paper.scaley,
+                symbol = d3.svg.symbol().type(function (d) {return d.symbol;})
+                                        .size(function (d) {return d.size();}),
+                container = current,
+                d;
+
+            function draw (selection) {
+                return _draw(selection).attr('d', symbol);
+            }
+
+            for (var i=0; i<data.length; i++) {
+                d = paperData(paper, opts, {values: data[i]});
+                d.size(size);
+                d.draw = draw;
+                data[i] = d.reset();
+            }
 
             return paper.addComponent(function () {
-                var chart = container.select("g.points"),
-                    scalex = paper.scalex,
-                    scaley = paper.scaley,
-                    symbol = d3.svg.symbol().type(function (d) {
-                        return d.symbol || opts.symbol;
-                    }).size(pointSize(paper, opts)),
-                    points;
+                var chart = container.select("g.points");
 
-                chartColors(paper, data, opts);
-
-                if (!chart.node()) {
+                if (!chart.node())
                     chart = container.append("g")
                                     .attr('class', 'points');
 
-                    points = chart.selectAll("path.point")
+                _events(draw(chart.selectAll("path.point")
                                 .data(data)
                                 .enter()
                                 .append("path")
-                                .attr('class', 'point');
-
-                } else
-                    points = chart.selectAll("path.point");
-
-                chart.attr('stroke', opts.color)
-                        .attr('stroke-width', opts.lineWidth)
-                        .attr('fill', opts.fill)
-                        .attr('fill-opacity', opts.fillOpacity);
-
-                points
-                    .attr("transform", function(d) {
-                        return "translate(" + scalex(d.x) + "," + scaley(d.y) + ")";
-                    })
-                    .attr('d', symbol);
-
-                opts.chart = chart;
-                return opts;
+                                .attr('class', 'point')
+                                .attr("transform", function(d) {
+                                    return "translate(" + scalex(d.values.x) + "," + scaley(d.values.y) + ")";
+                                })));
             });
         };
 
         // Draw a barchart
         paper.barchart = function (data, opts) {
             opts || (opts = {});
-            copyMissing(p.bar, opts);
+            data = data.slice();  // copy
+            chartColors(paper, copyMissing(p.bar, opts));
 
-            var container = current;
+            var size = barWidth(paper, data, opts),
+                scalex = paper.scalex,
+                scaley = paper.scaley,
+                container = current,
+                d;
+
+            function draw (selection) {
+                return _draw(selection).attr("width", function (d) {return d.size();});
+            }
+
+            for (var i=0; i<data.length; i++) {
+                d = paperData(paper, opts, {values: data[i]});
+                d.size(size);
+                d.draw = draw;
+                data[i] = d.reset();
+            }
 
             return paper.addComponent(function () {
 
-                var scalex = paper.scalex,
-                    scaley = paper.scaley,
-                    width = barWidth(paper, data, opts),
-                    zero = scaley(0),
-                    chart = container.select('g.barchart');
+                var zero = scaley(0),
+                    chart = container.select('g.barchart'),
+                    bar;
 
                 if (!chart.node())
                     chart = container.append("g")
                                 .attr('class', 'barchart');
 
-                var bar = chart
-                        .attr('stroke', opts.color)
-                        .attr('stroke-width', opts.lineWidth)
-                        .attr('fill', opts.fill)
+                bar = draw(chart
                         .selectAll(".bar")
                         .data(data)
                         .enter().append("rect")
                         .attr('class', 'bar')
                         .attr("x", function(d) {
-                            return scalex(d.x) - width/2;
+                            return scalex(d.values.x) - 0.5*d.size();
                         })
-                        .attr("y", function(d) {return d.y < 0 ? zero : scaley(d.y); })
-                        .attr("height", function(d) { return d.y < 0 ? scaley(d.y) - zero : zero - scaley(d.y); })
-                        .attr("width", width);
+                        .attr("y", function(d) {return d.values.y < 0 ? zero : scaley(d.values.y); })
+                        .attr("height", function(d) {
+                            return d.values.y < 0 ? scaley(d.values.y) - zero : zero - scaley(d.values.y);
+                        }));
 
                 if (opts.radius > 0)
                     bar.attr('rx', opts.radius).attr('ry', opts.radius);
 
-                opts.chart = chart;
-                return opts;
+                _events(bar);
             });
         };
 
         paper.pie = function (data, opts) {
             opts || (opts = {});
+            data = data.slice();  // copy
             copyMissing(p.pie, opts);
+            var container = current,
+                d, dd;
 
-            var container = current;
+            for (var i=0; i<data.length; i++) {
+                d = pieData(paper, opts, data[i]);
+                d.draw = _draw;
+                data[i] = d.reset();
+            }
 
             return paper.addComponent(function () {
 
@@ -1414,40 +1908,37 @@
                     height = paper.innerHeight(),
                     radius = 0.5*Math.min(width, height),
                     innerRadius = opts.innerRadius*radius,
-                    cornerRadius = paper.dim(opts.cornerRadius),
-                    pie = d3.layout.pie()
-                        .value(function (d, i) {
-                            return d.length > 1 ? d[1] : d[0];
-                        }),
-                        //.padAngle(opts.padAngle),
+                    cornerRadius = paper.scale(paper.dim(opts.cornerRadius)),
                     chart = container.select('g.pie'),
+                    pie = d3.layout.pie()
+                                    .value(function (d, i) {return d.value;})
+                                    .padAngle(d3_radians*opts.padAngle)(data),
                     arc = d3.svg.arc()
-                            //.padRadius(radius)
-                            //.cornerRadius(cornerRadius)
+                            .cornerRadius(cornerRadius)
                             .innerRadius(innerRadius)
                             .outerRadius(radius),
                     c;
 
+                for (i=0; i<pie.length; i++) {
+                    d = pie[i];
+                    dd = d.data;
+                    delete d.data;
+                    extend(dd, d);
+                    dd.draw = _draw;
+                    pie[i] = dd;
+                }
+
                 if (!chart.node())
                     chart = container.append("g")
                                 .attr('class', 'pie')
-                                //.style('shape-rendering', 'crispEdges')
                                 .attr("transform", "translate(" + width/2 + "," + height/2 + ")");
 
-                var piechart = chart
-                        .attr('stroke-width', opts.lineWidth)
-                        .attr('fill-opacity', opts.fillOpacity)
+                _events(_draw(chart
                         .selectAll(".slice")
-                        .data(pie(data))
+                        .data(pie)
                         .enter().append("path")
                         .attr('class', 'slice')
-                        .attr('stroke', function (d, i) {
-                            return paper.pickColor(i, 1);
-                        })
-                        .attr('fill', function (d, i) {
-                            return paper.pickColor(i);
-                        })
-                        .attr('d', arc);
+                        .attr('d', arc)));
             });
         };
 
@@ -1505,64 +1996,12 @@
         };
 
         paper.downloadSVG = function (e) {
-            var data = "data:image/svg+xml;charset=utf-8;base64," + paper.encode();
-            d3.select(e.target).attr("href", data);
+            var data = "data:image/svg+xml;charset=utf-8;base64," + paper.encode(),
+                target = e ? e.target : document;
+            d3.select(target).attr("href", data);
         };
 
-        paper.downloadPNG = function (e) {
-            if (!g.cloudConvertApiKey)
-                return;
-
-            var params = {
-                apikey: g.cloudConvertApiKey,
-                inputformat: 'svg',
-                outputformat: 'png'
-            };
-
-            var blob = new Blob(['base64,',paper.encode()], {type : 'image/svg+xml;charset=utf-8'});
-
-            d3.xhr('https://api.cloudconvert.org/process?' + encodeObject(params))
-                .header('content-type', 'multipart/form-data')
-                .post(submit);
-
-            function submit(_, request) {
-                if (!request || request.status !== 200)
-                    return;
-                var data = JSON.parse(request.responseText);
-                d3.xhr(data.url)
-                    .post(encodeObject({
-                        input: 'upload',
-                        file: blob
-                    }, 'multipart/form-data'), function (r, request) {
-                        if (!request || request.status !== 200)
-                            return;
-                        data = JSON.parse(request.responseText);
-                        wait_for_data(data);
-                    });
-            }
-
-            function wait_for_data (data) {
-                d3.xhr(data.url, function (r, request) {
-                    if (!request || request.status !== 200)
-                        return;
-                    data = JSON.parse(request.responseText);
-                    if (data.step === 'finished')
-                        download(data.output);
-                    else if (data.step === 'error')
-                        error(data);
-                    else
-                        wait_for_data(data);
-                });
-            }
-
-            function error (data) {
-
-            }
-
-            function download(data) {
-                d3.select(e.target).attr("href", data.url + '?inline');
-            }
-        };
+        paper.download = paper.downloadSVG;
 
         // LOW LEVEL FUNCTIONS - MAYBE THEY SHOULD BE PRIVATE?
 
@@ -1601,7 +2040,7 @@
             }
         }
 
-        function _font(element, opts) {
+        function _font (element, opts) {
             var font = p.font;
             opts || (opts = {});
             return element.style({
@@ -1612,10 +2051,36 @@
                 'font-variant': opts.variant || font.variant
             });
         }
+
+        function _draw (selection) {
+            return selection
+                    .attr('stroke', function (d) {return d.color;})
+                    .attr('stroke-width', function (d) {return d.lineWidth;})
+                    .attr('fill', function (d) {return d.fill;})
+                    .attr('fill-opacity', function (d) {return d.fillOpacity;});
+        }
+
+        function _events (selection) {
+            p.activeEvents.forEach(function (event) {
+                selection.on(event + '.paper-active', function () {
+                    if (d3.event.type === 'mouseout')
+                        events.activeout(this);
+                    else
+                        events.activein(this);
+                });
+            });
+            return selection;
+        }
     });
 
     //
     g.viz = {};
+    // Plugins for all visualization classes
+    g.vizplugins = [];
+    //
+    g.vizplugin = function (callback) {
+        g.vizplugins.push(callback);
+    };
     //
     // Factory of Giotto visualization factories
     //  name: name of the visualization constructor, the constructor is
@@ -1752,6 +2217,10 @@
                 return opts;
             };
 
+            viz.download = function () {
+                return paper.download();
+            };
+
             viz.xyfunction = g.math.xyfunction;
 
             d3.rebind(viz, event, 'on');
@@ -1759,6 +2228,10 @@
             // If constructor available, call it first
             if (constructor)
                 constructor(viz, opts);
+
+            // Inject plugins for all visualizations
+            for (i=0; i < g.vizplugins.length; ++i)
+                g.vizplugins[i](viz, opts);
 
             // Inject visualization plugins
             for (var i=0; i < plugins.length; ++i)
@@ -1791,159 +2264,125 @@
         return vizType;
     };
 
+    //
+    // Manage attributes for data to be drawn on papers
+    function paperData (paper, opts, d) {
+        // Default values
+        var _fill = d.fill || opts.fill,
+            _fillOpacity = d.fillOpacity || opts.fillOpacity,
+            _stroke = d.color || opts.color,
+            _strokeOpacity = d.colorOpacity || opts.colorOpacity,
+            _lineWidth = d.lineWidth || opts.lineWidth,
+            _symbol = d.symbol || opts.symbol,
+            _size;
 
-    g.crossfilter = function (options) {
-        var cf = {
-            dims: {},
-            tolerance: options.tolerance === undefined ? g.crossfilter.tolerance : options.tolerance
+        if (!d.active)
+            d.active = {};
+        copyMissing(opts.active, d.active);
+        activeColors(d);
+
+        d.reset = function () {
+            d.fill = _fill;
+            d.fillOpacity = _fillOpacity;
+            d.color = _stroke;
+            d.colorOpacity = _strokeOpacity;
+            d.lineWidth = _lineWidth;
+            d.symbol = _symbol;
+            d.size(_size);
+            return d;
         };
 
-        // Add a new dimension to the crossfilter
-        cf.addDimension = function (name, callback) {
-            if (!callback) {
-                callback = function (d) {
-                    return d[name];
-                };
-            }
-            cf.dims[name] = cf.data.dimension(callback);
+        d.highLight = function () {
+            var a = d.active;
+            _replace('fill', a);
+            _replace('fillOpacity', a);
+            _replace('color', a);
+            _replace('colorOpacity', a);
+            _replace('symbol', a);
+            if (a.lineWidth)
+                d.lineWidth *= a.lineWidth;
+            if (a.size)
+                d._size *= a.size;
+            return d;
         };
 
-        // Reduce the number of points by using a K-mean clustering algorithm
-        cf.reduceDensity = function (dimension, points, start, end) {
-            var count = 0,
-                dim = cf.dims[dimension],
-                group;
-
-            if (!dim)
-                throw Error('Cross filter dimension "' + dimension + '"" not available. Add it with the addDimension method');
-
-            if (start === undefined) start = null;
-            if (end === undefined) end = null;
-
-            if (start === null && end === null)
-                group = dim.filter();
-            else
-                group = dim.filter(function (d) {
-                    if (start !== null && d < start) return;
-                    if (end !== null && d > end) return;
-                    return true;
-                });
-
-            var all = group.bottom(Infinity);
-
-            if (all.length > cf.tolerance*points) {
-                var km = g.math.kmeans(),
-                    reduced = [],
-                    cl = [],
-                    centroids = [],
-                    r = all.length / points,
-                    index, i, c;
-
-                // Create the input for the k-means algorithm
-                for (i=0; i<all.length; i++)
-                    cl.push([all[i][dimension]]);
-
-                for (i=0; i<points; i++) {
-                    centroids.push(cl[Math.round(i*r)]);
-                }
-
-                km.centroids(centroids).maxIters(10);
-
-                cl = km.cluster(cl).sort(function (a, b) {
-                    return a.centroid[0] - b.centroid[0];
-                });
-
-                cl.forEach(function (d) {
-                    index = d.indices[0];
-                    c = d.points[0];
-                    for (i=1; i<d.points.length; ++i) {
-                        if (d.points[i] > c) {
-                            index = d.indices[i];
-                            c = d.points[i];
-                        }
-                    }
-                    reduced.push(all[index]);
-                });
-                all = reduced;
-            }
-
-            return all;
-        };
-
-
-        function build () {
-            if (!g.crossfilter.lib)
-                throw Error('Could not find crossfilter library');
-
-            cf.data = g.crossfilter.lib(options.data);
-
-            if (g._.isArray(options.dimensions))
-                options.dimensions.forEach(function (o) {
-                    cf.addDimension(o);
-                });
-
-            if (options.callback)
-                options.callback(cf);
-        }
-
-        if (g.crossfilter.lib === undefined)
-            if (typeof crossfilter === 'undefined') {
-                g.require(['crossfilter'], function (crossfilter) {
-                    g.crossfilter.lib = crossfilter || null;
-                    build();
-                });
-                return cf;
-            }
+        d.size = function (x) {
+            if (!arguments.length)
+                if (d.symbol) {
+                    return d._size*d._size*(SymbolSize[d.symbol] || 1);
+                } else
+                    return d._size;
             else {
-                g.crossfilter.lib = crossfilter;
+                _size = +x;
+                d._size = _size;
+                return d;
             }
+        };
 
-        build();
-        return cf;
+        return d;
+
+        function _replace(name, o) {
+            if (o[name])
+                d[name] = o[name];
+        }
+    }
+
+
+    function pieData (paper, opts, d) {
+        // Default values
+        if (_.isArray(d))
+            d = {label: d[0], value: d[1]};
+        if (!d.fill)
+            d.fill = paper.pickColor();
+        if (!d.color)
+            d.color = d3.rgb(d.fill).darker();
+
+        return paperData(paper, opts, d);
+    }
+
+
+    var SymbolSize = {
+        circle: 0.7,
+        cross: 0.7,
+        diamond: 0.7,
+        "triangle-up": 0.6,
+        "triangle-down": 0.6
     };
 
-    g.crossfilter.tolerance = 1.1;
-
-
-    function chartColors (paper, data, opts) {
+    //
+    // Add mission colors for graph
+    function chartColors (paper, opts) {
         if (!opts.color)
             opts.color = paper.pickColor();
 
         if (opts.fill === true)
             opts.fill = d3.rgb(opts.color).brighter();
+
+        activeColors(opts);
+    }
+
+    function activeColors(opts) {
+        var a = opts.active;
+        if (!a)
+            a = opts.active = {};
+
+        if (a.fill === 'darker')
+            a.fill = d3.rgb(opts.fill).darker();
+        else if (a.fill === 'brighter')
+            a.fill = d3.rgb(opts.fill).brighter();
+
+        if (a.color === 'darker')
+            a.color = d3.rgb(opts.color).darker();
+        else if (a.color === 'brighter')
+            a.color = d3.rgb(opts.color).brighter();
     }
 
     function barWidth (paper, data, opts) {
-        chartColors(paper, data, opts);
-
         if (opts.width === 'auto')
             return d3.round(0.8*(paper.innerWidth() / data.length));
         else
             return opts.width;
     }
-
-    function pointSize (paper, opts) {
-        var scale = paper.scale,
-            size = paper.dim(opts.size),
-            fraction = {
-                circle: 0.7,
-                cross: 0.7,
-                diamond: 0.7,
-                "triangle-up": 0.6,
-                "triangle-down": 0.6
-            }, type, s;
-
-        return function (d) {
-            type = d.symbol || opts.symbol;
-            s = d.size === undefined ? size : d.size;
-
-            if (type === 'circle' && d.radius !== undefined)
-                s = 2*d.radius;
-            s = scale(s);
-            return s*s*(fraction[type] || 1);
-        };
-    }
-
     //
     //  Initaise paper
     function _initPaper (paper, p) {
@@ -2025,25 +2464,6 @@
         return p;
     }
 
-    var drawArc = d3.canvas.drawArc = function (ctx, xyfrom, xyto, radius, laf, sweep) {
-        var dx = xyfrom[0] - xyto[0],
-            dy = xyfrom[1] - xyto[1],
-            q2 = dx*dx + dy*dy,
-            q = Math.sqrt(q2),
-            xc = 0.5*(xyfrom[0] + xyto[0]),
-            yc = 0.5*(xyfrom[1] + xyto[1]),
-            l =  Math.sqrt(radius*radius - 0.25*q2);
-        if (sweep > 0) {
-            xc += l*dy/q;
-            yc -= l*dx/q;
-        } else {
-            xc -= l*dy/q;
-            yc += l*dx/q;
-        }
-        var a1 = Math.atan2(xyfrom[1]-yc, xyfrom[0]-xc),
-            a2 = Math.atan2(xyto[1]-yc, xyto[0]-xc);
-        ctx.arc(xc, yc, radius, a1, a2, sweep<=0);
-    };
 
     // same as d3.svg.arc... but for canvas
     d3.canvas.arc = function() {
@@ -2172,10 +2592,10 @@
                         drawArc(ctx, t30[0], t30[1], rc1, 0, cr);
                         drawArc(ctx, t30[1], t12[1], r1, laf, cw);
                         drawArc(ctx, t12[1], t12[0], rc1, 0, cr);
-                        ctx.moveTo(t12[0][0], t12[0][1]);
+                        //ctx.moveTo(t12[0][0], t12[0][1]);
                     } else {
                         drawArc(ctx, t30[0], t12[0], rc1, 1, cr);
-                        ctx.moveTo(t12[0][0], t12[0][1]);
+                        //ctx.moveTo(t12[0][0], t12[0][1]);
                     }
                 } else
                     ctx.moveTo(x0, y0);
@@ -2196,22 +2616,19 @@
                         drawArc(ctx, t03[1], t03[0], rc0, 0, cr);
                     } else
                         drawArc(ctx, t21[0], t03[0], rc0, 0, cr);
-                    ctx.moveTo(t03[0][0], t03[0][1]);
+                    //ctx.moveTo(t03[0][0], t03[0][1]);
                 } else
                     ctx.lineTo(x2, y2);
             }
 
             // Compute straight corners.
             else {
-                //ctx.moveTo(x0, y0);
                 if (x1 !== null) {
                     drawArc(ctx, [x0, y0], [x1, y1], r1, l1, cw);
-                    //ctx.moveTo(x1, y1);
                 }
                 ctx.lineTo(x2, y2);
                 if (x3 !== null) {
                     drawArc(ctx, [x2, y2], [x3, y3], r0, l0, 1 - cw);
-                    //ctx.moveTo(x3, y3);
                 }
             }
 
@@ -2275,7 +2692,25 @@
         return arc;
     };
 
-
+    var drawArc = d3.canvas.drawArc = function (ctx, xyfrom, xyto, radius, laf, sweep) {
+        var dx = xyfrom[0] - xyto[0],
+            dy = xyfrom[1] - xyto[1],
+            q2 = dx*dx + dy*dy,
+            q = Math.sqrt(q2),
+            xc = 0.5*(xyfrom[0] + xyto[0]),
+            yc = 0.5*(xyfrom[1] + xyto[1]),
+            l =  Math.sqrt(radius*radius - 0.25*q2);
+        if (sweep > 0) {
+            xc += l*dy/q;
+            yc -= l*dx/q;
+        } else {
+            xc -= l*dy/q;
+            yc += l*dx/q;
+        }
+        var a1 = Math.atan2(xyfrom[1]-yc, xyfrom[0]-xc),
+            a2 = Math.atan2(xyto[1]-yc, xyto[0]-xc);
+        ctx.arc(xc, yc, radius, a1, a2, sweep<=0);
+    };
 
     d3.canvas.axis = function() {
         var scale = d3.scale.linear(),
@@ -2786,7 +3221,7 @@
             size = svg.size(),
             ctx;
 
-        function symbol (ctx, d, i) {
+        function symbol (d, i) {
             return (d3_canvas_symbols.get(type.call(symbol, d, i)) || d3_canvas_symbolCircle)(ctx, size.call(symbol, d, i));
         }
 
@@ -2800,6 +3235,12 @@
         symbol.size = function (x) {
             if (!arguments.length) return size;
             size = d3_functor(x);
+            return symbol;
+        };
+
+        symbol.context = function (_) {
+            if (!arguments.length) return ctx;
+            ctx = _;
             return symbol;
         };
 
@@ -2895,6 +3336,11 @@
         p.xAxis = d3.canvas.axis();
         p.yAxis = [d3.canvas.axis(), d3.canvas.axis()];
 
+        // Return the container of canvas elements
+        paper.container = function () {
+            return container;
+        };
+
         paper.destroy = function () {
             _clear();
             return paper;
@@ -2935,30 +3381,40 @@
             return paper;
         };
 
-        // Re-render the canvas/es in this paper
-        paper.render = function (_cid) {
-            if (!arguments.length)
-                _apply(_render);
-            else
-                _apply(_render, _cid);
+        paper.each = function (callback) {
+            _apply(callback);
             return paper;
         };
 
-        paper.clear = function () {
-            _clear();
-            _addCanvas();
-            return clear();
+        // Re-render the canvas/es in this paper
+        paper.render = function (ctx) {
+            arguments.length ? _apply(_render, ctx) : _apply(_render);
+            return paper;
         };
 
+        paper.clear = function (ctx) {
+            if (ctx)
+                _clearCanvas(ctx, p.size);
+            else {
+                _clear();
+                _addCanvas();
+                return clear();
+            }
+            return paper;
+        };
+
+        // Create a new canvas element and add it to thecanvas container
+        // Returns the new canvas Element
         paper.group = function (attr) {
             var canvas = _addCanvas();
             if (attr)
                 canvas.attr(attr);
+            paper.render(cid);
             return paper.current();
         };
 
         paper.on = function (event, callback) {
-            paper.element().on(event, function () {
+            container.on(event, function () {
                 callback.call(this);
             });
             return paper;
@@ -2980,6 +3436,17 @@
             var index = components.indexOf(cid);
             cid = Math.max(0, index-1);
             return paper;
+        };
+
+        paper.get = function (x) {
+            if (x) {
+                if (x.node)
+                    x = x.node();
+                if (x && x.getContext)
+                    x = x.getContext('2d');
+                if (x)
+                    return componentMap[x.__cid__ ? x.__cid__ : x];
+            }
         };
 
         paper.xfromPX = function (px) {
@@ -3006,19 +3473,29 @@
         paper.drawYaxis = function () {
         };
 
+        paper.getDataAtPoint = function (point) {
+            var x = factor*point[0],
+                y = factor*point[1],
+                data = [];
+            _apply(function (ctx, _, component) {
+                component.data.forEach(function (el) {
+                    if (el.inRange(x, y))
+                        data.push(el);
+                });
+            });
+            return data;
+        };
+
         // Draw a path or an area
         paper.path = function (data, opts) {
             opts || (opts = {});
-            copyMissing(p.line, opts);
+            chartColors(paper, copyMissing(p.line, opts));
 
             return _addComponent(function (ctx) {
 
                 var scalex = paper.scalex,
                     scaley = paper.scaley,
                     line = opts.area ? d3.canvas.area() : d3.canvas.line();
-
-                if (!opts.color)
-                    opts.color = paper.pickColor();
 
                 ctx.strokeStyle = opts.color;
                 ctx.lineWidth = factor*opts.lineWidth;
@@ -3037,114 +3514,111 @@
 
         paper.points = function (data, opts) {
             opts || (opts = {});
-            copyMissing(p.point, opts);
+            data = data.slice();  // copy
+            copyMissing(p.point, chartColors(paper, opts));
+
+            var symbol = d3.canvas.symbol().type(function (d) {return d.symbol;})
+                                           .size(function (d) {return d.size();}),
+                pass = 0;
 
             return _addComponent(function (ctx) {
 
-                var scalex = paper.scalex,
-                    scaley = paper.scaley,
-                    fill = opts.fill,
-                    symbol = d3.canvas.symbol().type(function (d) {
-                        return d.symbol || opts.symbol;
-                    }).size(pointSize(paper, opts)),
-                    d, i;
+                var size = paper.scale(paper.dim(opts.size)),
+                    d;
 
-                chartColors(paper, data, opts);
 
-                if (fill === true)
-                    opts.fill = fill = d3.rgb(opts.color).brighter();
-
-                for (i=0; i<data.length; ++i) {
-                    d = data[i];
-                    ctx.save();
-                    ctx.translate(scalex(d.x), scaley(d.y));
-                    ctx.fillStyle = d.fill || fill;
-                    ctx.strokeStyle = d.color || opts.color;
-                    ctx.lineWidth = factor*(d.lineWidth || opts.width);
-                    symbol(ctx, d, i);
-                    ctx.fill();
-                    ctx.stroke();
-                    ctx.restore();
+                for (var i=0; i<data.length; ++i) {
+                    if (!pass)
+                        data[i] = _addData(canvasPoint(paper, opts, ctx, data[i], symbol));
+                    data[i].size(size).reset().draw();
                 }
 
+                pass++;
             });
 
         };
 
         paper.barchart = function (data, opts) {
             opts || (opts = {});
-            copyMissing(p.point, opts);
+            copyMissing(p.bar, chartColors(paper, opts));
 
             return _addComponent(function (ctx) {
 
-                var scalex = paper.scalex,
-                    scaley = paper.scaley,
-                    fill = opts.fill,
-                    width = barWidth(paper, data, opts),
-                    zero = scaley(0),
-                    chart = container.select('g.barchart'),
-                    y0 = scaley(0),
-                    radius = factor*opts.radius,
-                    x, y, d, i;
+                var width = barWidth(paper, data, opts),
+                    d;
 
-                for (i=0; i<data.length; ++i) {
-                    d = data[i];
-                    ctx.beginPath();
-                    ctx.fillStyle = d.fill || opts.fill;
-                    ctx.strokeStyle = d.color || opts.color;
-                    ctx.lineWidth = factor*(d.lineWidth || opts.lineWidth);
-                    x = scalex(d.x) - width;
-                    y = scaley(d.y);
-                    drawPolygon(ctx, [[x,y0], [x+width,y0], [x+width,y], [x, y]], radius);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.stroke();
+                for (var i=0; i<data.length; i++) {
+                    d = canvasBar(paper, opts, ctx, data[i]);
+                    d.size(width);
+                    _addData(d.reset().draw());
                 }
             });
         };
 
         paper.pie = function (data, opts) {
             opts || (opts = {});
+            data = data.slice(); // copy
             copyMissing(p.pie, opts);
+
+            var arc, i;
 
             return _addComponent(function (ctx) {
 
-                var scalex = paper.scalex,
-                    scaley = paper.scaley,
-                    width = paper.innerWidth(),
+                if (!arc) {
+                    arc = d3.canvas.arc();
+                    for (i=0; i<data.length; i++)
+                        data[i] = canvasSlice(paper, opts, ctx, data[i], arc);
+                }
+
+                var width = paper.innerWidth(),
                     height = paper.innerHeight(),
                     radius = 0.5*Math.min(width, height),
                     innerRadius = opts.innerRadius*radius,
-                    cornerRadius = paper.dim(opts.cornerRadius),
-                    pie = d3.layout.pie()
-                        .value(function (d, i) {
-                            return d.length > 1 ? d[1] : d[0];
-                        }),
-                        //.padAngle(opts.padAngle),
-                    arc = d3.canvas.arc()
-                            //.padRadius(radius)
-                            .cornerRadius(cornerRadius)
-                            .innerRadius(innerRadius)
-                            .outerRadius(radius)
-                            .context(ctx),
-                    arcs = pie(data),
-                    j = -1, d;
+                    cornerRadius = paper.scale(paper.dim(opts.cornerRadius)),
+                    pie = d3.layout.pie().value(function (d, i) {return d.value;})
+                                         .padAngle(d3_radians*opts.padAngle)(data),
+                    d, dd;
 
-                ctx.save();
-                ctx.translate(width/2, height/2);
+                arc = arc.cornerRadius(cornerRadius)
+                        .innerRadius(innerRadius)
+                        .outerRadius(radius)
+                        .context(ctx);
 
-                for (var i=0; i<data.length; ++i) {
-                    d = data[i];
-                    ctx.fillStyle = d.fill || paper.pickColor(++j);
-                    ctx.strokeStyle = d.color || paper.pickColor(j, 1);
-                    ctx.lineWidth = factor*(d.lineWidth || opts.lineWidth);
-                    arc(arcs[i]);
-                    ctx.fill();
-                    ctx.stroke();
+                for (i=0; i<pie.length; ++i) {
+                    d = pie[i];
+                    dd = d.data;
+                    delete d.data;
+                    extend(dd, d);
+                    _addData(dd.reset().draw());
                 }
-                ctx.restore();
             });
         };
+
+        paper.removeCanvas  = function (c) {
+            c = paper.get(c);
+            if (c) {
+                delete componentMap[c.cid];
+                var index = components.indexOf(c.cid);
+                if (index > -1)
+                    return components.splice(index, 1)[0];
+                return c.canvas;
+            }
+        };
+
+        // Download
+        paper.downloadPNG = function () {
+            var canvas = _addCanvas(),
+                context = paper.current();
+
+            _apply(function (ctx) {
+                if (ctx !== context)
+                    ctx.drawImage(context, 0, 0);
+            });
+            var dataUrl = context.toDataURL();
+            return dataUrl;
+        };
+
+        paper.download = paper.downloadSVG;
 
         // INTERNALS
         function _clear () {
@@ -3164,10 +3638,12 @@
                 element = canvas.node(),
                 ctx = _scaleCanvas(element.getContext('2d'));
 
+            ctx.__cid__ = cid;
             var component = {
                     cid: cid,
                     canvas: element,
-                    callbacks: []
+                    callbacks: [],
+                    data: [],
                 };
 
             if (components.length)
@@ -3183,7 +3659,7 @@
             return cid;
         }
 
-        function _render (ctx, canvas) {
+        function _render (ctx) {
             _clearCanvas(ctx, p.size);
             //
             // translate the axis range
@@ -3202,12 +3678,14 @@
                 components.forEach(function (_cid) {
                     cid = _cid;
                     component = componentMap[cid];
-                    callback(component.canvas.getContext('2d'), component.canvas);
+                    callback(component.canvas.getContext('2d'), component.canvas, component);
                 });
-            else if (componentMap[_cid]) {
-                cid = component.cid;
-                component = componentMap[cid];
-                callback(component.canvas.getContext('2d'), component.canvas);
+            else {
+                component = paper.get(_cid);
+                if (component) {
+                    cid = component.cid;
+                    callback(component.canvas.getContext('2d'), component.canvas, component);
+                }
             }
             cid = current;
         }
@@ -3222,9 +3700,124 @@
         function _scaleCanvas(ctx) {
             factor = d3.canvas.retinaScale(ctx, p.size[0], p.size[1]);
             _reset_axis(paper);
+            return ctx;
+        }
+
+        function _addData (d) {
+            componentMap[cid].data.push(d);
+            return d;
         }
 
     });
+
+    function rgba (color, opacity) {
+        if (opacity < 1) {
+            var c = d3.rgb(color);
+            return 'rgba(' + c.r + ',' + c.g + ',' + c.b + ',' + opacity + ')';
+        } else return color;
+    }
+
+    function canvasPoint (paper, opts, ctx, d, symbol) {
+        var scalex = paper.scalex,
+            scaley = paper.scaley,
+            factor = paper.factor();
+
+        d = paperData(paper, opts, {values: d});
+
+        d.draw = function (context) {
+            context = context || ctx;
+            context.save();
+            context.fillStyle = rgba(d.fill, d.fillOpacity);
+            context.strokeStyle = rgba(d.color, d.colorOpacity);
+            context.lineWidth = factor*d.lineWidth;
+            context.translate(scalex(d.values.x), scaley(d.values.y));
+            symbol.context(context)(d);
+            context.fill();
+            context.stroke();
+            context.restore();
+            return d;
+        };
+
+        d.inRange = function (ex, ey) {
+            ctx.save();
+            ctx.translate(scalex(d.values.x), scaley(d.values.y));
+            symbol.context(ctx)(d);
+            var res = ctx.isPointInPath(ex, ey);
+            ctx.restore();
+            return res;
+        };
+
+        return d;
+    }
+
+    function canvasBar (paper, opts, ctx, d) {
+        var scalex = paper.scalex,
+            scaley = paper.scaley,
+            factor = paper.factor(),
+            radius = factor*opts.radius,
+            x, y, y0, y1, w, yb;
+
+        d = paperData(paper, opts, {values: d});
+
+        d.draw = function (context) {
+            context = context || ctx;
+            context.beginPath();
+            context.fillStyle = rgba(d.fill, d.fillOpacity);
+            context.strokeStyle = rgba(d.color, d.colorOpacity);
+            context.lineWidth = factor*d.lineWidth;
+            w = 0.5*d.size();
+            x = scalex(d.values.x);
+            y = scaley(d.values.y);
+            y0 = scaley(0);
+            drawPolygon(context, [[x-w,y0], [x+w,y0], [x+w,y], [x-w, y]], radius);
+            context.closePath();
+            context.fill();
+            context.stroke();
+            return d;
+        };
+
+        d.inRange = function (ex, ey) {
+            ctx.beginPath();
+            drawPolygon(ctx, [[x-w,y0], [x+w,y0], [x+w,y], [x-w, y]], radius);
+            ctx.closePath();
+            return ctx.isPointInPath(ex, ey);
+        };
+
+        return d;
+    }
+
+    function canvasSlice (paper, opts, ctx, d, arc) {
+        var scalex = paper.scalex,
+            scaley = paper.scaley,
+            factor = paper.factor();
+
+        d = pieData(paper, opts, d);
+
+        d.draw = function (context) {
+            context = context || ctx;
+            context.save();
+            context.translate(0.5*paper.innerWidth(), 0.5*paper.innerHeight());
+            context.fillStyle = rgba(d.fill, d.fillOpacity);
+            context.strokeStyle = rgba(d.color, d.colorOpacity);
+            context.lineWidth = factor*d.lineWidth;
+            arc.context(context)(d);
+            context.fill();
+            context.stroke();
+            context.restore();
+            return d;
+        };
+
+        d.inRange = function (ex, ey) {
+            ctx.save();
+            ctx.translate(0.5*paper.innerWidth(), 0.5*paper.innerHeight());
+            arc.context(ctx)(d);
+            var res = ctx.isPointInPath(ex, ey);
+            ctx.restore();
+            return res;
+        };
+
+        return d;
+    }
 
 
     function drawPolygon (ctx, pts, radius) {
@@ -3924,7 +4517,7 @@
     //
     //  Sunburst visualization
     //
-    g.createviz('sunBurst', {
+    g.createviz('sunburst', {
         // Show labels
         labels: true,
         // Add the order of labels if available in the data
@@ -4697,6 +5290,142 @@
         });
     });
 
+
+    g.contextMenu = function () {
+        var menu = {},
+            element = null,
+            menuElement = null,
+            opened = false,
+            disabled = false,
+            events = d3.dispatch('open', 'close');
+
+        menu.bind = function (element, callback) {
+            init();
+            element.on('keyup.gmenu', handleKeyUpEvent);
+            element.on('click.gmenu', handleClickEvent);
+            element.on('contextmenu.gmenu', handleContextMenu(callback));
+        };
+
+        menu.disabled  = function (x) {
+            if (!arguments.length) return disabled;
+            disabled = x ? true : false;
+            return menu;
+        };
+
+        d3.rebind(menu, events, 'on');
+
+        return menu;
+
+        // INTERNALS
+
+        function handleKeyUpEvent () {
+            if (!disabled && opened && d3.event.keyCode === 27)
+                close();
+        }
+
+        function handleClickEvent () {
+            var event = d3.event;
+            if (!disabled && opened && event.button !== 2 || event.target !== element)
+                close();
+        }
+
+        function handleContextMenu (callback) {
+            return function () {
+                if (disabled) return;
+                var event = d3.event;
+                event.preventDefault();
+                event.stopPropagation();
+                close();
+                element = this;
+                open(event, callback);
+            };
+        }
+
+        function open (event, callback) {
+            if (callback) callback(menuElement);
+            menuElement.classed('open', true);
+
+            var docLeft = (window.pageXOffset || document.scrollLeft || 0) - (document.clientLeft || 0),
+                docTop = (window.pageYOffset || document.scrollTop || 0) - (document.clientTop || 0),
+                elementWidth = menuElement.node().scrollWidth,
+                elementHeight = menuElement.node().scrollHeight,
+                docWidth = document.clientWidth + docLeft,
+                docHeight = document.clientHeight + docTop,
+                totalWidth = elementWidth + event.pageX,
+                totalHeight = elementHeight + event.pageY,
+                left = Math.max(event.pageX - docLeft, 0),
+                top = Math.max(event.pageY - docTop, 0);
+
+            if (totalWidth > docWidth)
+                left = left - (totalWidth - docWidth);
+
+            if (totalHeight > docHeight)
+                top = top - (totalHeight - docHeight);
+
+            menuElement.style({
+                top: top + 'px',
+                left: left + 'px',
+                position: 'fixed'
+            });
+            opened = true;
+        }
+
+        function close () {
+            menuElement.classed('open', false);
+            if (opened)
+                events.close();
+            opened = false;
+        }
+
+        function init () {
+            if (!menuElement) {
+
+                menuElement = d3.select(document.createElement('div'))
+                                .attr('class', 'giotto-menu');
+                close();
+                document.body.appendChild(menuElement.node());
+
+                d3.select(document)
+                    .on('keyup.gmenu', handleKeyUpEvent)
+                    // Firefox treats a right-click as a click and a contextmenu event
+                    // while other browsers just treat it as a contextmenu event
+                    .on('click.gmenu', handleClickEvent)
+                    .on('contextmenu.gmenu', handleClickEvent);
+            }
+        }
+
+    };
+
+    //
+    // Context menu singletone
+    g.contextmenu = g.contextMenu();
+
+
+    g.vizplugin(function (viz, opts) {
+
+        viz.contextmenu = function (menu) {
+            menu.append('ul')
+                .attr('class', 'dropdown-menu')
+                .attr('role', 'menu')
+                .selectAll('li')
+                .data(opts.contextmenu)
+                .enter()
+                .append('li')
+                .append('a')
+                .attr('role', 'menuitem')
+                .text(function (d) {return d.label;})
+                .attr('href', '#')
+                .on('click', function (d) {
+                    if (d.callback) d.callback(viz);
+                });
+        };
+
+        if (opts.contextmenu)
+            g.contextmenu.bind(viz.element(), function (menu) {
+                return viz.contextmenu(menu);
+            });
+    });
+
     var quadDefaults = {
         color: '#ccc',
         opacity: 1,
@@ -4796,6 +5525,409 @@
             };
 
         });
+
+
+    var tooltipDefaults = {
+        className: 'd3-tip',
+        show: true,
+        fill: '#333',
+        fillOpacity: 0.8,
+        color: '#fff',
+        padding: '5px',
+        radius: '3px',
+        template: function (d) {
+            return "<strong>" + d.label + ":</strong><span>" + d.value + "</span>";
+        }
+    };
+
+    //
+    //  Tooltip functionality for SVG paper
+    g.paper.svg.plugin('tooltip', tooltipDefaults,
+
+        function (paper, opts) {
+            var tip = createTip(paper, opts.tooltip),
+                active;
+
+            paper.tooltip = function () {
+                return tip;
+            };
+
+            function hide (el) {
+                if (active)
+                    active.reset().draw(el);
+                active = null;
+                if (tip)
+                    tip.hide();
+                return el;
+            }
+
+            if (tip)
+                tip.html(function () {
+                    return opts.tooltip.template(active);
+                });
+
+            paper.on('activein', function () {
+                var el = d3.select(this),
+                    a = this.__data__;
+                if (_.isArray(a)) a = a[0];
+
+                if (a === active) return;
+                hide(el);
+                active = a;
+                if (!active) return;
+                g.log.info('active in');
+                //
+                // For lines, the data is an array, pick the first element
+                active.highLight().draw(el);
+
+                if (tip)
+                    tip.bbox(getScreenBBox(this)).show();
+
+            }).on('activeout', function () {
+                g.log.info('active out');
+                hide(d3.select(this));
+            });
+        });
+
+    //
+    //  Tooltip functionality for CANVAS paper
+    g.paper.canvas.plugin('tooltip', tooltipDefaults,
+
+        function (paper, opts) {
+            var tip = createTip(paper, opts.tooltip),
+                active = [];
+
+            paper.tooltip = function () {
+                return tip;
+            };
+
+            opts.activeEvents.forEach(function (event) {
+                paper.on(event + '.tooltip', function () {
+                    var overlay = paper.container().select('.interaction-overlay').node(),
+                        point;
+
+                    // Create the overlay if not available
+                    if (!overlay) {
+                        paper.group({'class': 'interaction-overlay'});
+                        overlay = paper.current();
+                        paper.parent();
+                    } else
+                        overlay = overlay.getContext('2d');
+
+                    for (var i=0; i<active.length; ++i)
+                        paper.clear(overlay);
+
+                    active = [];
+                    if (d3.event.type === 'mouseout')
+                        return;
+                    else if (d3.event.type === 'mousemove')
+                        point = d3.mouse(this);
+                    else
+                        point = d3.touches(this)[0];
+                    active = paper.getDataAtPoint(point);
+
+                    //if (tip)
+                    //    tip.show();
+
+                    if (active.length) {
+                        paper.render(overlay);
+                        for (i=0; i<active.length; ++i)
+                            active[i].highLight().draw(overlay);
+                    }
+                });
+            });
+
+            function tooltipEvent (ctx, p) {
+
+            }
+
+            function clearActive () {
+
+            }
+
+        });
+
+
+
+    function createTip (paper, opts) {
+        if (!opts.show) return;
+        var tip = g.tip(paper);
+        tip.attr('class', opts.className)
+           .style({
+                background: opts.fill,
+                opacity: opts.fillOpacity,
+                color: opts.color,
+                padding: opts.padding,
+                'border-radius': opts.radius
+            });
+        if (opts.className === 'd3-tip' && tooltipCss) {
+            tooltipCss['d3-tip:after'].color = opts.fill;
+            addCss('', tooltipCss);
+            tooltipCss = null;
+        }
+        return tip;
+    }
+    //
+    // Returns a tip handle
+    g.tip = function () {
+        var direction = d3_tip_direction,
+            offset = d3_tip_offset,
+            html = d3_tip_html,
+            node = initNode(),
+            tip = {},
+            bbox;
+
+        document.body.appendChild(node);
+
+        // Public - show the tooltip on the screen
+        //
+        // Returns a tip
+        tip.show = function () {
+            var args = Array.prototype.slice.call(arguments);
+            if (args[args.length - 1] instanceof SVGElement) target = args.pop();
+
+            var content = html.apply(this, args),
+                poffset = offset.apply(this, args),
+                dir = direction.apply(this, args),
+                nodel = d3.select(node),
+                i = directions.length,
+                coords,
+                scrollTop = document.documentElement.scrollTop || document.body.scrollTop,
+                scrollLeft = document.documentElement.scrollLeft || document.body.scrollLeft;
+
+            nodel.html(content)
+                .style({
+                opacity: 1,
+                'pointer-events': 'all'
+            });
+
+            while (i--)
+                nodel.classed(directions[i], false);
+
+            coords = direction_callbacks.get(dir).apply(this);
+            nodel.classed(dir, true).style({
+                top: (coords.top + poffset[0]) + scrollTop + 'px',
+                left: (coords.left + poffset[1]) + scrollLeft + 'px'
+            });
+            return tip;
+        };
+
+        // Public - hide the tooltip
+        //
+        // Returns a tip
+        tip.hide = function() {
+            d3.select(node).style({
+                opacity: 0,
+                'pointer-events': 'none'
+            });
+            return tip;
+        };
+
+        // Public: Proxy attr calls to the d3 tip container.  Sets or gets attribute value.
+        //
+        // n - name of the attribute
+        // v - value of the attribute
+        //
+        // Returns tip or attribute value
+        tip.attr = function(n, v) {
+            if (arguments.length < 2 && typeof n === 'string') {
+                return d3.select(node).attr(n);
+            } else {
+                var args = Array.prototype.slice.call(arguments);
+                d3.selection.prototype.attr.apply(d3.select(node), args);
+            }
+            return tip;
+        };
+
+        // Public: Proxy style calls to the d3 tip container.  Sets or gets a style value.
+        //
+        // n - name of the property
+        // v - value of the property
+        //
+        // Returns tip or style property value
+        tip.style = function(n, v) {
+            if (arguments.length < 2 && typeof n === 'string') {
+                return d3.select(node).style(n);
+            } else {
+                var args = Array.prototype.slice.call(arguments);
+                d3.selection.prototype.style.apply(d3.select(node), args);
+            }
+            return tip;
+        };
+
+        tip.bbox = function (x) {
+            if (!arguments.length) return bbox;
+            bbox = x;
+            return tip;
+        };
+
+        // Public: Set or get the direction of the tooltip
+        //
+        // v - One of n(north), s(south), e(east), or w(west), nw(northwest),
+        //     sw(southwest), ne(northeast) or se(southeast)
+        //
+        // Returns tip or direction
+        tip.direction = function (v) {
+            if (!arguments.length) return direction;
+            direction = v === null ? v : d3.functor(v);
+            return tip;
+        };
+
+        // Public: Sets or gets the offset of the tip
+        //
+        // v - Array of [x, y] offset
+        //
+        // Returns offset or
+        tip.offset = function (v) {
+            if (!arguments.length) return offset;
+            offset = v === null ? v : d3.functor(v);
+            return tip;
+        };
+
+        // Public: sets or gets the html value of the tooltip
+        //
+        // v - String value of the tip
+        //
+        // Returns html value or tip
+        tip.html = function (v) {
+            if (!arguments.length) return html;
+            html = v === null ? v : d3.functor(v);
+            return tip;
+        };
+
+        function d3_tip_direction() {
+            return 'n';
+        }
+
+        function d3_tip_offset() {
+            return [0, 0];
+        }
+
+        function d3_tip_html() {
+            return ' ';
+        }
+
+        var direction_callbacks = d3.map({
+            n: direction_n,
+            s: direction_s,
+            e: direction_e,
+            w: direction_w,
+            nw: direction_nw,
+            ne: direction_ne,
+            sw: direction_sw,
+            se: direction_se
+        }),
+
+        directions = direction_callbacks.keys();
+
+        function direction_n() {
+            return {
+                top: bbox.n.y - node.offsetHeight,
+                left: bbox.n.x - node.offsetWidth / 2
+            };
+        }
+
+        function direction_s() {
+            return {
+                top: bbox.s.y,
+                left: bbox.s.x - node.offsetWidth / 2
+            };
+        }
+
+        function direction_e() {
+            return {
+                top: bbox.e.y - node.offsetHeight / 2,
+                left: bbox.e.x
+            };
+        }
+
+        function direction_w() {
+            return {
+                top: bbox.w.y - node.offsetHeight / 2,
+                left: bbox.w.x - node.offsetWidth
+            };
+        }
+
+        function direction_nw() {
+            return {
+                top: bbox.nw.y - node.offsetHeight,
+                left: bbox.nw.x - node.offsetWidth
+            };
+        }
+
+        function direction_ne() {
+            return {
+                top: bbox.ne.y - node.offsetHeight,
+                left: bbox.ne.x
+            };
+        }
+
+        function direction_sw() {
+            return {
+                top: bbox.sw.y,
+                left: bbox.sw.x - node.offsetWidth
+            };
+        }
+
+        function direction_se() {
+            return {
+                top: bbox.se.y,
+                left: bbox.e.x
+            };
+        }
+
+        function initNode() {
+            var node = d3.select(document.createElement('div'));
+            node.style({
+                position: 'absolute',
+                top: 0,
+                opacity: 0,
+                'pointer-events': 'none',
+                'box-sizing': 'border-box'
+            });
+            return node.node();
+        }
+
+        return tip;
+    };
+
+
+    var tooltipCss = {
+        'd3-tip:after': {
+            'box-sizing': 'border-box',
+            display: 'inline',
+            'font-size': '16px',
+            width: '100%',
+            'line-height': 1,
+            position: 'absolute'
+        },
+        'd3-tip.n:after': {
+            content: '"\\25BC"',
+            margin: '-2px 0 0 0',
+            top: '100%',
+            left: 0,
+            'text-align': 'center'
+        },
+        'd3-tip.e:after': {
+            content: '"\\25C0"',
+            margin: '-4px 0 0 0',
+            top: '50%',
+            left: '-8px'
+        },
+        'd3-tip.s:after': {
+            content: '"\\25B2"',
+            margin: '0 0 2px 0',
+            top: '-8px',
+            left: 0,
+            'text-align': 'center'
+        },
+        'd3-tip.w:after': {
+            content: '"\\25B6"',
+            margin: '-4px 0 0 -1px',
+            top: '50%',
+            left: '100%'
+        }
+    };
 
 
     g.viz.force.plugin(function (force, opts) {
@@ -5052,6 +6184,120 @@
 
         return ag;
     }());
+
+
+    g.crossfilter = function (options) {
+        var cf = {
+            dims: {},
+            tolerance: options.tolerance === undefined ? g.crossfilter.tolerance : options.tolerance
+        };
+
+        // Add a new dimension to the crossfilter
+        cf.addDimension = function (name, callback) {
+            if (!callback) {
+                callback = function (d) {
+                    return d[name];
+                };
+            }
+            cf.dims[name] = cf.data.dimension(callback);
+        };
+
+        // Reduce the number of points by using a K-mean clustering algorithm
+        cf.reduceDensity = function (dimension, points, start, end) {
+            var count = 0,
+                dim = cf.dims[dimension],
+                group;
+
+            if (!dim)
+                throw Error('Cross filter dimension "' + dimension + '"" not available. Add it with the addDimension method');
+
+            if (start === undefined) start = null;
+            if (end === undefined) end = null;
+
+            if (start === null && end === null)
+                group = dim.filter();
+            else
+                group = dim.filter(function (d) {
+                    if (start !== null && d < start) return;
+                    if (end !== null && d > end) return;
+                    return true;
+                });
+
+            var all = group.bottom(Infinity);
+
+            if (all.length > cf.tolerance*points) {
+                var km = g.math.kmeans(),
+                    reduced = [],
+                    cl = [],
+                    centroids = [],
+                    r = all.length / points,
+                    index, i, c;
+
+                // Create the input for the k-means algorithm
+                for (i=0; i<all.length; i++)
+                    cl.push([all[i][dimension]]);
+
+                for (i=0; i<points; i++) {
+                    centroids.push(cl[Math.round(i*r)]);
+                }
+
+                km.centroids(centroids).maxIters(10);
+
+                cl = km.cluster(cl).sort(function (a, b) {
+                    return a.centroid[0] - b.centroid[0];
+                });
+
+                cl.forEach(function (d) {
+                    index = d.indices[0];
+                    c = d.points[0];
+                    for (i=1; i<d.points.length; ++i) {
+                        if (d.points[i] > c) {
+                            index = d.indices[i];
+                            c = d.points[i];
+                        }
+                    }
+                    reduced.push(all[index]);
+                });
+                all = reduced;
+            }
+
+            return all;
+        };
+
+
+        function build () {
+            if (!g.crossfilter.lib)
+                throw Error('Could not find crossfilter library');
+
+            cf.data = g.crossfilter.lib(options.data);
+
+            if (g._.isArray(options.dimensions))
+                options.dimensions.forEach(function (o) {
+                    cf.addDimension(o);
+                });
+
+            if (options.callback)
+                options.callback(cf);
+        }
+
+        if (g.crossfilter.lib === undefined)
+            if (typeof crossfilter === 'undefined') {
+                g.require(['crossfilter'], function (crossfilter) {
+                    g.crossfilter.lib = crossfilter || null;
+                    build();
+                });
+                return cf;
+            }
+            else {
+                g.crossfilter.lib = crossfilter;
+            }
+
+        build();
+        return cf;
+    };
+
+    g.crossfilter.tolerance = 1.1;
+
 
 
     return d3;

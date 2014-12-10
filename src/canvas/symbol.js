@@ -6,7 +6,7 @@
             size = svg.size(),
             ctx;
 
-        function symbol (ctx, d, i) {
+        function symbol (d, i) {
             return (d3_canvas_symbols.get(type.call(symbol, d, i)) || d3_canvas_symbolCircle)(ctx, size.call(symbol, d, i));
         }
 
@@ -20,6 +20,12 @@
         symbol.size = function (x) {
             if (!arguments.length) return size;
             size = d3_functor(x);
+            return symbol;
+        };
+
+        symbol.context = function (_) {
+            if (!arguments.length) return ctx;
+            ctx = _;
             return symbol;
         };
 

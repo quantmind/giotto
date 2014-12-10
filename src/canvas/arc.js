@@ -1,22 +1,3 @@
-    var drawArc = d3.canvas.drawArc = function (ctx, xyfrom, xyto, radius, laf, sweep) {
-        var dx = xyfrom[0] - xyto[0],
-            dy = xyfrom[1] - xyto[1],
-            q2 = dx*dx + dy*dy,
-            q = Math.sqrt(q2),
-            xc = 0.5*(xyfrom[0] + xyto[0]),
-            yc = 0.5*(xyfrom[1] + xyto[1]),
-            l =  Math.sqrt(radius*radius - 0.25*q2);
-        if (sweep > 0) {
-            xc += l*dy/q;
-            yc -= l*dx/q;
-        } else {
-            xc -= l*dy/q;
-            yc += l*dx/q;
-        }
-        var a1 = Math.atan2(xyfrom[1]-yc, xyfrom[0]-xc),
-            a2 = Math.atan2(xyto[1]-yc, xyto[0]-xc);
-        ctx.arc(xc, yc, radius, a1, a2, sweep<=0);
-    };
 
     // same as d3.svg.arc... but for canvas
     d3.canvas.arc = function() {
@@ -145,10 +126,10 @@
                         drawArc(ctx, t30[0], t30[1], rc1, 0, cr);
                         drawArc(ctx, t30[1], t12[1], r1, laf, cw);
                         drawArc(ctx, t12[1], t12[0], rc1, 0, cr);
-                        ctx.moveTo(t12[0][0], t12[0][1]);
+                        //ctx.moveTo(t12[0][0], t12[0][1]);
                     } else {
                         drawArc(ctx, t30[0], t12[0], rc1, 1, cr);
-                        ctx.moveTo(t12[0][0], t12[0][1]);
+                        //ctx.moveTo(t12[0][0], t12[0][1]);
                     }
                 } else
                     ctx.moveTo(x0, y0);
@@ -169,22 +150,19 @@
                         drawArc(ctx, t03[1], t03[0], rc0, 0, cr);
                     } else
                         drawArc(ctx, t21[0], t03[0], rc0, 0, cr);
-                    ctx.moveTo(t03[0][0], t03[0][1]);
+                    //ctx.moveTo(t03[0][0], t03[0][1]);
                 } else
                     ctx.lineTo(x2, y2);
             }
 
             // Compute straight corners.
             else {
-                //ctx.moveTo(x0, y0);
                 if (x1 !== null) {
                     drawArc(ctx, [x0, y0], [x1, y1], r1, l1, cw);
-                    //ctx.moveTo(x1, y1);
                 }
                 ctx.lineTo(x2, y2);
                 if (x3 !== null) {
                     drawArc(ctx, [x2, y2], [x3, y3], r0, l0, 1 - cw);
-                    //ctx.moveTo(x3, y3);
                 }
             }
 
@@ -248,3 +226,22 @@
         return arc;
     };
 
+    var drawArc = d3.canvas.drawArc = function (ctx, xyfrom, xyto, radius, laf, sweep) {
+        var dx = xyfrom[0] - xyto[0],
+            dy = xyfrom[1] - xyto[1],
+            q2 = dx*dx + dy*dy,
+            q = Math.sqrt(q2),
+            xc = 0.5*(xyfrom[0] + xyto[0]),
+            yc = 0.5*(xyfrom[1] + xyto[1]),
+            l =  Math.sqrt(radius*radius - 0.25*q2);
+        if (sweep > 0) {
+            xc += l*dy/q;
+            yc -= l*dx/q;
+        } else {
+            xc -= l*dy/q;
+            yc += l*dx/q;
+        }
+        var a1 = Math.atan2(xyfrom[1]-yc, xyfrom[0]-xc),
+            a2 = Math.atan2(xyto[1]-yc, xyto[0]-xc);
+        ctx.arc(xc, yc, radius, a1, a2, sweep<=0);
+    };
