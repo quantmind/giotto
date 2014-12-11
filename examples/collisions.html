@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html data-debug='false' lang='en'>
+<head>
+<title>Collision Detection</title>
+<meta charset='utf-8'>
+<meta content='IE=edge' http-equiv='X-UA-Compatible'>
+<meta content='width=device-width, initial-scale=1' name='viewport'>
+<meta content='http://quantmind.github.io/giotto/examples/collisions/collision.svg' name='og:image'>
+<meta content='2014-12-08T08:41:10' name='og:modified_time'>
+<meta content='2014-11-28T00:00:00' name='og:published_time'>
+<meta content='summary_large_image' name='twitter:card'>
+<link href='//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css' rel='stylesheet' type='text/css'>
+<link href='//netdna.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css' rel='stylesheet' type='text/css'>
+<link href='http://quantmind.github.io/giotto/media/giotto/giotto.min.css' rel='stylesheet' type='text/css'>
+<link href='http://quantmind.github.io/giotto/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
+<script type='text/javascript'>
+var lux = {context: {"year": 2014, "url": "http://quantmind.github.io/giotto", "python_version": "3.4.2", "ngModules": ["highlight", "lux.blog"], "html5mode": true, "datetimeFormat": "d MMM y, h:mm:ss a", "name": "Lux", "dateFormat": "d MMM y", "media": "/media", "apiUrls": {}, "navbar": {"collapseWidth": 768}, "date": "2014-12-11T22-59-42", "brand": "Lux", "page": {"title": "Collision Detection", "slug": "collisions", "html_url": "http://quantmind.github.io/giotto/examples/collisions", "image": "http://quantmind.github.io/giotto/examples/collisions/collision.svg", "name": "collisions", "content_type": "text/html", "date": "2014-11-28T00:00:00", "api_url": "http://quantmind.github.io/giotto/ng/examples/collisions.json", "modified": "2014-12-08T08:41:10"}, "lux_version": "0.1.2-alpha.1"}};
+</script>
+<script type='text/javascript'>
+lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
+<script type='text/javascript'>
+var gexamples = {};
+</script>
+<script type="text/javascript">
+var require = {"baseUrl": "http://quantmind.github.io/giotto/media/", "minify": true, "waitSeconds": 200, "deps": ["http://quantmind.github.io/giotto/media/giottoweb/giottoweb.js"], "paths": {}};
+</script>
+<script src='http://quantmind.github.io/require-config-js/require.config.min.js' type='application/javascript'></script>
+<script src='//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js' type='application/javascript'></script>
+</head>
+<body data-ng-controller='Page' data-ng-model='page' data-page=''>
+<div data-ng-cloak>
+<navbar data-options="lux.context.navbar"></navbar>
+<div class="container">
+    <div class='row'>
+        <div class='col-sm-12' data-highlight>
+            <h3 class="text-center">Collision Detection</h3>
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-sm-10">
+      <div data-options="gexamples.force1" style="width: 100%;" giotto-force></div>
+    </div>
+    <div class="col-sm-2 small">
+     <div data-jstats></div>
+      <lux-form data-options='luxforms.collision_i5fto'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.collision_i5fto = {"field": {"id": "collision_i5fto", "type": "form", "model": "Collision"}, "children": [{"field": {"type": "fieldset"}, "children": [{"field": {"options": ["svg", "canvas"], "type": "select", "required": true, "value": "svg", "name": "type"}}, {"field": {"name": "gravity", "max": 1, "type": "number", "required": true, "value": 0.05, "min": 0}}, {"field": {"type": "number", "required": true, "value": -0.02, "name": "charge"}}, {"field": {"name": "friction", "max": 1, "type": "number", "required": true, "value": 0.9, "min": 0}}]}]};</script></lux-form>
+    </div>
+  </div>
+</div>
+
+<script>
+
+    gexamples.force1 = {
+        margin: {top:0, left:0, right:0, bottom:0},
+        nodes: 150,
+        minRadius: 0.005,
+        maxRadius: 0.02,
+        gravity: 0.05,
+        charge: -0.02,
+
+        height: '60%',
+
+        model: 'CollisionFormModel',
+
+        point: {
+            color: '#555',
+            width: 1,
+            fillOpacity: 1
+        },
+
+        onInit: function (force) {
+
+            var opts = force.options(),
+                root = {fixed: true, radius: 0, x: -1, y: -1},
+                paper = force.paper(),
+                charge = force.charge();
+
+            // Add nodes
+            force.nodes(d3.range(+opts.nodes).map(function() {
+                var minRadius = +opts.minRadius,
+                    maxRadius = +opts.maxRadius,
+                    dr = maxRadius > minRadius ? maxRadius - minRadius : 0;
+                return {radius: paper.dim(Math.random() * dr + minRadius)};
+            })).addNode(root);
+
+            if (typeof charge !== 'function')
+                force.charge(opts._charge(charge));
+
+            //force.drawQuadTree();
+            force.drawPoints();
+
+            paper.on("mousemove", function() {
+                var p1 = d3.mouse(this);
+                root.x = paper.xfromPX(p1[0]);
+                root.y = paper.yfromPX(p1[1]);
+                force.resume();
+            }).on("touchmove", function() {
+                var p1 = d3.touches(this);
+                root.x = paper.xfromPX(p1[0][0]);
+                root.y = paper.yfromPX(p1[0][1]);
+                force.resume();
+            });
+
+            force.on("tick", function(e) {
+                force.collide();
+                paper.render();
+            });
+        },
+
+        // Callback when angular directive
+        angular: function (force, opts) {
+
+            opts.scope.$on('formFieldChange', function (e, model) {
+                var value = model.form[model.field];
+
+                if (model.field === 'friction' && value)
+                    force.friction(value);
+                else if (model.field === 'gravity')
+                    force.gravity(value);
+                else if (model.field === 'charge')
+                    force.charge(opts._charge(value));
+                else if (model.field === 'type') {
+                    // rebuild paper
+                    opts.type = value;
+                    force.paper(true);
+                    opts.onInit(force);
+                }
+                force.resume();
+            });
+
+        },
+
+        _charge: function (value) {
+            return function (d) {
+                return d.fixed ? value : 0;
+            };
+        }
+    };
+</script>
+
+<p>Javascript code:</p>
+<pre><code>gexamples.force1 = {
+    margin: {top:0, left:0, right:0, bottom:0},
+    nodes: 150,
+    minRadius: 0.005,
+    maxRadius: 0.02,
+    gravity: 0.05,
+    charge: -0.02,
+
+    height: '60%',
+
+    model: 'CollisionFormModel',
+
+    point: {
+        color: '#555',
+        width: 1,
+        fillOpacity: 1
+    },
+
+    onInit: function (force) {
+
+        var opts = force.options(),
+            root = {fixed: true, radius: 0, x: -1, y: -1},
+            paper = force.paper(),
+            charge = force.charge();
+
+        // Add nodes
+        force.nodes(d3.range(+opts.nodes).map(function() {
+            var minRadius = +opts.minRadius,
+                maxRadius = +opts.maxRadius,
+                dr = maxRadius &gt; minRadius ? maxRadius - minRadius : 0;
+            return {radius: paper.dim(Math.random() * dr + minRadius)};
+        })).addNode(root);
+
+        if (typeof charge !== 'function')
+            force.charge(opts._charge(charge));
+
+        //force.drawQuadTree();
+        force.drawPoints();
+
+        paper.on("mousemove", function() {
+            var p1 = d3.mouse(this);
+            root.x = paper.xfromPX(p1[0]);
+            root.y = paper.yfromPX(p1[1]);
+            force.resume();
+        }).on("touchmove", function() {
+            var p1 = d3.touches(this);
+            root.x = paper.xfromPX(p1[0][0]);
+            root.y = paper.yfromPX(p1[0][1]);
+            force.resume();
+        });
+
+        force.on("tick", function(e) {
+            force.collide();
+            paper.render();
+        });
+    },
+
+    // Callback when angular directive
+    angular: function (force, opts) {
+
+        opts.scope.$on('formFieldChange', function (e, model) {
+            var value = model.form[model.field];
+
+            if (model.field === 'friction' &amp;&amp; value)
+                force.friction(value);
+            else if (model.field === 'gravity')
+                force.gravity(value);
+            else if (model.field === 'charge')
+                force.charge(opts._charge(value));
+            else if (model.field === 'type') {
+                // rebuild paper
+                opts.type = value;
+                force.paper(true);
+                opts.onInit(force);
+            }
+            force.resume();
+        });
+
+    },
+
+    _charge: function (value) {
+        return function (d) {
+            return d.fixed ? value : 0;
+        };
+    }
+};
+</code></pre>
+        </div>
+    </div>
+</div>
+</div></body>
+</html>

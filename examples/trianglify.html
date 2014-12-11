@@ -1,56 +1,84 @@
 <!DOCTYPE html>
 <html data-debug='false' lang='en'>
 <head>
-<title>Triangligy</title>
+<title>Trianglify</title>
 <meta charset='utf-8'>
 <meta content='IE=edge' http-equiv='X-UA-Compatible'>
 <meta content='width=device-width, initial-scale=1' name='viewport'>
-<meta content='2014-11-13T07:39:44' name='og:modified_time'>
+<meta content='2014-12-10T17:21:05' name='og:modified_time'>
+<meta content='summary_large_image' name='twitter:card'>
+<meta content='Use the Trianglify Javascript library to create background images with Delaunay triangulation' name='description'>
 <link href='//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css' rel='stylesheet' type='text/css'>
 <link href='//netdna.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css' rel='stylesheet' type='text/css'>
 <link href='http://quantmind.github.io/giotto/media/giotto/giotto.min.css' rel='stylesheet' type='text/css'>
 <link href='http://quantmind.github.io/giotto/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var lux = {context: {"html5mode": true, "url": "http://quantmind.github.io/giotto", "apiUrls": {}, "pages": {"/giotto/examples/*slug": {"url": "/giotto/examples/*slug", "controller": "Html5", "template": "<div class='angular-view' data-compile-html=''></div>", "parent": "/giotto/examples/", "name": "examplesview", "templateUrl": null, "api": {"url": "http://quantmind.github.io/giotto/ng/examples", "type": "static", "name": "examples"}}, "/giotto/examples": {"url": "/giotto/examples", "redirectTo": "/giotto/examples/"}, "/giotto/examples/": {"url": "/giotto/examples/", "controller": "Html5", "template": "<div class='angular-view' data-compile-html=''></div>", "parent": null, "name": "examples", "templateUrl": null, "api": {"url": "http://quantmind.github.io/giotto/ng/examples", "type": "static", "name": "examples"}}}, "date": "2014-11-27T19-54-00", "dateFormat": "d MMM y", "page": "/giotto/examples/*slug", "name": "Lux", "lux_version": "0.1.2-alpha.1", "navbar": {"collapseWidth": 768}, "ngModules": ["highlight", "ui.router"], "brand": "Lux", "media": "/media", "year": 2014, "datetimeFormat": "d MMM y, h:mm:ss a", "python_version": "3.4.2", "hrefs": ["/giotto/examples/", "/giotto/examples/*slug", "/giotto/examples"], "uiRouter": "lux.ui.router"}};
+var lux = {context: {"year": 2014, "url": "http://quantmind.github.io/giotto", "python_version": "3.4.2", "ngModules": ["highlight", "lux.blog"], "html5mode": true, "datetimeFormat": "d MMM y, h:mm:ss a", "name": "Lux", "dateFormat": "d MMM y", "media": "/media", "apiUrls": {}, "navbar": {"collapseWidth": 768}, "date": "2014-12-11T22-59-42", "brand": "Lux", "page": {"title": "Trianglify", "slug": "trianglify", "name": "trianglify", "description": "Use the Trianglify Javascript library to create background images with Delaunay triangulation", "content_type": "text/html", "html_url": "http://quantmind.github.io/giotto/examples/trianglify", "api_url": "http://quantmind.github.io/giotto/ng/examples/trianglify.json", "modified": "2014-12-10T17:21:05"}, "lux_version": "0.1.2-alpha.1"}};
 </script>
 <script type='text/javascript'>
 lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
+<script type='text/javascript'>
+var gexamples = {};
+</script>
 <script type="text/javascript">
-var require = {"deps": ["http://quantmind.github.io/giotto/media/giottoweb/giottoweb.js"], "waitSeconds": 200, "baseUrl": "http://quantmind.github.io/giotto/media/", "paths": {}, "minify": true};
+var require = {"baseUrl": "http://quantmind.github.io/giotto/media/", "minify": true, "waitSeconds": 200, "deps": ["http://quantmind.github.io/giotto/media/giottoweb/giottoweb.js"], "paths": {}};
 </script>
 <script src='http://quantmind.github.io/require-config-js/require.config.min.js' type='application/javascript'></script>
 <script src='//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js' type='application/javascript'></script>
 </head>
 <body data-ng-controller='Page' data-ng-model='page' data-page=''>
-<navbar2 data-options="lux.context.navbar">
+<div data-ng-cloak>
+<navbar data-options="lux.context.navbar"></navbar>
+<div class="container">
     <div class='row'>
-        <div class='col-sm-12' data-highlight data-toc>
-            <div class='angular-view' data-ui-view='main'><div class='hidden' id='seo-view'><h1 id="trianglify">Trianglify</h1>
-<div data-viz-trianglify data-resize=1 data-height='60%'
-data-on-init="luxforms.trianglifyReady">
+        <div class='col-sm-12' data-highlight>
+            <h3 class="text-center">Trianglify</h3>
+
+<div data-options="gexamples.trianglify" data-giotto-trianglify>
 <div class="trianglify-box center-block">
-<p>The trianglify extension uses the owesome <a href="http://qrohlf.com/trianglify/"> Trianglify</a> javascript library.</p>
-<lux-form data-options='luxforms.trianglify_EpdzB'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.trianglify_EpdzB = {"children": [{"children": [{"field": {"name": "cellsize", "label": "cell size", "required": true, "min_value": 1, "max_value": 1000, "value": 150, "type": "number"}}, {"field": {"name": "fillOpacity", "label": "fill opacity", "required": true, "min_value": 0, "max_value": 1, "value": 1, "type": "number"}}, {"field": {"name": "strokeOpacity", "label": "stroke opacity", "required": true, "min_value": 0, "max_value": 1, "value": 1, "type": "number"}}, {"field": {"name": "noiseIntensity", "label": "noise intensity", "required": true, "min_value": 0, "max_value": 1, "value": 0, "type": "number"}}, {"field": {"name": "x_gradient", "label": "x gradient", "required": false, "maxlength": 50, "min_value": 0, "max_value": 1, "type": "text"}}, {"field": {"name": "y_gradient", "label": "y gradient", "required": false, "maxlength": 50, "min_value": 0, "max_value": 1, "type": "text"}}], "field": {"type": "fieldset"}}, {"field": {"disabled": "form.$invalid", "label": "redraw", "type": "button", "name": "redraw", "click": "luxforms.redraw"}}], "field": {"labelSpan": 6, "model": "trianglify", "id": "trianglify_EpdzB", "layout": "horizontal", "type": "form"}};</script></lux-form>
+<p>The trianglify visualization uses the <a href="http://qrohlf.com/trianglify/"> Trianglify</a> javascript library.</p>
+<lux-form data-options='luxforms.trianglify_NPnwk'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.trianglify_NPnwk = {"field": {"id": "trianglify_NPnwk", "labelSpan": 6, "type": "form", "model": "trianglify", "layout": "horizontal"}, "children": [{"field": {"type": "fieldset"}, "children": [{"field": {"max_value": 1000, "min_value": 1, "name": "cellsize", "type": "number", "label": "cell size", "required": true, "value": 150}}, {"field": {"max_value": 1, "min_value": 0, "name": "fillOpacity", "type": "number", "label": "fill opacity", "required": true, "value": 1}}, {"field": {"max_value": 1, "min_value": 0, "name": "strokeOpacity", "type": "number", "label": "stroke opacity", "required": true, "value": 1}}, {"field": {"max_value": 1, "min_value": 0, "name": "noiseIntensity", "type": "number", "label": "noise intensity", "required": true, "value": 0}}, {"field": {"max_value": 1, "min_value": 0, "name": "x_gradient", "maxlength": 50, "type": "text", "label": "x gradient", "required": false}}, {"field": {"max_value": 1, "min_value": 0, "name": "y_gradient", "maxlength": 50, "type": "text", "label": "y gradient", "required": false}}]}, {"field": {"click": "luxforms.redraw", "type": "button", "label": "redraw", "name": "redraw", "disabled": "form.$invalid"}}]};</script></lux-form>
 </div>
 </div>
+
+<p>Html:</p>
+
+<pre><code>&lt;div data-options="gexamples.trianglify" data-giotto-trianglify&gt;
+</code></pre>
 
 <script>
-if (!this.luxforms)
-    this.luxforms = {};
 
-luxforms.redraw = function () {};
-// called back once the vizualization is ready
-luxforms.trianglifyReady = function () {
-    var viz = this;
-    luxforms.redraw = function (e) {
-        e.preventDefault();
-        if (this.form.$valid)
-            viz.redraw(this.trianglify);
+    gexamples.trianglify = {
+        height: 400,
+
+        onInit: function (viz) {
+
+            luxforms.redraw = function (e) {
+                e.preventDefault();
+                if (this.form.$valid)
+                    viz.redraw(this.trianglify);
+            };
+        }
     };
+
+</script>
+
+<p>Javascript code:</p>
+<pre><code>gexamples.trianglify = {
+    height: 400,
+
+    onInit: function (viz) {
+
+        luxforms.redraw = function (e) {
+            e.preventDefault();
+            if (this.form.$valid)
+                viz.redraw(this.trianglify);
+        };
+    }
 };
-</script></div></div>
+</code></pre>
         </div>
     </div>
-</navbar2>
-</body>
+</div>
+</div></body>
 </html>

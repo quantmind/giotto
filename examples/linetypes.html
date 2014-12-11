@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html data-debug='false' lang='en'>
+<head>
+<title>Lines and Symbols</title>
+<meta charset='utf-8'>
+<meta content='IE=edge' http-equiv='X-UA-Compatible'>
+<meta content='width=device-width, initial-scale=1' name='viewport'>
+<meta content='2014-12-07T18:19:29' name='og:modified_time'>
+<meta content='summary_large_image' name='twitter:card'>
+<link href='//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css' rel='stylesheet' type='text/css'>
+<link href='//netdna.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css' rel='stylesheet' type='text/css'>
+<link href='http://quantmind.github.io/giotto/media/giotto/giotto.min.css' rel='stylesheet' type='text/css'>
+<link href='http://quantmind.github.io/giotto/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
+<script type='text/javascript'>
+var lux = {context: {"year": 2014, "url": "http://quantmind.github.io/giotto", "python_version": "3.4.2", "ngModules": ["highlight", "lux.blog"], "html5mode": true, "datetimeFormat": "d MMM y, h:mm:ss a", "name": "Lux", "dateFormat": "d MMM y", "media": "/media", "apiUrls": {}, "navbar": {"collapseWidth": 768}, "date": "2014-12-11T22-59-42", "brand": "Lux", "page": {"title": "Lines and Symbols", "slug": "linetypes", "name": "linetypes", "content_type": "text/html", "html_url": "http://quantmind.github.io/giotto/examples/linetypes", "api_url": "http://quantmind.github.io/giotto/ng/examples/linetypes.json", "modified": "2014-12-07T18:19:29"}, "lux_version": "0.1.2-alpha.1"}};
+</script>
+<script type='text/javascript'>
+lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
+<script type='text/javascript'>
+var gexamples = {};
+</script>
+<script type="text/javascript">
+var require = {"baseUrl": "http://quantmind.github.io/giotto/media/", "minify": true, "waitSeconds": 200, "deps": ["http://quantmind.github.io/giotto/media/giottoweb/giottoweb.js"], "paths": {}};
+</script>
+<script src='http://quantmind.github.io/require-config-js/require.config.min.js' type='application/javascript'></script>
+<script src='//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js' type='application/javascript'></script>
+</head>
+<body data-ng-controller='Page' data-ng-model='page' data-page=''>
+<div data-ng-cloak>
+<navbar data-options="lux.context.navbar"></navbar>
+<div class="container">
+    <div class='row'>
+        <div class='col-sm-12' data-highlight>
+            <h3 class="text-center">Lines and Symbols</h3>
+
+<div class="text-center"><lux-form data-options='luxforms.linetypeform_6KVdC'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.linetypeform_6KVdC = {"field": {"id": "linetypeform_6KVdC", "type": "form", "showLabels": false, "layout": "inline", "model": "LineTypeForm"}, "children": [{"field": {"type": "fieldset"}, "children": [{"field": {"options": ["svg", "canvas"], "type": "select", "required": true, "value": "svg", "name": "type"}}, {"field": {"options": ["linear", "linear-closed", "step", "step-before", "step-after", "basis", "basis-open", "basis-closed", "bundle", "cardinal", "cardinal-open", "cardinal-closed", "monotone"], "type": "select", "required": true, "value": "linear", "name": "interpolate"}}, {"field": {"options": ["circle", "cross", "diamond", "square", "triangle-down", "triangle-up"], "type": "select", "required": true, "value": "circle", "name": "symbol"}}]}]};</script></lux-form></div>
+
+<div data-options='gexamples.linetypes' style='max-width: 700px' class="center-block" giotto-chart></div>
+
+<script>
+
+    gexamples.linetypes = {
+        height: '70%',
+
+        point: {
+            show: true,
+            lineWidth: 3,
+            fill: '#fff',
+            size: '12px'
+        },
+
+        line: {
+            show: true,
+            interpolate: 'linear',
+            lineWidth: 3
+        },
+
+        grid: {
+            show: true,
+            color: '#000'
+        },
+
+        data: function () {
+            return [randomPath(0.2, 0.3)];
+        },
+
+        // Callback for angular directive
+        angular: function (chart, opts) {
+
+            function update (form) {
+                angular.forEach(form, function (value, name) {
+                    if (name === 'type')
+                        opts.type = value;
+                    else if (name === 'interpolate')
+                        chart.setSerieOption('line', name, value);
+                    else
+                        chart.setSerieOption('point', name, value);
+                });
+                chart.resume();
+            }
+
+            opts.scope.$on('formReady', function (e, form) {
+                update(form);
+            });
+            opts.scope.$on('formFieldChange', function (e, form) {
+                update(form);
+            });
+        }
+    };
+
+    function randomPath (µ, σ) {
+        // Create a random path
+        var t = d3.range(0, 5, 0.5),
+            data = [{x: t[0], y: 1}],
+            norm = d3.random.normal(0, 1),
+            dt, dy;
+
+        for(var i=1; i<t.length; i++) {
+            dt = t[i] - t[i-1];
+            dy = dt*µ + σ*norm()*Math.sqrt(dt);
+            data[i] = {x: t[i], y: data[i-1].y + dy};
+        }
+        return data;
+    }
+</script>
+
+<p>Javascript code:</p>
+<pre><code>gexamples.linetypes = {
+    height: '70%',
+
+    point: {
+        show: true,
+        lineWidth: 3,
+        fill: '#fff',
+        size: '12px'
+    },
+
+    line: {
+        show: true,
+        interpolate: 'linear',
+        lineWidth: 3
+    },
+
+    grid: {
+        show: true,
+        color: '#000'
+    },
+
+    data: function () {
+        return [randomPath(0.2, 0.3)];
+    },
+
+    // Callback for angular directive
+    angular: function (chart, opts) {
+
+        function update (form) {
+            angular.forEach(form, function (value, name) {
+                if (name === 'type')
+                    opts.type = value;
+                else if (name === 'interpolate')
+                    chart.setSerieOption('line', name, value);
+                else
+                    chart.setSerieOption('point', name, value);
+            });
+            chart.resume();
+        }
+
+        opts.scope.$on('formReady', function (e, form) {
+            update(form);
+        });
+        opts.scope.$on('formFieldChange', function (e, form) {
+            update(form);
+        });
+    }
+};
+
+function randomPath (µ, σ) {
+    // Create a random path
+    var t = d3.range(0, 5, 0.5),
+        data = [{x: t[0], y: 1}],
+        norm = d3.random.normal(0, 1),
+        dt, dy;
+
+    for(var i=1; i&lt;t.length; i++) {
+        dt = t[i] - t[i-1];
+        dy = dt*µ + σ*norm()*Math.sqrt(dt);
+        data[i] = {x: t[i], y: data[i-1].y + dy};
+    }
+    return data;
+}
+</code></pre>
+        </div>
+    </div>
+</div>
+</div></body>
+</html>

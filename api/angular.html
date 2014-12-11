@@ -1,17 +1,17 @@
 <!DOCTYPE html>
 <html data-debug='false' lang='en'>
 <head>
-<title>GiottoJs - API</title>
+<title>GiottoJs - AngularJs integration</title>
 <meta charset='utf-8'>
 <meta content='IE=edge' http-equiv='X-UA-Compatible'>
 <meta content='width=device-width, initial-scale=1' name='viewport'>
-<meta content='2014-12-06T15:17:59' name='og:modified_time'>
+<meta content='2014-12-03T17:39:49' name='og:modified_time'>
 <link href='//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css' rel='stylesheet' type='text/css'>
 <link href='//netdna.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css' rel='stylesheet' type='text/css'>
 <link href='http://quantmind.github.io/giotto/media/giotto/giotto.min.css' rel='stylesheet' type='text/css'>
 <link href='http://quantmind.github.io/giotto/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var lux = {context: {"year": 2014, "url": "http://quantmind.github.io/giotto", "python_version": "3.4.2", "ngModules": ["highlight"], "html5mode": true, "datetimeFormat": "d MMM y, h:mm:ss a", "name": "Lux", "dateFormat": "d MMM y", "media": "/media", "apiUrls": {}, "navbar": {"collapseWidth": 768}, "date": "2014-12-11T22-59-42", "brand": "Lux", "page": {"title": "GiottoJs - API", "slug": "api/index", "name": "api_index", "content_type": "text/html", "html_url": "http://quantmind.github.io/giotto/api/", "api_url": "http://quantmind.github.io/giotto/ng/site/api/index.json", "modified": "2014-12-06T15:17:59"}, "lux_version": "0.1.2-alpha.1"}};
+var lux = {context: {"year": 2014, "url": "http://quantmind.github.io/giotto", "python_version": "3.4.2", "ngModules": ["highlight"], "html5mode": true, "datetimeFormat": "d MMM y, h:mm:ss a", "name": "Lux", "dateFormat": "d MMM y", "media": "/media", "apiUrls": {}, "navbar": {"collapseWidth": 768}, "date": "2014-12-11T22-59-42", "brand": "Lux", "page": {"title": "GiottoJs - AngularJs integration", "slug": "api/angular", "name": "api_angular", "content_type": "text/html", "html_url": "http://quantmind.github.io/giotto/api/angular", "api_url": "http://quantmind.github.io/giotto/ng/site/api/angular.json", "modified": "2014-12-03T17:39:49"}, "lux_version": "0.1.2-alpha.1"}};
 </script>
 <script type='text/javascript'>
 lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
@@ -30,16 +30,16 @@ var require = {"baseUrl": "http://quantmind.github.io/giotto/media/", "minify": 
 <div class="container">
     <div class='row'>
         <div class='col-sm-12' data-highlight>
-            <h1 id="giotto-api">Giotto API</h1>
-<p>Everything in <code>giotto</code> is scoped under the <code>d3.giotto</code> namespace.</p>
-<p>Giotto uses semantic versioning.
-You can find the current version of Giotto as d3.giotto.version.</p>
-<ul>
-<li><a href="/api/paper">Paper API</a></li>
-<li><a href="/api/visualization">Visualization API</a></li>
-<li><a href="/api/chart">Chart API</a></li>
-<li><a href="/api/angular">Angular Integration</a></li>
-</ul>
+            <h1 id="angularjs-integration">AngularJs Integration</h1>
+<p>GiottoJs comes with a small utility for facilitating integration with <a href="https://angularjs.org/" title="AngularJS">AngularJs</a>.
+Once angular is loaded, a module can be created using the utility function</p>
+<pre><code>var ng = d3.giotto.angular;
+
+ng.module(angular);
+</code></pre>
+<p>The function create a mdoule named 'giotto' by default. The call the module in a different name pass the module name as second parameter:</p>
+<pre><code>ng.module(nagular, 'mymodule');
+</code></pre>
         </div>
     </div>
 </div>

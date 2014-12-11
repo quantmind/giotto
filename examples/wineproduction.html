@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html data-debug='false' lang='en'>
+<head>
+<title>2011 World Wine Production</title>
+<meta charset='utf-8'>
+<meta content='IE=edge' http-equiv='X-UA-Compatible'>
+<meta content='width=device-width, initial-scale=1' name='viewport'>
+<meta content='http://quantmind.github.io/giotto/examples/wineproduction.png' name='og:image'>
+<meta content='2014-12-11T13:44:32' name='og:modified_time'>
+<meta content='summary_large_image' name='twitter:card'>
+<meta content='Illustrate several options when visualizing data with a pie chart using GiottoJS. Both canvas and svg are supported.' name='description'>
+<link href='//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css' rel='stylesheet' type='text/css'>
+<link href='//netdna.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css' rel='stylesheet' type='text/css'>
+<link href='http://quantmind.github.io/giotto/media/giotto/giotto.min.css' rel='stylesheet' type='text/css'>
+<link href='http://quantmind.github.io/giotto/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
+<script type='text/javascript'>
+var lux = {context: {"year": 2014, "url": "http://quantmind.github.io/giotto", "python_version": "3.4.2", "ngModules": ["highlight", "lux.blog"], "html5mode": true, "datetimeFormat": "d MMM y, h:mm:ss a", "name": "Lux", "dateFormat": "d MMM y", "media": "/media", "apiUrls": {}, "navbar": {"collapseWidth": 768}, "date": "2014-12-11T22-59-42", "brand": "Lux", "page": {"title": "2011 World Wine Production", "slug": "wineproduction", "image": "http://quantmind.github.io/giotto/examples/wineproduction.png", "name": "wineproduction", "description": "Illustrate several options when visualizing data with a pie chart using GiottoJS. Both canvas and svg are supported.", "content_type": "text/html", "html_url": "http://quantmind.github.io/giotto/examples/wineproduction", "api_url": "http://quantmind.github.io/giotto/ng/examples/wineproduction.json", "modified": "2014-12-11T13:44:32"}, "lux_version": "0.1.2-alpha.1"}};
+</script>
+<script type='text/javascript'>
+lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
+<script type='text/javascript'>
+var gexamples = {};
+</script>
+<script type="text/javascript">
+var require = {"baseUrl": "http://quantmind.github.io/giotto/media/", "minify": true, "waitSeconds": 200, "deps": ["http://quantmind.github.io/giotto/media/giottoweb/giottoweb.js"], "paths": {}};
+</script>
+<script src='http://quantmind.github.io/require-config-js/require.config.min.js' type='application/javascript'></script>
+<script src='//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js' type='application/javascript'></script>
+</head>
+<body data-ng-controller='Page' data-ng-model='page' data-page=''>
+<div data-ng-cloak>
+<navbar data-options="lux.context.navbar"></navbar>
+<div class="container">
+    <div class='row'>
+        <div class='col-sm-12' data-highlight>
+            <h3 class="text-center">2011 World Wine Production</h3>
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-sm-10">
+      <div data-options="gexamples.piecharts" style="width: 100%;" giotto-chart></div>
+    </div>
+    <div class="col-sm-2 small">
+      <lux-form data-options='luxforms.pietypeform_d3TwK'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.pietypeform_d3TwK = {"field": {"id": "pietypeform_d3TwK", "type": "form", "model": "PieTypeForm"}, "children": [{"field": {"type": "fieldset"}, "children": [{"field": {"options": ["svg", "canvas"], "type": "select", "required": true, "value": "svg", "name": "type"}}, {"field": {"name": "padAngle", "max": 20, "type": "number", "label": "pad angle", "required": false, "value": 1, "min": 0}}, {"field": {"name": "cornerRadius", "max": 30, "type": "number", "label": "corner radius", "required": false, "value": 0.01, "min": 0}}, {"field": {"name": "innerRadius", "max": 0.99, "type": "number", "label": "inner radius", "required": false, "value": 0.5, "min": 0}}]}]};</script></lux-form>
+    </div>
+  </div>
+</div>
+
+<p>The total wine production in 2011 was 267,413 million of ectoliters, source <a href="http://www.oiv.int/">OIV</a>.</p>
+
+<p>Html:</p>
+
+<pre><code>&lt;div data-options="gexamples.piecharts" style="width: 100%;" giotto-pie&gt;&lt;/div&gt;
+</code></pre>
+
+<script>
+
+    var oivdata = [['Italy', 42772],
+                   ['France', 50764],
+                   ['Spain', 33397],
+                   ['USA', 19187],
+                   ['Argentina', 15473],
+                   ['China', 13200],
+                   ['Australia', 11180],
+                   ['Chile', 10463],
+                   ['Germany', 9132],
+                   ['South Africa', 9725],
+                   ['Portugal', 5610],
+                   ['New Zealand', 2350],
+                   ['Rest of World', 63776]];
+
+    gexamples.piecharts = {
+        height: '80%',
+
+        data: [{pie: oivdata}],
+
+        // Rightclick menu
+        contextmenu: [{
+            label: 'Open Image',
+            callback: function (chart) {
+                window.open(chart.image());
+            }
+        }],
+
+        // Callback for angular directive
+        angular: function (chart, opts) {
+
+            function update (form) {
+                angular.forEach(form, function (value, name) {
+                    if (name === 'type')
+                        opts.type = value;
+                    else
+                        chart.setSerieOption('pie', name, value);
+                });
+                chart.resume();
+            }
+
+            opts.scope.$on('formReady', function (e, form) {
+                update(form);
+            });
+            opts.scope.$on('formFieldChange', function (e, form) {
+                update(form);
+            });
+        }
+    };
+</script>
+
+<p>Javascript code:</p>
+<pre><code>var oivdata = [['Italy', 42772],
+               ['France', 50764],
+               ['Spain', 33397],
+               ['USA', 19187],
+               ['Argentina', 15473],
+               ['China', 13200],
+               ['Australia', 11180],
+               ['Chile', 10463],
+               ['Germany', 9132],
+               ['South Africa', 9725],
+               ['Portugal', 5610],
+               ['New Zealand', 2350],
+               ['Rest of World', 63776]];
+
+gexamples.piecharts = {
+    height: '80%',
+
+    data: [{pie: oivdata}],
+
+    // Rightclick menu
+    contextmenu: [{
+        label: 'Open Image',
+        callback: function (chart) {
+            window.open(chart.image());
+        }
+    }],
+
+    // Callback for angular directive
+    angular: function (chart, opts) {
+
+        function update (form) {
+            angular.forEach(form, function (value, name) {
+                if (name === 'type')
+                    opts.type = value;
+                else
+                    chart.setSerieOption('pie', name, value);
+            });
+            chart.resume();
+        }
+
+        opts.scope.$on('formReady', function (e, form) {
+            update(form);
+        });
+        opts.scope.$on('formFieldChange', function (e, form) {
+            update(form);
+        });
+    }
+};
+</code></pre>
+        </div>
+    </div>
+</div>
+</div></body>
+</html>
