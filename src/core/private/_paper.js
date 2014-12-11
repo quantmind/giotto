@@ -76,5 +76,11 @@
         }
 
         p.size = [width, height];
+
+        var v = d3[p.type];
+
+        p.xAxis = v.axis();
+        p.yAxis = [v.axis(), v.axis()];
+
         return p;
     }

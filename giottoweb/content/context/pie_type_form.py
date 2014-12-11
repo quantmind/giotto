@@ -3,9 +3,24 @@ from lux import forms
 
 class PieTypeForm(forms.Form):
     type = forms.ChoiceField(options=('svg', 'canvas'))
-    padding = forms.FloatField(min=0, max=30)
-    cornerRadius = forms.FloatField(min=0, max=30, label='corner radius')
-    innerRadius = forms.FloatField(min=0, max=0.99, label='inner radius')
+    padAngle = forms.FloatField(
+        initial=1,
+        min=0,
+        max=20,
+        label='pad angle',
+        required=False)
+    cornerRadius = forms.FloatField(
+        initial=0.01,
+        min=0,
+        max=30,
+        label='corner radius',
+        required=False)
+    innerRadius = forms.FloatField(
+        initial=0.5,
+        min=0,
+        max=0.99,
+        label='inner radius',
+        required=False)
 
     layout = forms.Layout()
 

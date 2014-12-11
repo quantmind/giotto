@@ -1,10 +1,12 @@
-title: World Wine Production - 2011
+title: 2011 World Wine Production
+description: Illustrate several options when visualizing data with a pie chart using GiottoJS. Both canvas and svg are supported.
+image: $site_url/examples/wineproduction.png
 
 
 <div class="container-fluid">
   <div class="row">
     <div class="col-sm-10">
-      <div data-options="gexamples.piecharts" style="width: 100%;" giotto-pie></div>
+      <div data-options="gexamples.piecharts" style="width: 100%;" giotto-chart></div>
     </div>
     <div class="col-sm-2 small">
       $html_pie_type_form

@@ -16,9 +16,6 @@
             cidCounter,
             current;
 
-        p.xAxis = d3.svg.axis();
-        p.yAxis = [d3.svg.axis(), d3.svg.axis()];
-
         paper.destroy = function () {
             svg = current = null;
             paper.element().selectAll('*').remove();
@@ -136,41 +133,34 @@
             var container = current,
                 scalex = paper.scalex,
                 scaley = paper.scaley,
-                d;
+                dline = paperData(paper, opts, {}).reset();
 
-            function draw (selection) {
+            data.paper = dline;
+
+            dline.draw = function (selection) {
                 return selection
-                    .attr('stroke', data[0].color)
-                    .attr('stroke-opacity', data[0].colorOpacity)
-                    .attr('stroke-width', data[0].lineWidth);
-            }
+                    .attr('stroke', dline.color)
+                    .attr('stroke-opacity', dline.colorOpacity)
+                    .attr('stroke-width', dline.lineWidth);
+            };
 
-            for (var i=0; i<data.length; i++) {
-                d = {values: data[i]};
-                if (!i) {
-                    d = paperData(paper, opts, d).reset();
-                    d.draw = draw;
-                }
-                data[i] = d;
-            }
-
-            return paper.addComponent(function () {
+            return paper.addComponent(dline, function () {
 
                 var chart = container.select("path.line"),
                     line = opts.area ? d3.svg.area() : d3.svg.line();
 
                 line.interpolate(opts.interpolate)
-                    .x(function(d) {return scalex(d.values.x);})
-                    .y(function(d) {return scaley(d.values.y);});
+                    .x(function(d) {return scalex(d.x);})
+                    .y(function(d) {return scaley(d.y);});
 
                 if (!chart.node())
                     chart = container.append('path')
                                         .attr('class', 'line');
 
-                draw(chart
-                        .classed('area', opts.area)
-                        .datum(data)
-                        .attr('d', line));
+                dline.draw(chart
+                            .classed('area', opts.area)
+                            .datum(data)
+                            .attr('d', line));
 
                 _events(chart);
             });
@@ -197,17 +187,19 @@
 
             for (var i=0; i<data.length; i++) {
                 d = paperData(paper, opts, {values: data[i]});
-                d.size(size);
+                d.set('size', size);
                 d.draw = draw;
                 data[i] = d.reset();
             }
 
-            return paper.addComponent(function () {
+            return paper.addComponent(data, function () {
                 var chart = container.select("g.points");
 
                 if (!chart.node())
                     chart = container.append("g")
                                     .attr('class', 'points');
+
+                chart.selectAll("path.point").remove();
 
                 _events(draw(chart.selectAll("path.point")
                                 .data(data)
@@ -238,12 +230,12 @@
 
             for (var i=0; i<data.length; i++) {
                 d = paperData(paper, opts, {values: data[i]});
-                d.size(size);
+                d.set('size', size);
                 d.draw = draw;
                 data[i] = d.reset();
             }
 
-            return paper.addComponent(function () {
+            return paper.addComponent(data, function () {
 
                 var zero = scaley(0),
                     chart = container.select('g.barchart'),
@@ -286,7 +278,7 @@
                 data[i] = d.reset();
             }
 
-            return paper.addComponent(function () {
+            return paper.addComponent(data, function () {
 
                 var scalex = paper.scalex,
                     scaley = paper.scaley,
@@ -318,6 +310,8 @@
                     chart = container.append("g")
                                 .attr('class', 'pie')
                                 .attr("transform", "translate(" + width/2 + "," + height/2 + ")");
+
+                chart.selectAll(".slice").remove();
 
                 _events(_draw(chart
                         .selectAll(".slice")
@@ -381,8 +375,12 @@
                     .node().parentNode.innerHTML)));
         };
 
+        paper.image = function () {
+            return "data:image/svg+xml;charset=utf-8;base64," + paper.encode();
+        };
+
         paper.downloadSVG = function (e) {
-            var data = "data:image/svg+xml;charset=utf-8;base64," + paper.encode(),
+            var data = paper.image(),
                 target = e ? e.target : document;
             d3.select(target).attr("href", data);
         };
@@ -392,11 +390,13 @@
         // LOW LEVEL FUNCTIONS - MAYBE THEY SHOULD BE PRIVATE?
 
         // Add a new component to the paper and return the component id
-        paper.addComponent = function (callback) {
+        paper.addComponent = function (component, callback) {
+            component = paperComponent(component, callback);
             var cid = ++cidCounter;
-            components.push(callback);
-            componentMap[cid] = callback;
-            return cid;
+            components.push(component);
+            componentMap[cid] = component;
+            component.cid = cid;
+            return component;
         };
 
         paper.removeComponent = function (cid) {
@@ -420,7 +420,7 @@
                             .attr("class", "axis " + cn)
                             .attr("transform", "translate(" + px + "," + py + ")")
                             .attr('stroke', opts.color), opts.font);
-                paper.addComponent(function () {
+                paper.addComponent(paperData(paper, opts, axis), function () {
                     g.call(axis);
                 });
             }

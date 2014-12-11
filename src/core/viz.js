@@ -142,8 +142,8 @@
                 return opts;
             };
 
-            viz.download = function () {
-                return paper.download();
+            viz.image = function () {
+                return paper.image();
             };
 
             viz.xyfunction = g.math.xyfunction;

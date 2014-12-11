@@ -5,6 +5,7 @@
         point: {
             show: true,
             lineWidth: 3,
+            fill: '#fff',
             size: '12px'
         },
 
@@ -26,18 +27,23 @@
         // Callback for angular directive
         angular: function (chart, opts) {
 
-            opts.scope.$on('formFieldChange', function (e, model) {
-                var value = model.form[model.field];
-
-                if (model.field === 'type') {
-                    opts.type = value;
-                    chart.paper(true);
-                } else if (model.field === 'interpolate') {
-                    opts.line.interpolate = value;
-                } else if (model.field === 'symbol') {
-                    opts.point.symbol = value;
-                }
+            function update (form) {
+                angular.forEach(form, function (value, name) {
+                    if (name === 'type')
+                        opts.type = value;
+                    else if (name === 'interpolate')
+                        chart.setSerieOption('line', name, value);
+                    else
+                        chart.setSerieOption('point', name, value);
+                });
                 chart.resume();
+            }
+
+            opts.scope.$on('formReady', function (e, form) {
+                update(form);
+            });
+            opts.scope.$on('formFieldChange', function (e, form) {
+                update(form);
             });
         }
     };

@@ -143,43 +143,6 @@
             return [w, h];
         };
 
-        paper.xyData = function (data) {
-            if (!data) return;
-            if (!data.data) data = {data: data};
-
-            var xy = data.data,
-                xmin = Infinity,
-                ymin = Infinity,
-                xmax =-Infinity,
-                ymax =-Infinity,
-                x = function (x) {
-                    xmin = x < xmin ? x : xmin;
-                    xmax = x > xmax ? x : xmax;
-                    return x;
-                },
-                y = function (y) {
-                    ymin = y < ymin ? y : ymin;
-                    ymax = y > ymax ? y : ymax;
-                    return y;
-                };
-            var xydata = [];
-            if (isArray(xy[0]) && xy[0].length === 2) {
-                xy.forEach(function (xy) {
-                    xydata.push({x: x(xy[0]), y: y(xy[1])});
-                });
-            } else {
-                var xl = data.xlabel || 'x',
-                    yl = data.ylabel || 'y';
-                xy.forEach(function (xy) {
-                    xydata.push({x: x(xy[xl]), y: y(xy[yl])});
-                });
-            }
-            data.data = xydata;
-            data.xrange = [xmin, xmax];
-            data.yrange = [ymin, ymax];
-            return data;
-        };
-
         // pick a unique color, never picked before
         paper.pickColor = function (index, darker) {
             if (arguments.length === 0) index = color++;
@@ -250,3 +213,14 @@
         };
 
     };
+
+
+    g.paper.addType('html', function (paper, p) {
+        clear = paper.clear;
+
+        paper.clear = function () {
+            paper.element().selectAll('*').remove();
+            return clear();
+        };
+
+    });

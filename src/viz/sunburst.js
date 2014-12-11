@@ -40,8 +40,8 @@
             if (!opts.data)
                 return self.loadData();
             else {
+                self.stop();
                 build();
-                self.alpha(0);
             }
         });
 

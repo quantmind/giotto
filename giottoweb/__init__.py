@@ -34,6 +34,9 @@ import lux
 from lux.extensions.static import (HtmlContent, MediaBuilder, Sitemap,
                                    DirContent, Blog)
 
+examples_meta = {'template': 'examples.md',
+                 'twitter:card': 'summary_large_image'}
+
 
 class Extension(lux.Extension):
 
@@ -42,7 +45,7 @@ class Extension(lux.Extension):
         examples = HtmlContent('/',
                                Sitemap('/sitemap.xml'),
                                Blog('/examples',
-                                    meta={'template': 'examples.md'},
+                                    meta=examples_meta,
                                     content=DirContent,
                                     dir='examples',
                                     drafts=False),
@@ -53,9 +56,6 @@ class Extension(lux.Extension):
 
     def on_html_document(self, app, request, doc):
         doc.head.embedded_js.append('var gexamples = {};\n')
-
-    def context(self, request, context):
-        context['html_html'] = ''
 
 
 def add_css(all):

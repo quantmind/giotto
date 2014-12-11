@@ -14,9 +14,6 @@
                             .attr('class', 'canvas-container')
                             .style('position', 'relative');
 
-        p.xAxis = d3.canvas.axis();
-        p.yAxis = [d3.canvas.axis(), d3.canvas.axis()];
-
         // Return the container of canvas elements
         paper.container = function () {
             return container;
@@ -157,82 +154,64 @@
         paper.getDataAtPoint = function (point) {
             var x = factor*point[0],
                 y = factor*point[1],
-                data = [];
+                elements = [],
+                data;
             _apply(function (ctx, _, component) {
-                component.data.forEach(function (el) {
-                    if (el.inRange(x, y))
-                        data.push(el);
+                component.callbacks.forEach(function (callback) {
+                    data = callback.data();
+                    data.forEach(function (el) {
+                        if (el.context(ctx).inRange(x, y))
+                            elements.push(el);
+                    });
                 });
             });
-            return data;
+            return elements;
         };
 
         // Draw a path or an area
         paper.path = function (data, opts) {
             opts || (opts = {});
+            data = data.slice();  // copy
             chartColors(paper, copyMissing(p.line, opts));
+            var line = canvasLine(paper, opts, data);
 
-            return _addComponent(function (ctx) {
-
-                var scalex = paper.scalex,
-                    scaley = paper.scaley,
-                    line = opts.area ? d3.canvas.area() : d3.canvas.line();
-
-                ctx.strokeStyle = opts.color;
-                ctx.lineWidth = factor*opts.lineWidth;
-
-                line.interpolate(opts.interpolate)
-                    .x(function(d) {
-                        return scalex(d.x);
-                    })
-                    .y(function(d) {
-                        return scaley(d.y);
-                    }).context(ctx)(data);
-
-                ctx.stroke();
+            return paper.addComponent(line, function (ctx) {
+                line.context(ctx).draw();
             });
         };
 
         paper.points = function (data, opts) {
             opts || (opts = {});
             data = data.slice();  // copy
-            copyMissing(p.point, chartColors(paper, opts));
+            chartColors(paper, copyMissing(p.point, opts));
 
             var symbol = d3.canvas.symbol().type(function (d) {return d.symbol;})
-                                           .size(function (d) {return d.size();}),
-                pass = 0;
+                                           .size(function (d) {return d.size();});
 
-            return _addComponent(function (ctx) {
+            for (var i=0; i<data.length; ++i)
+                data[i] = canvasPoint(paper, opts, data[i], symbol);
 
-                var size = paper.scale(paper.dim(opts.size)),
-                    d;
+            return paper.addComponent(data, function (ctx) {
+                var size = paper.scale(paper.dim(opts.size));
 
-
-                for (var i=0; i<data.length; ++i) {
-                    if (!pass)
-                        data[i] = _addData(canvasPoint(paper, opts, ctx, data[i], symbol));
-                    data[i].size(size).reset().draw();
-                }
-
-                pass++;
+                for (var i=0; i<data.length; ++i)
+                    data[i].context(ctx).size(size).draw();
             });
-
         };
 
         paper.barchart = function (data, opts) {
             opts || (opts = {});
-            copyMissing(p.bar, chartColors(paper, opts));
+            data = data.slice();  // copy
+            chartColors(paper, copyMissing(p.bar, opts));
 
-            return _addComponent(function (ctx) {
+            for (var i=0; i<data.length; i++)
+                data[i] = canvasBar(paper, opts, data[i]);
 
-                var width = barWidth(paper, data, opts),
-                    d;
+            return paper.addComponent(data, function (ctx) {
+                var width = barWidth(paper, data, opts);
 
-                for (var i=0; i<data.length; i++) {
-                    d = canvasBar(paper, opts, ctx, data[i]);
-                    d.size(width);
-                    _addData(d.reset().draw());
-                }
+                for (var i=0; i<data.length; i++)
+                    data[i].context(ctx).size(width).draw();
             });
         };
 
@@ -241,15 +220,12 @@
             data = data.slice(); // copy
             copyMissing(p.pie, opts);
 
-            var arc, i;
+            var arc = d3.canvas.arc();
 
-            return _addComponent(function (ctx) {
+            for (var i=0; i<data.length; i++)
+                data[i] = canvasSlice(paper, opts, data[i], arc);
 
-                if (!arc) {
-                    arc = d3.canvas.arc();
-                    for (i=0; i<data.length; i++)
-                        data[i] = canvasSlice(paper, opts, ctx, data[i], arc);
-                }
+            return paper.addComponent(data, function (ctx) {
 
                 var width = paper.innerWidth(),
                     height = paper.innerHeight(),
@@ -270,7 +246,7 @@
                     dd = d.data;
                     delete d.data;
                     extend(dd, d);
-                    _addData(dd.reset().draw());
+                    dd.context(ctx).draw();
                 }
             });
         };
@@ -281,25 +257,36 @@
                 delete componentMap[c.cid];
                 var index = components.indexOf(c.cid);
                 if (index > -1)
-                    return components.splice(index, 1)[0];
+                    components.splice(index, 1)[0];
+                d3.select(c.canvas).remove();
                 return c.canvas;
             }
         };
 
-        // Download
-        paper.downloadPNG = function () {
-            var canvas = _addCanvas(),
-                context = paper.current();
-
-            _apply(function (ctx) {
-                if (ctx !== context)
-                    ctx.drawImage(context, 0, 0);
-            });
-            var dataUrl = context.toDataURL();
-            return dataUrl;
+        paper.addComponent = function (component, callback) {
+            component = paperComponent(component, callback);
+            componentMap[cid].callbacks.push(component);
+            component.cid = cid;
+            return component;
         };
 
-        paper.download = paper.downloadSVG;
+        // Download
+        paper.image = function () {
+            var canvas = _addCanvas().node(),
+                context = paper.current(),
+                img;
+
+            _apply(function (ctx) {
+                if (ctx !== context) {
+                    img = new Image();
+                    img.src = ctx.canvas.toDataURL();
+                    context.drawImage(img, 0, 0, p.size[0], p.size[1]);
+                }
+            });
+            var dataUrl = canvas.toDataURL();
+            paper.removeCanvas(canvas);
+            return dataUrl;
+        };
 
         // INTERNALS
         function _clear () {
@@ -333,11 +320,6 @@
             components.push(cid);
             componentMap[cid] = component;
             return canvas;
-        }
-
-        function _addComponent (callback) {
-            componentMap[cid].callbacks.push(callback);
-            return cid;
         }
 
         function _render (ctx) {
@@ -384,11 +366,6 @@
             return ctx;
         }
 
-        function _addData (d) {
-            componentMap[cid].data.push(d);
-            return d;
-        }
-
     });
 
     function rgba (color, opacity) {
@@ -398,12 +375,54 @@
         } else return color;
     }
 
-    function canvasPoint (paper, opts, ctx, d, symbol) {
+    function canvasLine (paper, opts, data) {
         var scalex = paper.scalex,
             scaley = paper.scaley,
-            factor = paper.factor();
+            factor = paper.factor(),
+            d = paperData(paper, opts, {}),
+            ctx;
 
-        d = paperData(paper, opts, {values: d});
+        d.draw = function (context) {
+            context = context || ctx;
+            ctx.strokeStyle = d.color;
+            ctx.lineWidth = factor*d.lineWidth;
+            _draw(context);
+            context.stroke();
+            return d;
+        };
+
+        d.context = function (context) {
+            ctx = context;
+            return d;
+        };
+
+        d.inRange = function (ex, ey) {
+            _draw(ctx);
+            return ctx.isPointInPath(ex, ey);
+        };
+
+        return d.reset();
+
+        function _draw (context) {
+            var line = d.area ? d3.canvas.area() : d3.canvas.line();
+
+            line.interpolate(d.interpolate)
+                .x(function (d) {
+                    return scalex(d.x);
+                })
+                .y(function (d) {
+                    return scaley(d.y);
+                }).context(context)(data);
+        }
+    }
+
+    function canvasPoint (paper, opts, d, symbol) {
+        var scalex = paper.scalex,
+            scaley = paper.scaley,
+            factor = paper.factor(),
+            ctx;
+
+        d = paperData(paper, opts, {data: d});
 
         d.draw = function (context) {
             context = context || ctx;
@@ -411,7 +430,7 @@
             context.fillStyle = rgba(d.fill, d.fillOpacity);
             context.strokeStyle = rgba(d.color, d.colorOpacity);
             context.lineWidth = factor*d.lineWidth;
-            context.translate(scalex(d.values.x), scaley(d.values.y));
+            context.translate(scalex(d.data.x), scaley(d.data.y));
             symbol.context(context)(d);
             context.fill();
             context.stroke();
@@ -419,58 +438,71 @@
             return d;
         };
 
+        d.context = function (context) {
+            ctx = context;
+            return d;
+        };
+
         d.inRange = function (ex, ey) {
             ctx.save();
-            ctx.translate(scalex(d.values.x), scaley(d.values.y));
+            ctx.translate(scalex(d.data.x), scaley(d.data.y));
             symbol.context(ctx)(d);
             var res = ctx.isPointInPath(ex, ey);
             ctx.restore();
             return res;
         };
 
-        return d;
+        return d.reset();
     }
 
-    function canvasBar (paper, opts, ctx, d) {
+    function canvasBar (paper, opts, d) {
         var scalex = paper.scalex,
             scaley = paper.scaley,
             factor = paper.factor(),
             radius = factor*opts.radius,
-            x, y, y0, y1, w, yb;
+            ctx, x, y, y0, y1, w, yb;
 
-        d = paperData(paper, opts, {values: d});
+        d = paperData(paper, opts, {data: d});
+
+        d.context = function (context) {
+            ctx = context;
+            return d;
+        };
 
         d.draw = function (context) {
             context = context || ctx;
-            context.beginPath();
             context.fillStyle = rgba(d.fill, d.fillOpacity);
             context.strokeStyle = rgba(d.color, d.colorOpacity);
             context.lineWidth = factor*d.lineWidth;
-            w = 0.5*d.size();
-            x = scalex(d.values.x);
-            y = scaley(d.values.y);
-            y0 = scaley(0);
-            drawPolygon(context, [[x-w,y0], [x+w,y0], [x+w,y], [x-w, y]], radius);
-            context.closePath();
+            _draw(context);
             context.fill();
             context.stroke();
             return d;
         };
 
         d.inRange = function (ex, ey) {
-            ctx.beginPath();
-            drawPolygon(ctx, [[x-w,y0], [x+w,y0], [x+w,y], [x-w, y]], radius);
-            ctx.closePath();
+            _draw(ctx);
             return ctx.isPointInPath(ex, ey);
         };
 
-        return d;
+        return d.reset();
+
+        function _draw (context) {
+            context.beginPath();
+            w = 0.5*d.size();
+            x = scalex(d.data.x);
+            y = scaley(d.data.y);
+            y0 = scaley(0);
+            drawPolygon(context, [[x-w,y0], [x+w,y0], [x+w,y], [x-w, y]], radius);
+            context.closePath();
+        }
     }
 
-    function canvasSlice (paper, opts, ctx, d, arc) {
+    function canvasSlice (paper, opts, d, arc) {
         var scalex = paper.scalex,
             scaley = paper.scaley,
-            factor = paper.factor();
+            factor = paper.factor(),
+            ctx;
 
         d = pieData(paper, opts, d);
 
@@ -488,6 +520,11 @@
             return d;
         };
 
+        d.context = function (context) {
+            ctx = context;
+            return d;
+        };
+
         d.inRange = function (ex, ey) {
             ctx.save();
             ctx.translate(0.5*paper.innerWidth(), 0.5*paper.innerHeight());
@@ -497,7 +534,7 @@
             return res;
         };
 
-        return d;
+        return d.reset();
     }
 
 

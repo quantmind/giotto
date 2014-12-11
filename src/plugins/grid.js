@@ -6,26 +6,25 @@
         },
         opacity: 0.3
     };
-    //
-    //  Add grid functionality to svg paper
-    g.paper.svg.plugin('grid', gridDefaults,
 
-    function (paper, opts) {
+    function gridConstructor (paper, opts) {
 
-        var xGrid, yGrid;
+        var type = paper.type(),
+            inner = {},
+            xGrid, yGrid;
 
         paper.showGrid = function (options) {
             init();
-            addgrid();
-            showhide(xGrid, paper.xAxis(), 'x', opts.xaxis.grid);
-            showhide(yGrid, paper.yAxis(), 'y', opts.yaxis.grid);
+            inner[type].addgrid();
+            inner[type].showhide(xGrid, paper.xAxis(), 'x', opts.xaxis.grid);
+            inner[type].showhide(yGrid, paper.yAxis(), 'y', opts.yaxis.grid);
             return paper;
         };
 
         paper.hideGrid = function () {
             if (xGrid) {
-                showhide(xGrid, paper.xAxis(), 'x');
-                showhide(yGrid, paper.yAxis(), 'y');
+                inner[type].showhide(xGrid, paper.xAxis(), 'x');
+                inner[type].showhide(yGrid, paper.yAxis(), 'y');
             }
             return paper;
         };
@@ -47,61 +46,61 @@
                 opts.grid = extend({}, opts.grid, g.defaults.paper.grid);
                 if (opts.xaxis.grid === undefined) opts.xaxis.grid = true;
                 if (opts.yaxis.grid === undefined) opts.yaxis.grid = true;
-                xGrid = d3.svg.axis();
-                yGrid = d3.svg.axis();
+                xGrid = d3[type].axis();
+                yGrid = d3[type].axis();
             }
         }
 
-        function addgrid () {
-            var r = paper.root().current().select('rect.grid');
-            if (!r.node()) {
-                r = paper.current().insert("rect", "*")
-                        .attr("class", "grid")
-                        .attr("width", paper.innerWidth())
-                        .attr("height", paper.innerHeight());
-            }
-            paper.setBackground(r, opts.grid.background);
-        }
-
-        function showhide(grid, axis, xy, show) {
-            var g = paper.root().current()
-                            .select('.' + xy + '-grid');
-            if (show) {
-                if(!g.node()) {
-                    grid.scale(axis.scale()).ticks(axis.ticks()).tickFormat("");
-                    g = paper.group().attr('class', 'grid ' + xy + '-grid')
-                            .attr('stroke', opts.grid.color)
-                            .attr('stroke-opacity', opts.grid.opacity);
-                    if (opts.grid.background)
-                        g.attr('fill', opts.grid.backgroundColor);
-
-                    if (xy === 'x')
-                        grid.tickSize(paper.innerHeight(), 0, 0);
-                    else
-                        grid.tickSize(-paper.innerWidth(), 0, 0).orient('left');
-
-                    paper.addComponent(function () {
-                        g.call(grid);
-                    });
+        inner.svg = {
+            addgrid: function () {
+                var r = paper.root().current().select('rect.grid');
+                if (!r.node()) {
+                    r = paper.current().insert("rect", "*")
+                            .attr("class", "grid")
+                            .attr("width", paper.innerWidth())
+                            .attr("height", paper.innerHeight());
                 }
-            } else
-                g.remove();
-        }
-    });
+                paper.setBackground(r, opts.grid.background);
+            },
 
-    g.paper.canvas.plugin('grid', gridDefaults,
+            showhide: function (grid, axis, xy, show) {
+                var g = paper.root().current()
+                                .select('.' + xy + '-grid');
+                if (show) {
+                    if(!g.node()) {
+                        grid.scale(axis.scale()).ticks(axis.ticks()).tickFormat("");
+                        g = paper.group().attr('class', 'grid ' + xy + '-grid')
+                                .attr('stroke', opts.grid.color)
+                                .attr('stroke-opacity', opts.grid.opacity);
+                        if (opts.grid.background)
+                            g.attr('fill', opts.grid.backgroundColor);
 
-    function (paper, opts) {
+                        if (xy === 'x')
+                            grid.tickSize(paper.innerHeight(), 0, 0);
+                        else
+                            grid.tickSize(-paper.innerWidth(), 0, 0).orient('left');
 
-        paper.showGrid = function (options) {
-            return paper;
+                        paper.addComponent(paperData(paper, {}, g), function () {
+                            g.call(grid);
+                        });
+                    }
+                } else
+                    g.remove();
+            }
         };
 
-        paper.hideGrid = function () {
-            return paper;
-        };
+        inner.canvas = {
+            addgrid: function () {
+            },
 
-     });
+            showhide: function (grid, axis, xy, show) {
+            }
+        };
+    }
+    //
+    //  Add grid functionality to svg and canvas paper
+    g.paper.svg.plugin('grid', gridDefaults, gridConstructor);
+    g.paper.canvas.plugin('grid', gridDefaults, gridConstructor);
     //
     //  Add grid functionality to charts
     g.viz.chart.plugin(function (chart, opts) {

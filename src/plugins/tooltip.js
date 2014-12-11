@@ -41,13 +41,12 @@
             paper.on('activein', function () {
                 var el = d3.select(this),
                     a = this.__data__;
-                if (_.isArray(a)) a = a[0];
+                if (_.isArray(a)) a = a.paper;
 
                 if (a === active) return;
                 hide(el);
                 active = a;
                 if (!active) return;
-                g.log.info('active in');
                 //
                 // For lines, the data is an array, pick the first element
                 active.highLight().draw(el);
@@ -364,39 +363,4 @@
     };
 
 
-    var tooltipCss = {
-        'd3-tip:after': {
-            'box-sizing': 'border-box',
-            display: 'inline',
-            'font-size': '16px',
-            width: '100%',
-            'line-height': 1,
-            position: 'absolute'
-        },
-        'd3-tip.n:after': {
-            content: '"\\25BC"',
-            margin: '-2px 0 0 0',
-            top: '100%',
-            left: 0,
-            'text-align': 'center'
-        },
-        'd3-tip.e:after': {
-            content: '"\\25C0"',
-            margin: '-4px 0 0 0',
-            top: '50%',
-            left: '-8px'
-        },
-        'd3-tip.s:after': {
-            content: '"\\25B2"',
-            margin: '0 0 2px 0',
-            top: '-8px',
-            left: 0,
-            'text-align': 'center'
-        },
-        'd3-tip.w:after': {
-            content: '"\\25B6"',
-            margin: '-4px 0 0 -1px',
-            top: '50%',
-            left: '100%'
-        }
-    };
+    var tooltipCss = {'d3-tip:after': {}};

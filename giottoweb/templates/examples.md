@@ -1,15 +1,9 @@
-# $title
+<h3 class="text-center">$title</h3>
 
-$html_html
+$html_main
 <script>
 $script_js
 </script>
-
-$html_main
-
-Html:
-
-    $html_html
 
 Javascript code:
 

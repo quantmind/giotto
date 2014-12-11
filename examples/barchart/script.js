@@ -17,15 +17,18 @@
         // Callback for angular directive
         angular: function (chart, opts) {
 
-            opts.scope.$on('formFieldChange', function (e, model) {
-                var value = model.form[model.field];
-
-                if (model.field === 'type') {
-                    // rebuild paper
-                    opts.type = value;
-                    chart.paper(true);
+            function update (form) {
+                if (form.type) {
+                    opts.type = form.type;
                     chart.resume();
                 }
+            }
+
+            opts.scope.$on('formReady', function (e, form) {
+                update(form);
+            });
+            opts.scope.$on('formFieldChange', function (e, form) {
+                update(form);
             });
         }
     };

@@ -42,7 +42,7 @@
                 fill: 'darker',
                 color: 'brighter',
                 // Multiplier for size, set to 1 for no change
-                size: 1.2
+                size: 1.5
             }
         },
         bar: {
@@ -61,6 +61,7 @@
         },
         pie: {
             lineWidth: 1,
+            // pad angle in degrees
             padAngle: 0,
             cornerRadius: 0,
             fillOpacity: 0.7,

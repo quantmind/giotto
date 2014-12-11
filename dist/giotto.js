@@ -1,6 +1,6 @@
 //      Giotto - v0.1.0
 
-//      Compiled 2014-12-10.
+//      Compiled 2014-12-11.
 //      Copyright (c) 2014 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -47,6 +47,7 @@
         require(deps, callback);
         return g;
     };
+
 
 
     // D3 internal functions used by GiottoJS
@@ -1305,7 +1306,7 @@
                 fill: 'darker',
                 color: 'brighter',
                 // Multiplier for size, set to 1 for no change
-                size: 1.2
+                size: 1.5
             }
         },
         bar: {
@@ -1324,6 +1325,7 @@
         },
         pie: {
             lineWidth: 1,
+            // pad angle in degrees
             padAngle: 0,
             cornerRadius: 0,
             fillOpacity: 0.7,
@@ -1504,43 +1506,6 @@
             return [w, h];
         };
 
-        paper.xyData = function (data) {
-            if (!data) return;
-            if (!data.data) data = {data: data};
-
-            var xy = data.data,
-                xmin = Infinity,
-                ymin = Infinity,
-                xmax =-Infinity,
-                ymax =-Infinity,
-                x = function (x) {
-                    xmin = x < xmin ? x : xmin;
-                    xmax = x > xmax ? x : xmax;
-                    return x;
-                },
-                y = function (y) {
-                    ymin = y < ymin ? y : ymin;
-                    ymax = y > ymax ? y : ymax;
-                    return y;
-                };
-            var xydata = [];
-            if (isArray(xy[0]) && xy[0].length === 2) {
-                xy.forEach(function (xy) {
-                    xydata.push({x: x(xy[0]), y: y(xy[1])});
-                });
-            } else {
-                var xl = data.xlabel || 'x',
-                    yl = data.ylabel || 'y';
-                xy.forEach(function (xy) {
-                    xydata.push({x: x(xy[xl]), y: y(xy[yl])});
-                });
-            }
-            data.data = xydata;
-            data.xrange = [xmin, xmax];
-            data.yrange = [ymin, ymax];
-            return data;
-        };
-
         // pick a unique color, never picked before
         paper.pickColor = function (index, darker) {
             if (arguments.length === 0) index = color++;
@@ -1612,6 +1577,17 @@
 
     };
 
+
+    g.paper.addType('html', function (paper, p) {
+        clear = paper.clear;
+
+        paper.clear = function () {
+            paper.element().selectAll('*').remove();
+            return clear();
+        };
+
+    });
+
     //
     //  SVG Paper
     //  ================
@@ -1629,9 +1605,6 @@
             componentMap,
             cidCounter,
             current;
-
-        p.xAxis = d3.svg.axis();
-        p.yAxis = [d3.svg.axis(), d3.svg.axis()];
 
         paper.destroy = function () {
             svg = current = null;
@@ -1750,41 +1723,34 @@
             var container = current,
                 scalex = paper.scalex,
                 scaley = paper.scaley,
-                d;
+                dline = paperData(paper, opts, {}).reset();
 
-            function draw (selection) {
+            data.paper = dline;
+
+            dline.draw = function (selection) {
                 return selection
-                    .attr('stroke', data[0].color)
-                    .attr('stroke-opacity', data[0].colorOpacity)
-                    .attr('stroke-width', data[0].lineWidth);
-            }
+                    .attr('stroke', dline.color)
+                    .attr('stroke-opacity', dline.colorOpacity)
+                    .attr('stroke-width', dline.lineWidth);
+            };
 
-            for (var i=0; i<data.length; i++) {
-                d = {values: data[i]};
-                if (!i) {
-                    d = paperData(paper, opts, d).reset();
-                    d.draw = draw;
-                }
-                data[i] = d;
-            }
-
-            return paper.addComponent(function () {
+            return paper.addComponent(dline, function () {
 
                 var chart = container.select("path.line"),
                     line = opts.area ? d3.svg.area() : d3.svg.line();
 
                 line.interpolate(opts.interpolate)
-                    .x(function(d) {return scalex(d.values.x);})
-                    .y(function(d) {return scaley(d.values.y);});
+                    .x(function(d) {return scalex(d.x);})
+                    .y(function(d) {return scaley(d.y);});
 
                 if (!chart.node())
                     chart = container.append('path')
                                         .attr('class', 'line');
 
-                draw(chart
-                        .classed('area', opts.area)
-                        .datum(data)
-                        .attr('d', line));
+                dline.draw(chart
+                            .classed('area', opts.area)
+                            .datum(data)
+                            .attr('d', line));
 
                 _events(chart);
             });
@@ -1811,17 +1777,19 @@
 
             for (var i=0; i<data.length; i++) {
                 d = paperData(paper, opts, {values: data[i]});
-                d.size(size);
+                d.set('size', size);
                 d.draw = draw;
                 data[i] = d.reset();
             }
 
-            return paper.addComponent(function () {
+            return paper.addComponent(data, function () {
                 var chart = container.select("g.points");
 
                 if (!chart.node())
                     chart = container.append("g")
                                     .attr('class', 'points');
+
+                chart.selectAll("path.point").remove();
 
                 _events(draw(chart.selectAll("path.point")
                                 .data(data)
@@ -1852,12 +1820,12 @@
 
             for (var i=0; i<data.length; i++) {
                 d = paperData(paper, opts, {values: data[i]});
-                d.size(size);
+                d.set('size', size);
                 d.draw = draw;
                 data[i] = d.reset();
             }
 
-            return paper.addComponent(function () {
+            return paper.addComponent(data, function () {
 
                 var zero = scaley(0),
                     chart = container.select('g.barchart'),
@@ -1900,7 +1868,7 @@
                 data[i] = d.reset();
             }
 
-            return paper.addComponent(function () {
+            return paper.addComponent(data, function () {
 
                 var scalex = paper.scalex,
                     scaley = paper.scaley,
@@ -1932,6 +1900,8 @@
                     chart = container.append("g")
                                 .attr('class', 'pie')
                                 .attr("transform", "translate(" + width/2 + "," + height/2 + ")");
+
+                chart.selectAll(".slice").remove();
 
                 _events(_draw(chart
                         .selectAll(".slice")
@@ -1995,8 +1965,12 @@
                     .node().parentNode.innerHTML)));
         };
 
+        paper.image = function () {
+            return "data:image/svg+xml;charset=utf-8;base64," + paper.encode();
+        };
+
         paper.downloadSVG = function (e) {
-            var data = "data:image/svg+xml;charset=utf-8;base64," + paper.encode(),
+            var data = paper.image(),
                 target = e ? e.target : document;
             d3.select(target).attr("href", data);
         };
@@ -2006,11 +1980,13 @@
         // LOW LEVEL FUNCTIONS - MAYBE THEY SHOULD BE PRIVATE?
 
         // Add a new component to the paper and return the component id
-        paper.addComponent = function (callback) {
+        paper.addComponent = function (component, callback) {
+            component = paperComponent(component, callback);
             var cid = ++cidCounter;
-            components.push(callback);
-            componentMap[cid] = callback;
-            return cid;
+            components.push(component);
+            componentMap[cid] = component;
+            component.cid = cid;
+            return component;
         };
 
         paper.removeComponent = function (cid) {
@@ -2034,7 +2010,7 @@
                             .attr("class", "axis " + cn)
                             .attr("transform", "translate(" + px + "," + py + ")")
                             .attr('stroke', opts.color), opts.font);
-                paper.addComponent(function () {
+                paper.addComponent(paperData(paper, opts, axis), function () {
                     g.call(axis);
                 });
             }
@@ -2217,8 +2193,8 @@
                 return opts;
             };
 
-            viz.download = function () {
-                return paper.download();
+            viz.image = function () {
+                return paper.image();
             };
 
             viz.xyfunction = g.math.xyfunction;
@@ -2268,62 +2244,83 @@
     // Manage attributes for data to be drawn on papers
     function paperData (paper, opts, d) {
         // Default values
-        var _fill = d.fill || opts.fill,
-            _fillOpacity = d.fillOpacity || opts.fillOpacity,
-            _stroke = d.color || opts.color,
-            _strokeOpacity = d.colorOpacity || opts.colorOpacity,
-            _lineWidth = d.lineWidth || opts.lineWidth,
-            _symbol = d.symbol || opts.symbol,
+        var values = {},
+            highlight = false,
             _size;
 
-        if (!d.active)
-            d.active = {};
-        copyMissing(opts.active, d.active);
-        activeColors(d);
+        pointOptions.forEach(function (name) {
+            values[name] = d[name] || opts[name];
+        });
+        values.size = 0;
+
+        if (opts.active) {
+            if (!d.active)
+                d.active = {};
+            copyMissing(opts.active, d.active);
+            activeColors(d);
+        }
 
         d.reset = function () {
-            d.fill = _fill;
-            d.fillOpacity = _fillOpacity;
-            d.color = _stroke;
-            d.colorOpacity = _strokeOpacity;
-            d.lineWidth = _lineWidth;
-            d.symbol = _symbol;
-            d.size(_size);
+            highlight = false;
+            pointOptions.forEach(function (name) {
+                _set(name, values[name]);
+            });
             return d;
         };
 
         d.highLight = function () {
-            var a = d.active;
-            _replace('fill', a);
-            _replace('fillOpacity', a);
-            _replace('color', a);
-            _replace('colorOpacity', a);
-            _replace('symbol', a);
-            if (a.lineWidth)
-                d.lineWidth *= a.lineWidth;
-            if (a.size)
-                d._size *= a.size;
+            if (highlight) return d;
+            highlight = true;
+
+            var a = d.active,
+                v;
+            if (a) {
+                pointOptions.forEach(function (name) {
+                    v = a[name];
+                    if (v) {
+                        if (multiplyOptions.indexOf(name) > -1)
+                            v *= values[name];
+                        _set(name, v);
+                    }
+                });
+            }
+            return d;
+        };
+
+        // set a value and its default
+        d.set = function (name, value) {
+            values[name] = value;
+            _set(name, value);
             return d;
         };
 
         d.size = function (x) {
             if (!arguments.length)
                 if (d.symbol) {
-                    return d._size*d._size*(SymbolSize[d.symbol] || 1);
+                    return _size*_size*(SymbolSize[d.symbol] || 1);
                 } else
-                    return d._size;
+                    return _size;
             else {
                 _size = +x;
-                d._size = _size;
                 return d;
             }
         };
 
+        d.options = function () {
+            return opts;
+        };
+
+        d.forEach = function (callback) {
+            callback(d);
+        };
+
         return d;
 
-        function _replace(name, o) {
-            if (o[name])
-                d[name] = o[name];
+        function _set(name, value) {
+            if (typeof d[name] === 'function')
+                d[name](value);
+            else
+                d[name] = value;
         }
     }
 
@@ -2340,14 +2337,43 @@
         return paperData(paper, opts, d);
     }
 
+    //
+    // A paper component draw an array of paperData into a paper
+    function paperComponent (data, component) {
+        var opts = data.options ? data.options() : data[0].options();
+
+        component.setOptions = function (name, value) {
+
+            if (pointOptions.indexOf(name) === -1) {
+                opts[name] = value;
+            } else {
+                data.forEach(function (d) {
+                    d.set(name, value);
+                });
+            }
+            return component;
+        };
+
+        component.data = function () {
+            return data;
+        };
+
+        return component;
+    }
+
 
     var SymbolSize = {
-        circle: 0.7,
-        cross: 0.7,
-        diamond: 0.7,
-        "triangle-up": 0.6,
-        "triangle-down": 0.6
-    };
+            circle: 0.7,
+            cross: 0.7,
+            diamond: 0.7,
+            "triangle-up": 0.6,
+            "triangle-down": 0.6
+        },
+
+        pointOptions = ['fill', 'color', 'fillOpacity',
+                        'colorOpacity', 'lineWidth', 'size', 'symbol'],
+
+        multiplyOptions = ['lineWidth', 'size'];
 
     //
     // Add mission colors for graph
@@ -2461,6 +2487,12 @@
         }
 
         p.size = [width, height];
+
+        var v = d3[p.type];
+
+        p.xAxis = v.axis();
+        p.yAxis = [v.axis(), v.axis()];
+
         return p;
     }
 
@@ -3333,9 +3365,6 @@
                             .attr('class', 'canvas-container')
                             .style('position', 'relative');
 
-        p.xAxis = d3.canvas.axis();
-        p.yAxis = [d3.canvas.axis(), d3.canvas.axis()];
-
         // Return the container of canvas elements
         paper.container = function () {
             return container;
@@ -3476,82 +3505,64 @@
         paper.getDataAtPoint = function (point) {
             var x = factor*point[0],
                 y = factor*point[1],
-                data = [];
+                elements = [],
+                data;
             _apply(function (ctx, _, component) {
-                component.data.forEach(function (el) {
-                    if (el.inRange(x, y))
-                        data.push(el);
+                component.callbacks.forEach(function (callback) {
+                    data = callback.data();
+                    data.forEach(function (el) {
+                        if (el.context(ctx).inRange(x, y))
+                            elements.push(el);
+                    });
                 });
             });
-            return data;
+            return elements;
         };
 
         // Draw a path or an area
         paper.path = function (data, opts) {
             opts || (opts = {});
+            data = data.slice();  // copy
             chartColors(paper, copyMissing(p.line, opts));
+            var line = canvasLine(paper, opts, data);
 
-            return _addComponent(function (ctx) {
-
-                var scalex = paper.scalex,
-                    scaley = paper.scaley,
-                    line = opts.area ? d3.canvas.area() : d3.canvas.line();
-
-                ctx.strokeStyle = opts.color;
-                ctx.lineWidth = factor*opts.lineWidth;
-
-                line.interpolate(opts.interpolate)
-                    .x(function(d) {
-                        return scalex(d.x);
-                    })
-                    .y(function(d) {
-                        return scaley(d.y);
-                    }).context(ctx)(data);
-
-                ctx.stroke();
+            return paper.addComponent(line, function (ctx) {
+                line.context(ctx).draw();
             });
         };
 
         paper.points = function (data, opts) {
             opts || (opts = {});
             data = data.slice();  // copy
-            copyMissing(p.point, chartColors(paper, opts));
+            chartColors(paper, copyMissing(p.point, opts));
 
             var symbol = d3.canvas.symbol().type(function (d) {return d.symbol;})
-                                           .size(function (d) {return d.size();}),
-                pass = 0;
+                                           .size(function (d) {return d.size();});
 
-            return _addComponent(function (ctx) {
+            for (var i=0; i<data.length; ++i)
+                data[i] = canvasPoint(paper, opts, data[i], symbol);
 
-                var size = paper.scale(paper.dim(opts.size)),
-                    d;
+            return paper.addComponent(data, function (ctx) {
+                var size = paper.scale(paper.dim(opts.size));
 
-
-                for (var i=0; i<data.length; ++i) {
-                    if (!pass)
-                        data[i] = _addData(canvasPoint(paper, opts, ctx, data[i], symbol));
-                    data[i].size(size).reset().draw();
-                }
-
-                pass++;
+                for (var i=0; i<data.length; ++i)
+                    data[i].context(ctx).size(size).draw();
             });
-
         };
 
         paper.barchart = function (data, opts) {
             opts || (opts = {});
-            copyMissing(p.bar, chartColors(paper, opts));
+            data = data.slice();  // copy
+            chartColors(paper, copyMissing(p.bar, opts));
 
-            return _addComponent(function (ctx) {
+            for (var i=0; i<data.length; i++)
+                data[i] = canvasBar(paper, opts, data[i]);
 
-                var width = barWidth(paper, data, opts),
-                    d;
+            return paper.addComponent(data, function (ctx) {
+                var width = barWidth(paper, data, opts);
 
-                for (var i=0; i<data.length; i++) {
-                    d = canvasBar(paper, opts, ctx, data[i]);
-                    d.size(width);
-                    _addData(d.reset().draw());
-                }
+                for (var i=0; i<data.length; i++)
+                    data[i].context(ctx).size(width).draw();
             });
         };
 
@@ -3560,15 +3571,12 @@
             data = data.slice(); // copy
             copyMissing(p.pie, opts);
 
-            var arc, i;
+            var arc = d3.canvas.arc();
 
-            return _addComponent(function (ctx) {
+            for (var i=0; i<data.length; i++)
+                data[i] = canvasSlice(paper, opts, data[i], arc);
 
-                if (!arc) {
-                    arc = d3.canvas.arc();
-                    for (i=0; i<data.length; i++)
-                        data[i] = canvasSlice(paper, opts, ctx, data[i], arc);
-                }
+            return paper.addComponent(data, function (ctx) {
 
                 var width = paper.innerWidth(),
                     height = paper.innerHeight(),
@@ -3589,7 +3597,7 @@
                     dd = d.data;
                     delete d.data;
                     extend(dd, d);
-                    _addData(dd.reset().draw());
+                    dd.context(ctx).draw();
                 }
             });
         };
@@ -3600,25 +3608,36 @@
                 delete componentMap[c.cid];
                 var index = components.indexOf(c.cid);
                 if (index > -1)
-                    return components.splice(index, 1)[0];
+                    components.splice(index, 1)[0];
+                d3.select(c.canvas).remove();
                 return c.canvas;
             }
         };
 
-        // Download
-        paper.downloadPNG = function () {
-            var canvas = _addCanvas(),
-                context = paper.current();
-
-            _apply(function (ctx) {
-                if (ctx !== context)
-                    ctx.drawImage(context, 0, 0);
-            });
-            var dataUrl = context.toDataURL();
-            return dataUrl;
+        paper.addComponent = function (component, callback) {
+            component = paperComponent(component, callback);
+            componentMap[cid].callbacks.push(component);
+            component.cid = cid;
+            return component;
         };
 
-        paper.download = paper.downloadSVG;
+        // Download
+        paper.image = function () {
+            var canvas = _addCanvas().node(),
+                context = paper.current(),
+                img;
+
+            _apply(function (ctx) {
+                if (ctx !== context) {
+                    img = new Image();
+                    img.src = ctx.canvas.toDataURL();
+                    context.drawImage(img, 0, 0, p.size[0], p.size[1]);
+                }
+            });
+            var dataUrl = canvas.toDataURL();
+            paper.removeCanvas(canvas);
+            return dataUrl;
+        };
 
         // INTERNALS
         function _clear () {
@@ -3652,11 +3671,6 @@
             components.push(cid);
             componentMap[cid] = component;
             return canvas;
-        }
-
-        function _addComponent (callback) {
-            componentMap[cid].callbacks.push(callback);
-            return cid;
         }
 
         function _render (ctx) {
@@ -3703,11 +3717,6 @@
             return ctx;
         }
 
-        function _addData (d) {
-            componentMap[cid].data.push(d);
-            return d;
-        }
-
     });
 
     function rgba (color, opacity) {
@@ -3717,12 +3726,54 @@
         } else return color;
     }
 
-    function canvasPoint (paper, opts, ctx, d, symbol) {
+    function canvasLine (paper, opts, data) {
         var scalex = paper.scalex,
             scaley = paper.scaley,
-            factor = paper.factor();
+            factor = paper.factor(),
+            d = paperData(paper, opts, {}),
+            ctx;
 
-        d = paperData(paper, opts, {values: d});
+        d.draw = function (context) {
+            context = context || ctx;
+            ctx.strokeStyle = d.color;
+            ctx.lineWidth = factor*d.lineWidth;
+            _draw(context);
+            context.stroke();
+            return d;
+        };
+
+        d.context = function (context) {
+            ctx = context;
+            return d;
+        };
+
+        d.inRange = function (ex, ey) {
+            _draw(ctx);
+            return ctx.isPointInPath(ex, ey);
+        };
+
+        return d.reset();
+
+        function _draw (context) {
+            var line = d.area ? d3.canvas.area() : d3.canvas.line();
+
+            line.interpolate(d.interpolate)
+                .x(function (d) {
+                    return scalex(d.x);
+                })
+                .y(function (d) {
+                    return scaley(d.y);
+                }).context(context)(data);
+        }
+    }
+
+    function canvasPoint (paper, opts, d, symbol) {
+        var scalex = paper.scalex,
+            scaley = paper.scaley,
+            factor = paper.factor(),
+            ctx;
+
+        d = paperData(paper, opts, {data: d});
 
         d.draw = function (context) {
             context = context || ctx;
@@ -3730,7 +3781,7 @@
             context.fillStyle = rgba(d.fill, d.fillOpacity);
             context.strokeStyle = rgba(d.color, d.colorOpacity);
             context.lineWidth = factor*d.lineWidth;
-            context.translate(scalex(d.values.x), scaley(d.values.y));
+            context.translate(scalex(d.data.x), scaley(d.data.y));
             symbol.context(context)(d);
             context.fill();
             context.stroke();
@@ -3738,58 +3789,71 @@
             return d;
         };
 
+        d.context = function (context) {
+            ctx = context;
+            return d;
+        };
+
         d.inRange = function (ex, ey) {
             ctx.save();
-            ctx.translate(scalex(d.values.x), scaley(d.values.y));
+            ctx.translate(scalex(d.data.x), scaley(d.data.y));
             symbol.context(ctx)(d);
             var res = ctx.isPointInPath(ex, ey);
             ctx.restore();
             return res;
         };
 
-        return d;
+        return d.reset();
     }
 
-    function canvasBar (paper, opts, ctx, d) {
+    function canvasBar (paper, opts, d) {
         var scalex = paper.scalex,
             scaley = paper.scaley,
             factor = paper.factor(),
             radius = factor*opts.radius,
-            x, y, y0, y1, w, yb;
+            ctx, x, y, y0, y1, w, yb;
 
-        d = paperData(paper, opts, {values: d});
+        d = paperData(paper, opts, {data: d});
+
+        d.context = function (context) {
+            ctx = context;
+            return d;
+        };
 
         d.draw = function (context) {
             context = context || ctx;
-            context.beginPath();
             context.fillStyle = rgba(d.fill, d.fillOpacity);
             context.strokeStyle = rgba(d.color, d.colorOpacity);
             context.lineWidth = factor*d.lineWidth;
-            w = 0.5*d.size();
-            x = scalex(d.values.x);
-            y = scaley(d.values.y);
-            y0 = scaley(0);
-            drawPolygon(context, [[x-w,y0], [x+w,y0], [x+w,y], [x-w, y]], radius);
-            context.closePath();
+            _draw(context);
             context.fill();
             context.stroke();
             return d;
         };
 
         d.inRange = function (ex, ey) {
-            ctx.beginPath();
-            drawPolygon(ctx, [[x-w,y0], [x+w,y0], [x+w,y], [x-w, y]], radius);
-            ctx.closePath();
+            _draw(ctx);
             return ctx.isPointInPath(ex, ey);
         };
 
-        return d;
+        return d.reset();
+
+        function _draw (context) {
+            context.beginPath();
+            w = 0.5*d.size();
+            x = scalex(d.data.x);
+            y = scaley(d.data.y);
+            y0 = scaley(0);
+            drawPolygon(context, [[x-w,y0], [x+w,y0], [x+w,y], [x-w, y]], radius);
+            context.closePath();
+        }
     }
 
-    function canvasSlice (paper, opts, ctx, d, arc) {
+    function canvasSlice (paper, opts, d, arc) {
         var scalex = paper.scalex,
             scaley = paper.scaley,
-            factor = paper.factor();
+            factor = paper.factor(),
+            ctx;
 
         d = pieData(paper, opts, d);
 
@@ -3807,6 +3871,11 @@
             return d;
         };
 
+        d.context = function (context) {
+            ctx = context;
+            return d;
+        };
+
         d.inRange = function (ex, ey) {
             ctx.save();
             ctx.translate(0.5*paper.innerWidth(), 0.5*paper.innerHeight());
@@ -3816,7 +3885,7 @@
             return res;
         };
 
-        return d;
+        return d.reset();
     }
 
 
@@ -3866,17 +3935,13 @@
 
     g.createviz('chart', {
         margin: {top: 30, right: 30, bottom: 30, left: 30},
-        chartTypes: ['bar', 'line', 'point', 'pie'],
-
-        line: {show: true},
-        point: {show: false},
-        bar: {show: false},
-        pie: {show: false}
+        chartTypes: ['pie', 'bar', 'line', 'point']
     },
 
     function (chart, opts) {
 
-        var series = [];
+        var series = [],
+            xrange, yrange;
 
         chart.numSeries = function () {
             return series.length;
@@ -3892,44 +3957,32 @@
 
         chart.addSeries = function (series) {
             // Loop through data and build the graph
-            var xrange = [Infinity, -Infinity],
-                yrange = [Infinity, -Infinity],
-                wasempty = chart.numSeries() === 0,
-                paper = chart.paper(),
-                data = [];
+            var data = [];
 
             series.forEach(function (serie) {
 
                 if (isFunction(serie))
                     serie = serie(chart);
 
-                serie = addSerie(serie);
+                serie = formatSerie(serie);
 
                 if (serie) {
+                    if (!serie.pie) {
+                        serie = xyData(serie);
+                        if (!xrange) {
+                            xrange = [Infinity, -Infinity];
+                            yrange = [Infinity, -Infinity];
+                        }
+                        xrange[0] = Math.min(xrange[0], serie.xrange[0]);
+                        xrange[1] = Math.max(xrange[1], serie.xrange[1]);
+                        yrange[0] = Math.min(yrange[0], serie.yrange[0]);
+                        yrange[1] = Math.max(yrange[1], serie.yrange[1]);
+                    }
                     data.push(serie);
-                    xrange[0] = Math.min(xrange[0], serie.xrange[0]);
-                    xrange[1] = Math.max(xrange[1], serie.xrange[1]);
-                    yrange[0] = Math.min(yrange[0], serie.yrange[0]);
-                    yrange[1] = Math.max(yrange[1], serie.yrange[1]);
                 }
             });
 
-            paper.xAxis().scale().domain([ac(opts.xaxis.min, xrange[0]), ac(opts.xaxis.max, xrange[1])]);
-            paper.yAxis().scale().domain([ac(opts.yaxis.min, yrange[0]), ac(opts.yaxis.max, yrange[1])]);
-
-            data.forEach(function (serie) {
-                addSerie(serie, true);
-            });
-
-            if (wasempty)
-                if (show(opts.xaxis))
-                    paper.drawXaxis();
-                if (show(opts.yaxis))
-                    paper.drawYaxis();
-                if (show(opts.yaxis2, false))
-                    paper.drawYaxis();
-
-            return chart;
+            return data;
         };
 
         chart.addSerie = function (serie) {
@@ -3943,18 +3996,63 @@
         };
 
         chart.draw = function () {
-            var data = opts.data;
-            if (data === undefined && opts.src)
-                return chart.loadData(chart.draw);
-            if (g._.isFunction(data))
-                data = opts.data = data(chart);
+            var paper = chart.paper(),
+                data = opts.data;
 
-            chart.clear();
+            // load data if in options
             if (data) {
-                chart.addSeries(data);
-                chart.render();
+                delete opts.data;
+                if (data === undefined && opts.src)
+                    return chart.loadData(chart.draw);
+                if (g._.isFunction(data))
+                    data = data(chart);
             }
 
+            if (data)
+                data = chart.addSeries(data);
+
+            if (data || opts.type !== paper.type()) {
+
+                if (opts.type !== paper.type()) {
+                    paper = chart.paper(true);
+                    data = series;
+                }
+
+                if (xrange) {
+                    paper.xAxis().scale().domain([ac(opts.xaxis.min, xrange[0]), ac(opts.xaxis.max, xrange[1])]);
+                    paper.yAxis().scale().domain([ac(opts.yaxis.min, yrange[0]), ac(opts.yaxis.max, yrange[1])]);
+                }
+
+                data.forEach(function (serie) {
+                    drawSerie(serie);
+                });
+
+                if (data.length === series.length && xrange) {
+                    if (show(opts.xaxis))
+                        paper.drawXaxis();
+                    if (show(opts.yaxis))
+                        paper.drawYaxis();
+                    if (show(opts.yaxis2, false))
+                        paper.drawYaxis();
+                }
+            }
+
+            // Render the chart
+            chart.render();
+        };
+
+        chart.setSerieOption = function (type, field, value) {
+
+            if (opts.chartTypes.indexOf(type) === -1) return;
+
+            if (!chart.numSeries()) {
+                opts[type][field] = value;
+            } else {
+                chart.each(function (serie) {
+                    if (serie[type])
+                        serie[type].setOptions(field, value);
+                });
+            }
         };
 
 
@@ -3981,53 +4079,71 @@
             return val;
         }
 
-        function addSerie (serie, add) {
-            // The serie is
+        function formatSerie (serie) {
             if (!serie) return;
+            if (isArray(serie)) serie = {data: serie};
 
             var paper = chart.paper(),
-                color;
+                color, show, o;
 
-            if (add) {
-                g.log.info('Add new serie to chart');
+            series.push(serie);
+            if (!serie.label)
+                serie.label = 'serie ' + series.length;
 
-                series.push(serie);
-                if (!serie.label)
-                    serie.label = 'serie ' + series.length;
-
-                paper.group({'class': 'serie ' + slugify(serie.label)});
-
-                opts.chartTypes.forEach(function (type) {
-                    var o = serie[type];
-
-                    if (o === undefined)
-                        serie[type] = o = opts[type];
-
-                    if (o.show) {
-                        if (!o.color) {
-                            if (!color)
-                                color = paper.pickColor();
-                            o.color = color;
-                        }
-                        chartTypes[type](chart, serie.data, o);
-                    }
-
-                    serie[type] = o;
-                });
-
-                paper.parent();
-            } else {
-
-                if (isArray(serie)) {
-                    serie = {data: serie};
+            opts.chartTypes.forEach(function (type) {
+                o = serie[type];
+                if (o) {
+                    if (isArray(o))
+                        serie.data = o;
+                    o = {};
                 }
-                return paper.xyData(serie);
-            }
+                if (o || opts[type].show) {
+                    if (!o) o = {};
+                    extend(o, opts[type]);
+                    serie[type] = o;
+                    show = true;
+                }
+            });
+
+            // None of the chart are shown, specify line
+            if (!show)
+                serie.line = extend({}, opts.line);
+
+            opts.chartTypes.forEach(function (type) {
+                o = serie[type];
+
+                if (o && type !== 'pie' && !o.color) {
+                    // pick a default color if one is not given
+                    if (!color)
+                        color = paper.pickColor();
+                    o.color = color;
+                }
+            });
+
+            return serie;
+        }
+
+        function drawSerie (serie) {
+            // The serie is
+            var paper = chart.paper();
+
+            paper.group({'class': 'serie ' + slugify(serie.label)});
+
+            opts.chartTypes.forEach(function (type) {
+                if (serie[type])
+                    serie[type] = chartTypes[type](chart, serie.data, serie[type]);
+            });
+
+            paper.parent();
         }
 
     });
 
     var chartTypes = {
+
+        pie: function (chart, data, opts) {
+            return chart.paper().pie(data, opts);
+        },
 
         bar: function (chart, data, opts) {
             return chart.paper().barchart(data, opts);
@@ -4040,6 +4156,43 @@
         point: function (chart, data, opts) {
             return chart.paper().points(data, opts);
         }
+    };
+
+    var xyData = function (data) {
+        if (!data) return;
+        if (!data.data) data = {data: data};
+
+        var xy = data.data,
+            xmin = Infinity,
+            ymin = Infinity,
+            xmax =-Infinity,
+            ymax =-Infinity,
+            x = function (x) {
+                xmin = x < xmin ? x : xmin;
+                xmax = x > xmax ? x : xmax;
+                return x;
+            },
+            y = function (y) {
+                ymin = y < ymin ? y : ymin;
+                ymax = y > ymax ? y : ymax;
+                return y;
+            };
+        var xydata = [];
+        if (isArray(xy[0]) && xy[0].length === 2) {
+            xy.forEach(function (xy) {
+                xydata.push({x: x(xy[0]), y: y(xy[1])});
+            });
+        } else {
+            var xl = data.xlabel || 'x',
+                yl = data.ylabel || 'y';
+            xy.forEach(function (xy) {
+                xydata.push({x: x(xy[xl]), y: y(xy[yl])});
+            });
+        }
+        data.data = xydata;
+        data.xrange = [xmin, xmax];
+        data.yrange = [ymin, ymax];
+        return data;
     };
 
     //
@@ -4489,31 +4642,6 @@
 
 
 
-
-    g.createviz('pie', {},
-
-    function (chart, opts) {
-
-        chart.draw = function () {
-            if (opts.data === undefined && opts.src)
-                return chart.loadData(chart.draw);
-            if (g._.isFunction(opts.data))
-                opts.data = data(chart);
-
-            chart.clear();
-            if (opts.data) {
-                chart.paper().pie(opts.data, opts);
-                chart.render();
-            }
-        };
-
-        chart.on('tick.main', function () {
-            // Chart don't need ticking unless explicitly required (real time updates for example)
-            chart.stop();
-            chart.draw();
-        });
-    });
-
     //
     //  Sunburst visualization
     //
@@ -4556,8 +4684,8 @@
             if (!opts.data)
                 return self.loadData();
             else {
+                self.stop();
                 build();
-                self.alpha(0);
             }
         });
 
@@ -5169,26 +5297,25 @@
         },
         opacity: 0.3
     };
-    //
-    //  Add grid functionality to svg paper
-    g.paper.svg.plugin('grid', gridDefaults,
 
-    function (paper, opts) {
+    function gridConstructor (paper, opts) {
 
-        var xGrid, yGrid;
+        var type = paper.type(),
+            inner = {},
+            xGrid, yGrid;
 
         paper.showGrid = function (options) {
             init();
-            addgrid();
-            showhide(xGrid, paper.xAxis(), 'x', opts.xaxis.grid);
-            showhide(yGrid, paper.yAxis(), 'y', opts.yaxis.grid);
+            inner[type].addgrid();
+            inner[type].showhide(xGrid, paper.xAxis(), 'x', opts.xaxis.grid);
+            inner[type].showhide(yGrid, paper.yAxis(), 'y', opts.yaxis.grid);
             return paper;
         };
 
         paper.hideGrid = function () {
             if (xGrid) {
-                showhide(xGrid, paper.xAxis(), 'x');
-                showhide(yGrid, paper.yAxis(), 'y');
+                inner[type].showhide(xGrid, paper.xAxis(), 'x');
+                inner[type].showhide(yGrid, paper.yAxis(), 'y');
             }
             return paper;
         };
@@ -5210,61 +5337,61 @@
                 opts.grid = extend({}, opts.grid, g.defaults.paper.grid);
                 if (opts.xaxis.grid === undefined) opts.xaxis.grid = true;
                 if (opts.yaxis.grid === undefined) opts.yaxis.grid = true;
-                xGrid = d3.svg.axis();
-                yGrid = d3.svg.axis();
+                xGrid = d3[type].axis();
+                yGrid = d3[type].axis();
             }
         }
 
-        function addgrid () {
-            var r = paper.root().current().select('rect.grid');
-            if (!r.node()) {
-                r = paper.current().insert("rect", "*")
-                        .attr("class", "grid")
-                        .attr("width", paper.innerWidth())
-                        .attr("height", paper.innerHeight());
-            }
-            paper.setBackground(r, opts.grid.background);
-        }
-
-        function showhide(grid, axis, xy, show) {
-            var g = paper.root().current()
-                            .select('.' + xy + '-grid');
-            if (show) {
-                if(!g.node()) {
-                    grid.scale(axis.scale()).ticks(axis.ticks()).tickFormat("");
-                    g = paper.group().attr('class', 'grid ' + xy + '-grid')
-                            .attr('stroke', opts.grid.color)
-                            .attr('stroke-opacity', opts.grid.opacity);
-                    if (opts.grid.background)
-                        g.attr('fill', opts.grid.backgroundColor);
-
-                    if (xy === 'x')
-                        grid.tickSize(paper.innerHeight(), 0, 0);
-                    else
-                        grid.tickSize(-paper.innerWidth(), 0, 0).orient('left');
-
-                    paper.addComponent(function () {
-                        g.call(grid);
-                    });
+        inner.svg = {
+            addgrid: function () {
+                var r = paper.root().current().select('rect.grid');
+                if (!r.node()) {
+                    r = paper.current().insert("rect", "*")
+                            .attr("class", "grid")
+                            .attr("width", paper.innerWidth())
+                            .attr("height", paper.innerHeight());
                 }
-            } else
-                g.remove();
-        }
-    });
+                paper.setBackground(r, opts.grid.background);
+            },
 
-    g.paper.canvas.plugin('grid', gridDefaults,
+            showhide: function (grid, axis, xy, show) {
+                var g = paper.root().current()
+                                .select('.' + xy + '-grid');
+                if (show) {
+                    if(!g.node()) {
+                        grid.scale(axis.scale()).ticks(axis.ticks()).tickFormat("");
+                        g = paper.group().attr('class', 'grid ' + xy + '-grid')
+                                .attr('stroke', opts.grid.color)
+                                .attr('stroke-opacity', opts.grid.opacity);
+                        if (opts.grid.background)
+                            g.attr('fill', opts.grid.backgroundColor);
 
-    function (paper, opts) {
+                        if (xy === 'x')
+                            grid.tickSize(paper.innerHeight(), 0, 0);
+                        else
+                            grid.tickSize(-paper.innerWidth(), 0, 0).orient('left');
 
-        paper.showGrid = function (options) {
-            return paper;
+                        paper.addComponent(paperData(paper, {}, g), function () {
+                            g.call(grid);
+                        });
+                    }
+                } else
+                    g.remove();
+            }
         };
 
-        paper.hideGrid = function () {
-            return paper;
-        };
+        inner.canvas = {
+            addgrid: function () {
+            },
 
-     });
+            showhide: function (grid, axis, xy, show) {
+            }
+        };
+    }
+    //
+    //  Add grid functionality to svg and canvas paper
+    g.paper.svg.plugin('grid', gridDefaults, gridConstructor);
+    g.paper.canvas.plugin('grid', gridDefaults, gridConstructor);
     //
     //  Add grid functionality to charts
     g.viz.chart.plugin(function (chart, opts) {
@@ -5569,13 +5696,12 @@
             paper.on('activein', function () {
                 var el = d3.select(this),
                     a = this.__data__;
-                if (_.isArray(a)) a = a[0];
+                if (_.isArray(a)) a = a.paper;
 
                 if (a === active) return;
                 hide(el);
                 active = a;
                 if (!active) return;
-                g.log.info('active in');
                 //
                 // For lines, the data is an array, pick the first element
                 active.highLight().draw(el);
@@ -5892,42 +6018,7 @@
     };
 
 
-    var tooltipCss = {
-        'd3-tip:after': {
-            'box-sizing': 'border-box',
-            display: 'inline',
-            'font-size': '16px',
-            width: '100%',
-            'line-height': 1,
-            position: 'absolute'
-        },
-        'd3-tip.n:after': {
-            content: '"\\25BC"',
-            margin: '-2px 0 0 0',
-            top: '100%',
-            left: 0,
-            'text-align': 'center'
-        },
-        'd3-tip.e:after': {
-            content: '"\\25C0"',
-            margin: '-4px 0 0 0',
-            top: '50%',
-            left: '-8px'
-        },
-        'd3-tip.s:after': {
-            content: '"\\25B2"',
-            margin: '0 0 2px 0',
-            top: '-8px',
-            left: 0,
-            'text-align': 'center'
-        },
-        'd3-tip.w:after': {
-            content: '"\\25B6"',
-            margin: '-4px 0 0 -1px',
-            top: '50%',
-            left: '100%'
-        }
-    };
+    var tooltipCss = {'d3-tip:after': {}};
 
 
     g.viz.force.plugin(function (force, opts) {
