@@ -1,4 +1,5 @@
 
+    // same as d3.svg.axis... but for canvas
     d3.canvas.axis = function() {
         var scale = d3.scale.linear(),
             orient = d3_canvas_axisDefaultOrient,
@@ -7,51 +8,55 @@
             tickPadding = 3,
             tickArguments_ = [10],
             tickValues = null,
-            tickFormat_ = null,
-            lineColor_,
-            lineWidth = 1,
-            font = g.defaults.paper.font;
+            tickFormat_ = null;
 
         function axis (canvas) {
             canvas.each(function() {
-                var ctx = this.canvas.getContext('2d');
-
-                var scale0 = this.__chart__ || scale,
+                var ctx = this.getContext('2d'),
+                    scale0 = this.__chart__ || scale,
                     scale1 = this.__chart__ = scale.copy();
 
                 // Ticks, or domain values for ordinal scales.
                 var ticks = tickValues === null ? (scale1.ticks ? scale1.ticks.apply(scale1, tickArguments_) : scale1.domain()) : tickValues,
                     tickFormat = tickFormat_ === null ? (scale1.tickFormat ? scale1.tickFormat.apply(scale1, tickArguments_) : d3_identity) : tickFormat_,
-                    tick = g.selectAll(".tick").data(ticks, scale1),
                     tickSpacing = Math.max(innerTickSize, 0) + tickPadding,
-                    lineColor = lineColor_ || font.color,
-                    tickTransform;
+                    sign = orient === "top" || orient === "left" ? -1 : 1,
+                    tickTransform,
+                    trange;
 
                 // Domain.
                 var range = d3_scaleRange(scale1);
 
-                ctx.fillStyle = font.color;
-                ctx.font = font.family;
                 // Apply axis labels on major ticks
                 if (orient === "bottom" || orient === "top") {
+                    ctx.textBaseline = sign < 0 ? 'bottom' : 'top';
+                    ctx.textAlign = 'center';
+                    ctx.moveTo(range[0], 0);
+                    ctx.lineTo(range[1], 0);
+                    ctx.moveTo(range[0], 0);
+                    ctx.lineTo(range[0], sign*outerTickSize);
+                    ctx.moveTo(range[1], 0);
+                    ctx.lineTo(range[1], sign*outerTickSize);
                     ticks.forEach(function (tick, index) {
-                        ctx.beginPath();
-                        ctx.lineWidth = lineWidth;
-                        ctx.strokeStyle = lineColor;
-                        ctx.moveTo(xStart, linePositionY);
-                        ctx.lineTo(this.width, linePositionY);
-                        ctx.stroke();
-                        ctx.closePath();
+                        trange = scale1(tick);
+                        ctx.moveTo(trange, 0);
+                        ctx.lineTo(trange, sign*innerTickSize);
+                        ctx.fillText(tickFormat(tick), trange, sign*tickSpacing);
                     });
                 } else {
+                    ctx.textBaseline = 'middle';
+                    ctx.textAlign = sign < 0 ? "end" : "start";
+                    ctx.moveTo(0, range[0]);
+                    ctx.lineTo(0, range[1]);
+                    ctx.moveTo(0, range[0]);
+                    ctx.lineTo(sign*outerTickSize, range[0]);
+                    ctx.moveTo(0, range[1]);
+                    ctx.lineTo(sign*outerTickSize, range[1]);
                     ticks.forEach(function (tick, index) {
-                        ctx.beginPath();
-                        ctx.lineWidth = lineWidth;
-                        ctx.strokeStyle = lineColor;
-                        ctx.moveTo(xStart, linePositionY);
-                        ctx.lineTo(this.width, linePositionY);
-                        ctx.stroke();
-                        ctx.closePath();
+                        trange = scale1(tick);
+                        ctx.moveTo(0, trange);
+                        ctx.lineTo(sign*innerTickSize, trange);
+                        ctx.fillText(tickFormat(tick), sign*tickSpacing, trange);
                     });
                 }
             });
@@ -123,10 +128,3 @@
     var d3_canvas_axisDefaultOrient = "bottom",
         d3_canvas_axisOrients = {top: 1, right: 1, bottom: 1, left: 1};
 
-    function d3_canvas_axisX(selection, x0, x1) {
-        selection.attr("transform", function(d) { var v0 = x0(d); return "translate(" + (isFinite(v0) ? v0 : x1(d)) + ",0)"; });
-    }
-
-    function d3_canvas_axisY(selection, y0, y1) {
-        selection.attr("transform", function(d) { var v0 = y0(d); return "translate(0," + (isFinite(v0) ? v0 : y1(d)) + ")"; });
-    }

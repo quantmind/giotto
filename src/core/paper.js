@@ -5,18 +5,8 @@
 
         var paper = {},
             uid = ++_idCounter,
+            yaxis,
             color;
-
-        if (isObject(element)) {
-            p = element;
-            element = null;
-        }
-        if (!element)
-            element = document.createElement('div');
-
-        element = d3.select(element);
-
-        p = _newPaperAttr(element, p);
 
         // paper type
         paper.type = function () {
@@ -58,9 +48,9 @@
 
         // returns the number of the y-axis currently selected
         paper.yaxis = function (x) {
-            if (!arguments.length) return p.yaxisNumber;
-            if (x === 1 || x === 2)
-                p.yaxisNumber = x;
+            if (!arguments.length) return yaxis;
+            if (+x === 1 || +x === 2)
+                yaxis = +x;
             return paper;
         };
 
@@ -69,7 +59,18 @@
         };
 
         paper.yAxis = function () {
-            return p.yAxis[p.yaxisNumber-1];
+            return p.yAxis[yaxis-1];
+        };
+
+        paper.allAxis = function () {
+            var width = paper.innerWidth(),
+                height = paper.innerHeight(),
+                yaxis = paper.yaxis(),
+                all = [{axis: paper.xAxis(), o: p.xaxis, range: [0, width]},
+                       {axis: paper.yaxis(1).yAxis(), o: p.yaxis, range: [height, 0]},
+                       {axis: paper.yaxis(2).yAxis(), o: p.yaxis2, range: [height, 0]}];
+            paper.yaxis(yaxis);
+            return all;
         };
 
         paper.scale = function (r) {
@@ -170,10 +171,63 @@
             return p;
         };
 
+        paper.drawXaxis = function () {
+            var opts = p.xaxis,
+                py = opts.position === 'top' ? 0 : paper.innerHeight;
+            return p._axis(paper.xAxis(), 'x-axis', 0, py, opts);
+        };
+
+        paper.drawYaxis = function () {
+            var yaxis = paper.yaxis(),
+                opts = yaxis === 1 ? p.yaxis : p.yaxis2,
+                px = opts.position === 'left' ? 0 : paper.innerWidth;
+            return p._axis(paper.yAxis(), 'y-axis-' + yaxis, px, 0, opts);
+        };
+
+        paper.resetAxis = function () {
+            paper.yaxis(1).allAxis().forEach(function (a) {
+                var axis = a.axis,
+                    o = a.o,
+                    innerTickSize = paper.scale(paper.dim(o.tickSize)),
+                    outerTickSize = paper.scale(paper.dim(o.outerTickSize)),
+                    tickPadding = paper.scale(paper.dim(o.tickPadding));
+                a.axis.scale().range(a.range);
+                a.axis.tickSize(innerTickSize, outerTickSize)
+                      .tickPadding(tickPadding)
+                      .orient(o.position);
+
+                if (isNull(o.min) || isNull(o.max))
+                    o.auto = true;
+            });
+            return paper;
+        };
+
+        // Setup
+
+        if (isObject(element)) {
+            p = element;
+            element = null;
+        }
+        if (!element)
+            element = document.createElement('div');
+
+        element = d3.select(element);
+
+        p = _newPaperAttr(element, p);
+        //
+        // Apply paper type
+        g.paper[p.type](paper, p);
+
+        // clear the paper
+        paper.clear().resetAxis();
+        //
+        if (p.css)
+            addCss('#giotto-paper-' + paper.uid(), p.css);
+
         // Auto resize the paper
         if (p.resize) {
             //
-            d3.select(window).on('resize.paper', function () {
+            d3.select(window).on('resize.paper' + paper.uid(), function () {
                 if (!p._resizing) {
                     if (p.resizeDelay) {
                         p._resizing = true;
@@ -187,8 +241,8 @@
                 }
             });
         }
-
-        return _initPaper(paper, p);
+        //
+        return paper;
     };
 
     //

@@ -1,9 +1,11 @@
     g.defaults = {};
 
     g.defaults.axis = {
-        color: '#000',
-        tickSize: 0.05,
-        minTickSize: null,
+        tickSize: '6px',
+        outerTickSize: '6px',
+        tickPadding: '3px',
+        lineWidth: 1,
+        //minTickSize: undefined,
         min: null,
         max: null
     };
@@ -14,8 +16,8 @@
         resize: true,
         margin: {top: 20, right: 20, bottom: 20, left: 20},
         xaxis: extend({position: 'bottom'}, g.defaults.axis),
-        yaxis: extend({position: 'left'}, g.defaults.axis),
-        yaxis2: extend({position: 'right'}, g.defaults.axis),
+        yaxis: {position: 'left', min: null, max: null},
+        yaxis2: {position: 'right', min: null, max: null},
         colors: d3.scale.category10().range(),
         css: null,
         activeEvents: ["mousemove", "touchstart", "touchmove", "mouseout"],
@@ -73,10 +75,11 @@
             }
         },
         font: {
-            size: 11,
-            weight: 'bold',
+            color: '#444',
+            size: '11px',
+            weight: 'normal',
             lineHeight: 13,
-            style: "italic",
+            style: "normal",
             family: "sans-serif",
             variant: "small-caps"
         }
@@ -89,6 +92,15 @@
         //
         // Default events dispatched by the visualization
         events: ['build', 'change', 'start', 'tick', 'end'],
+
+        // Rightclick menu
+        contextmenu: [{
+            label: 'Open Image',
+            callback: function (chart) {
+                window.open(chart.image());
+            }
+        }]
+
     });
 
     g.constants = {

@@ -129,6 +129,10 @@
     isArray = _.isArray = function (value) {
         return ostring.call(value) === '[object Array]';
     },
+    //
+    isNull = _.isNull = function (value) {
+        return value === undefined || value === null;
+    },
 
     encodeObject = _.encodeObject = function (obj, contentType) {
         var p;
@@ -217,4 +221,17 @@
             .replace(/-+/g, '-'); // collapse dashes
 
         return str;
+    },
+
+    fontstrings = ['style', 'variant', 'weight', 'size', 'family'],
+
+    fontString = _.fontString = function (opts) {
+        var bits = [],
+            v;
+        for (var i=0; i<fontstrings.length; ++i) {
+            v = opts[fontstrings[i]];
+            if (v)
+                bits.push(v);
+        }
+        return bits.join(' ');
     };

@@ -76,9 +76,9 @@
                             g.attr('fill', opts.grid.backgroundColor);
 
                         if (xy === 'x')
-                            grid.tickSize(paper.innerHeight(), 0, 0);
+                            grid.tickSize(paper.innerHeight(), 0);
                         else
-                            grid.tickSize(-paper.innerWidth(), 0, 0).orient('left');
+                            grid.tickSize(-paper.innerWidth(), 0).orient('left');
 
                         paper.addComponent(paperData(paper, {}, g), function () {
                             g.call(grid);

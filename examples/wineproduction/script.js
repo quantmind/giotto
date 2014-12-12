@@ -18,14 +18,6 @@
 
         data: [{pie: oivdata}],
 
-        // Rightclick menu
-        contextmenu: [{
-            label: 'Open Image',
-            callback: function (chart) {
-                window.open(chart.image());
-            }
-        }],
-
         // Callback for angular directive
         angular: function (chart, opts) {
 

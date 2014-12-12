@@ -1,6 +1,6 @@
 //      Giotto - v0.1.0
 
-//      Compiled 2014-12-11.
+//      Compiled 2014-12-12.
 //      Copyright (c) 2014 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -463,6 +463,10 @@
     isArray = _.isArray = function (value) {
         return ostring.call(value) === '[object Array]';
     },
+    //
+    isNull = _.isNull = function (value) {
+        return value === undefined || value === null;
+    },
 
     encodeObject = _.encodeObject = function (obj, contentType) {
         var p;
@@ -551,6 +555,19 @@
             .replace(/-+/g, '-'); // collapse dashes
 
         return str;
+    },
+
+    fontstrings = ['style', 'variant', 'weight', 'size', 'family'],
+
+    fontString = _.fontString = function (opts) {
+        var bits = [],
+            v;
+        for (var i=0; i<fontstrings.length; ++i) {
+            v = opts[fontstrings[i]];
+            if (v)
+                bits.push(v);
+        }
+        return bits.join(' ');
     };
 
 
@@ -1265,9 +1282,11 @@
     g.defaults = {};
 
     g.defaults.axis = {
-        color: '#000',
-        tickSize: 0.05,
-        minTickSize: null,
+        tickSize: '6px',
+        outerTickSize: '6px',
+        tickPadding: '3px',
+        lineWidth: 1,
+        //minTickSize: undefined,
         min: null,
         max: null
     };
@@ -1278,8 +1297,8 @@
         resize: true,
         margin: {top: 20, right: 20, bottom: 20, left: 20},
         xaxis: extend({position: 'bottom'}, g.defaults.axis),
-        yaxis: extend({position: 'left'}, g.defaults.axis),
-        yaxis2: extend({position: 'right'}, g.defaults.axis),
+        yaxis: {position: 'left', min: null, max: null},
+        yaxis2: {position: 'right', min: null, max: null},
         colors: d3.scale.category10().range(),
         css: null,
         activeEvents: ["mousemove", "touchstart", "touchmove", "mouseout"],
@@ -1337,10 +1356,11 @@
             }
         },
         font: {
-            size: 11,
-            weight: 'bold',
+            color: '#444',
+            size: '11px',
+            weight: 'normal',
             lineHeight: 13,
-            style: "italic",
+            style: "normal",
             family: "sans-serif",
             variant: "small-caps"
         }
@@ -1353,6 +1373,15 @@
         //
         // Default events dispatched by the visualization
         events: ['build', 'change', 'start', 'tick', 'end'],
+
+        // Rightclick menu
+        contextmenu: [{
+            label: 'Open Image',
+            callback: function (chart) {
+                window.open(chart.image());
+            }
+        }]
+
     });
 
     g.constants = {
@@ -1368,18 +1397,8 @@
 
         var paper = {},
             uid = ++_idCounter,
+            yaxis,
             color;
-
-        if (isObject(element)) {
-            p = element;
-            element = null;
-        }
-        if (!element)
-            element = document.createElement('div');
-
-        element = d3.select(element);
-
-        p = _newPaperAttr(element, p);
 
         // paper type
         paper.type = function () {
@@ -1421,9 +1440,9 @@
 
         // returns the number of the y-axis currently selected
         paper.yaxis = function (x) {
-            if (!arguments.length) return p.yaxisNumber;
-            if (x === 1 || x === 2)
-                p.yaxisNumber = x;
+            if (!arguments.length) return yaxis;
+            if (+x === 1 || +x === 2)
+                yaxis = +x;
             return paper;
         };
 
@@ -1432,7 +1451,18 @@
         };
 
         paper.yAxis = function () {
-            return p.yAxis[p.yaxisNumber-1];
+            return p.yAxis[yaxis-1];
+        };
+
+        paper.allAxis = function () {
+            var width = paper.innerWidth(),
+                height = paper.innerHeight(),
+                yaxis = paper.yaxis(),
+                all = [{axis: paper.xAxis(), o: p.xaxis, range: [0, width]},
+                       {axis: paper.yaxis(1).yAxis(), o: p.yaxis, range: [height, 0]},
+                       {axis: paper.yaxis(2).yAxis(), o: p.yaxis2, range: [height, 0]}];
+            paper.yaxis(yaxis);
+            return all;
         };
 
         paper.scale = function (r) {
@@ -1533,10 +1563,63 @@
             return p;
         };
 
+        paper.drawXaxis = function () {
+            var opts = p.xaxis,
+                py = opts.position === 'top' ? 0 : paper.innerHeight;
+            return p._axis(paper.xAxis(), 'x-axis', 0, py, opts);
+        };
+
+        paper.drawYaxis = function () {
+            var yaxis = paper.yaxis(),
+                opts = yaxis === 1 ? p.yaxis : p.yaxis2,
+                px = opts.position === 'left' ? 0 : paper.innerWidth;
+            return p._axis(paper.yAxis(), 'y-axis-' + yaxis, px, 0, opts);
+        };
+
+        paper.resetAxis = function () {
+            paper.yaxis(1).allAxis().forEach(function (a) {
+                var axis = a.axis,
+                    o = a.o,
+                    innerTickSize = paper.scale(paper.dim(o.tickSize)),
+                    outerTickSize = paper.scale(paper.dim(o.outerTickSize)),
+                    tickPadding = paper.scale(paper.dim(o.tickPadding));
+                a.axis.scale().range(a.range);
+                a.axis.tickSize(innerTickSize, outerTickSize)
+                      .tickPadding(tickPadding)
+                      .orient(o.position);
+
+                if (isNull(o.min) || isNull(o.max))
+                    o.auto = true;
+            });
+            return paper;
+        };
+
+        // Setup
+
+        if (isObject(element)) {
+            p = element;
+            element = null;
+        }
+        if (!element)
+            element = document.createElement('div');
+
+        element = d3.select(element);
+
+        p = _newPaperAttr(element, p);
+        //
+        // Apply paper type
+        g.paper[p.type](paper, p);
+
+        // clear the paper
+        paper.clear().resetAxis();
+        //
+        if (p.css)
+            addCss('#giotto-paper-' + paper.uid(), p.css);
+
         // Auto resize the paper
         if (p.resize) {
             //
-            d3.select(window).on('resize.paper', function () {
+            d3.select(window).on('resize.paper' + paper.uid(), function () {
                 if (!p._resizing) {
                     if (p.resizeDelay) {
                         p._resizing = true;
@@ -1550,8 +1633,8 @@
                 }
             });
         }
-
-        return _initPaper(paper, p);
+        //
+        return paper;
     };
 
     //
@@ -1912,19 +1995,6 @@
             });
         };
 
-        paper.drawXaxis = function () {
-            var opts = p.xaxis,
-                py = opts.position === 'top' ? 0 : paper.innerHeight();
-            return _axis(p.xAxis, 'x-axis', 0, py, opts);
-        };
-
-        paper.drawYaxis = function () {
-            var yaxis = paper.yaxis(),
-                opts = yaxis === 1 ? p.yaxis : p.yaxis2,
-                px = opts.position === 'left' ? 0 : paper.innerWidth();
-            return _axis(paper.yAxis(), 'y-axis-' + yaxis, px, 0, opts);
-        };
-
         paper.setBackground = function (o, background) {
             if (_.isObject(background)) {
                 if (background.opacity !== undefined)
@@ -2002,29 +2072,31 @@
 
         // PRIVATE FUNCTIONS
 
-        function _axis(axis, cn, px, py, opts) {
-            var font = opts.font,
-                g = paper.root().current().select('g.' + cn);
+        p._axis = function (axis, cn, px, py, opts) {
+            var g = paper.root().current().select('g.' + cn);
             if (!g.node()) {
-                g = _font(paper.current().append('g')
-                            .attr("class", "axis " + cn)
-                            .attr("transform", "translate(" + px + "," + py + ")")
-                            .attr('stroke', opts.color), opts.font);
+                g = paper.current().append('g')
+                        .attr("class", "axis " + cn);
                 paper.addComponent(paperData(paper, opts, axis), function () {
-                    g.call(axis);
+                    var x = px ? px() : 0,
+                        y = py ? py() : 0;
+                    g.attr("transform", "translate(" + x + "," + y + ")").call(axis);
+                    g.selectAll('line, path')
+                     .attr('stroke', opts.color)
+                     .attr('stroke-width', opts.lineWidth);
+                    _font(g.selectAll('text'), opts);
                 });
             }
-        }
+        };
 
-        function _font (element, opts) {
-            var font = p.font;
-            opts || (opts = {});
-            return element.style({
-                'font-size': opts.size || font.size,
-                'font-weight': opts.weight || font.weight,
-                'font-style': opts.style || font.style,
-                'font-family': opts.family || font.family,
-                'font-variant': opts.variant || font.variant
+        function _font (selection, opts) {
+            return selection.style({
+                'fill': opts.color,
+                'font-size': opts.size ,
+                'font-weight': opts.weight,
+                'font-style': opts.style,
+                'font-family': opts.family,
+                'font-variant': opts.variant
             });
         }
 
@@ -2409,46 +2481,6 @@
         else
             return opts.width;
     }
-    //
-    //  Initaise paper
-    function _initPaper (paper, p) {
-        //
-        // Apply paper type
-        g.paper[p.type](paper, p);
-
-        // clear the paper
-        paper.clear();
-        _reset_axis(paper);
-
-        var width = paper.innerWidth(),
-            height = paper.innerHeight(),
-            allAxis = [{axis: paper.xAxis(), o: p.xaxis},
-                       {axis: paper.yaxis(2).yAxis(), o: p.yaxis2},
-                       {axis: paper.yaxis(1).yAxis(), o: p.yaxis}];
-
-        allAxis.forEach(function (a) {
-            var axis = a.axis, o = a.o;
-            axis.orient(o.position);
-            if (o.min !== null && o.max !== null)
-                axis.scale().domain([o.min, o.max]);
-            else
-                o.auto = true;
-        });
-        //
-        if (p.css)
-            addCss('#giotto-paper-' + paper.uid(), p.css);
-        //
-        return paper;
-    }
-
-    function _reset_axis (paper) {
-        var yaxis = paper.yaxis();
-        paper.xAxis().scale().range([0, paper.innerWidth()]);
-        paper.yaxis(2).yAxis().scale().range([paper.innerHeight(), 0]);
-        paper.yaxis(1).yAxis().scale().range([paper.innerHeight(), 0]);
-        return paper.yaxis(yaxis);
-    }
-
 
     function _newPaperAttr (element, cfg) {
         var width, height;
@@ -2485,6 +2517,11 @@
             p.height_percentage = 0.01*parseFloat(height);
             height = d3.round(p.height_percentage*width);
         }
+
+        // Inherit axis properties
+        copyMissing(p.font, p.xaxis);
+        copyMissing(p.xaxis, p.yaxis);
+        copyMissing(p.yaxis, p.yaxis2);
 
         p.size = [width, height];
 
@@ -2744,6 +2781,7 @@
         ctx.arc(xc, yc, radius, a1, a2, sweep<=0);
     };
 
+    // same as d3.svg.axis... but for canvas
     d3.canvas.axis = function() {
         var scale = d3.scale.linear(),
             orient = d3_canvas_axisDefaultOrient,
@@ -2752,51 +2790,55 @@
             tickPadding = 3,
             tickArguments_ = [10],
             tickValues = null,
-            tickFormat_ = null,
-            lineColor_,
-            lineWidth = 1,
-            font = g.defaults.paper.font;
+            tickFormat_ = null;
 
         function axis (canvas) {
             canvas.each(function() {
-                var ctx = this.canvas.getContext('2d');
-
-                var scale0 = this.__chart__ || scale,
+                var ctx = this.getContext('2d'),
+                    scale0 = this.__chart__ || scale,
                     scale1 = this.__chart__ = scale.copy();
 
                 // Ticks, or domain values for ordinal scales.
                 var ticks = tickValues === null ? (scale1.ticks ? scale1.ticks.apply(scale1, tickArguments_) : scale1.domain()) : tickValues,
                     tickFormat = tickFormat_ === null ? (scale1.tickFormat ? scale1.tickFormat.apply(scale1, tickArguments_) : d3_identity) : tickFormat_,
-                    tick = g.selectAll(".tick").data(ticks, scale1),
                     tickSpacing = Math.max(innerTickSize, 0) + tickPadding,
-                    lineColor = lineColor_ || font.color,
-                    tickTransform;
+                    sign = orient === "top" || orient === "left" ? -1 : 1,
+                    tickTransform,
+                    trange;
 
                 // Domain.
                 var range = d3_scaleRange(scale1);
 
-                ctx.fillStyle = font.color;
-                ctx.font = font.family;
                 // Apply axis labels on major ticks
                 if (orient === "bottom" || orient === "top") {
+                    ctx.textBaseline = sign < 0 ? 'bottom' : 'top';
+                    ctx.textAlign = 'center';
+                    ctx.moveTo(range[0], 0);
+                    ctx.lineTo(range[1], 0);
+                    ctx.moveTo(range[0], 0);
+                    ctx.lineTo(range[0], sign*outerTickSize);
+                    ctx.moveTo(range[1], 0);
+                    ctx.lineTo(range[1], sign*outerTickSize);
                     ticks.forEach(function (tick, index) {
-                        ctx.beginPath();
-                        ctx.lineWidth = lineWidth;
-                        ctx.strokeStyle = lineColor;
-                        ctx.moveTo(xStart, linePositionY);
-                        ctx.lineTo(this.width, linePositionY);
-                        ctx.stroke();
-                        ctx.closePath();
+                        trange = scale1(tick);
+                        ctx.moveTo(trange, 0);
+                        ctx.lineTo(trange, sign*innerTickSize);
+                        ctx.fillText(tickFormat(tick), trange, sign*tickSpacing);
                     });
                 } else {
+                    ctx.textBaseline = 'middle';
+                    ctx.textAlign = sign < 0 ? "end" : "start";
+                    ctx.moveTo(0, range[0]);
+                    ctx.lineTo(0, range[1]);
+                    ctx.moveTo(0, range[0]);
+                    ctx.lineTo(sign*outerTickSize, range[0]);
+                    ctx.moveTo(0, range[1]);
+                    ctx.lineTo(sign*outerTickSize, range[1]);
                     ticks.forEach(function (tick, index) {
-                        ctx.beginPath();
-                        ctx.lineWidth = lineWidth;
-                        ctx.strokeStyle = lineColor;
-                        ctx.moveTo(xStart, linePositionY);
-                        ctx.lineTo(this.width, linePositionY);
-                        ctx.stroke();
-                        ctx.closePath();
+                        trange = scale1(tick);
+                        ctx.moveTo(0, trange);
+                        ctx.lineTo(sign*innerTickSize, trange);
+                        ctx.fillText(tickFormat(tick), sign*tickSpacing, trange);
                     });
                 }
             });
@@ -2868,13 +2910,6 @@
     var d3_canvas_axisDefaultOrient = "bottom",
         d3_canvas_axisOrients = {top: 1, right: 1, bottom: 1, left: 1};
 
-    function d3_canvas_axisX(selection, x0, x1) {
-        selection.attr("transform", function(d) { var v0 = x0(d); return "translate(" + (isFinite(v0) ? v0 : x1(d)) + ",0)"; });
-    }
-
-    function d3_canvas_axisY(selection, y0, y1) {
-        selection.attr("transform", function(d) { var v0 = y0(d); return "translate(0," + (isFinite(v0) ? v0 : y1(d)) + ")"; });
-    }
 
 
     d3.canvas.retinaScale = function(ctx, width, height){
@@ -3349,6 +3384,12 @@
     var d3_svg_symbolSqrt3 = Math.sqrt(3),
         d3_svg_symbolTan30 = Math.tan(30 * d3_radians);
 
+
+    d3.canvas.transition = function(selection, name) {
+        var transition = d3.transition(selection, name);
+
+        return transition;
+    };
     //
     //  Canvas based Paper
     //  ======================
@@ -3496,12 +3537,6 @@
             ctx.endPath();
         };
 
-        paper.drawXaxis = function () {
-        };
-
-        paper.drawYaxis = function () {
-        };
-
         paper.getDataAtPoint = function (point) {
             var x = factor*point[0],
                 y = factor*point[1],
@@ -3640,6 +3675,21 @@
         };
 
         // INTERNALS
+        p._axis = function (axis, cn, px, py, opts) {
+            var font = opts.font,
+                pax = canvasAxis(paper, opts, axis, px, py),
+                canvas = container.select('.axis').node();
+
+            if (!canvas)
+                canvas = _addCanvas().classed('axis', true);
+
+            return _apply(function (ctx) {
+                return paper.addComponent(pax, function (ctx) {
+                    pax.context(ctx).draw();
+                });
+            }, canvas);
+        };
+
         function _clear () {
             components = [];
             componentMap = {};
@@ -3648,7 +3698,7 @@
             container.selectAll('*').remove();
         }
 
-        function _addCanvas() {
+        function _addCanvas(pos) {
             cid = ++cidCounter;
 
             var canvas = container.append("canvas")
@@ -3687,6 +3737,7 @@
 
         function _apply (callback, _cid) {
             var current = cid,
+                result,
                 component;
             if (!_cid)
                 components.forEach(function (_cid) {
@@ -3698,10 +3749,11 @@
                 component = paper.get(_cid);
                 if (component) {
                     cid = component.cid;
-                    callback(component.canvas.getContext('2d'), component.canvas, component);
+                    result = callback(component.canvas.getContext('2d'), component.canvas, component);
                 }
             }
             cid = current;
+            return result;
         }
 
         function _clearCanvas(ctx, size) {
@@ -3713,7 +3765,7 @@
 
         function _scaleCanvas(ctx) {
             factor = d3.canvas.retinaScale(ctx, p.size[0], p.size[1]);
-            _reset_axis(paper);
+            paper.resetAxis();
             return ctx;
         }
 
@@ -3724,6 +3776,46 @@
             var c = d3.rgb(color);
             return 'rgba(' + c.r + ',' + c.g + ',' + c.b + ',' + opacity + ')';
         } else return color;
+    }
+
+    function canvasAxis (paper, opts, axis, px, py) {
+        var d = paperData(paper, opts, {}),
+            ctx;
+
+        d.draw = function (context) {
+            var size = opts.size;
+            opts.size = paper.scale(paper.dim(size)) + 'px';
+            context = context || ctx;
+
+            ctx.strokeStyle = d.color;
+            context.fillStyle = d.color;
+            context.font = fontString(opts);
+            ctx.lineWidth = paper.factor()*d.lineWidth;
+            _draw(context);
+            context.stroke();
+            opts.size = size;
+            return d;
+        };
+
+        d.context = function (context) {
+            ctx = context;
+            return d;
+        };
+
+        d.inRange = function (ex, ey) {
+            return false;
+            //_draw(ctx);
+            //return ctx.isPointInPath(ex, ey);
+        };
+
+        return d.reset();
+
+        function _draw (context) {
+            context.save();
+            context.translate(px ? px() : 0, py ? py() : 0);
+            axis(d3.select(context.canvas));
+            context.restore();
+        }
     }
 
     function canvasLine (paper, opts, data) {
@@ -3941,7 +4033,7 @@
     function (chart, opts) {
 
         var series = [],
-            xrange, yrange;
+            ranges;
 
         chart.numSeries = function () {
             return series.length;
@@ -3957,7 +4049,7 @@
 
         chart.addSeries = function (series) {
             // Loop through data and build the graph
-            var data = [];
+            var data = [], range;
 
             series.forEach(function (serie) {
 
@@ -3969,14 +4061,18 @@
                 if (serie) {
                     if (!serie.pie) {
                         serie = xyData(serie);
-                        if (!xrange) {
-                            xrange = [Infinity, -Infinity];
-                            yrange = [Infinity, -Infinity];
-                        }
-                        xrange[0] = Math.min(xrange[0], serie.xrange[0]);
-                        xrange[1] = Math.max(xrange[1], serie.xrange[1]);
-                        yrange[0] = Math.min(yrange[0], serie.yrange[0]);
-                        yrange[1] = Math.max(yrange[1], serie.yrange[1]);
+                        if (serie.yaxis === undefined)
+                            serie.yaxis = 1;
+                        if (!ranges)
+                            ranges = [[Infinity, -Infinity],
+                                      [Infinity, -Infinity],
+                                      [Infinity, -Infinity]];
+                        range = ranges[0];
+                        range[0] = Math.min(range[0], serie.xrange[0]);
+                        range[1] = Math.max(range[1], serie.xrange[1]);
+                        range = ranges[serie.yaxis];
+                        range[0] = Math.min(range[0], serie.yrange[0]);
+                        range[1] = Math.max(range[1], serie.yrange[1]);
                     }
                     data.push(serie);
                 }
@@ -4018,16 +4114,26 @@
                     data = series;
                 }
 
-                if (xrange) {
-                    paper.xAxis().scale().domain([ac(opts.xaxis.min, xrange[0]), ac(opts.xaxis.max, xrange[1])]);
-                    paper.yAxis().scale().domain([ac(opts.yaxis.min, yrange[0]), ac(opts.yaxis.max, yrange[1])]);
-                }
+                if (ranges)
+                    paper.allAxis().forEach(function (a, i) {
+                        var o = a.o,
+                            range = ranges[i],
+                            scale = a.axis.scale();
+                        if (o.auto) {
+                            scale.domain([range[0], range[1]]).nice();
+                            if (!isNull(o.min))
+                                scale.domain([o.min, scale.domain()[1]]);
+                            else if (!isNull(o.max))
+                                scale.domain([scale.domain()[0], o.max]);
+                        } else
+                            scale.domain([o.min, o.max]);
+                    });
 
                 data.forEach(function (serie) {
                     drawSerie(serie);
                 });
 
-                if (data.length === series.length && xrange) {
+                if (data.length === series.length && ranges) {
                     if (show(opts.xaxis))
                         paper.drawXaxis();
                     if (show(opts.yaxis))
@@ -4072,11 +4178,6 @@
                     return o.show;
             }
             return false;
-        }
-
-        function ac(val, calc) {
-            val = val === undefined || val === null ? calc : val;
-            return val;
         }
 
         function formatSerie (serie) {
@@ -5367,9 +5468,9 @@
                             g.attr('fill', opts.grid.backgroundColor);
 
                         if (xy === 'x')
-                            grid.tickSize(paper.innerHeight(), 0, 0);
+                            grid.tickSize(paper.innerHeight(), 0);
                         else
-                            grid.tickSize(-paper.innerWidth(), 0, 0).orient('left');
+                            grid.tickSize(-paper.innerWidth(), 0).orient('left');
 
                         paper.addComponent(paperData(paper, {}, g), function () {
                             g.call(grid);

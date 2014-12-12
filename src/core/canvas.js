@@ -145,12 +145,6 @@
             ctx.endPath();
         };
 
-        paper.drawXaxis = function () {
-        };
-
-        paper.drawYaxis = function () {
-        };
-
         paper.getDataAtPoint = function (point) {
             var x = factor*point[0],
                 y = factor*point[1],
@@ -289,6 +283,21 @@
         };
 
         // INTERNALS
+        p._axis = function (axis, cn, px, py, opts) {
+            var font = opts.font,
+                pax = canvasAxis(paper, opts, axis, px, py),
+                canvas = container.select('.axis').node();
+
+            if (!canvas)
+                canvas = _addCanvas().classed('axis', true);
+
+            return _apply(function (ctx) {
+                return paper.addComponent(pax, function (ctx) {
+                    pax.context(ctx).draw();
+                });
+            }, canvas);
+        };
+
         function _clear () {
             components = [];
             componentMap = {};
@@ -297,7 +306,7 @@
             container.selectAll('*').remove();
         }
 
-        function _addCanvas() {
+        function _addCanvas(pos) {
             cid = ++cidCounter;
 
             var canvas = container.append("canvas")
@@ -336,6 +345,7 @@
 
         function _apply (callback, _cid) {
             var current = cid,
+                result,
                 component;
             if (!_cid)
                 components.forEach(function (_cid) {
@@ -347,10 +357,11 @@
                 component = paper.get(_cid);
                 if (component) {
                     cid = component.cid;
-                    callback(component.canvas.getContext('2d'), component.canvas, component);
+                    result = callback(component.canvas.getContext('2d'), component.canvas, component);
                 }
             }
             cid = current;
+            return result;
         }
 
         function _clearCanvas(ctx, size) {
@@ -362,7 +373,7 @@
 
         function _scaleCanvas(ctx) {
             factor = d3.canvas.retinaScale(ctx, p.size[0], p.size[1]);
-            _reset_axis(paper);
+            paper.resetAxis();
             return ctx;
         }
 
@@ -373,6 +384,46 @@
             var c = d3.rgb(color);
             return 'rgba(' + c.r + ',' + c.g + ',' + c.b + ',' + opacity + ')';
         } else return color;
+    }
+
+    function canvasAxis (paper, opts, axis, px, py) {
+        var d = paperData(paper, opts, {}),
+            ctx;
+
+        d.draw = function (context) {
+            var size = opts.size;
+            opts.size = paper.scale(paper.dim(size)) + 'px';
+            context = context || ctx;
+
+            ctx.strokeStyle = d.color;
+            context.fillStyle = d.color;
+            context.font = fontString(opts);
+            ctx.lineWidth = paper.factor()*d.lineWidth;
+            _draw(context);
+            context.stroke();
+            opts.size = size;
+            return d;
+        };
+
+        d.context = function (context) {
+            ctx = context;
+            return d;
+        };
+
+        d.inRange = function (ex, ey) {
+            return false;
+            //_draw(ctx);
+            //return ctx.isPointInPath(ex, ey);
+        };
+
+        return d.reset();
+
+        function _draw (context) {
+            context.save();
+            context.translate(px ? px() : 0, py ? py() : 0);
+            axis(d3.select(context.canvas));
+            context.restore();
+        }
     }
 
     function canvasLine (paper, opts, data) {

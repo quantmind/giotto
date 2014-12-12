@@ -7,7 +7,7 @@
     function (chart, opts) {
 
         var series = [],
-            xrange, yrange;
+            ranges;
 
         chart.numSeries = function () {
             return series.length;
@@ -23,7 +23,7 @@
 
         chart.addSeries = function (series) {
             // Loop through data and build the graph
-            var data = [];
+            var data = [], range;
 
             series.forEach(function (serie) {
 
@@ -35,14 +35,18 @@
                 if (serie) {
                     if (!serie.pie) {
                         serie = xyData(serie);
-                        if (!xrange) {
-                            xrange = [Infinity, -Infinity];
-                            yrange = [Infinity, -Infinity];
-                        }
-                        xrange[0] = Math.min(xrange[0], serie.xrange[0]);
-                        xrange[1] = Math.max(xrange[1], serie.xrange[1]);
-                        yrange[0] = Math.min(yrange[0], serie.yrange[0]);
-                        yrange[1] = Math.max(yrange[1], serie.yrange[1]);
+                        if (serie.yaxis === undefined)
+                            serie.yaxis = 1;
+                        if (!ranges)
+                            ranges = [[Infinity, -Infinity],
+                                      [Infinity, -Infinity],
+                                      [Infinity, -Infinity]];
+                        range = ranges[0];
+                        range[0] = Math.min(range[0], serie.xrange[0]);
+                        range[1] = Math.max(range[1], serie.xrange[1]);
+                        range = ranges[serie.yaxis];
+                        range[0] = Math.min(range[0], serie.yrange[0]);
+                        range[1] = Math.max(range[1], serie.yrange[1]);
                     }
                     data.push(serie);
                 }
@@ -84,16 +88,26 @@
                     data = series;
                 }
 
-                if (xrange) {
-                    paper.xAxis().scale().domain([ac(opts.xaxis.min, xrange[0]), ac(opts.xaxis.max, xrange[1])]);
-                    paper.yAxis().scale().domain([ac(opts.yaxis.min, yrange[0]), ac(opts.yaxis.max, yrange[1])]);
-                }
+                if (ranges)
+                    paper.allAxis().forEach(function (a, i) {
+                        var o = a.o,
+                            range = ranges[i],
+                            scale = a.axis.scale();
+                        if (o.auto) {
+                            scale.domain([range[0], range[1]]).nice();
+                            if (!isNull(o.min))
+                                scale.domain([o.min, scale.domain()[1]]);
+                            else if (!isNull(o.max))
+                                scale.domain([scale.domain()[0], o.max]);
+                        } else
+                            scale.domain([o.min, o.max]);
+                    });
 
                 data.forEach(function (serie) {
                     drawSerie(serie);
                 });
 
-                if (data.length === series.length && xrange) {
+                if (data.length === series.length && ranges) {
                     if (show(opts.xaxis))
                         paper.drawXaxis();
                     if (show(opts.yaxis))
@@ -138,11 +152,6 @@
                     return o.show;
             }
             return false;
-        }
-
-        function ac(val, calc) {
-            val = val === undefined || val === null ? calc : val;
-            return val;
         }
 
         function formatSerie (serie) {

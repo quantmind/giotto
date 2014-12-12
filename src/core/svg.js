@@ -322,19 +322,6 @@
             });
         };
 
-        paper.drawXaxis = function () {
-            var opts = p.xaxis,
-                py = opts.position === 'top' ? 0 : paper.innerHeight();
-            return _axis(p.xAxis, 'x-axis', 0, py, opts);
-        };
-
-        paper.drawYaxis = function () {
-            var yaxis = paper.yaxis(),
-                opts = yaxis === 1 ? p.yaxis : p.yaxis2,
-                px = opts.position === 'left' ? 0 : paper.innerWidth();
-            return _axis(paper.yAxis(), 'y-axis-' + yaxis, px, 0, opts);
-        };
-
         paper.setBackground = function (o, background) {
             if (_.isObject(background)) {
                 if (background.opacity !== undefined)
@@ -412,29 +399,31 @@
 
         // PRIVATE FUNCTIONS
 
-        function _axis(axis, cn, px, py, opts) {
-            var font = opts.font,
-                g = paper.root().current().select('g.' + cn);
+        p._axis = function (axis, cn, px, py, opts) {
+            var g = paper.root().current().select('g.' + cn);
             if (!g.node()) {
-                g = _font(paper.current().append('g')
-                            .attr("class", "axis " + cn)
-                            .attr("transform", "translate(" + px + "," + py + ")")
-                            .attr('stroke', opts.color), opts.font);
+                g = paper.current().append('g')
+                        .attr("class", "axis " + cn);
                 paper.addComponent(paperData(paper, opts, axis), function () {
-                    g.call(axis);
+                    var x = px ? px() : 0,
+                        y = py ? py() : 0;
+                    g.attr("transform", "translate(" + x + "," + y + ")").call(axis);
+                    g.selectAll('line, path')
+                     .attr('stroke', opts.color)
+                     .attr('stroke-width', opts.lineWidth);
+                    _font(g.selectAll('text'), opts);
                 });
             }
-        }
+        };
 
-        function _font (element, opts) {
-            var font = p.font;
-            opts || (opts = {});
-            return element.style({
-                'font-size': opts.size || font.size,
-                'font-weight': opts.weight || font.weight,
-                'font-style': opts.style || font.style,
-                'font-family': opts.family || font.family,
-                'font-variant': opts.variant || font.variant
+        function _font (selection, opts) {
+            return selection.style({
+                'fill': opts.color,
+                'font-size': opts.size ,
+                'font-weight': opts.weight,
+                'font-style': opts.style,
+                'font-family': opts.family,
+                'font-variant': opts.variant
             });
         }
 

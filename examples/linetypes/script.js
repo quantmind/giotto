@@ -6,13 +6,21 @@
             show: true,
             lineWidth: 3,
             fill: '#fff',
-            size: '12px'
+            size: '12px',
+            active: {
+                fill: '#fff',
+                size: 1.5
+            }
         },
 
         line: {
             show: true,
             interpolate: 'linear',
             lineWidth: 3
+        },
+
+        xaxis: {
+            outerTickSize: '10px'
         },
 
         grid: {
