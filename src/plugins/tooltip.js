@@ -1,3 +1,4 @@
+    var tooltip;
     //
     //  Tooltip functionality for SVG paper
     g.paper.plugin('tooltip', {
@@ -17,9 +18,9 @@
         svg: function (group, opts) {
             var paper = group.paper();
 
-            if (paper.tip) return;
+            if (paper.tip || !opts.tooltip.show) return;
 
-            paper.tip = createTip(paper, opts.tooltip);
+            paper.tip = tooltip || createTip(opts.tooltip);
 
             var active;
 
@@ -58,9 +59,9 @@
         canvas: function (group, opts) {
             var paper = group.paper();
 
-            if (paper.tip) return;
+            if (paper.tip || !opts.tooltip.show) return;
 
-            paper.tip = createTip(paper, opts.tooltip);
+            paper.tip = tooltip || createTip(opts.tooltip);
 
             var active = [];
 
@@ -110,11 +111,9 @@
     });
 
 
-
-    function createTip (paper, opts) {
-        if (!opts.show) return;
-        var tip = g.tip(paper);
-        tip.attr('class', opts.className)
+    function createTip (opts) {
+        tooltip = g.tip();
+        tooltip.attr('class', opts.className)
            .style({
                 background: opts.fill,
                 opacity: opts.fillOpacity,
@@ -127,7 +126,7 @@
             addCss('', tooltipCss);
             tooltipCss = null;
         }
-        return tip;
+        return tooltip;
     }
     //
     // Returns a tip handle

@@ -2,11 +2,13 @@
     function svg_implementation (paper, p) {
         var _ = {};
 
-        _.resize = function (group, size) {
-            p.size = size;
-            svg.attr('width', p.size[0])
-               .attr('height', p.size[1]);
-            group.render();
+        _.resize = function (group, oldsize) {
+            if (p.resize) {
+                paper.svg()
+                    .attr('width', p.size[0])
+                    .attr('height', p.size[1]);
+                group.resetAxis().render();
+            }
         };
 
         _.clear = function (group) {
@@ -53,11 +55,19 @@
         };
 
         _.bar = point;
-        _.pieslice = pieSlice;
+
+        _.pieslice = function (draw, data) {
+            var p = pieSlice(draw, data);
+            p.render = function (element) {
+                _draw(element).attr('d', draw.arc);
+            };
+            return p;
+        };
 
         _.points = function (group) {
 
             return drawing(group, function () {
+
                 var pp = group.element().select("#" + this.uid()),
                     scalex = this.scalex(),
                     scaley = this.scaley();
@@ -89,6 +99,7 @@
         _.path = function (group, data) {
 
             return drawing(group, function () {
+
                 var draw = this,
                     opts = draw.options(),
                     p = group.element().select("#" + draw.uid()),
@@ -141,30 +152,27 @@
             });
         };
 
-        _.pie = function (group, data, arc) {
+        // Pie chart drawing on an svg group
+        _.pie = function (draw, width, height) {
 
-            return drawing(group, function () {
+            var container = draw.group().element(),
+                pp = container.select('#' + draw.uid());
 
-                var chart = group.select('#' + this.uid());
+            if (!pp.node())
+                pp = container.append("g")
+                            .attr('id', draw.uid())
+                            .classed('pie', true);
 
-                if (!chart.node()) {
-                    var width = group.innerWidth(),
-                        height = group.innerHeight();
-                    chart = container.append("g")
-                                .attr('id', this.uid)
-                                .classed('pie', true)
-                                .attr("transform", "translate(" + width/2 + "," + height/2 + ")");
-                }
+            pp.attr("transform", "translate(" + width/2 + "," + height/2 + ")")
+                .selectAll(".slice").remove();
 
-                chart.selectAll(".slice").remove();
-
-                return _events(_draw(chart
-                        .selectAll(".slice")
-                        .data(data)
-                        .enter().append("path")
-                        .attr('class', 'slice')
-                        .attr('d', arc)));
-            });
+            return _events(_draw(pp
+                            .selectAll(".slice")
+                            .data(draw.data())
+                            .enter()
+                            .append("path")
+                            .attr('class', 'slice')
+                            .attr('d', draw.arc)));
         };
 
         _.axis = function (group, axis, xy) {

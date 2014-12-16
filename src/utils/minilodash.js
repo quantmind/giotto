@@ -144,6 +144,21 @@
         }
         return picked;
     },
+
+    // Extend the initial array with values for other arrays
+    extendArray = _.extendArray = function () {
+        if (!arguments.length) return;
+        var value = arguments[0],
+            push = function (v) {
+                value.push(v);
+            };
+        if (typeof(value.push) === 'function') {
+            for (var i=1; i<arguments.length; ++i)
+                forEach(arguments[i], push);
+        }
+        return value;
+    },
+
     //
     isObject = _.isObject = function (value) {
         return ostring.call(value) === '[object Object]';

@@ -7,6 +7,9 @@
             yaxis = d3v.axis(),
             group = {};
 
+        xaxis.options = function () {return p.xaxis;};
+        yaxis.options = function () {return p.yaxis;};
+
         element.__group__ = group;
 
         group.element = function () {
@@ -96,6 +99,11 @@
             return group;
         };
 
+        group.resize = function (size) {
+            _.resize(group, size);
+            return group;
+        };
+
         // clear the group without removing drawing from memory
         group.clear = function () {
             _.clear(group);
@@ -138,7 +146,37 @@
             opts || (opts = {});
             copyMissing(p.pie, opts);
 
-            return group.add(_.pie(group, pie, arc))
+            return group.add(drawing(group, function () {
+
+                var width = group.innerWidth(),
+                    height = group.innerHeight(),
+                    opts = this.options(),
+                    outerRadius = 0.5*Math.min(width, height),
+                    innerRadius = opts.innerRadius*outerRadius,
+                    cornerRadius = group.scale(group.dim(opts.cornerRadius)),
+                    value = this.y(),
+                    data = this.data(),
+                    pie = d3.layout.pie().value(function (d) {return value(d.data);})
+                                         .padAngle(d3_radians*opts.padAngle)(data),
+                    d, dd;
+
+                this.arc = d3v.arc()
+                                .cornerRadius(cornerRadius)
+                                .innerRadius(function (d) {return d.innerRadius;})
+                                .outerRadius(function (d) {return d.outerRadius;});
+
+                // recalculate pie angles
+                for (var i=0; i<pie.length; ++i) {
+                    d = pie[i];
+                    dd = d.data;
+                    dd.set('innerRadius', innerRadius);
+                    dd.set('outerRadius', outerRadius);
+                    delete d.data;
+                    data[i] = extend(dd, d);
+                }
+
+                return _.pie(this, width, height);
+            }))
             .options(opts)
             .dataConstructor(pie_costructor)
             .data(data);
@@ -184,7 +222,7 @@
                 return group.xfromPX(x.substring(0, x.length-2));
             // otherwise assume it is a value between 0 and 1 defined as percentage of the x axis length
             else {
-                var d = group.xAxis().scale().domain();
+                var d = group.xaxis().scale().domain();
                 return v*(d[d.length-1] - d[0]);
             }
         };
@@ -202,9 +240,6 @@
         };
 
         group.resetAxis = function () {
-            xaxis.options = function () {return p.xaxis;};
-            yaxis.options = function () {return p.yaxis;};
-
             xaxis.scale().range([0, group.innerWidth()]);
             yaxis.scale().range([group.innerHeight(), 0]);
 
@@ -237,7 +272,8 @@
         },
 
         bar_costructor = function (rawdata) {
-            var width = barWidth(paper, rawdata, this.options());
+            var width = barWidth(paper, rawdata, this.options()),
+                data = [];
 
             for (var i=0; i<rawdata.length; i++)
                 data.push(_.bar(this, rawdata[i], size));
@@ -246,23 +282,12 @@
         },
 
         pie_costructor = function (rawdata) {
-            var paper = this.paper(),
-                group = this.group(),
-                opts = this.options(),
-                data = [],
-                x = this.x(),
-                y = this.y(),
-                d;
+            var data = [];
 
-            for (var i=0; i<rawdata.length; i++) {
-                d = rawdata[i];
-                data.push(_.slice(group, {
-                    label: x(d),
-                    value: y(d)
-                }).options(opts));
-                d.draw = _draw;
-                data[i] = d.reset();
-            }
+            for (var i=0; i<rawdata.length; i++)
+                data.push(_.pieslice(this, rawdata[i]));
+
+            return data;
         };
 
         return group.resetAxis();

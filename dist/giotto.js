@@ -478,6 +478,21 @@
         }
         return picked;
     },
+
+    // Extend the initial array with values for other arrays
+    extendArray = _.extendArray = function () {
+        if (!arguments.length) return;
+        var value = arguments[0],
+            push = function (v) {
+                value.push(v);
+            };
+        if (typeof(value.push) === 'function') {
+            for (var i=1; i<arguments.length; ++i)
+                forEach(arguments[i], push);
+        }
+        return value;
+    },
+
     //
     isObject = _.isObject = function (value) {
         return ostring.call(value) === '[object Object]';
@@ -1556,6 +1571,8 @@
         ctx.arc(xc, yc, radius, a1, a2, sweep<=0);
     };
 
+
+
     // same as d3.svg.axis... but for canvas
     d3.canvas.axis = function() {
         var scale = d3.scale.linear(),
@@ -1700,6 +1717,59 @@
         }
         return window.devicePixelRatio || 1;
     };
+
+
+    d3.canvas.drawPolygon = function (ctx, pts, radius) {
+        if (radius > 0)
+            pts = getRoundedPoints(pts, radius);
+        var i, pt, len = pts.length;
+        ctx.beginPath();
+        for (i = 0; i < len; i++) {
+            pt = pts[i];
+            if (i === 0)
+                ctx.moveTo(pt[0], pt[1]);
+            else
+                ctx.lineTo(pt[0], pt[1]);
+            if (radius > 0)
+                ctx.quadraticCurveTo(pt[2], pt[3], pt[4], pt[5]);
+        }
+        ctx.closePath();
+    };
+
+    d3.canvas.rgba = function (color, opacity) {
+        if (opacity < 1) {
+            var c = d3.rgb(color);
+            return 'rgba(' + c.r + ',' + c.g + ',' + c.b + ',' + opacity + ')';
+        } else
+            return color;
+    };
+
+    function getRoundedPoints(pts, radius) {
+        var i1, i2, i3, p1, p2, p3, prevPt, nextPt,
+            len = pts.length,
+            res = new Array(len);
+        for (i2 = 0; i2 < len; i2++) {
+            i1 = i2-1;
+            i3 = i2+1;
+            if (i1 < 0)
+                i1 = len - 1;
+            if (i3 === len) i3 = 0;
+            p1 = pts[i1];
+            p2 = pts[i2];
+            p3 = pts[i3];
+            prevPt = getRoundedPoint(p1[0], p1[1], p2[0], p2[1], radius, false);
+            nextPt = getRoundedPoint(p2[0], p2[1], p3[0], p3[1], radius, true);
+            res[i2] = [prevPt[0], prevPt[1], p2[0], p2[1], nextPt[0], nextPt[1]];
+        }
+      return res;
+    }
+
+    function getRoundedPoint(x1, y1, x2, y2, radius, first) {
+        var total = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2)),
+            idx = first ? radius / total : (total - radius) / total;
+        return [x1 + (idx * (x2 - x1)), y1 + (idx * (y2 - y1))];
+    }
+
 
     // same as d3.svg.line... but for canvas
     d3.canvas.line = function() {
@@ -2165,6 +2235,9 @@
 
         return transition;
     };
+    //
+    //  Defaults for Papers, Groups, Drawings and Visualizations
+
     g.defaults = {};
 
     g.defaults.axis = {
@@ -2239,7 +2312,9 @@
             innerRadius: 0,
             active: {
                 fill: 'darker',
-                color: 'brighter'
+                color: 'brighter',
+                innerRadius: 1.01,
+                outerRadius: 1.05
             }
         },
         font: {
@@ -2324,11 +2399,11 @@
             }
             paper.svg().selectAll(filter).each(function () {
                 if (this.__group__)
-                    callback(this.__group__);
+                    callback.call(this.__group__);
             });
             paper.canvas().selectAll(filter).each(function () {
                 if (this.__group__)
-                    callback(this.__group__);
+                    callback.call(this.__group__);
             });
             return paper;
         };
@@ -2342,8 +2417,8 @@
 
         paper.render = function () {
             var c, i;
-            paper.each(function (group) {
-                group.render();
+            paper.each(function () {
+                this.render();
             });
             return paper;
         };
@@ -2368,9 +2443,11 @@
                 size = paper.boundingBox();
             }
             if (p.size[0] !== size[0] || p.size[1] !== size[1]) {
-                g.log.info('Resizing paper');
-                paper.each(function (group) {
-                    group.resize(size);
+                var oldsize = [p.size[0], p.size[1]];
+                p.size[0] = size[0];
+                p.size[1] = size[1];
+                paper.each(function () {
+                    this.resize(oldsize);
                 });
             }
             p._resizing = false;
@@ -2416,8 +2493,9 @@
                 svg = paper.element().append('svg')
                                 .attr('class', 'giotto')
                                 .attr('width', p.size[0])
-                                .attr('height', p.size[1])
-                                .attr("viewBox", "0 0 " + p.size[0] + " " + p.size[1]);
+                                .attr('height', p.size[1]);
+                if (!p.resize)
+                    svg.attr("viewBox", "0 0 " + p.size[0] + " " + p.size[1]);
             return svg;
         };
 
@@ -2522,6 +2600,9 @@
             yaxis = d3v.axis(),
             group = {};
 
+        xaxis.options = function () {return p.xaxis;};
+        yaxis.options = function () {return p.yaxis;};
+
         element.__group__ = group;
 
         group.element = function () {
@@ -2611,6 +2692,11 @@
             return group;
         };
 
+        group.resize = function (size) {
+            _.resize(group, size);
+            return group;
+        };
+
         // clear the group without removing drawing from memory
         group.clear = function () {
             _.clear(group);
@@ -2653,7 +2739,37 @@
             opts || (opts = {});
             copyMissing(p.pie, opts);
 
-            return group.add(_.pie(group, pie, arc))
+            return group.add(drawing(group, function () {
+
+                var width = group.innerWidth(),
+                    height = group.innerHeight(),
+                    opts = this.options(),
+                    outerRadius = 0.5*Math.min(width, height),
+                    innerRadius = opts.innerRadius*outerRadius,
+                    cornerRadius = group.scale(group.dim(opts.cornerRadius)),
+                    value = this.y(),
+                    data = this.data(),
+                    pie = d3.layout.pie().value(function (d) {return value(d.data);})
+                                         .padAngle(d3_radians*opts.padAngle)(data),
+                    d, dd;
+
+                this.arc = d3v.arc()
+                                .cornerRadius(cornerRadius)
+                                .innerRadius(function (d) {return d.innerRadius;})
+                                .outerRadius(function (d) {return d.outerRadius;});
+
+                // recalculate pie angles
+                for (var i=0; i<pie.length; ++i) {
+                    d = pie[i];
+                    dd = d.data;
+                    dd.set('innerRadius', innerRadius);
+                    dd.set('outerRadius', outerRadius);
+                    delete d.data;
+                    data[i] = extend(dd, d);
+                }
+
+                return _.pie(this, width, height);
+            }))
             .options(opts)
             .dataConstructor(pie_costructor)
             .data(data);
@@ -2699,7 +2815,7 @@
                 return group.xfromPX(x.substring(0, x.length-2));
             // otherwise assume it is a value between 0 and 1 defined as percentage of the x axis length
             else {
-                var d = group.xAxis().scale().domain();
+                var d = group.xaxis().scale().domain();
                 return v*(d[d.length-1] - d[0]);
             }
         };
@@ -2717,9 +2833,6 @@
         };
 
         group.resetAxis = function () {
-            xaxis.options = function () {return p.xaxis;};
-            yaxis.options = function () {return p.yaxis;};
-
             xaxis.scale().range([0, group.innerWidth()]);
             yaxis.scale().range([group.innerHeight(), 0]);
 
@@ -2752,7 +2865,8 @@
         },
 
         bar_costructor = function (rawdata) {
-            var width = barWidth(paper, rawdata, this.options());
+            var width = barWidth(paper, rawdata, this.options()),
+                data = [];
 
             for (var i=0; i<rawdata.length; i++)
                 data.push(_.bar(this, rawdata[i], size));
@@ -2761,23 +2875,12 @@
         },
 
         pie_costructor = function (rawdata) {
-            var paper = this.paper(),
-                group = this.group(),
-                opts = this.options(),
-                data = [],
-                x = this.x(),
-                y = this.y(),
-                d;
+            var data = [];
 
-            for (var i=0; i<rawdata.length; i++) {
-                d = rawdata[i];
-                data.push(_.slice(group, {
-                    label: x(d),
-                    value: y(d)
-                }).options(opts));
-                d.draw = _draw;
-                data[i] = d.reset();
-            }
+            for (var i=0; i<rawdata.length; i++)
+                data.push(_.pieslice(this, rawdata[i]));
+
+            return data;
         };
 
         return group.resetAxis();
@@ -3006,10 +3109,10 @@
         // Default values
         if (!data.fill)
             data.fill = draw.paper().pickColor();
-        if (!d.color)
-            d.color = d3.rgb(d.fill).darker();
+        if (!data.color)
+            data.color = d3.rgb(data.fill).darker();
 
-        return paperData(draw, data, drawingOptions);
+        return paperData(draw, data, pieOptions);
     }
 
     var SymbolSize = {
@@ -3023,10 +3126,11 @@
         drawingOptions = ['fill', 'color', 'fillOpacity',
                         'colorOpacity', 'lineWidth'],
 
-        pointOptions = ['fill', 'color', 'fillOpacity',
-                        'colorOpacity', 'lineWidth', 'size', 'symbol'],
+        pointOptions = extendArray(['size', 'symbol'], drawingOptions),
 
-        multiplyOptions = ['lineWidth', 'size'],
+        pieOptions = extendArray(['innerRadius', 'outerRadius'], drawingOptions),
+
+        multiplyOptions = ['lineWidth', 'size', 'innerRadius', 'outerRadius'],
 
         default_size = function (d) {
             return d.size;
@@ -3058,13 +3162,12 @@
         var container = paper.canvas(true),
             elem = p.before ? container.insert('canvas', p.before) : container.append('canvas'),
             ctx = elem.node().getContext('2d'),
-            _ = canvas_implementation(p);
+            _ = canvas_implementation(paper, p);
 
-        container.selectAll().style({"position": "absolute", "top": "0", "left": "0"});
-        container.select().style({"position": "relative"});
+        container.selectAll('*').style({"position": "absolute", "top": "0", "left": "0"});
+        container.select('*').style({"position": "relative"});
 
-        var group = g.group(paper, elem.node(), p, _).factor(
-                d3.canvas.retinaScale(ctx, p.size[0], p.size[1])),
+        var group = g.group(paper, elem.node(), p, _),
             render = group.render;
 
         group.render = function () {
@@ -3089,274 +3192,8 @@
             });
         };
 
-        return group;
+        return group.factor(_.scale(group));
     };
-
-    function rgba (color, opacity) {
-        if (opacity < 1) {
-            var c = d3.rgb(color);
-            return 'rgba(' + c.r + ',' + c.g + ',' + c.b + ',' + opacity + ')';
-        } else return color;
-    }
-
-    function canvasAxis (group, axis, xy) {
-        var d = drawing(group),
-            ctx = group.context(),
-            opts, size;
-
-        d.render = function (context) {
-            context = context || ctx;
-            // size of font
-            opts = d.options();
-            size = opts.size;
-            opts.size = group.scale(group.dim(size)) + 'px';
-            context.font = fontString(opts);
-            opts.size = size;
-            //
-            ctx.strokeStyle = d.color;
-            context.fillStyle = d.color;
-            ctx.lineWidth = group.factor()*d.lineWidth;
-            _draw(context);
-            context.stroke();
-            return d;
-        };
-
-        d.context = function (context) {
-            ctx = context;
-            return d;
-        };
-
-        d.inRange = function (ex, ey) {
-            return false;
-        };
-
-        return d;
-
-        function _draw (context) {
-            var x = 0, y = 0;
-
-            context.save();
-            opts = d.options();
-
-            if (xy[0] === 'x')
-                y = opts.position === 'top' ? 0 : group.innerHeight();
-            else
-                x = opts.position === 'left' ? 0 : group.innerWidth();
-            context.translate(x, y);
-            axis(d3.select(context.canvas));
-            context.restore();
-        }
-    }
-
-    function canvasPath (group, data) {
-        var d = drawing(group),
-            scalex = d.scalex,
-            scaley = d.scaley,
-            ctx = group.context();
-
-        d.render = function (context) {
-            context = context || ctx;
-            ctx.strokeStyle = d.color;
-            ctx.lineWidth = group.factor()*d.lineWidth;
-            _draw(context);
-            context.stroke();
-            return d;
-        };
-
-        d.context = function (context) {
-            ctx = context;
-            return d;
-        };
-
-        d.inRange = function (ex, ey) {
-            _draw(ctx);
-            return ctx.isPointInPath(ex, ey);
-        };
-
-        return d;
-
-        function _draw (context) {
-            var opts = d.options(),
-                line = opts.area ? d3.canvas.area() : d3.canvas.line();
-
-            line.interpolate(opts.interpolate)
-                .x(d.scalex())
-                .y(d.scaley())
-                .context(context)(data);
-        }
-    }
-
-    function canvasPoint (draw, data, size) {
-        var d = point(draw, data, size),
-            scalex = draw.scalex(),
-            scaley = draw.scaley(),
-            factor = draw.factor(),
-            ctx = draw.group().context();
-
-        d.render = function (context) {
-            context = context || ctx;
-            context.save();
-            context.fillStyle = rgba(d.fill, d.fillOpacity);
-            context.strokeStyle = rgba(d.color, d.colorOpacity);
-            context.lineWidth = factor*d.lineWidth;
-            _draw(context);
-            context.fill();
-            context.stroke();
-            context.restore();
-            return d;
-        };
-
-        d.context = function (context) {
-            ctx = context;
-            return d;
-        };
-
-        d.inRange = function (ex, ey) {
-            ctx.save();
-            _draw(ctx);
-            var res = ctx.isPointInPath(ex, ey);
-            ctx.restore();
-            return res;
-        };
-
-        return d;
-
-        function _draw (context) {
-            if (!draw.symbol)
-                draw.symbol = d3.canvas.symbol().type(function (d) {return d.symbol;})
-                                                .size(draw.size());
-            context.translate(scalex(d.data), scaley(d.data));
-            draw.symbol.context(context)(d);
-        }
-    }
-
-    function canvasBar (draw, opts, d) {
-        var scalex = paper.scalex,
-            scaley = paper.scaley,
-            factor = paper.factor(),
-            radius = factor*opts.radius,
-            ctx = draw.group().context(),
-            x, y, y0, y1, w, yb;
-
-        d = paperData(paper, opts, {data: d});
-
-        d.context = function (context) {
-            ctx = context;
-            return d;
-        };
-
-        d.draw = function (context) {
-            context = context || ctx;
-            context.fillStyle = rgba(d.fill, d.fillOpacity);
-            context.strokeStyle = rgba(d.color, d.colorOpacity);
-            context.lineWidth = factor*d.lineWidth;
-            _draw(context);
-            context.fill();
-            context.stroke();
-            return d;
-        };
-
-        d.inRange = function (ex, ey) {
-            _draw(ctx);
-            return ctx.isPointInPath(ex, ey);
-        };
-
-        return d.reset();
-
-        function _draw (context) {
-            context.beginPath();
-            w = 0.5*d.size();
-            x = scalex(d.data.x);
-            y = scaley(d.data.y);
-            y0 = scaley(0);
-            drawPolygon(context, [[x-w,y0], [x+w,y0], [x+w,y], [x-w, y]], radius);
-            context.closePath();
-        }
-    }
-
-    function canvasSlice (paper, opts, d, arc) {
-        var scalex = paper.scalex,
-            scaley = paper.scaley,
-            factor = paper.factor(),
-            ctx;
-
-        d = pieData(paper, opts, d);
-
-        d.draw = function (context) {
-            context = context || ctx;
-            context.save();
-            context.translate(0.5*paper.innerWidth(), 0.5*paper.innerHeight());
-            context.fillStyle = rgba(d.fill, d.fillOpacity);
-            context.strokeStyle = rgba(d.color, d.colorOpacity);
-            context.lineWidth = factor*d.lineWidth;
-            arc.context(context)(d);
-            context.fill();
-            context.stroke();
-            context.restore();
-            return d;
-        };
-
-        d.context = function (context) {
-            ctx = context;
-            return d;
-        };
-
-        d.inRange = function (ex, ey) {
-            ctx.save();
-            ctx.translate(0.5*paper.innerWidth(), 0.5*paper.innerHeight());
-            arc.context(ctx)(d);
-            var res = ctx.isPointInPath(ex, ey);
-            ctx.restore();
-            return res;
-        };
-
-        return d.reset();
-    }
-
-
-    function drawPolygon (ctx, pts, radius) {
-        if (radius > 0)
-            pts = getRoundedPoints(pts, radius);
-        var i, pt, len = pts.length;
-        ctx.beginPath();
-        for (i = 0; i < len; i++) {
-            pt = pts[i];
-            if (i === 0)
-                ctx.moveTo(pt[0], pt[1]);
-            else
-                ctx.lineTo(pt[0], pt[1]);
-            if (radius > 0)
-                ctx.quadraticCurveTo(pt[2], pt[3], pt[4], pt[5]);
-        }
-        ctx.closePath();
-    }
-
-    function getRoundedPoints(pts, radius) {
-        var i1, i2, i3, p1, p2, p3, prevPt, nextPt,
-            len = pts.length,
-            res = new Array(len);
-        for (i2 = 0; i2 < len; i2++) {
-            i1 = i2-1;
-            i3 = i2+1;
-            if (i1 < 0)
-                i1 = len - 1;
-            if (i3 === len) i3 = 0;
-            p1 = pts[i1];
-            p2 = pts[i2];
-            p3 = pts[i3];
-            prevPt = getRoundedPoint(p1[0], p1[1], p2[0], p2[1], radius, false);
-            nextPt = getRoundedPoint(p2[0], p2[1], p3[0], p3[1], radius, true);
-            res[i2] = [prevPt[0], prevPt[1], p2[0], p2[1], nextPt[0], nextPt[1]];
-        }
-      return res;
-    }
-
-    function getRoundedPoint(x1, y1, x2, y2, radius, first) {
-        var total = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2)),
-            idx = first ? radius / total : (total - radius) / total;
-        return [x1 + (idx * (x2 - x1)), y1 + (idx * (y2 - y1))];
-    }
-
     //
     g.viz = {};
     // Plugins for all visualization classes
@@ -5272,6 +5109,7 @@
         }
     });
 
+    var tooltip;
     //
     //  Tooltip functionality for SVG paper
     g.paper.plugin('tooltip', {
@@ -5291,9 +5129,9 @@
         svg: function (group, opts) {
             var paper = group.paper();
 
-            if (paper.tip) return;
+            if (paper.tip || !opts.tooltip.show) return;
 
-            paper.tip = createTip(paper, opts.tooltip);
+            paper.tip = tooltip || createTip(opts.tooltip);
 
             var active;
 
@@ -5332,9 +5170,9 @@
         canvas: function (group, opts) {
             var paper = group.paper();
 
-            if (paper.tip) return;
+            if (paper.tip || !opts.tooltip.show) return;
 
-            paper.tip = createTip(paper, opts.tooltip);
+            paper.tip = tooltip || createTip(opts.tooltip);
 
             var active = [];
 
@@ -5384,11 +5222,9 @@
     });
 
 
-
-    function createTip (paper, opts) {
-        if (!opts.show) return;
-        var tip = g.tip(paper);
-        tip.attr('class', opts.className)
+    function createTip (opts) {
+        tooltip = g.tip();
+        tooltip.attr('class', opts.className)
            .style({
                 background: opts.fill,
                 opacity: opts.fillOpacity,
@@ -5401,7 +5237,7 @@
             addCss('', tooltipCss);
             tooltipCss = null;
         }
-        return tip;
+        return tooltip;
     }
     //
     // Returns a tip handle
@@ -5996,8 +5832,10 @@
     g.crossfilter.tolerance = 1.1;
 
 
+    var rgba = d3.canvas.rgba;
 
-    function canvas_implementation (p) {
+
+    function canvas_implementation (paper, p) {
         var _ = {};
 
         _.clear = function (group, size) {
@@ -6009,19 +5847,20 @@
             return factor;
         };
 
-        _.resize = function (group, size) {
-            var oldsize = p.size;
-            p.size = size;
-            _clearCanvas(oldsize);
-            _scaleCanvas();
-            group.render();
+        _.scale = function (group) {
+            return d3.canvas.retinaScale(group.context(), p.size[0], p.size[1]);
+        };
+
+        _.resize = function (group, oldsize) {
+            _.clear(group, oldsize);
+            _.scale(group);
+            group.resetAxis().render();
         };
 
         _.point = canvasPoint;
-
         _.axis = canvasAxis;
-
         _.path = canvasPath;
+        _.pieslice = canvasSlice;
 
         _.points = function (group) {
             return drawing(group, function () {
@@ -6054,6 +5893,220 @@
         };
 
         return _;
+    }
+
+    function canvasAxis (group, axis, xy) {
+        var d = drawing(group),
+            ctx = group.context(),
+            opts, size;
+
+        d.render = function (context) {
+            context = context || ctx;
+            // size of font
+            opts = d.options();
+            size = opts.size;
+            opts.size = group.scale(group.dim(size)) + 'px';
+            context.font = fontString(opts);
+            opts.size = size;
+            //
+            ctx.strokeStyle = d.color;
+            context.fillStyle = d.color;
+            ctx.lineWidth = group.factor()*d.lineWidth;
+            _draw(context);
+            context.stroke();
+            return d;
+        };
+
+        d.context = function (context) {
+            ctx = context;
+            return d;
+        };
+
+        d.inRange = function (ex, ey) {
+            return false;
+        };
+
+        return d;
+
+        function _draw (context) {
+            var x = 0, y = 0;
+
+            context.save();
+            opts = d.options();
+
+            if (xy[0] === 'x')
+                y = opts.position === 'top' ? 0 : group.innerHeight();
+            else
+                x = opts.position === 'left' ? 0 : group.innerWidth();
+            context.translate(x, y);
+            axis(d3.select(context.canvas));
+            context.restore();
+        }
+    }
+
+    function canvasPath (group, data) {
+        var d = drawing(group),
+            scalex = d.scalex,
+            scaley = d.scaley,
+            ctx = group.context();
+
+        d.render = function (context) {
+            context = context || ctx;
+            ctx.strokeStyle = d.color;
+            ctx.lineWidth = group.factor()*d.lineWidth;
+            _draw(context);
+            context.stroke();
+            return d;
+        };
+
+        d.context = function (context) {
+            ctx = context;
+            return d;
+        };
+
+        d.inRange = function (ex, ey) {
+            _draw(ctx);
+            return ctx.isPointInPath(ex, ey);
+        };
+
+        return d;
+
+        function _draw (context) {
+            var opts = d.options(),
+                line = opts.area ? d3.canvas.area() : d3.canvas.line();
+
+            line.interpolate(opts.interpolate)
+                .x(d.scalex())
+                .y(d.scaley())
+                .context(context)(data);
+        }
+    }
+
+    function canvasPoint (draw, data, size) {
+        var d = point(draw, data, size),
+            scalex = draw.scalex(),
+            scaley = draw.scaley(),
+            factor = draw.factor(),
+            ctx = draw.group().context();
+
+        d.render = function (context) {
+            context = context || ctx;
+            context.save();
+            context.fillStyle = rgba(d.fill, d.fillOpacity);
+            context.strokeStyle = rgba(d.color, d.colorOpacity);
+            context.lineWidth = factor*d.lineWidth;
+            _draw(context);
+            context.fill();
+            context.stroke();
+            context.restore();
+            return d;
+        };
+
+        d.context = function (context) {
+            ctx = context;
+            return d;
+        };
+
+        d.inRange = function (ex, ey) {
+            ctx.save();
+            _draw(ctx);
+            var res = ctx.isPointInPath(ex, ey);
+            ctx.restore();
+            return res;
+        };
+
+        return d;
+
+        function _draw (context) {
+            if (!draw.symbol)
+                draw.symbol = d3.canvas.symbol().type(function (d) {return d.symbol;})
+                                                .size(draw.size());
+            context.translate(scalex(d.data), scaley(d.data));
+            draw.symbol.context(context)(d);
+        }
+    }
+
+    function canvasBar (draw, opts, d) {
+        var scalex = paper.scalex,
+            scaley = paper.scaley,
+            factor = paper.factor(),
+            radius = factor*opts.radius,
+            ctx = draw.group().context(),
+            x, y, y0, y1, w, yb;
+
+        d = paperData(paper, opts, {data: d});
+
+        d.context = function (context) {
+            ctx = context;
+            return d;
+        };
+
+        d.draw = function (context) {
+            context = context || ctx;
+            context.fillStyle = rgba(d.fill, d.fillOpacity);
+            context.strokeStyle = rgba(d.color, d.colorOpacity);
+            context.lineWidth = factor*d.lineWidth;
+            _draw(context);
+            context.fill();
+            context.stroke();
+            return d;
+        };
+
+        d.inRange = function (ex, ey) {
+            _draw(ctx);
+            return ctx.isPointInPath(ex, ey);
+        };
+
+        return d.reset();
+
+        function _draw (context) {
+            context.beginPath();
+            w = 0.5*d.size();
+            x = scalex(d.data.x);
+            y = scaley(d.data.y);
+            y0 = scaley(0);
+            d3.canvas.drawPolygon(context, [[x-w,y0], [x+w,y0], [x+w,y], [x-w, y]], radius);
+            context.closePath();
+        }
+    }
+
+    function canvasSlice (paper, opts, d, arc) {
+        var scalex = paper.scalex,
+            scaley = paper.scaley,
+            factor = paper.factor(),
+            ctx;
+
+        d = pieData(paper, opts, d);
+
+        d.draw = function (context) {
+            context = context || ctx;
+            context.save();
+            context.translate(0.5*paper.innerWidth(), 0.5*paper.innerHeight());
+            context.fillStyle = rgba(d.fill, d.fillOpacity);
+            context.strokeStyle = rgba(d.color, d.colorOpacity);
+            context.lineWidth = factor*d.lineWidth;
+            arc.context(context)(d);
+            context.fill();
+            context.stroke();
+            context.restore();
+            return d;
+        };
+
+        d.context = function (context) {
+            ctx = context;
+            return d;
+        };
+
+        d.inRange = function (ex, ey) {
+            ctx.save();
+            ctx.translate(0.5*paper.innerWidth(), 0.5*paper.innerHeight());
+            arc.context(ctx)(d);
+            var res = ctx.isPointInPath(ex, ey);
+            ctx.restore();
+            return res;
+        };
+
+        return d.reset();
     }
 
     //
@@ -6141,11 +6194,13 @@
     function svg_implementation (paper, p) {
         var _ = {};
 
-        _.resize = function (group, size) {
-            p.size = size;
-            svg.attr('width', p.size[0])
-               .attr('height', p.size[1]);
-            group.render();
+        _.resize = function (group, oldsize) {
+            if (p.resize) {
+                paper.svg()
+                    .attr('width', p.size[0])
+                    .attr('height', p.size[1]);
+                group.resetAxis().render();
+            }
         };
 
         _.clear = function (group) {
@@ -6192,11 +6247,19 @@
         };
 
         _.bar = point;
-        _.pieslice = pieSlice;
+
+        _.pieslice = function (draw, data) {
+            var p = pieSlice(draw, data);
+            p.render = function (element) {
+                _draw(element).attr('d', draw.arc);
+            };
+            return p;
+        };
 
         _.points = function (group) {
 
             return drawing(group, function () {
+
                 var pp = group.element().select("#" + this.uid()),
                     scalex = this.scalex(),
                     scaley = this.scaley();
@@ -6228,6 +6291,7 @@
         _.path = function (group, data) {
 
             return drawing(group, function () {
+
                 var draw = this,
                     opts = draw.options(),
                     p = group.element().select("#" + draw.uid()),
@@ -6280,30 +6344,27 @@
             });
         };
 
-        _.pie = function (group, data, arc) {
+        // Pie chart drawing on an svg group
+        _.pie = function (draw, width, height) {
 
-            return drawing(group, function () {
+            var container = draw.group().element(),
+                pp = container.select('#' + draw.uid());
 
-                var chart = group.select('#' + this.uid());
+            if (!pp.node())
+                pp = container.append("g")
+                            .attr('id', draw.uid())
+                            .classed('pie', true);
 
-                if (!chart.node()) {
-                    var width = group.innerWidth(),
-                        height = group.innerHeight();
-                    chart = container.append("g")
-                                .attr('id', this.uid)
-                                .classed('pie', true)
-                                .attr("transform", "translate(" + width/2 + "," + height/2 + ")");
-                }
+            pp.attr("transform", "translate(" + width/2 + "," + height/2 + ")")
+                .selectAll(".slice").remove();
 
-                chart.selectAll(".slice").remove();
-
-                return _events(_draw(chart
-                        .selectAll(".slice")
-                        .data(data)
-                        .enter().append("path")
-                        .attr('class', 'slice')
-                        .attr('d', arc)));
-            });
+            return _events(_draw(pp
+                            .selectAll(".slice")
+                            .data(draw.data())
+                            .enter()
+                            .append("path")
+                            .attr('class', 'slice')
+                            .attr('d', draw.arc)));
         };
 
         _.axis = function (group, axis, xy) {

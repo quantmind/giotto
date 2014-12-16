@@ -221,10 +221,10 @@
         // Default values
         if (!data.fill)
             data.fill = draw.paper().pickColor();
-        if (!d.color)
-            d.color = d3.rgb(d.fill).darker();
+        if (!data.color)
+            data.color = d3.rgb(data.fill).darker();
 
-        return paperData(draw, data, drawingOptions);
+        return paperData(draw, data, pieOptions);
     }
 
     var SymbolSize = {
@@ -238,10 +238,11 @@
         drawingOptions = ['fill', 'color', 'fillOpacity',
                         'colorOpacity', 'lineWidth'],
 
-        pointOptions = ['fill', 'color', 'fillOpacity',
-                        'colorOpacity', 'lineWidth', 'size', 'symbol'],
+        pointOptions = extendArray(['size', 'symbol'], drawingOptions),
 
-        multiplyOptions = ['lineWidth', 'size'],
+        pieOptions = extendArray(['innerRadius', 'outerRadius'], drawingOptions),
+
+        multiplyOptions = ['lineWidth', 'size', 'innerRadius', 'outerRadius'],
 
         default_size = function (d) {
             return d.size;

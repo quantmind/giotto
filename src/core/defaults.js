@@ -1,3 +1,6 @@
+    //
+    //  Defaults for Papers, Groups, Drawings and Visualizations
+
     g.defaults = {};
 
     g.defaults.axis = {
@@ -72,7 +75,9 @@
             innerRadius: 0,
             active: {
                 fill: 'darker',
-                color: 'brighter'
+                color: 'brighter',
+                innerRadius: 1.01,
+                outerRadius: 1.05
             }
         },
         font: {

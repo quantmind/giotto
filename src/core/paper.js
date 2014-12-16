@@ -45,11 +45,11 @@
             }
             paper.svg().selectAll(filter).each(function () {
                 if (this.__group__)
-                    callback(this.__group__);
+                    callback.call(this.__group__);
             });
             paper.canvas().selectAll(filter).each(function () {
                 if (this.__group__)
-                    callback(this.__group__);
+                    callback.call(this.__group__);
             });
             return paper;
         };
@@ -63,8 +63,8 @@
 
         paper.render = function () {
             var c, i;
-            paper.each(function (group) {
-                group.render();
+            paper.each(function () {
+                this.render();
             });
             return paper;
         };
@@ -89,9 +89,11 @@
                 size = paper.boundingBox();
             }
             if (p.size[0] !== size[0] || p.size[1] !== size[1]) {
-                g.log.info('Resizing paper');
-                paper.each(function (group) {
-                    group.resize(size);
+                var oldsize = [p.size[0], p.size[1]];
+                p.size[0] = size[0];
+                p.size[1] = size[1];
+                paper.each(function () {
+                    this.resize(oldsize);
                 });
             }
             p._resizing = false;
@@ -137,8 +139,9 @@
                 svg = paper.element().append('svg')
                                 .attr('class', 'giotto')
                                 .attr('width', p.size[0])
-                                .attr('height', p.size[1])
-                                .attr("viewBox", "0 0 " + p.size[0] + " " + p.size[1]);
+                                .attr('height', p.size[1]);
+                if (!p.resize)
+                    svg.attr("viewBox", "0 0 " + p.size[0] + " " + p.size[1]);
             return svg;
         };
 
