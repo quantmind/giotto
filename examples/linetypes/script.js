@@ -15,12 +15,7 @@
 
         line: {
             show: true,
-            interpolate: 'linear',
             lineWidth: 3
-        },
-
-        xaxis: {
-            outerTickSize: '10px'
         },
 
         grid: {

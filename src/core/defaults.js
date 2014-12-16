@@ -19,6 +19,7 @@
         yaxis: {position: 'left', min: null, max: null},
         yaxis2: {position: 'right', min: null, max: null},
         colors: d3.scale.category10().range(),
+        colorIndex: 0,
         css: null,
         activeEvents: ["mousemove", "touchstart", "touchmove", "mouseout"],
         line: {

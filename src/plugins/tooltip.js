@@ -1,109 +1,99 @@
-
-    var tooltipDefaults = {
-        className: 'd3-tip',
-        show: true,
-        fill: '#333',
-        fillOpacity: 0.8,
-        color: '#fff',
-        padding: '5px',
-        radius: '3px',
-        template: function (d) {
-            return "<strong>" + d.label + ":</strong><span>" + d.value + "</span>";
-        }
-    };
-
     //
     //  Tooltip functionality for SVG paper
-    g.paper.svg.plugin('tooltip', tooltipDefaults,
+    g.paper.plugin('tooltip', {
+        defaults: {
+            className: 'd3-tip',
+            show: true,
+            fill: '#333',
+            fillOpacity: 0.8,
+            color: '#fff',
+            padding: '5px',
+            radius: '3px',
+            template: function (d) {
+                return "<strong>" + d.label + ":</strong><span>" + d.value + "</span>";
+            }
+        },
 
-        function (paper, opts) {
-            var tip = createTip(paper, opts.tooltip),
-                active;
+        svg: function (group, opts) {
+            var paper = group.paper();
 
-            paper.tooltip = function () {
-                return tip;
-            };
+            if (paper.tip) return;
+
+            paper.tip = createTip(paper, opts.tooltip);
+
+            var active;
 
             function hide (el) {
                 if (active)
-                    active.reset().draw(el);
+                    active.reset().render(el);
                 active = null;
-                if (tip)
-                    tip.hide();
+                paper.tip.hide();
                 return el;
             }
 
-            if (tip)
-                tip.html(function () {
-                    return opts.tooltip.template(active);
-                });
-
-            paper.on('activein', function () {
-                var el = d3.select(this),
-                    a = this.__data__;
-                if (_.isArray(a)) a = a.paper;
-
-                if (a === active) return;
-                hide(el);
-                active = a;
-                if (!active) return;
-                //
-                // For lines, the data is an array, pick the first element
-                active.highLight().draw(el);
-
-                if (tip)
-                    tip.bbox(getScreenBBox(this)).show();
-
-            }).on('activeout', function () {
-                g.log.info('active out');
-                hide(d3.select(this));
+            paper.tip.html(function () {
+                return opts.tooltip.template(active);
             });
-        });
-
-    //
-    //  Tooltip functionality for CANVAS paper
-    g.paper.canvas.plugin('tooltip', tooltipDefaults,
-
-        function (paper, opts) {
-            var tip = createTip(paper, opts.tooltip),
-                active = [];
-
-            paper.tooltip = function () {
-                return tip;
-            };
 
             opts.activeEvents.forEach(function (event) {
                 paper.on(event + '.tooltip', function () {
-                    var overlay = paper.container().select('.interaction-overlay').node(),
+                    var el = d3.select(this),
+                        a = this.__data__;
+                    if (_.isArray(a)) a = a.paper;
+
+                    if (d3.event.type === 'mouseout')
+                        hide(el);
+                    else if (a !== active) {
+                        hide(el);
+                        active = a;
+                        if (!active) return;
+                        //
+                        active.highLight().render(el);
+                        paper.tip.bbox(getScreenBBox(this)).show();
+                    }
+                });
+            });
+        },
+
+        canvas: function (group, opts) {
+            var paper = group.paper();
+
+            if (paper.tip) return;
+
+            paper.tip = createTip(paper, opts.tooltip);
+
+            var active = [];
+
+            opts.activeEvents.forEach(function (event) {
+                paper.canvas().on(event + '.tooltip', function () {
+                    var overlay = paper.select('.canvas-interaction-overlay'),
                         point;
 
                     // Create the overlay if not available
                     if (!overlay) {
-                        paper.group({'class': 'interaction-overlay'});
-                        overlay = paper.current();
-                        paper.parent();
-                    } else
-                        overlay = overlay.getContext('2d');
-
+                        overlay = paper.group(opts);
+                        overlay.element().classed('canvas-interaction-overlay', true);
+                    }
+                    overlay.remove();
                     for (var i=0; i<active.length; ++i)
-                        paper.clear(overlay);
-
+                        active[i].reset();
                     active = [];
+
                     if (d3.event.type === 'mouseout')
                         return;
                     else if (d3.event.type === 'mousemove')
                         point = d3.mouse(this);
                     else
                         point = d3.touches(this)[0];
-                    active = paper.getDataAtPoint(point);
+                    active = paper.canvasDataAtPoint(point);
 
                     //if (tip)
                     //    tip.show();
 
                     if (active.length) {
-                        paper.render(overlay);
+                        overlay.render();
                         for (i=0; i<active.length; ++i)
-                            active[i].highLight().draw(overlay);
+                            active[i].highLight().render(overlay.context());
                     }
                 });
             });
@@ -116,7 +106,8 @@
 
             }
 
-        });
+        }
+    });
 
 
 
@@ -154,12 +145,9 @@
         //
         // Returns a tip
         tip.show = function () {
-            var args = Array.prototype.slice.call(arguments);
-            if (args[args.length - 1] instanceof SVGElement) target = args.pop();
-
-            var content = html.apply(this, args),
-                poffset = offset.apply(this, args),
-                dir = direction.apply(this, args),
+            var content = html.call(tip),
+                poffset = offset.call(tip),
+                dir = direction.call(tip),
                 nodel = d3.select(node),
                 i = directions.length,
                 coords,

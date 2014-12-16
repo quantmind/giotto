@@ -1,19 +1,16 @@
 
-    function _newPaperAttr (element, cfg) {
+    function _newPaperAttr (element, p) {
         var width, height;
 
-        if (cfg) {
-            width = cfg.width;
-            height = cfg.height;
-            cfg = pick(cfg, function (value, key) {
-                if (g.defaults.paper[key] !== undefined)
-                    return value;
-            });
+        if (p) {
+            if (p.__paper__ === element) return p;
+            width = p.width;
+            height = p.height;
         }
         else
-            cfg = {};
+            p = {};
 
-        var p = extend(true, {}, g.defaults.paper, cfg);
+        copyMissing(g.defaults.paper, p, true);
 
         if (!width) {
             width = getWidth(element);
@@ -41,11 +38,9 @@
         copyMissing(p.yaxis, p.yaxis2);
 
         p.size = [width, height];
+        p.giotto = 'giotto-group';
 
-        var v = d3[p.type];
-
-        p.xAxis = v.axis();
-        p.yAxis = [v.axis(), v.axis()];
+        p.__paper__ = element;
 
         return p;
     }

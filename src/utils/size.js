@@ -16,7 +16,7 @@
     }
 
     function getParentRectValue (element, key) {
-        var parent = element.node(),
+        var parent = element.node ? element.node() : element,
             r, v;
         while (parent && parent.tagName !== 'BODY') {
             v = parent.getBoundingClientRect()[key];
@@ -28,7 +28,7 @@
     }
 
     function getParentElementRect (element, key) {
-        var parent = element.node(),
+        var parent = element.node ? element.node() : element,
             r, v;
         while (parent && parent.tagName !== 'BODY') {
             v = parent.getBoundingClientRect()[key];
@@ -55,7 +55,7 @@
     //    |   |
     //    +-+-+
     //
-    // Returns an Object {n, s, e, w, nw, sw, ne, se}
+    // Returns an Object {x, y, e, w, nw, sw, ne, se}
     function getScreenBBox (target) {
 
         var bbox = {},
@@ -64,12 +64,10 @@
             point = svg.createSVGPoint(),
             tbbox = target.getBBox(),
             width = tbbox.width,
-            height = tbbox.height,
-            x = tbbox.x,
-            y = tbbox.y;
+            height = tbbox.height;
 
-        point.x = x;
-        point.y = y;
+        point.x = tbbox.x - 0.5*width;
+        point.y = tbbox.y - 0.5*height;
         bbox.nw = point.matrixTransform(matrix);
         point.x += width;
         bbox.ne = point.matrixTransform(matrix);
@@ -77,12 +75,12 @@
         bbox.se = point.matrixTransform(matrix);
         point.x -= width;
         bbox.sw = point.matrixTransform(matrix);
-        point.y -= height / 2;
+        point.y -= 0.5*height;
         bbox.w = point.matrixTransform(matrix);
         point.x += width;
         bbox.e = point.matrixTransform(matrix);
-        point.x -= width / 2;
-        point.y -= height / 2;
+        point.x -= 0.5*width;
+        point.y -= 0.5*height;
         bbox.n = point.matrixTransform(matrix);
         point.y += height;
         bbox.s = point.matrixTransform(matrix);

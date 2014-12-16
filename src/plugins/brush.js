@@ -1,94 +1,98 @@
     //
     //  Add brush functionality to svg paper
-    g.paper.svg.plugin('brush', {
-        axis: 'x',
-        opacity: 0.125,
-        fill: '#000'
-    },
+    g.paper.plugin('brush', {
+        defaults: {
+            axis: null, // set one of 'x', 'y' or 'xy'
+            fill: '#000',
+            fillOpacity: 0.125
+        },
 
-    function (paper, opts) {
-        var cid, brush;
+        svg: function (paper, opts) {
+            var cid, brush;
 
-        paper.brush = function () {
-            return brush;
-        };
+            paper.brush = function () {
+                return brush;
+            };
 
-        // get/set the extent for the brush
-        // When set, it re-renders in the paper
-        paper.extent = function (x) {
-            if (!arguments.length) return brush ? brush.extent() : null;
-            if (brush) {
-                brush.extent(x);
-                paper.render(cid);
-            }
-        };
+            // get/set the extent for the brush
+            // When set, it re-renders in the paper
+            paper.extent = function (x) {
+                if (!arguments.length) return brush ? brush.extent() : null;
+                if (brush) {
+                    brush.extent(x);
+                    paper.render(cid);
+                }
+            };
 
-        // Add a brush to the paper if not already available
-        paper.addBrush = function (options) {
-            if (cid) return paper;
+            // Add a brush to the paper if not already available
+            paper.addBrush = function (options) {
+                if (cid) return paper;
 
-            if (_.isObject(options))
-                extend(opts.brush, options);
+                if (_.isObject(options))
+                    extend(opts.brush, options);
 
-            brush = d3.svg.brush()
-                            .on("brushstart", brushstart)
-                            .on("brush", brushmove)
-                            .on("brushend", brushend);
+                brush = d3.svg.brush()
+                                .on("brushstart", brushstart)
+                                .on("brush", brushmove)
+                                .on("brushend", brushend);
 
-            cid = paper.addComponent(function () {
-                if (!brush) return;
+                var b = paperData(paper, opts.brush, {}).reset();
 
-                var current = paper.root().current(),
-                    gBrush = current.select('g.brush');
+                cid = paper.addComponent(b, function () {
+                    if (!brush) return;
 
-                if (opts.brush.axis === 'x') brush.x(paper.xAxis().scale());
+                    var current = paper.root().current(),
+                        gBrush = current.select('g.brush');
 
-                if (!gBrush.node()) {
-                    if (opts.brush.extent)
-                        brush.extent(opts.brush.extent);
-                    gBrush = current.append('g');
+                    if (opts.brush.axis === 'x') brush.x(paper.xAxis().scale());
+
+                    if (!gBrush.node()) {
+                        if (opts.brush.extent)
+                            brush.extent(opts.brush.extent);
+                        gBrush = current.append('g');
+                    }
 
                     var rect = gBrush.call(brush).selectAll("rect")
-                                        .attr('fill', opts.brush.fill)
-                                        .attr('fill-opacity', opts.brush.opacity);
+                                                .attr('fill', b.fill)
+                                                .attr('fill-opacity', b.fillOpacity);
 
                     if (opts.brush.axis === 'x') {
                         gBrush.attr("class", "brush x-brush");
                         rect.attr("y", -6).attr("height", paper.innerHeight() + 7);
                     }
-                } else
-                    gBrush.call(brush);
 
-                brushstart();
-                brushmove();
-                brushend();
-            });
+                    brushstart();
+                    brushmove();
+                    brushend();
+                });
 
-            return brush;
-        };
+                return brush;
+            };
 
-        paper.removeBrush = function () {
-            cid = paper.removeComponent(cid);
-            paper.root().current().select('g.brush').remove();
-            brush = null;
-        };
+            paper.removeBrush = function () {
+                cid = paper.removeComponent(cid);
+                paper.root().current().select('g.brush').remove();
+                brush = null;
+            };
 
+            function brushstart () {
+                paper.root().current().classed('selecting', true);
+                if (opts.brush.start) opts.brush.start();
+            }
 
-        function brushstart () {
-            paper.root().current().classed('selecting', true);
-            if (opts.brush.start) opts.brush.start();
-        }
+            function brushmove () {
+                if (opts.brush.move) opts.brush.move();
+            }
 
-        function brushmove () {
-            if (opts.brush.move) opts.brush.move();
-        }
+            function brushend () {
+                paper.root().current().classed('selecting', false);
+                if (opts.brush.end) opts.brush.end();
+            }
+        },
 
-        function brushend () {
-            paper.root().current().classed('selecting', false);
-            if (opts.brush.end) opts.brush.end();
+        canvas: function (paper, opts) {
         }
     });
-
 
     //
     //  Add brush functionality to charts
@@ -96,9 +100,9 @@
         var dimension,
             brush, brushopts;
 
-        if (opts.brush) {
+        if (opts.brush && opts.brush.axis) {
             brush = opts.brush;
-            if (!_.isObject(brush)) brush = {};
+            if (!isObject(brush)) brush = {};
             brushopts = extend({}, brush);
 
             brushopts.start = function () {

@@ -29,8 +29,8 @@
                 for (var prop in obj) {
                     if (obj.hasOwnProperty(prop)) {
                         if (deep) {
-                            if (_.isObject(obj[prop]))
-                                if (_.isObject(object[prop]))
+                            if (isObject(obj[prop]))
+                                if (isObject(object[prop]))
                                     extend(true, object[prop], obj[prop]);
                                 else
                                     object[prop] = extend(true, {}, obj[prop]);
@@ -48,32 +48,54 @@
     //  =================
     //
     //  Copy values to toObj from fromObj which are missing (undefined) in toObj
-    copyMissing = _.copyMissing = function (fromObj, toObj) {
+    copyMissing = _.copyMissing = function (fromObj, toObj, deep) {
         if (fromObj && toObj) {
+            var v, t;
             for (var prop in fromObj) {
-                if (fromObj.hasOwnProperty(prop) && toObj[prop] === undefined)
-                    toObj[prop] = fromObj[prop];
+                if (fromObj.hasOwnProperty(prop)) {
+                    t = fromObj[prop];
+                    v = toObj[prop];
+                    if (deep && isObject(t) && t !== v) {
+                        if (!isObject(v)) v = {};
+                        copyMissing(t, v, deep);
+                        toObj[prop] = v;
+                    } else if (v === undefined) {
+                        toObj[prop] = t;
+                    }
+                }
             }
         }
         return toObj;
     },
     //
+    getRootAttribute = function (name) {
+        var obj = root,
+            bits= name.split('.');
+
+        for (var i=0; i<bits.length; ++i) {
+            obj = obj[bits[i]];
+            if (!obj) break;
+        }
+        return obj;
+    },
+    //
     //
     // Obtain extra information from javascript objects
     getOptions = function (attrs) {
+        var options;
         if (attrs && typeof attrs.options === 'string') {
-            var obj = root,
-                bits= attrs.options.split('.');
-
-            for (var i=0; i<bits.length; ++i) {
-                obj = obj[bits[i]];
-                if (!obj) break;
-            }
-            if (typeof obj === 'function')
-                obj = obj(g, attrs);
-            attrs = extend(attrs, obj);
+            options = getRootAttribute(attrs.options);
+            if (typeof options === 'function')
+                options = options();
+        } else {
+            options = {};
         }
-        return attrs;
+        if (isObject(options))
+            forEach(attrs, function (value, name) {
+                if (name.substring(0, 1) !== '$' && name !== 'options')
+                    options[name] = value;
+            });
+        return options;
     },
     //
     //
@@ -99,6 +121,15 @@
         }
         else
             return 0;
+    },
+    //
+    forEach = _.forEach = _.each = function (obj, callback) {
+        if (!obj) return;
+        if (obj.forEach) obj.forEach(callback);
+        for (var key in obj) {
+            if (obj.hasOwnProperty(key))
+                callback(obj[keys], key);
+        }
     },
     //
     pick = _.pick = function (obj, callback) {

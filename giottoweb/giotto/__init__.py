@@ -11,7 +11,7 @@ class Extension(lux.Extension):
 def add_css(all):
     '''d3 extension style sheet
     '''
-    css = all.css('.giotto').css
+    css = all.css
     media = all.media
     d3 = all.variables.d3
 
@@ -42,24 +42,24 @@ def add_css(all):
             line_height=1,
             position='absolute'),
         css('.n:after',
-            content='"\25BC"',
+            content='"\\25BC"',
             margin='-2px 0 0 0',
             top=pc(100),
             left=0,
             text_align='center'),
         css('.e:after',
-            content='"\25C0"',
+            content='"\\25C0"',
             margin='-4px 0 0 0',
             top=pc(50),
             left='-8px'),
         css('.s:after',
-            content='"\25B2"',
+            content='"\\25B2"',
             margin='0 0 2px 0',
             top='-8px',
             left=0,
             text_align='center'),
         css('.w:after',
-            content='"\25B6"',
+            content='"\\25B6"',
             margin='-4px 0 0 -1px',
             top='50%',
             left='100%'))

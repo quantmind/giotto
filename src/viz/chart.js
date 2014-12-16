@@ -7,7 +7,7 @@
     function (chart, opts) {
 
         var series = [],
-            ranges;
+            allranges = {};
 
         chart.numSeries = function () {
             return series.length;
@@ -22,41 +22,13 @@
         chart.forEach = chart.each;
 
         chart.addSeries = function (series) {
-            // Loop through data and build the graph
-            var data = [], range;
-
-            series.forEach(function (serie) {
-
-                if (isFunction(serie))
-                    serie = serie(chart);
-
-                serie = formatSerie(serie);
-
-                if (serie) {
-                    if (!serie.pie) {
-                        serie = xyData(serie);
-                        if (serie.yaxis === undefined)
-                            serie.yaxis = 1;
-                        if (!ranges)
-                            ranges = [[Infinity, -Infinity],
-                                      [Infinity, -Infinity],
-                                      [Infinity, -Infinity]];
-                        range = ranges[0];
-                        range[0] = Math.min(range[0], serie.xrange[0]);
-                        range[1] = Math.max(range[1], serie.xrange[1]);
-                        range = ranges[serie.yaxis];
-                        range[0] = Math.min(range[0], serie.yrange[0]);
-                        range[1] = Math.max(range[1], serie.yrange[1]);
-                    }
-                    data.push(serie);
-                }
-            });
-
-            return data;
+            addSeries(series);
+            return chart;
         };
 
         chart.addSerie = function (serie) {
-            return chart.addSeries([serie]);
+            addSeries([serie]);
+            return chart;
         };
 
         chart.clear = function () {
@@ -65,56 +37,34 @@
             return chart;
         };
 
-        chart.draw = function () {
-            var paper = chart.paper(),
-                data = opts.data;
+        chart.draw = function (data) {
+            var paper = chart.paper();
+            data = data || opts.data;
 
             // load data if in options
-            if (data) {
-                delete opts.data;
-                if (data === undefined && opts.src)
-                    return chart.loadData(chart.draw);
-                if (g._.isFunction(data))
-                    data = data(chart);
+            if (data === undefined && opts.src) {
+                opts.data = null;
+                return chart.loadData(chart.draw);
             }
 
-            if (data)
-                data = chart.addSeries(data);
+            if (isFunction(data))
+                data = data(chart);
+
+            opts.data = null;
 
             if (data || opts.type !== paper.type()) {
+
+                if (data)
+                    data = addSeries(data);
 
                 if (opts.type !== paper.type()) {
                     paper = chart.paper(true);
                     data = series;
                 }
 
-                if (ranges)
-                    paper.allAxis().forEach(function (a, i) {
-                        var o = a.o,
-                            range = ranges[i],
-                            scale = a.axis.scale();
-                        if (o.auto) {
-                            scale.domain([range[0], range[1]]).nice();
-                            if (!isNull(o.min))
-                                scale.domain([o.min, scale.domain()[1]]);
-                            else if (!isNull(o.max))
-                                scale.domain([scale.domain()[0], o.max]);
-                        } else
-                            scale.domain([o.min, o.max]);
-                    });
-
                 data.forEach(function (serie) {
                     drawSerie(serie);
                 });
-
-                if (data.length === series.length && ranges) {
-                    if (show(opts.xaxis))
-                        paper.drawXaxis();
-                    if (show(opts.yaxis))
-                        paper.drawYaxis();
-                    if (show(opts.yaxis2, false))
-                        paper.drawYaxis();
-                }
             }
 
             // Render the chart
@@ -130,7 +80,7 @@
             } else {
                 chart.each(function (serie) {
                     if (serie[type])
-                        serie[type].setOptions(field, value);
+                        serie[type].set(field, value);
                 });
             }
         };
@@ -142,18 +92,6 @@
             chart.draw();
         });
 
-
-        // INTERNALS
-        function show (o, d) {
-            if (o) {
-                if (o.show === undefined)
-                    return d === undefined ? true : d;
-                else
-                    return o.show;
-            }
-            return false;
-        }
-
         function formatSerie (serie) {
             if (!serie) return;
             if (isArray(serie)) serie = {data: serie};
@@ -161,7 +99,10 @@
             var paper = chart.paper(),
                 color, show, o;
 
+            serie.index = series.length;
+
             series.push(serie);
+
             if (!serie.label)
                 serie.label = 'serie ' + series.length;
 
@@ -198,38 +139,122 @@
             return serie;
         }
 
-        function drawSerie (serie) {
-            // The serie is
-            var paper = chart.paper();
+        function addSeries (series) {
+            // Loop through data and build the graph
+            var data = [], ranges, range;
 
-            paper.group({'class': 'serie ' + slugify(serie.label)});
+            series.forEach(function (serie) {
 
-            opts.chartTypes.forEach(function (type) {
-                if (serie[type])
-                    serie[type] = chartTypes[type](chart, serie.data, serie[type]);
+                if (isFunction(serie))
+                    serie = serie(chart);
+
+                serie = formatSerie(serie);
+
+                if (serie) {
+                    if (!serie.pie) {
+                        serie = xyData(serie);
+                        if (serie.yaxis === undefined)
+                            serie.yaxis = 1;
+                        if (!serie.group) serie.group = 1;
+
+                        ranges = allranges[serie.group];
+                        if (!ranges)
+                            allranges[serie.group] = ranges = {};
+
+                        if (!isObject(serie.xaxis)) serie.xaxis = opts.xaxis;
+                        if (serie.yaxis === 2) serie.yaxis = opts.yaxis2;
+                        if (!isObject(serie.yaxis)) serie.yaxis = opts.yaxis;
+
+                        range = ranges[serie.xaxis.position];
+                        if (!range) {
+                            ranges[serie.xaxis.position] = range = [serie.xrange[0], serie.xrange[1]];
+                            serie.drawXaxis = true;
+                        } else {
+                            range[0] = Math.min(range[0], serie.xrange[0]);
+                            range[1] = Math.max(range[1], serie.xrange[1]);
+                        }
+                        range = ranges[serie.yaxis.position];
+                        if (!range) {
+                            ranges[serie.yaxis.position] = range = [serie.yrange[0], serie.yrange[1]];
+                            serie.drawYaxis = true;
+                        } else {
+                            range[0] = Math.min(range[0], serie.yrange[0]);
+                            range[1] = Math.max(range[1], serie.yrange[1]);
+                        }
+                    }
+                    data.push(serie);
+                }
             });
 
-            paper.parent();
+            return data;
+        }
+
+        function drawSerie (serie) {
+            // The serie is
+            var paper = chart.paper(),
+                group = paper.classGroup('serie ' + slugify(serie.label), {
+                    xaxis: serie.xaxis,
+                    yaxis: serie.yaxis
+                }),
+                stype;
+
+            function domain(axis) {
+                var range = allranges[serie.group][axis.orient()],
+                    o = axis.options(),
+                    scale = axis.scale();
+
+                if (o.auto) {
+                    scale.domain([range[0], range[1]]).nice();
+                    if (!isNull(o.min))
+                        scale.domain([o.min, scale.domain()[1]]);
+                    else if (!isNull(o.max))
+                        scale.domain([scale.domain()[0], o.max]);
+                } else {
+                    scale.domain([o.min, o.max]);
+                }
+                return group;
+            }
+
+            if (serie.drawXaxis)
+                domain(group.xaxis()).drawXaxis();
+
+            if (serie.drawYaxis)
+                domain(group.yaxis()).drawYaxis();
+
+            opts.chartTypes.forEach(function (type) {
+                stype = serie[type];
+                if (stype) {
+                    if(isFunction(stype.options))
+                        stype = stype.options();
+                    serie[type] = chartTypes[type](group, serie.data, stype);
+                }
+            });
         }
 
     });
 
     var chartTypes = {
 
-        pie: function (chart, data, opts) {
-            return chart.paper().pie(data, opts);
+        pie: function (group, data, opts) {
+            return group.pie(data, opts);
         },
 
-        bar: function (chart, data, opts) {
-            return chart.paper().barchart(data, opts);
+        bar: function (group, data, opts) {
+            return group.barchart(data, opts)
+                        .x(function (d) {return d.x;})
+                        .y(function (d) {return d.y;});
         },
 
-        line: function (chart, data, opts) {
-            return chart.paper().path(data, opts);
+        line: function (group, data, opts) {
+            return group.path(data, opts)
+                        .x(function (d) {return d.x;})
+                        .y(function (d) {return d.y;});
         },
 
-        point: function (chart, data, opts) {
-            return chart.paper().points(data, opts);
+        point: function (group, data, opts) {
+            return group.points(data, opts)
+                        .x(function (d) {return d.x;})
+                        .y(function (d) {return d.y;});
         }
     };
 

@@ -46,7 +46,7 @@
             viz.paper = function (createNew) {
                 if (createNew || paper === undefined) {
                     if (paper)
-                        paper.destroy();
+                        paper.clear();
                     paper = g.paper(element, opts);
                 }
                 return paper;

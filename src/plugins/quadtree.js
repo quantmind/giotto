@@ -7,11 +7,16 @@
     };
 
 
-    g.paper.svg.plugin("quadtree",
+    g.paper.plugin("quadtree", {
+        defaults: {
+            color: '#ccc',
+            opacity: 1,
+            width: 1,
+            fill: 'none',
+            fillOpacity: 0.5,
+        },
 
-        quadDefaults,
-
-        function (paper, opts) {
+        svg: function (paper, opts) {
 
             paper.quadtree = function () {
                 //var sx = paper.xAxis().scale(),
@@ -84,16 +89,9 @@
                 });
                 return nodes;
             }
-        });
+        },
 
-    g.paper.canvas.plugin("quadtree",
+        canvas: function (paper, opts) {
 
-        quadDefaults,
-
-        function (paper, opts) {
-
-            paper.quadtree = function () {
-                return d3.geom.quadtree;
-            };
-
-        });
+        }
+    });
