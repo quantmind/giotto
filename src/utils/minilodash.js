@@ -125,7 +125,7 @@
     //
     forEach = _.forEach = _.each = function (obj, callback) {
         if (!obj) return;
-        if (obj.forEach) obj.forEach(callback);
+        if (obj.forEach) return obj.forEach(callback);
         for (var key in obj) {
             if (obj.hasOwnProperty(key))
                 callback(obj[keys], key);

@@ -17,7 +17,7 @@
                 "src/viz/*.js",
                 "src/plugins/*.js",
                 "src/integration/*.js",
-                "src/core/private/*.js",
+                "src/core/internals/*.js",
                 "src/close.js"],
         "dest": "dist/giotto.js"
     },

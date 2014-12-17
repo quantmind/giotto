@@ -15,32 +15,39 @@
     gexamples.giottologo1 = {
         width: 500,
         height: 500,
-        //colors: ['#F2E905', '#F2A605', '#BB7200', '#0091E8', '#005AAA'],
-        colors: ['#005AAA', '#0091E8', '#BB7200', '#F2A605', '#F2E905',
-                 '#005AAA', '#0091E8', '#BB7200', '#F2A605', '#F2E905',
-                 '#005AAA', '#0091E8', '#BB7200', '#F2A605', '#F2E905'],
+
+        // Some defaults for all pies
+        pie: {
+            padAngle: 2,
+            cornerRadius: 0.02,
+            fillOpacity: 1,
+            // Accessor of values, by default it returns d[1]
+            y: function (d) {return d.value;}
+        },
 
         data: function () {
             var width = 500,
                 dangle = 10,
                 margin = 0.05,
-                start = 1,
-                r = 0.02,
-                pad = 2;
                 angle = 0,
                 inner = 0.9,
                 innerpad = 0.05,
                 dinnerpad = 0.005,
-                series = [];
+                series = [],
+                logodata = [],
+                colors = ['#005AAA', '#0091E8', '#BB7200', '#F2A605', '#F2E905'];
+
+            logo.forEach(function (d, i) {
+                while (i >= colors.length) i-= colors.length;
+                logodata.push({label: d[0], value: d[1], fill: colors[i]});
+            });
+
             while (margin < 0.97) {
                 series.push({
-                    data: logo,
+                    data: logodata,
                     pie: {
                         startAngle: angle,
-                        padAngle: pad,
-                        cornerRadius: r,
-                        innerRadius: inner,
-                        fillOpacity: 1
+                        innerRadius: inner
                     },
                     margin: m(0.5*margin*width)
                 });

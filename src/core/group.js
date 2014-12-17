@@ -124,8 +124,8 @@
             chartColors(paper, copyMissing(p.point, opts));
 
             return group.add(_.points(group))
-            .options(opts)
             .size(point_size)
+            .options(opts)
             .dataConstructor(point_costructor)
             .data(data);
         };

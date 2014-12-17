@@ -56,6 +56,8 @@
         draw.options = function (_) {
             if (arguments.length === 0) return opts;
             opts = _;
+            if (isFunction(opts.x)) draw.x(opts.x);
+            if (isFunction(opts.y)) draw.y(opts.y);
             draw.init(draw, opts);
             return draw;
         };
@@ -202,9 +204,13 @@
     function paperData (draw, data, parameters, d) {
         var opts = draw.options();
         d = highlightMixin(parameters, d);
+        if (isArray(data))
+            d.init(d, opts);
+        else {
+            d.init(data, opts);
+            d.active = data.active;
+        }
 
-        d.init(data, opts);
-        d.active = data.active;
         d.data = data;
 
         d.options = function () {
@@ -222,12 +228,12 @@
 
     function pieSlice (draw, data) {
         // Default values
-        if (!data.fill)
-            data.fill = draw.paper().pickColor();
-        if (!data.color)
-            data.color = d3.rgb(data.fill).darker();
+        var d = {},
+            dd = isArray(data) ? d : data;
+        dd.fill = dd.fill || draw.paper().pickColor();
+        dd.color = dd.color || d3.rgb(dd.fill).darker().toString();
 
-        return paperData(draw, data, pieOptions);
+        return paperData(draw, data, pieOptions, d);
     }
 
     var SymbolSize = {

@@ -58,6 +58,7 @@
         paper.clear = function () {
             paper.svg().remove();
             paper.canvas().remove();
+            p.colorIndex = 0;
             return paper;
         };
 
@@ -121,9 +122,9 @@
             }
             var c = p.colors[index];
             if (darker)
-                c = d3.rgb(c).darker(darker);
+                c = d3.rgb(c).darker(darker).toString();
             if (k)
-                c = d3.rgb(c).brighter(k);
+                c = d3.rgb(c).brighter(k).toString();
             return c;
         };
 

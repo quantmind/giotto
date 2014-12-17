@@ -187,7 +187,17 @@
         }
 
         function drawSerie (serie) {
-            // The serie is
+
+            // Remove serie drawing if any
+            opts.chartTypes.forEach(function (type) {
+                stype = serie[type];
+                if (stype) {
+                    if(isFunction(stype.options))
+                        stype = stype.options();
+                    serie[type] = stype;
+                }
+            });
+
             var paper = chart.paper(),
                 group = paper.classGroup(slugify(serie.label), extend({}, serie)),
                 stype;
@@ -217,11 +227,8 @@
 
             opts.chartTypes.forEach(function (type) {
                 stype = serie[type];
-                if (stype) {
-                    if(isFunction(stype.options))
-                        stype = stype.options();
+                if (stype)
                     serie[type] = chartTypes[type](group, serie.data, stype);
-                }
             });
         }
 

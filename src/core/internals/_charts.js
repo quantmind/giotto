@@ -5,7 +5,7 @@
             opts.color = paper.pickColor();
 
         if (opts.fill === true)
-            opts.fill = d3.rgb(opts.color).brighter();
+            opts.fill = d3.rgb(opts.color).brighter().toString();
 
         activeColors(opts);
     }
@@ -16,14 +16,14 @@
             a = opts.active = {};
 
         if (a.fill === 'darker')
-            a.fill = d3.rgb(opts.fill).darker();
+            a.fill = d3.rgb(opts.fill).darker().toString();
         else if (a.fill === 'brighter')
-            a.fill = d3.rgb(opts.fill).brighter();
+            a.fill = d3.rgb(opts.fill).brighter().toString();
 
         if (a.color === 'darker')
-            a.color = d3.rgb(opts.color).darker();
+            a.color = d3.rgb(opts.color).darker().toString();
         else if (a.color === 'brighter')
-            a.color = d3.rgb(opts.color).brighter();
+            a.color = d3.rgb(opts.color).brighter().toString();
     }
 
     function barWidth (paper, data, opts) {

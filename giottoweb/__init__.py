@@ -3,6 +3,11 @@ Lux application for building the example website
 
 https://github.com/quantmind/lux
 '''
+DESCRIPTION = ('GiottoJS is a javascript visualization library built on '
+               'top of d3js. '
+               'It is designed to visualize both SVG and Canvas elements '
+               'with a simple API. AngularJS integration')
+
 SITE_URL = 'http://quantmind.github.io/giotto'
 HTML_TITLE = 'GiottoJs Examples'
 STATIC_LOCATION = '../docs/giotto'
@@ -18,15 +23,25 @@ EXTENSIONS = ['lux.extensions.base',
               'lux.extensions.angular',
               'lux.extensions.static',
               'lux.extensions.sitemap',
+              'lux.extensions.oauth',
               'lux.extensions.code',
               'giottoweb.giotto']
 HTML_LINKS = ['giotto/giotto',
               'giottoweb/giottoweb.css']
 REQUIREJS = ['.giottoweb/giottoweb.js']
 
+HTML_META = [{'http-equiv': 'X-UA-Compatible',
+              'content': 'IE=edge'},
+             {'name': 'viewport',
+              'content': 'width=device-width, initial-scale=1'},
+             {'name': 'description', 'content': DESCRIPTION}]
+
 LINKS = {'AngularJS': 'https://angularjs.org/',
          'RequireJS': 'http://requirejs.org/',
          'd3': 'http://d3js.org/'}
+
+OAUTH_PROVIDERS = {'google': {'analytics': {'id': 'UA-54439804-4'}},
+                   'twitter': {'site': '@quantmind'}}
 
 
 from os import path
