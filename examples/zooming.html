@@ -20,7 +20,7 @@
 <link href='http://quantmind.github.io/giotto/media/giotto/giotto.min.css' rel='stylesheet' type='text/css'>
 <link href='http://quantmind.github.io/giotto/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var lux = {context: {"lux_version": "0.1.2-alpha.1", "media": "/media", "page": {"content_type": "text/html", "api_url": "http://quantmind.github.io/giotto/ng/examples/zooming.json", "title": "Zooming", "modified": "2014-12-07T18:44:55", "slug": "zooming", "name": "zooming", "html_url": "http://quantmind.github.io/giotto/examples/zooming"}, "dateFormat": "d MMM y", "google": {"analytics": {"id": "UA-54439804-4", "ga": "ga"}}, "ngModules": ["lux.blog", "highlight", "lux.google"], "date": "2014-12-17T11-13-56", "url": "http://quantmind.github.io/giotto", "html5mode": true, "oauths": null, "brand": "Lux", "navbar": {"collapseWidth": 768}, "python_version": "3.4.2", "datetimeFormat": "d MMM y, h:mm:ss a", "year": 2014, "name": "Lux", "apiUrls": {}}};
+var lux = {context: {"name": "Lux", "navbar": {"collapseWidth": 768}, "html5mode": true, "datetimeFormat": "d MMM y, h:mm:ss a", "page": {"api_url": "http://quantmind.github.io/giotto/ng/examples/zooming.json", "name": "zooming", "html_url": "http://quantmind.github.io/giotto/examples/zooming", "content_type": "text/html", "modified": "2014-12-07T18:44:55", "title": "Zooming", "slug": "zooming"}, "apiUrls": {}, "brand": "Lux", "python_version": "3.4.2", "date": "2014-12-17T11-19-28", "url": "http://quantmind.github.io/giotto", "ngModules": ["lux.blog", "lux.google", "highlight"], "dateFormat": "d MMM y", "oauths": null, "year": 2014, "google": {"analytics": {"ga": "ga", "id": "UA-54439804-4"}}, "media": "/media", "lux_version": "0.1.2-alpha.1"}};
 </script>
 <script type='text/javascript'>
 lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
@@ -51,7 +51,7 @@ var require = {"paths": {}, "deps": ["http://quantmind.github.io/giotto/media/gi
 <h2>Zooming</h2>
 </div>
 
-<div style="width: 100px" class="center-block"><lux-form data-options='luxforms.typeform_0wjdA'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.typeform_0wjdA = {"children": [{"children": [{"field": {"value": "svg", "name": "type", "type": "select", "options": ["svg", "canvas"], "required": true}}], "field": {"type": "fieldset"}}], "field": {"showLabels": false, "type": "form", "id": "typeform_0wjdA", "model": "TypeForm"}};</script></lux-form></div>
+<div style="width: 100px" class="center-block"><lux-form data-options='luxforms.typeform_PMvep'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.typeform_PMvep = {"children": [{"children": [{"field": {"value": "svg", "name": "type", "options": ["svg", "canvas"], "type": "select", "required": true}}], "field": {"type": "fieldset"}}], "field": {"model": "TypeForm", "id": "typeform_PMvep", "type": "form", "showLabels": false}};</script></lux-form></div>
 
 <div data-options='gexamples.zooming1' style="max-width: 600px" class="center-block" giotto-chart></div>
 
