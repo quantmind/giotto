@@ -56,7 +56,7 @@ meta_default = {'image': '$site_url$site_media/giottoweb/giotto.png',
                 'twitter:card': 'summary_large_image',
                 'template': 'partials/base.html'}
 
-examples_meta = {'template': 'partials/examples.md',
+examples_meta = {'template': 'partials/examples.html',
                  'twitter:card': 'summary_large_image'}
 
 
@@ -71,7 +71,6 @@ class Extension(lux.Extension):
                                     content=DirContent,
                                     dir='examples',
                                     drafts=False,
-                                    html_body_template='examples.html',
                                     index_template='partials/blogindex.html'),
                                drafts=False,
                                dir='giottoweb/content/site',

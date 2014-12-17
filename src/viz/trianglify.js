@@ -1,16 +1,16 @@
 
     g.createviz('trianglify', {
-        bleed: 150,
+        bleed: 100,
         fillOpacity: 1,
         strokeOpacity: 1,
         noiseIntensity: 0,
         gradient: null,
-        cellsize: 0,
+        cellsize: 100,
         cellpadding: 0,
         x_gradient: null,
         y_gradient: null
     }, function (tri, opts) {
-        var waiting, t;
+        var t;
 
         tri.gradient = function (value) {
             if (value && typeof(value) === 'string') {
@@ -27,19 +27,16 @@
         //
         tri.on('tick.main', function (e) {
             // Load data if not already available
+            tri.stop();
             if (tri.Trianglify === undefined && typeof Trianglify === 'undefined') {
-                if (!waiting) {
-                    waiting = true;
-                    return g.require(['trianglify'], function (Trianglify) {
-                        waiting = false;
-                        tri.Trianglify = Trianglify || null;
-                    });
-                }
+                g.require(['trianglify'], function (Trianglify) {
+                    tri.Trianglify = Trianglify || null;
+                    tri.resume();
+                });
             } else {
                 if (tri.Trianglify === undefined)
                     tri.Trianglify = Trianglify;
                 build();
-                tri.stop();
             }
         });
 
@@ -53,13 +50,20 @@
                 gradient = tri.gradient(opts.gradient),
                 x_gradient = tri.gradient(opts.x_gradient) || gradient,
                 y_gradient = tri.gradient(opts.y_gradient) || gradient,
-                paper = tri.paper().clear(),
+                paper = tri.paper(),
                 element = paper.element(),
-                size = tri.paper().size();
+                size = paper.size();
 
-            element.selectAll('*').remove();
-            if (!t)
+            //element.selectAll('.trianglify-background').remove();
+            if (!t) {
+                paper.on('change.trianglify' + paper.uid(), build);
+                //highjack paper.image()
+                paper.image = function () {
+                    var url = pattern.dataUrl;
+                    return url.substring(4,url.length-1);
+                };
                 t = new Trianglify();
+            }
 
             t.options.fillOpacity = Math.min(1, Math.max(fillOpacity, 0));
             t.options.strokeOpacity = Math.min(1, Math.max(strokeOpacity, 0));
@@ -70,7 +74,7 @@
                 t.options.y_gradient = y_gradient;
             if (cellsize > 0) {
                 t.options.cellsize = cellsize;
-                t.options.bleed = +attrs.bleed;
+                t.options.bleed = +opts.bleed;
             }
             var pattern = t.generate(size[0], size[1]),
                 telement = element.select('.trianglify-background');

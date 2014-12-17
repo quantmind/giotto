@@ -12,7 +12,7 @@ paper.
 
 ### # paper.type()
 
-Returns the default [/api/group](group) type paper for the paper.
+Returns the default [group](/api/group) type paper for the paper.
 It can be either ``svg`` (default) or ``canvas``.
 
 ### # paper.uid()
@@ -23,6 +23,13 @@ Returns the unique identifier for the paper in the current Html document, an int
 
 Returns a two elements array containing the pixel dimensions of the paper, including any margin.
 
+### # paper.select([filter])
+
+Select a [group](/api/group) given a filter in a similar way as ``d3.select``.
+Returns the selected group or ``undefined``:
+
+    paper.select('*')   // returns the first group in the paper
+    paper.select('#plot1') // select the group with id plot1
 
 
 ## Options

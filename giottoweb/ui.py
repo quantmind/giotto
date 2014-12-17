@@ -12,7 +12,7 @@ def add_css(all):
     vars.color = color(0,0,0,0.8)
     vars.scroll.background = '#99EBFF'
 
-    css('.page-header',
+    css('.page-header, .full-header',
         padding_top=vars.navbar.height)
 
     css('.page-header.index-header',
@@ -26,6 +26,9 @@ def add_css(all):
     css('html, body, .fullpage',
         height=pc(100),
         min_height=pc(100))
+
+    css('form',
+        font_size=px(14))
 
     css('.trianglify-background',
         padding_top=px(30))

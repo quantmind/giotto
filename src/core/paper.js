@@ -3,7 +3,7 @@
     // Create a new paper for drawing stuff
     g.paper = function (element, p) {
 
-        var paper = d3.dispatch.apply({}, p.activeEvents),
+        var paper = d3.dispatch.apply({}, extendArray(['change'], p.activeEvents)),
             uid = ++_idCounter;
 
         // Create a new group for this paper
@@ -23,6 +23,10 @@
 
         paper.uid = function () {
             return uid;
+        };
+
+        paper.size = function () {
+            return [p.size[0], p.size[1]];
         };
 
         // Select a group based on attributes
@@ -96,6 +100,7 @@
                 paper.each(function () {
                     this.resize(oldsize);
                 });
+                paper.change();
             }
             p._resizing = false;
         };

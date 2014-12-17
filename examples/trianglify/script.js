@@ -1,13 +1,12 @@
 
     gexamples.trianglify = {
-        height: 400,
 
-        onInit: function (viz) {
+        onInit: function (viz, opts) {
 
             luxforms.redraw = function (e) {
                 e.preventDefault();
-                if (this.form.$valid)
-                    viz.redraw(this.trianglify);
+                angular.extend(viz.options(), this.trianglify);
+                viz.resume();
             };
         }
     };
