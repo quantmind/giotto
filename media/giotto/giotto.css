@@ -2,7 +2,7 @@
 /*
 ------------------------------------------------------------------
 Created by lux in 0.0 seconds
-Date: 2014-12-17 14:46:14
+Date: 2014-12-17 15:24:01
 
 http://quantmind.github.io/lux/
 ------------------------------------------------------------------ */
@@ -26,11 +26,11 @@ http://quantmind.github.io/lux/
 }
 
 .d3-tip:after {
-    line-height: 1;
-    font-size: 16px;
     width: 100%;
     display: inline;
+    font-size: 16px;
     position: absolute;
+    line-height: 1;
     -webkit-box-sizing: border-box;
        -moz-box-sizing: border-box;
             box-sizing: border-box;

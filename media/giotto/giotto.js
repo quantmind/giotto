@@ -2315,7 +2315,8 @@
                 fill: 'darker',
                 color: 'brighter',
                 innerRadius: 1,
-                outerRadius: 1.05
+                outerRadius: 1.05,
+                fillOpacity: 1
             }
         },
         font: {
