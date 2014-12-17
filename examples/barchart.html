@@ -20,7 +20,7 @@
 <link href='http://quantmind.github.io/giotto/media/giotto/giotto.min.css' rel='stylesheet' type='text/css'>
 <link href='http://quantmind.github.io/giotto/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var lux = {context: {"oauths": null, "navbar": {"collapseWidth": 768}, "google": {"analytics": {"id": "UA-54439804-4", "ga": "ga"}}, "name": "Lux", "year": 2014, "brand": "Lux", "url": "http://quantmind.github.io/giotto", "ngModules": ["lux.google", "highlight", "lux.blog"], "html5mode": true, "apiUrls": {}, "python_version": "3.4.2", "date": "2014-12-17T13-18-38", "dateFormat": "d MMM y", "media": "/media", "lux_version": "0.1.2-alpha.1", "datetimeFormat": "d MMM y, h:mm:ss a", "page": {"slug": "barchart", "title": "Simple Bar Chart", "api_url": "http://quantmind.github.io/giotto/ng/examples/barchart.json", "html_url": "http://quantmind.github.io/giotto/examples/barchart", "modified": "2014-12-04T17:29:01", "content_type": "text/html", "name": "barchart"}}};
+var lux = {context: {"oauths": null, "google": {"analytics": {"ga": "ga", "id": "UA-54439804-4"}}, "ngModules": ["highlight", "lux.blog", "lux.google"], "apiUrls": {}, "navbar": {"collapseWidth": 768}, "page": {"title": "Simple Bar Chart", "name": "barchart", "content_type": "text/html", "modified": "2014-12-04T17:29:01", "slug": "barchart", "api_url": "http://quantmind.github.io/giotto/ng/examples/barchart.json", "html_url": "http://quantmind.github.io/giotto/examples/barchart"}, "html5mode": true, "datetimeFormat": "d MMM y, h:mm:ss a", "name": "Lux", "brand": "Lux", "python_version": "3.4.2", "url": "http://quantmind.github.io/giotto", "lux_version": "0.1.2-alpha.1", "year": 2014, "dateFormat": "d MMM y", "date": "2014-12-17T14-46-15", "media": "/media"}};
 </script>
 <script type='text/javascript'>
 lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
@@ -28,7 +28,7 @@ lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback
 var gexamples = {};
 </script>
 <script type="text/javascript">
-var require = {"waitSeconds": 200, "minify": true, "baseUrl": "http://quantmind.github.io/giotto/media/", "deps": ["http://quantmind.github.io/giotto/media/giottoweb/giottoweb.js"], "paths": {}};
+var require = {"paths": {}, "deps": ["http://quantmind.github.io/giotto/media/giottoweb/giottoweb.js"], "waitSeconds": 200, "baseUrl": "http://quantmind.github.io/giotto/media/", "minify": true};
 </script>
 <script src='http://quantmind.github.io/require-config-js/require.config.min.js' type='application/javascript'></script>
 <script src='//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js' type='application/javascript'></script>
@@ -51,7 +51,7 @@ var require = {"waitSeconds": 200, "minify": true, "baseUrl": "http://quantmind.
 <h2>Simple Bar Chart</h2>
 </div>
 
-<div style="width: 100px" class="center-block"><lux-form data-options='luxforms.typeform_WccQq'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.typeform_WccQq = {"children": [{"children": [{"field": {"options": ["svg", "canvas"], "value": "svg", "required": true, "name": "type", "type": "select"}}], "field": {"type": "fieldset"}}], "field": {"showLabels": false, "model": "TypeForm", "id": "typeform_WccQq", "type": "form"}};</script></lux-form></div>
+<div style="width: 100px" class="center-block"><lux-form data-options='luxforms.typeform_3Js3M'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.typeform_3Js3M = {"children": [{"children": [{"field": {"name": "type", "type": "select", "value": "svg", "required": true, "options": ["svg", "canvas"]}}], "field": {"type": "fieldset"}}], "field": {"id": "typeform_3Js3M", "type": "form", "model": "TypeForm", "showLabels": false}};</script></lux-form></div>
 
 <div data-options='gexamples.barchart' style='max-width: 500px' class="center-block" giotto-chart></div>
 
