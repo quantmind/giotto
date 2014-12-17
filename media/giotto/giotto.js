@@ -459,7 +459,7 @@
     //
     forEach = _.forEach = _.each = function (obj, callback) {
         if (!obj) return;
-        if (obj.forEach) obj.forEach(callback);
+        if (obj.forEach) return obj.forEach(callback);
         for (var key in obj) {
             if (obj.hasOwnProperty(key))
                 callback(obj[keys], key);
@@ -2413,6 +2413,7 @@
         paper.clear = function () {
             paper.svg().remove();
             paper.canvas().remove();
+            p.colorIndex = 0;
             return paper;
         };
 
@@ -2476,9 +2477,9 @@
             }
             var c = p.colors[index];
             if (darker)
-                c = d3.rgb(c).darker(darker);
+                c = d3.rgb(c).darker(darker).toString();
             if (k)
-                c = d3.rgb(c).brighter(k);
+                c = d3.rgb(c).brighter(k).toString();
             return c;
         };
 
@@ -2746,8 +2747,8 @@
             chartColors(paper, copyMissing(p.point, opts));
 
             return group.add(_.points(group))
-            .options(opts)
             .size(point_size)
+            .options(opts)
             .dataConstructor(point_costructor)
             .data(data);
         };
@@ -2974,6 +2975,8 @@
         draw.options = function (_) {
             if (arguments.length === 0) return opts;
             opts = _;
+            if (isFunction(opts.x)) draw.x(opts.x);
+            if (isFunction(opts.y)) draw.y(opts.y);
             draw.init(draw, opts);
             return draw;
         };
@@ -3120,9 +3123,13 @@
     function paperData (draw, data, parameters, d) {
         var opts = draw.options();
         d = highlightMixin(parameters, d);
+        if (isArray(data))
+            d.init(d, opts);
+        else {
+            d.init(data, opts);
+            d.active = data.active;
+        }
 
-        d.init(data, opts);
-        d.active = data.active;
         d.data = data;
 
         d.options = function () {
@@ -3140,12 +3147,12 @@
 
     function pieSlice (draw, data) {
         // Default values
-        if (!data.fill)
-            data.fill = draw.paper().pickColor();
-        if (!data.color)
-            data.color = d3.rgb(data.fill).darker();
+        var d = {},
+            dd = isArray(data) ? d : data;
+        dd.fill = dd.fill || draw.paper().pickColor();
+        dd.color = dd.color || d3.rgb(dd.fill).darker().toString();
 
-        return paperData(draw, data, pieOptions);
+        return paperData(draw, data, pieOptions, d);
     }
 
     var SymbolSize = {
@@ -3607,7 +3614,17 @@
         }
 
         function drawSerie (serie) {
-            // The serie is
+
+            // Remove serie drawing if any
+            opts.chartTypes.forEach(function (type) {
+                stype = serie[type];
+                if (stype) {
+                    if(isFunction(stype.options))
+                        stype = stype.options();
+                    serie[type] = stype;
+                }
+            });
+
             var paper = chart.paper(),
                 group = paper.classGroup(slugify(serie.label), extend({}, serie)),
                 stype;
@@ -3637,11 +3654,8 @@
 
             opts.chartTypes.forEach(function (type) {
                 stype = serie[type];
-                if (stype) {
-                    if(isFunction(stype.options))
-                        stype = stype.options();
+                if (stype)
                     serie[type] = chartTypes[type](group, serie.data, stype);
-                }
             });
         }
 
@@ -6146,7 +6160,7 @@
             opts.color = paper.pickColor();
 
         if (opts.fill === true)
-            opts.fill = d3.rgb(opts.color).brighter();
+            opts.fill = d3.rgb(opts.color).brighter().toString();
 
         activeColors(opts);
     }
@@ -6157,14 +6171,14 @@
             a = opts.active = {};
 
         if (a.fill === 'darker')
-            a.fill = d3.rgb(opts.fill).darker();
+            a.fill = d3.rgb(opts.fill).darker().toString();
         else if (a.fill === 'brighter')
-            a.fill = d3.rgb(opts.fill).brighter();
+            a.fill = d3.rgb(opts.fill).brighter().toString();
 
         if (a.color === 'darker')
-            a.color = d3.rgb(opts.color).darker();
+            a.color = d3.rgb(opts.color).darker().toString();
         else if (a.color === 'brighter')
-            a.color = d3.rgb(opts.color).brighter();
+            a.color = d3.rgb(opts.color).brighter().toString();
     }
 
     function barWidth (paper, data, opts) {
