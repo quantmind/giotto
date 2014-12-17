@@ -22,7 +22,7 @@
 <link href='http://giottojs.org/media/giotto/giotto.min.css' rel='stylesheet' type='text/css'>
 <link href='http://giottojs.org/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var lux = {context: {"dateFormat": "d MMM y", "date": "2014-12-17T15-24-02", "page": {"image": "http://giottojs.org/media/giottoweb/giotto.png", "modified": "2014-12-10T13:58:47", "name": "download", "content_type": "text/html", "html_url": "http://giottojs.org/download", "slug": "download", "title": "GiottoJS - Download", "api_url": "http://giottojs.org/ng/site/download.json"}, "ngModules": ["lux.google", "highlight"], "apiUrls": {}, "year": 2014, "navbar": {"collapseWidth": 768}, "html5mode": true, "brand": "Lux", "python_version": "3.4.2", "datetimeFormat": "d MMM y, h:mm:ss a", "name": "Lux", "media": "/media", "oauths": null, "url": "http://giottojs.org", "google": {"analytics": {"ga": "ga", "id": "UA-54439804-4"}}, "lux_version": "0.1.2-alpha.1"}};
+var lux = {context: {"html5mode": true, "year": 2014, "lux_version": "0.1.2-alpha.1", "brand": "Lux", "media": "/media", "apiUrls": {}, "url": "http://giottojs.org", "oauths": null, "ngModules": ["lux.google", "highlight"], "python_version": "3.4.2", "page": {"slug": "download", "content_type": "text/html", "name": "download", "title": "GiottoJS - Download", "image": "http://giottojs.org/media/giottoweb/giotto.png", "api_url": "http://giottojs.org/ng/site/download.json", "html_url": "http://giottojs.org/download", "modified": "2014-12-10T13:58:47"}, "name": "Lux", "dateFormat": "d MMM y", "date": "2014-12-17T15-53-01", "google": {"analytics": {"ga": "ga", "id": "UA-54439804-4"}}, "navbar": {"collapseWidth": 768}, "datetimeFormat": "d MMM y, h:mm:ss a"}};
 </script>
 <script type='text/javascript'>
 lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
@@ -30,7 +30,7 @@ lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback
 var gexamples = {};
 </script>
 <script type="text/javascript">
-var require = {"waitSeconds": 200, "paths": {}, "minify": true, "baseUrl": "http://giottojs.org/media/", "deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"]};
+var require = {"waitSeconds": 200, "baseUrl": "http://giottojs.org/media/", "deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"], "paths": {}, "minify": true};
 </script>
 <script src='http://quantmind.github.io/require-config-js/require.config.min.js' type='application/javascript'></script>
 <script src='//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js' type='application/javascript'></script>
@@ -46,6 +46,12 @@ var require = {"waitSeconds": 200, "paths": {}, "minify": true, "baseUrl": "http
 </script></head>
 <body data-ng-controller='Page' data-ng-model='page' data-page=''>
 <navbar data-options="lux.context.navbar"></navbar>
+<div class="container">
+<div class="row">
+<div class="col-sm-12">
+<div class="page-header">
+<h2>GiottoJS - Download</h2>
+</div>
 <p>Latest development versions</p>
 <ul>
 <li><a href="http://quantmind.github.io/giotto/media/giotto/giotto.js">giotto.js</a></li>
@@ -54,5 +60,8 @@ var require = {"waitSeconds": 200, "paths": {}, "minify": true, "baseUrl": "http
 <p><a href="https://travis-ci.org/quantmind/giotto" target="_self">
 <img src="https://travis-ci.org/quantmind/giotto.svg?branch=master" alt="giotto CI"></a>
 <a href="https://coveralls.io/r/quantmind/giotto?branch=master"><img alt="Coverage Status" src="https://img.shields.io/coveralls/quantmind/giotto.svg" /></a></p>
+</div>
+</div>
+</div>
 </body>
 </html>

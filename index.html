@@ -1,19 +1,19 @@
 <!DOCTYPE html>
 <html data-debug='false' lang='en' prefix='og: http://ogp.me/ns#'>
 <head>
-<title>GiottoJs</title>
+<title>GiottoJS</title>
 <meta charset='utf-8'>
 <meta content='IE=edge' http-equiv='X-UA-Compatible'>
 <meta content='width=device-width, initial-scale=1' name='viewport'>
 <meta content='GiottoJS is a javascript visualization library built on top of d3js. It is designed to visualize both SVG and Canvas elements with a simple API. AngularJS integration' name='description'>
 <meta content='website' property='og:type'>
 <meta content='http://giottojs.org' property='og:url'>
-<meta content='GiottoJs' property='og:title'>
+<meta content='GiottoJS' property='og:title'>
 <meta content='GiottoJS is a javascript visualization library built on top of d3js. It is designed to visualize both SVG and Canvas elements with a simple API. AngularJS integration' property='og:description'>
 <meta content='http://giottojs.org/examples/giottologo.png' property='og:image'>
 <meta content='summary_large_image' name='twitter:card'>
 <meta content='@quantmind' name='twitter:site'>
-<meta content='GiottoJs' name='twitter:title'>
+<meta content='GiottoJS' name='twitter:title'>
 <meta content='GiottoJS is a javascript visualization library built on top of d3js. It is designed to visualize both SVG and Canvas elements with a simple API. AngularJS integration' name='twitter:description'>
 <meta content='http://giottojs.org/examples/giottologo.png' name='twitter:image'>
 <link href='http://giottojs.org/media/giottoweb/favicon.ico' rel='icon' type='image/x-icon'>
@@ -22,7 +22,7 @@
 <link href='http://giottojs.org/media/giotto/giotto.min.css' rel='stylesheet' type='text/css'>
 <link href='http://giottojs.org/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var lux = {context: {"dateFormat": "d MMM y", "date": "2014-12-17T15-24-02", "page": {"image": "http://giottojs.org/examples/giottologo.png", "modified": "2014-12-17T10:19:05", "name": "index", "content_type": "text/html", "html_url": "http://giottojs.org", "slug": "index", "title": "GiottoJs", "api_url": "http://giottojs.org/ng/site/index.json"}, "ngModules": ["lux.google", "highlight"], "apiUrls": {}, "year": 2014, "navbar": {"collapseWidth": 768}, "html5mode": true, "brand": "Lux", "python_version": "3.4.2", "datetimeFormat": "d MMM y, h:mm:ss a", "name": "Lux", "media": "/media", "oauths": null, "url": "http://giottojs.org", "google": {"analytics": {"ga": "ga", "id": "UA-54439804-4"}}, "lux_version": "0.1.2-alpha.1"}};
+var lux = {context: {"html5mode": true, "year": 2014, "lux_version": "0.1.2-alpha.1", "brand": "Lux", "media": "/media", "apiUrls": {}, "url": "http://giottojs.org", "oauths": null, "ngModules": ["lux.google", "highlight"], "python_version": "3.4.2", "page": {"slug": "index", "content_type": "text/html", "name": "index", "title": "GiottoJS", "image": "http://giottojs.org/examples/giottologo.png", "api_url": "http://giottojs.org/ng/site/index.json", "html_url": "http://giottojs.org", "modified": "2014-12-17T15:49:20"}, "name": "Lux", "dateFormat": "d MMM y", "date": "2014-12-17T15-53-01", "google": {"analytics": {"ga": "ga", "id": "UA-54439804-4"}}, "navbar": {"collapseWidth": 768}, "datetimeFormat": "d MMM y, h:mm:ss a"}};
 </script>
 <script type='text/javascript'>
 lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
@@ -30,7 +30,7 @@ lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback
 var gexamples = {};
 </script>
 <script type="text/javascript">
-var require = {"waitSeconds": 200, "paths": {}, "minify": true, "baseUrl": "http://giottojs.org/media/", "deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"]};
+var require = {"waitSeconds": 200, "baseUrl": "http://giottojs.org/media/", "deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"], "paths": {}, "minify": true};
 </script>
 <script src='http://quantmind.github.io/require-config-js/require.config.min.js' type='application/javascript'></script>
 <script src='//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js' type='application/javascript'></script>
@@ -60,12 +60,7 @@ var require = {"waitSeconds": 200, "paths": {}, "minify": true, "baseUrl": "http
                         <a class="btn btn-primary btn-lg width160" href="http://giottojs.org/download">
                         <i class="fa fa-download fa-lg"></i> Download</a>
                     </p>
-                    <div class="center-block width160 visible-xs">
-                        <a class="btn btn-primary btn-lg btn-block" href="https://github.com/quantmind/lux">
-                        <i class="fa fa-github fa-lg"></i> Source Code</a>
-                        <a class="btn btn-primary btn-lg btn-block" href="https://pypi.python.org/pypi/lux">
-                        <i class="fa fa-download fa-lg"></i> Download</a>
-                    </div>
+                    <div class="hidden-xs">
                     <p class="lead">Version 0.1.2-alpha.1</p>
                     <a href="https://travis-ci.org/quantmind/lux" title="Build Status">
                     <img src="https://travis-ci.org/quantmind/lux.svg?branch=master" alt="Build Status">
@@ -73,6 +68,7 @@ var require = {"waitSeconds": 200, "paths": {}, "minify": true, "baseUrl": "http
                     <a href='https://coveralls.io/r/quantmind/lux?branch=master'>
                     <img src='https://coveralls.io/repos/quantmind/lux/badge.png?branch=master' alt='Coverage Status'/>
                     </a>
+                    </div>
             </div>
         </div>
     </div>
