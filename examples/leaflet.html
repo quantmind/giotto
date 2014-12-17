@@ -5,22 +5,22 @@
 <meta charset='utf-8'>
 <meta content='IE=edge' http-equiv='X-UA-Compatible'>
 <meta content='width=device-width, initial-scale=1' name='viewport'>
-<meta content='GiottoJS is a javascript visualization library built on top of d3js. It is designed to visualize both SVG and Canvas elements with a simple API. AngularJS integration' name='description'>
+<meta content='A list of GiottoJS examples' name='description'>
 <meta content='website' property='og:type'>
 <meta content='http://giottojs.org/examples/leaflet' property='og:url'>
 <meta content='Leaflet example' property='og:title'>
-<meta content='GiottoJS is a javascript visualization library built on top of d3js. It is designed to visualize both SVG and Canvas elements with a simple API. AngularJS integration' property='og:description'>
+<meta content='A list of GiottoJS examples' property='og:description'>
 <meta content='summary_large_image' name='twitter:card'>
 <meta content='@quantmind' name='twitter:site'>
 <meta content='Leaflet example' name='twitter:title'>
-<meta content='GiottoJS is a javascript visualization library built on top of d3js. It is designed to visualize both SVG and Canvas elements with a simple API. AngularJS integration' name='twitter:description'>
+<meta content='A list of GiottoJS examples' name='twitter:description'>
 <link href='http://giottojs.org/media/giottoweb/favicon.ico' rel='icon' type='image/x-icon'>
 <link href='//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css' rel='stylesheet' type='text/css'>
 <link href='//netdna.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css' rel='stylesheet' type='text/css'>
 <link href='http://giottojs.org/media/giotto/giotto.min.css' rel='stylesheet' type='text/css'>
 <link href='http://giottojs.org/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var lux = {context: {"ngModules": ["highlight", "lux.google", "lux.blog"], "name": "Lux", "navbar": {"collapseWidth": 768}, "html5mode": true, "apiUrls": {}, "lux_version": "0.1.2-alpha.1", "url": "http://giottojs.org", "brand": "Lux", "oauths": null, "media": "/media", "python_version": "3.4.2", "dateFormat": "d MMM y", "google": {"analytics": {"id": "UA-54439804-4", "ga": "ga"}}, "datetimeFormat": "d MMM y, h:mm:ss a", "year": 2014, "date": "2014-12-17T17-11-39", "page": {"modified": "2014-11-28T21:34:04", "html_url": "http://giottojs.org/examples/leaflet", "slug": "leaflet", "name": "leaflet", "title": "Leaflet example", "content_type": "text/html", "api_url": "http://giottojs.org/ng/examples/leaflet.json"}}};
+var lux = {context: {"python_version": "3.4.2", "ngModules": ["lux.google", "lux.blog", "highlight"], "year": 2014, "google": {"analytics": {"ga": "ga", "id": "UA-54439804-4"}}, "navbar": {"collapseWidth": 768}, "datetimeFormat": "d MMM y, h:mm:ss a", "brand": "Lux", "oauths": null, "apiUrls": {}, "name": "Lux", "url": "http://giottojs.org", "dateFormat": "d MMM y", "html5mode": true, "media": "/media", "lux_version": "0.1.2-alpha.1", "page": {"content_type": "text/html", "name": "leaflet", "modified": "2014-11-28T21:34:04", "title": "Leaflet example", "slug": "leaflet", "description": "A list of GiottoJS examples", "html_url": "http://giottojs.org/examples/leaflet", "api_url": "http://giottojs.org/ng/examples/leaflet.json"}, "date": "2014-12-17T20-39-07"}};
 </script>
 <script type='text/javascript'>
 lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
@@ -28,7 +28,7 @@ lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback
 var gexamples = {};
 </script>
 <script type="text/javascript">
-var require = {"minify": true, "baseUrl": "http://giottojs.org/media/", "deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"], "paths": {}, "waitSeconds": 200};
+var require = {"deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"], "paths": {}, "minify": true, "waitSeconds": 200, "baseUrl": "http://giottojs.org/media/"};
 </script>
 <script src='http://quantmind.github.io/require-config-js/require.config.min.js' type='application/javascript'></script>
 <script src='//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js' type='application/javascript'></script>
@@ -44,6 +44,7 @@ var require = {"minify": true, "baseUrl": "http://giottojs.org/media/", "deps": 
 </script></head>
 <body data-ng-controller='Page' data-ng-model='page' data-page=''>
 <navbar data-options="lux.context.navbar"></navbar>
+<div id="page-main">
 <div class="container">
 <div class="row">
 <div class="col-sm-12" data-highlight>
@@ -51,6 +52,79 @@ var require = {"minify": true, "baseUrl": "http://giottojs.org/media/", "deps": 
 <h2>Leaflet example</h2>
 </div>
 
+<h3>Javascript code</h3>
+<pre><code>gexamples.leaflet1 = {
+
+    tile: 'leaflet',
+
+    center: [32, 103.14],
+
+    wheelZoom: false,
+
+    onInit: function (viz) {
+        var http = 'http://{s}.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={token}',
+            MB_ATTR = 'Map data &amp;copy; &lt;a href="http://openstreetmap.org"&gt;OpenStreetMap&lt;/a&gt; contributors, ' +
+                      '&lt;a href="http://creativecommons.org/licenses/by-sa/2.0/"&gt;CC-BY-SA&lt;/a&gt;, ' +
+                      'Imagery © &lt;a href="http://mapbox.com"&gt;Mapbox&lt;/a&gt;',
+            opts = viz.options();
+
+        viz.on('tick.main', function () {
+            //
+            // Add layer to the map
+            viz.stop().addLayer(http, {
+                attribution: MB_ATTR,
+                id: 'lsbardel.jlpfdli1',
+                token: 'pk.eyJ1IjoibHNiYXJkZWwiLCJhIjoidHltTnFxRSJ9.Mx5To8eaHJjq8OS6usKV8g'
+            });
+
+            if (opts.src) {
+
+                g.require(['topojson'], function (topojson) {
+
+                    d3.json(opts.src, function(topology) {
+                        var collection = topojson.feature(topology, topology.objects.china_adm1),
+                            layer = viz.addLayer(collection, onDraw),
+                            feature = layer.element.attr("class", "china-wine").selectAll("path")
+                                            .data(collection.features)
+                                            .enter().append("path")
+                                            .on('click', function (d) {
+                                                var hash = d.properties.name,
+                                                    scope = viz.attrs.scope;
+                                                if (scope &amp;&amp; scope.$location) {
+                                                    scope.$location.hash(lux.slugify(hash));
+                                                    scope.$apply();
+                                                }
+                                            }),
+                            text = layer.element.selectAll("text")
+                                        .data(collection.features)
+                                        .enter()
+                                        .append("svg:text")
+                                        .text(function (d) {
+                                            return d.properties.name;
+                                        })
+                                        .attr("text-anchor","middle")
+                                        .attr('font-size','6pt');
+                        layer.draw();
+
+                        function onDraw (svgLayer) {
+                            feature.attr("d", svgLayer.path);
+                            text.attr("x", function(d) {
+                                return layer.path.centroid(d)[0];
+                            }).attr("y", function(d) {
+                                return layer.path.centroid(d)[1];
+                            });
+                        }
+                    });
+                });
+            }
+        });
+    }
+};
+</code></pre>
+</div>
+</div>
+</div>
+</div>
 <script>
     gexamples.leaflet1 = {
 
@@ -121,76 +195,13 @@ var require = {"minify": true, "baseUrl": "http://giottojs.org/media/", "deps": 
     };
 
 </script>
-
-<p>Javascript code:</p>
-<pre><code>gexamples.leaflet1 = {
-
-    tile: 'leaflet',
-
-    center: [32, 103.14],
-
-    wheelZoom: false,
-
-    onInit: function (viz) {
-        var http = 'http://{s}.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={token}',
-            MB_ATTR = 'Map data &amp;copy; &lt;a href="http://openstreetmap.org"&gt;OpenStreetMap&lt;/a&gt; contributors, ' +
-                      '&lt;a href="http://creativecommons.org/licenses/by-sa/2.0/"&gt;CC-BY-SA&lt;/a&gt;, ' +
-                      'Imagery © &lt;a href="http://mapbox.com"&gt;Mapbox&lt;/a&gt;',
-            opts = viz.options();
-
-        viz.on('tick.main', function () {
-            //
-            // Add layer to the map
-            viz.stop().addLayer(http, {
-                attribution: MB_ATTR,
-                id: 'lsbardel.jlpfdli1',
-                token: 'pk.eyJ1IjoibHNiYXJkZWwiLCJhIjoidHltTnFxRSJ9.Mx5To8eaHJjq8OS6usKV8g'
-            });
-
-            if (opts.src) {
-
-                g.require(['topojson'], function (topojson) {
-
-                    d3.json(opts.src, function(topology) {
-                        var collection = topojson.feature(topology, topology.objects.china_adm1),
-                            layer = viz.addLayer(collection, onDraw),
-                            feature = layer.element.attr("class", "china-wine").selectAll("path")
-                                            .data(collection.features)
-                                            .enter().append("path")
-                                            .on('click', function (d) {
-                                                var hash = d.properties.name,
-                                                    scope = viz.attrs.scope;
-                                                if (scope &amp;&amp; scope.$location) {
-                                                    scope.$location.hash(lux.slugify(hash));
-                                                    scope.$apply();
-                                                }
-                                            }),
-                            text = layer.element.selectAll("text")
-                                        .data(collection.features)
-                                        .enter()
-                                        .append("svg:text")
-                                        .text(function (d) {
-                                            return d.properties.name;
-                                        })
-                                        .attr("text-anchor","middle")
-                                        .attr('font-size','6pt');
-                        layer.draw();
-
-                        function onDraw (svgLayer) {
-                            feature.attr("d", svgLayer.path);
-                            text.attr("x", function(d) {
-                                return layer.path.centroid(d)[0];
-                            }).attr("y", function(d) {
-                                return layer.path.centroid(d)[1];
-                            });
-                        }
-                    });
-                });
-            }
-        });
-    }
-};
-</code></pre>
+<div id="footer">
+<div class="container">
+<div class="row">
+<div class="col-sm-12 small">
+<p>Library released under the <a href="http://opensource.org/licenses/BSD-3-Clause">BSD License</a>.</p>
+<p>Copyright 2014 <a href="http://lucasbardella.com">Luca Sbardella</a> and <a href="http://quantmind.com">Quantmind</a></p>
+</div>
 </div>
 </div>
 </div>

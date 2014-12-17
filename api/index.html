@@ -22,7 +22,7 @@
 <link href='http://giottojs.org/media/giotto/giotto.min.css' rel='stylesheet' type='text/css'>
 <link href='http://giottojs.org/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var lux = {context: {"ngModules": ["highlight", "lux.google"], "name": "Lux", "navbar": {"collapseWidth": 768}, "html5mode": true, "apiUrls": {}, "lux_version": "0.1.2-alpha.1", "url": "http://giottojs.org", "brand": "Lux", "oauths": null, "media": "/media", "python_version": "3.4.2", "dateFormat": "d MMM y", "google": {"analytics": {"id": "UA-54439804-4", "ga": "ga"}}, "datetimeFormat": "d MMM y, h:mm:ss a", "year": 2014, "date": "2014-12-17T17-11-39", "page": {"modified": "2014-12-17T16:20:04", "html_url": "http://giottojs.org/api/", "slug": "api/index", "name": "api_index", "title": "GiottoJS API", "content_type": "text/html", "image": "http://giottojs.org/media/giottoweb/giotto.png", "api_url": "http://giottojs.org/ng/site/api/index.json"}}};
+var lux = {context: {"python_version": "3.4.2", "ngModules": ["lux.google", "highlight"], "year": 2014, "google": {"analytics": {"ga": "ga", "id": "UA-54439804-4"}}, "navbar": {"collapseWidth": 768}, "datetimeFormat": "d MMM y, h:mm:ss a", "brand": "Lux", "oauths": null, "apiUrls": {}, "name": "Lux", "url": "http://giottojs.org", "dateFormat": "d MMM y", "html5mode": true, "media": "/media", "lux_version": "0.1.2-alpha.1", "page": {"content_type": "text/html", "name": "api_index", "modified": "2014-12-17T20:35:32", "slug": "api/index", "title": "GiottoJS API", "api_url": "http://giottojs.org/ng/site/api/index.json", "html_url": "http://giottojs.org/api/", "image": "http://giottojs.org/media/giottoweb/giotto.png"}, "date": "2014-12-17T20-39-07"}};
 </script>
 <script type='text/javascript'>
 lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
@@ -30,7 +30,7 @@ lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback
 var gexamples = {};
 </script>
 <script type="text/javascript">
-var require = {"minify": true, "baseUrl": "http://giottojs.org/media/", "deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"], "paths": {}, "waitSeconds": 200};
+var require = {"deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"], "paths": {}, "minify": true, "waitSeconds": 200, "baseUrl": "http://giottojs.org/media/"};
 </script>
 <script src='http://quantmind.github.io/require-config-js/require.config.min.js' type='application/javascript'></script>
 <script src='//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js' type='application/javascript'></script>
@@ -46,6 +46,7 @@ var require = {"minify": true, "baseUrl": "http://giottojs.org/media/", "deps": 
 </script></head>
 <body data-ng-controller='Page' data-ng-model='page' data-page=''>
 <navbar data-options="lux.context.navbar"></navbar>
+<div id="page-main">
 <div class="container">
 <div class="row">
 <div class="col-sm-12">
@@ -55,7 +56,7 @@ var require = {"minify": true, "baseUrl": "http://giottojs.org/media/", "deps": 
 <div data-highlight>
 <p>Everything in <code>giotto</code> is scoped under the <code>d3.giotto</code> namespace.</p>
 <p>Giotto uses semantic versioning.
-You can find the current version of Giotto as d3.giotto.version.</p>
+You can find the current version of Giotto as <code>d3.giotto.version</code>.</p>
 <ul>
 <li><a href="/api/paper">Paper API</a></li>
 <li><a href="/api/group">Group API</a></li>
@@ -67,5 +68,15 @@ You can find the current version of Giotto as d3.giotto.version.</p>
 </div>
 </div>
 </div>
-</body>
+</div>
+<div id="footer">
+<div class="container">
+<div class="row">
+<div class="col-sm-12 small">
+<p>Library released under the <a href="http://opensource.org/licenses/BSD-3-Clause">BSD License</a>.</p>
+<p>Copyright 2014 <a href="http://lucasbardella.com">Luca Sbardella</a> and <a href="http://quantmind.com">Quantmind</a></p>
+</div>
+</div>
+</div>
+</div></body>
 </html>

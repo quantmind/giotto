@@ -5,22 +5,22 @@
 <meta charset='utf-8'>
 <meta content='IE=edge' http-equiv='X-UA-Compatible'>
 <meta content='width=device-width, initial-scale=1' name='viewport'>
-<meta content='GiottoJS is a javascript visualization library built on top of d3js. It is designed to visualize both SVG and Canvas elements with a simple API. AngularJS integration' name='description'>
+<meta content='A list of GiottoJS examples' name='description'>
 <meta content='website' property='og:type'>
 <meta content='http://giottojs.org/examples/barchart' property='og:url'>
 <meta content='Simple Bar Chart' property='og:title'>
-<meta content='GiottoJS is a javascript visualization library built on top of d3js. It is designed to visualize both SVG and Canvas elements with a simple API. AngularJS integration' property='og:description'>
+<meta content='A list of GiottoJS examples' property='og:description'>
 <meta content='summary_large_image' name='twitter:card'>
 <meta content='@quantmind' name='twitter:site'>
 <meta content='Simple Bar Chart' name='twitter:title'>
-<meta content='GiottoJS is a javascript visualization library built on top of d3js. It is designed to visualize both SVG and Canvas elements with a simple API. AngularJS integration' name='twitter:description'>
+<meta content='A list of GiottoJS examples' name='twitter:description'>
 <link href='http://giottojs.org/media/giottoweb/favicon.ico' rel='icon' type='image/x-icon'>
 <link href='//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css' rel='stylesheet' type='text/css'>
 <link href='//netdna.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css' rel='stylesheet' type='text/css'>
 <link href='http://giottojs.org/media/giotto/giotto.min.css' rel='stylesheet' type='text/css'>
 <link href='http://giottojs.org/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var lux = {context: {"ngModules": ["highlight", "lux.google", "lux.blog"], "name": "Lux", "navbar": {"collapseWidth": 768}, "html5mode": true, "apiUrls": {}, "lux_version": "0.1.2-alpha.1", "url": "http://giottojs.org", "brand": "Lux", "oauths": null, "media": "/media", "python_version": "3.4.2", "dateFormat": "d MMM y", "google": {"analytics": {"id": "UA-54439804-4", "ga": "ga"}}, "datetimeFormat": "d MMM y, h:mm:ss a", "year": 2014, "date": "2014-12-17T17-11-39", "page": {"modified": "2014-12-04T17:29:01", "html_url": "http://giottojs.org/examples/barchart", "slug": "barchart", "name": "barchart", "title": "Simple Bar Chart", "content_type": "text/html", "api_url": "http://giottojs.org/ng/examples/barchart.json"}}};
+var lux = {context: {"python_version": "3.4.2", "ngModules": ["lux.google", "lux.blog", "highlight"], "year": 2014, "google": {"analytics": {"ga": "ga", "id": "UA-54439804-4"}}, "navbar": {"collapseWidth": 768}, "datetimeFormat": "d MMM y, h:mm:ss a", "brand": "Lux", "oauths": null, "apiUrls": {}, "name": "Lux", "url": "http://giottojs.org", "dateFormat": "d MMM y", "html5mode": true, "media": "/media", "lux_version": "0.1.2-alpha.1", "page": {"content_type": "text/html", "name": "barchart", "modified": "2014-12-04T17:29:01", "title": "Simple Bar Chart", "slug": "barchart", "description": "A list of GiottoJS examples", "html_url": "http://giottojs.org/examples/barchart", "api_url": "http://giottojs.org/ng/examples/barchart.json"}, "date": "2014-12-17T20-39-07"}};
 </script>
 <script type='text/javascript'>
 lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
@@ -28,7 +28,7 @@ lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback
 var gexamples = {};
 </script>
 <script type="text/javascript">
-var require = {"minify": true, "baseUrl": "http://giottojs.org/media/", "deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"], "paths": {}, "waitSeconds": 200};
+var require = {"deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"], "paths": {}, "minify": true, "waitSeconds": 200, "baseUrl": "http://giottojs.org/media/"};
 </script>
 <script src='http://quantmind.github.io/require-config-js/require.config.min.js' type='application/javascript'></script>
 <script src='//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js' type='application/javascript'></script>
@@ -44,17 +44,55 @@ var require = {"minify": true, "baseUrl": "http://giottojs.org/media/", "deps": 
 </script></head>
 <body data-ng-controller='Page' data-ng-model='page' data-page=''>
 <navbar data-options="lux.context.navbar"></navbar>
+<div id="page-main">
 <div class="container">
 <div class="row">
 <div class="col-sm-12" data-highlight>
 <div class="page-header">
 <h2>Simple Bar Chart</h2>
 </div>
-
-<div style="width: 100px" class="center-block"><lux-form data-options='luxforms.typeform_quS3y'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.typeform_quS3y = {"children": [{"children": [{"field": {"required": true, "type": "select", "value": "svg", "name": "type", "options": ["svg", "canvas"]}}], "field": {"type": "fieldset"}}], "field": {"showLabels": false, "model": "TypeForm", "type": "form", "id": "typeform_quS3y"}};</script></lux-form></div>
+<div style="width: 100px" class="center-block"><lux-form data-options='luxforms.typeform_5yhPW'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.typeform_5yhPW = {"field": {"model": "TypeForm", "showLabels": false, "type": "form", "id": "typeform_5yhPW"}, "children": [{"field": {"type": "fieldset"}, "children": [{"field": {"value": "svg", "options": ["svg", "canvas"], "name": "type", "required": true, "type": "select"}}]}]};</script></lux-form></div>
 
 <div data-options='gexamples.barchart' style='max-width: 500px' class="center-block" giotto-chart></div>
+<h3>Javascript code</h3>
+<pre><code>gexamples.barchart = {
+    height: '80%',
 
+    line: {show: true},
+
+    bar: {show: true},
+
+    data: function (chart) {
+        var X = d3.range(-5, 5, 0.5);
+
+        return [chart.xyfunction(X, function (x) {
+                    return 1/(1+Math.exp(-x)) - 0.5;
+                })];
+    },
+
+    // Callback for angular directive
+    angular: function (chart, opts) {
+
+        function update (form) {
+            if (form.type) {
+                opts.type = form.type;
+                chart.resume();
+            }
+        }
+
+        opts.scope.$on('formReady', function (e, form) {
+            update(form);
+        });
+        opts.scope.$on('formFieldChange', function (e, form) {
+            update(form);
+        });
+    }
+};
+</code></pre>
+</div>
+</div>
+</div>
+</div>
 <script>
 
     gexamples.barchart = {
@@ -91,42 +129,13 @@ var require = {"minify": true, "baseUrl": "http://giottojs.org/media/", "deps": 
         }
     };
 </script>
-
-<p>Javascript code:</p>
-<pre><code>gexamples.barchart = {
-    height: '80%',
-
-    line: {show: true},
-
-    bar: {show: true},
-
-    data: function (chart) {
-        var X = d3.range(-5, 5, 0.5);
-
-        return [chart.xyfunction(X, function (x) {
-                    return 1/(1+Math.exp(-x)) - 0.5;
-                })];
-    },
-
-    // Callback for angular directive
-    angular: function (chart, opts) {
-
-        function update (form) {
-            if (form.type) {
-                opts.type = form.type;
-                chart.resume();
-            }
-        }
-
-        opts.scope.$on('formReady', function (e, form) {
-            update(form);
-        });
-        opts.scope.$on('formFieldChange', function (e, form) {
-            update(form);
-        });
-    }
-};
-</code></pre>
+<div id="footer">
+<div class="container">
+<div class="row">
+<div class="col-sm-12 small">
+<p>Library released under the <a href="http://opensource.org/licenses/BSD-3-Clause">BSD License</a>.</p>
+<p>Copyright 2014 <a href="http://lucasbardella.com">Luca Sbardella</a> and <a href="http://quantmind.com">Quantmind</a></p>
+</div>
 </div>
 </div>
 </div>

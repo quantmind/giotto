@@ -22,7 +22,7 @@
 <link href='http://giottojs.org/media/giotto/giotto.min.css' rel='stylesheet' type='text/css'>
 <link href='http://giottojs.org/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var lux = {context: {"ngModules": ["highlight", "lux.google", "lux.blog"], "name": "Lux", "navbar": {"collapseWidth": 768}, "html5mode": true, "apiUrls": {}, "lux_version": "0.1.2-alpha.1", "url": "http://giottojs.org", "brand": "Lux", "oauths": null, "media": "/media", "python_version": "3.4.2", "dateFormat": "d MMM y", "google": {"analytics": {"id": "UA-54439804-4", "ga": "ga"}}, "datetimeFormat": "d MMM y, h:mm:ss a", "year": 2014, "date": "2014-12-17T17-11-39", "page": {"modified": "2014-12-17T13:01:49", "html_url": "http://giottojs.org/examples/linetypes", "slug": "linetypes", "name": "linetypes", "date": "2014-12-14T00:00:00", "title": "Lines and Symbols", "content_type": "text/html", "description": "A ranthrough of all the options available when plotting lines and points on a chart. Both SVG and Canavs supported.", "image": "http://giottojs.org/examples/linetypes.png", "api_url": "http://giottojs.org/ng/examples/linetypes.json"}}};
+var lux = {context: {"python_version": "3.4.2", "ngModules": ["lux.google", "lux.blog", "highlight"], "year": 2014, "google": {"analytics": {"ga": "ga", "id": "UA-54439804-4"}}, "navbar": {"collapseWidth": 768}, "datetimeFormat": "d MMM y, h:mm:ss a", "brand": "Lux", "oauths": null, "apiUrls": {}, "name": "Lux", "url": "http://giottojs.org", "dateFormat": "d MMM y", "html5mode": true, "media": "/media", "lux_version": "0.1.2-alpha.1", "page": {"content_type": "text/html", "name": "linetypes", "date": "2014-12-14T00:00:00", "modified": "2014-12-17T13:01:49", "slug": "linetypes", "title": "Lines and Symbols", "api_url": "http://giottojs.org/ng/examples/linetypes.json", "description": "A ranthrough of all the options available when plotting lines and points on a chart. Both SVG and Canavs supported.", "html_url": "http://giottojs.org/examples/linetypes", "image": "http://giottojs.org/examples/linetypes.png"}, "date": "2014-12-17T20-39-07"}};
 </script>
 <script type='text/javascript'>
 lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
@@ -30,7 +30,7 @@ lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback
 var gexamples = {};
 </script>
 <script type="text/javascript">
-var require = {"minify": true, "baseUrl": "http://giottojs.org/media/", "deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"], "paths": {}, "waitSeconds": 200};
+var require = {"deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"], "paths": {}, "minify": true, "waitSeconds": 200, "baseUrl": "http://giottojs.org/media/"};
 </script>
 <script src='http://quantmind.github.io/require-config-js/require.config.min.js' type='application/javascript'></script>
 <script src='//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js' type='application/javascript'></script>
@@ -46,24 +46,95 @@ var require = {"minify": true, "baseUrl": "http://giottojs.org/media/", "deps": 
 </script></head>
 <body data-ng-controller='Page' data-ng-model='page' data-page=''>
 <navbar data-options="lux.context.navbar"></navbar>
+<div id="page-main">
 <div class="container">
 <div class="row">
 <div class="col-sm-12" data-highlight>
 <div class="page-header">
 <h2>Lines and Symbols</h2>
 </div>
-
 <div class="container-fluid">
   <div class="row">
     <div class="col-sm-10">
       <div data-options='gexamples.linetypes' style='max-width: 700px' class="center-block" giotto-chart></div>
     </div>
     <div class="col-sm-2 small">
-      <lux-form data-options='luxforms.linetypeform_rRcFP'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.linetypeform_rRcFP = {"children": [{"children": [{"field": {"required": true, "type": "select", "value": "svg", "name": "type", "options": ["svg", "canvas"]}}, {"field": {"required": true, "type": "select", "value": "linear", "name": "interpolate", "options": ["linear", "linear-closed", "step", "step-before", "step-after", "basis", "basis-open", "basis-closed", "bundle", "cardinal", "cardinal-open", "cardinal-closed", "monotone"]}}, {"field": {"required": true, "type": "select", "value": "circle", "name": "symbol", "options": ["circle", "cross", "diamond", "square", "triangle-down", "triangle-up"]}}], "field": {"type": "fieldset"}}], "field": {"showLabels": false, "model": "LineTypeForm", "type": "form", "id": "linetypeform_rRcFP"}};</script></lux-form>
+      <lux-form data-options='luxforms.linetypeform_g4CEJ'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.linetypeform_g4CEJ = {"field": {"model": "LineTypeForm", "showLabels": false, "type": "form", "id": "linetypeform_g4CEJ"}, "children": [{"field": {"type": "fieldset"}, "children": [{"field": {"value": "svg", "options": ["svg", "canvas"], "name": "type", "required": true, "type": "select"}}, {"field": {"value": "linear", "options": ["linear", "linear-closed", "step", "step-before", "step-after", "basis", "basis-open", "basis-closed", "bundle", "cardinal", "cardinal-open", "cardinal-closed", "monotone"], "name": "interpolate", "required": true, "type": "select"}}, {"field": {"value": "circle", "options": ["circle", "cross", "diamond", "square", "triangle-down", "triangle-up"], "name": "symbol", "required": true, "type": "select"}}]}]};</script></lux-form>
     </div>
   </div>
 </div>
+<h3>Javascript code</h3>
+<pre><code>gexamples.linetypes = {
+    height: '70%',
 
+    point: {
+        show: true,
+        lineWidth: 3,
+        fill: '#fff',
+        size: '12px',
+        active: {
+            fill: '#fff',
+            size: 1.5
+        }
+    },
+
+    line: {
+        show: true,
+        lineWidth: 3
+    },
+
+    grid: {
+        show: true,
+        color: '#000'
+    },
+
+    data: function () {
+        return [randomPath(0.2, 0.3)];
+    },
+
+    // Callback for angular directive
+    angular: function (chart, opts) {
+
+        function update (form) {
+            angular.forEach(form, function (value, name) {
+                if (name === 'type')
+                    opts.type = value;
+                else if (name === 'interpolate')
+                    chart.setSerieOption('line', name, value);
+                else
+                    chart.setSerieOption('point', name, value);
+            });
+            chart.resume();
+        }
+
+        opts.scope.$on('formReady', function (e, form) {
+            update(form);
+        });
+        opts.scope.$on('formFieldChange', function (e, form) {
+            update(form);
+        });
+    }
+};
+
+function randomPath (µ, σ) {
+    // Create a random path
+    var t = d3.range(0, 5, 0.5),
+        data = [{x: t[0], y: 1}],
+        norm = d3.random.normal(0, 1),
+        dt, dy;
+
+    for(var i=1; i&lt;t.length; i++) {
+        dt = t[i] - t[i-1];
+        dy = dt*µ + σ*norm()*Math.sqrt(dt);
+        data[i] = {x: t[i], y: data[i-1].y + dy};
+    }
+    return data;
+}
+</code></pre>
+</div>
+</div>
+</div>
+</div>
 <script>
 
     gexamples.linetypes = {
@@ -133,75 +204,13 @@ var require = {"minify": true, "baseUrl": "http://giottojs.org/media/", "deps": 
         return data;
     }
 </script>
-
-<p>Javascript code:</p>
-<pre><code>gexamples.linetypes = {
-    height: '70%',
-
-    point: {
-        show: true,
-        lineWidth: 3,
-        fill: '#fff',
-        size: '12px',
-        active: {
-            fill: '#fff',
-            size: 1.5
-        }
-    },
-
-    line: {
-        show: true,
-        lineWidth: 3
-    },
-
-    grid: {
-        show: true,
-        color: '#000'
-    },
-
-    data: function () {
-        return [randomPath(0.2, 0.3)];
-    },
-
-    // Callback for angular directive
-    angular: function (chart, opts) {
-
-        function update (form) {
-            angular.forEach(form, function (value, name) {
-                if (name === 'type')
-                    opts.type = value;
-                else if (name === 'interpolate')
-                    chart.setSerieOption('line', name, value);
-                else
-                    chart.setSerieOption('point', name, value);
-            });
-            chart.resume();
-        }
-
-        opts.scope.$on('formReady', function (e, form) {
-            update(form);
-        });
-        opts.scope.$on('formFieldChange', function (e, form) {
-            update(form);
-        });
-    }
-};
-
-function randomPath (µ, σ) {
-    // Create a random path
-    var t = d3.range(0, 5, 0.5),
-        data = [{x: t[0], y: 1}],
-        norm = d3.random.normal(0, 1),
-        dt, dy;
-
-    for(var i=1; i&lt;t.length; i++) {
-        dt = t[i] - t[i-1];
-        dy = dt*µ + σ*norm()*Math.sqrt(dt);
-        data[i] = {x: t[i], y: data[i-1].y + dy};
-    }
-    return data;
-}
-</code></pre>
+<div id="footer">
+<div class="container">
+<div class="row">
+<div class="col-sm-12 small">
+<p>Library released under the <a href="http://opensource.org/licenses/BSD-3-Clause">BSD License</a>.</p>
+<p>Copyright 2014 <a href="http://lucasbardella.com">Luca Sbardella</a> and <a href="http://quantmind.com">Quantmind</a></p>
+</div>
 </div>
 </div>
 </div>
