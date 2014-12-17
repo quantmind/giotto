@@ -1,6 +1,6 @@
 //      Giotto - v0.1.0
 
-//      Compiled 2014-12-11.
+//      Compiled 2014-12-17.
 //      Copyright (c) 2014 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -363,8 +363,8 @@
                 for (var prop in obj) {
                     if (obj.hasOwnProperty(prop)) {
                         if (deep) {
-                            if (_.isObject(obj[prop]))
-                                if (_.isObject(object[prop]))
+                            if (isObject(obj[prop]))
+                                if (isObject(object[prop]))
                                     extend(true, object[prop], obj[prop]);
                                 else
                                     object[prop] = extend(true, {}, obj[prop]);
@@ -382,32 +382,54 @@
     //  =================
     //
     //  Copy values to toObj from fromObj which are missing (undefined) in toObj
-    copyMissing = _.copyMissing = function (fromObj, toObj) {
+    copyMissing = _.copyMissing = function (fromObj, toObj, deep) {
         if (fromObj && toObj) {
+            var v, t;
             for (var prop in fromObj) {
-                if (fromObj.hasOwnProperty(prop) && toObj[prop] === undefined)
-                    toObj[prop] = fromObj[prop];
+                if (fromObj.hasOwnProperty(prop)) {
+                    t = fromObj[prop];
+                    v = toObj[prop];
+                    if (deep && isObject(t) && t !== v) {
+                        if (!isObject(v)) v = {};
+                        copyMissing(t, v, deep);
+                        toObj[prop] = v;
+                    } else if (v === undefined) {
+                        toObj[prop] = t;
+                    }
+                }
             }
         }
         return toObj;
     },
     //
+    getRootAttribute = function (name) {
+        var obj = root,
+            bits= name.split('.');
+
+        for (var i=0; i<bits.length; ++i) {
+            obj = obj[bits[i]];
+            if (!obj) break;
+        }
+        return obj;
+    },
+    //
     //
     // Obtain extra information from javascript objects
     getOptions = function (attrs) {
+        var options;
         if (attrs && typeof attrs.options === 'string') {
-            var obj = root,
-                bits= attrs.options.split('.');
-
-            for (var i=0; i<bits.length; ++i) {
-                obj = obj[bits[i]];
-                if (!obj) break;
-            }
-            if (typeof obj === 'function')
-                obj = obj(g, attrs);
-            attrs = extend(attrs, obj);
+            options = getRootAttribute(attrs.options);
+            if (typeof options === 'function')
+                options = options();
+        } else {
+            options = {};
         }
-        return attrs;
+        if (isObject(options))
+            forEach(attrs, function (value, name) {
+                if (name.substring(0, 1) !== '$' && name !== 'options')
+                    options[name] = value;
+            });
+        return options;
     },
     //
     //
@@ -435,6 +457,15 @@
             return 0;
     },
     //
+    forEach = _.forEach = _.each = function (obj, callback) {
+        if (!obj) return;
+        if (obj.forEach) obj.forEach(callback);
+        for (var key in obj) {
+            if (obj.hasOwnProperty(key))
+                callback(obj[keys], key);
+        }
+    },
+    //
     pick = _.pick = function (obj, callback) {
         var picked = {},
             val;
@@ -447,6 +478,21 @@
         }
         return picked;
     },
+
+    // Extend the initial array with values for other arrays
+    extendArray = _.extendArray = function () {
+        if (!arguments.length) return;
+        var value = arguments[0],
+            push = function (v) {
+                value.push(v);
+            };
+        if (typeof(value.push) === 'function') {
+            for (var i=1; i<arguments.length; ++i)
+                forEach(arguments[i], push);
+        }
+        return value;
+    },
+
     //
     isObject = _.isObject = function (value) {
         return ostring.call(value) === '[object Object]';
@@ -462,6 +508,10 @@
     //
     isArray = _.isArray = function (value) {
         return ostring.call(value) === '[object Array]';
+    },
+    //
+    isNull = _.isNull = function (value) {
+        return value === undefined || value === null;
     },
 
     encodeObject = _.encodeObject = function (obj, contentType) {
@@ -551,6 +601,19 @@
             .replace(/-+/g, '-'); // collapse dashes
 
         return str;
+    },
+
+    fontstrings = ['style', 'variant', 'weight', 'size', 'family'],
+
+    fontString = _.fontString = function (opts) {
+        var bits = [],
+            v;
+        for (var i=0; i<fontstrings.length; ++i) {
+            v = opts[fontstrings[i]];
+            if (v)
+                bits.push(v);
+        }
+        return bits.join(' ');
     };
 
 
@@ -571,7 +634,7 @@
     }
 
     function getParentRectValue (element, key) {
-        var parent = element.node(),
+        var parent = element.node ? element.node() : element,
             r, v;
         while (parent && parent.tagName !== 'BODY') {
             v = parent.getBoundingClientRect()[key];
@@ -583,7 +646,7 @@
     }
 
     function getParentElementRect (element, key) {
-        var parent = element.node(),
+        var parent = element.node ? element.node() : element,
             r, v;
         while (parent && parent.tagName !== 'BODY') {
             v = parent.getBoundingClientRect()[key];
@@ -610,7 +673,7 @@
     //    |   |
     //    +-+-+
     //
-    // Returns an Object {n, s, e, w, nw, sw, ne, se}
+    // Returns an Object {x, y, e, w, nw, sw, ne, se}
     function getScreenBBox (target) {
 
         var bbox = {},
@@ -619,12 +682,10 @@
             point = svg.createSVGPoint(),
             tbbox = target.getBBox(),
             width = tbbox.width,
-            height = tbbox.height,
-            x = tbbox.x,
-            y = tbbox.y;
+            height = tbbox.height;
 
-        point.x = x;
-        point.y = y;
+        point.x = tbbox.x - 0.5*width;
+        point.y = tbbox.y - 0.5*height;
         bbox.nw = point.matrixTransform(matrix);
         point.x += width;
         bbox.ne = point.matrixTransform(matrix);
@@ -632,12 +693,12 @@
         bbox.se = point.matrixTransform(matrix);
         point.x -= width;
         bbox.sw = point.matrixTransform(matrix);
-        point.y -= height / 2;
+        point.y -= 0.5*height;
         bbox.w = point.matrixTransform(matrix);
         point.x += width;
         bbox.e = point.matrixTransform(matrix);
-        point.x -= width / 2;
-        point.y -= height / 2;
+        point.x -= 0.5*width;
+        point.y -= 0.5*height;
         bbox.n = point.matrixTransform(matrix);
         point.y += height;
         bbox.s = point.matrixTransform(matrix);
@@ -1262,1240 +1323,6 @@
         return sobol;
     };
 
-    g.defaults = {};
-
-    g.defaults.axis = {
-        color: '#000',
-        tickSize: 0.05,
-        minTickSize: null,
-        min: null,
-        max: null
-    };
-
-    g.defaults.paper = {
-        type: 'svg',
-        resizeDelay: 200,
-        resize: true,
-        margin: {top: 20, right: 20, bottom: 20, left: 20},
-        xaxis: extend({position: 'bottom'}, g.defaults.axis),
-        yaxis: extend({position: 'left'}, g.defaults.axis),
-        yaxis2: extend({position: 'right'}, g.defaults.axis),
-        colors: d3.scale.category10().range(),
-        css: null,
-        activeEvents: ["mousemove", "touchstart", "touchmove", "mouseout"],
-        line: {
-            interpolate: 'cardinal',
-            fill: 'none',
-            fillOpacity: 1,
-            colorOpacity: 1,
-            lineWidth: 2,
-            active: {
-                color: 'darker',
-                // Multiplier for lineWidth, set to 1 for no change
-                lineWidth: 1
-            }
-        },
-        point: {
-            symbol: 'circle',
-            size: '8px',
-            fill: true,
-            fillOpacity: 1,
-            colorOpacity: 1,
-            lineWidth: 2,
-            active: {
-                fill: 'darker',
-                color: 'brighter',
-                // Multiplier for size, set to 1 for no change
-                size: 1.5
-            }
-        },
-        bar: {
-            width: 'auto',
-            color: null,
-            fill: true,
-            fillOpacity: 1,
-            colorOpacity: 1,
-            lineWidth: 2,
-            // Radius in pixels of rounded corners. Set to 0 for no rounded corners
-            radius: 4,
-            active: {
-                fill: 'darker',
-                color: 'brighter'
-            }
-        },
-        pie: {
-            lineWidth: 1,
-            // pad angle in degrees
-            padAngle: 0,
-            cornerRadius: 0,
-            fillOpacity: 0.7,
-            colorOpacity: 1,
-            innerRadius: 0,
-            active: {
-                fill: 'darker',
-                color: 'brighter'
-            }
-        },
-        font: {
-            size: 11,
-            weight: 'bold',
-            lineHeight: 13,
-            style: "italic",
-            family: "sans-serif",
-            variant: "small-caps"
-        }
-    };
-
-    g.defaults.viz = extend({
-        //
-        // Optional callback after initialisation
-        onInit: null,
-        //
-        // Default events dispatched by the visualization
-        events: ['build', 'change', 'start', 'tick', 'end'],
-    });
-
-    g.constants = {
-        DEFAULT_VIZ_GROUP: 'default_viz_group',
-        WIDTH: 400,
-        HEIGHT: 300,
-        leaflet: 'http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css'
-    };
-    var _idCounter = 0;
-    //
-    // Create a new paper for drawing stuff
-    g.paper = function (element, p) {
-
-        var paper = {},
-            uid = ++_idCounter,
-            color;
-
-        if (isObject(element)) {
-            p = element;
-            element = null;
-        }
-        if (!element)
-            element = document.createElement('div');
-
-        element = d3.select(element);
-
-        p = _newPaperAttr(element, p);
-
-        // paper type
-        paper.type = function () {
-            return p.type;
-        };
-
-        paper.uid = function () {
-            return uid;
-        };
-
-        // paper size, [width, height] in pixels
-        paper.width = function () {
-            return p.size[0];
-        };
-
-        paper.height = function () {
-            return p.size[1];
-        };
-
-        paper.innerWidth = function () {
-            return p.size[0] - p.margin.left - p.margin.right;
-        };
-
-        paper.innerHeight = function () {
-            return p.size[1] - p.margin.top - p.margin.bottom;
-        };
-
-        paper.size = function () {
-            return [paper.width(), paper.height()];
-        };
-
-        paper.aspectRatio = function () {
-            return paper.innerHeight()/paper.innerWidth();
-        };
-
-        paper.element = function () {
-            return element;
-        };
-
-        // returns the number of the y-axis currently selected
-        paper.yaxis = function (x) {
-            if (!arguments.length) return p.yaxisNumber;
-            if (x === 1 || x === 2)
-                p.yaxisNumber = x;
-            return paper;
-        };
-
-        paper.xAxis = function (x) {
-            return p.xAxis;
-        };
-
-        paper.yAxis = function () {
-            return p.yAxis[p.yaxisNumber-1];
-        };
-
-        paper.scale = function (r) {
-            var s = p.xAxis.scale();
-            return Math.max(0, s(r) - s(0));
-        };
-
-        paper.scalex = function (x) {
-            return p.xAxis.scale()(x);
-        };
-
-        paper.scaley = function (y) {
-            return paper.yAxis().scale()(y);
-        };
-
-        paper.xfromPX = function (px) {
-            return p.xAxis.scale().invert(px);
-        };
-
-        paper.yfromPX = function (px) {
-            return paper.yAxis().scale().invert(px);
-        };
-
-        // Resize the paper and fire the resize event if resizing was performed
-        paper.resize = function (size) {
-            p._resizing = true;
-            if (!size) {
-                size = paper.boundingBox();
-            }
-            if (p.size[0] !== size[0] || p.size[1] !== size[1]) {
-                g.log.info('Resizing paper');
-                paper.refresh(size);
-            }
-            p._resizing = false;
-        };
-
-        // dimension in the input domain from a 0 <= x <= 1
-        // assume a continuous domain
-        // TODO allow for multiple domain points
-        paper.dim = function (x) {
-            var v = +x;
-            // assume input is in pixels
-            if (isNaN(v))
-                return paper.xfromPX(x.substring(0, x.length-2));
-            // otherwise assume it is a value between 0 and 1 defined as percentage of the x axis length
-            else {
-                var d = paper.xAxis().scale().domain();
-                return v*(d[d.length-1] - d[0]);
-            }
-        };
-
-        // x coordinate in the input domain
-        paper.x = function (u) {
-            var d = paper.xAxis().scale().domain();
-            return u*(d[d.length-1] - d[0]) + d[0];
-        };
-
-        // y coordinate in the input domain
-        paper.y = function (u) {
-            var d = paper.yAxis().scale().domain();
-            return u*(d[d.length-1] - d[0]) + d[0];
-        };
-
-        paper.boundingBox = function () {
-            var w = p.elwidth ? getWidth(p.elwidth) : p.size[0],
-                h;
-            if (p.height_percentage)
-                h = d3.round(w*p.height_percentage, 0);
-            else
-                h = p.elheight ? getHeight(p.elheight) : p.size[1];
-            return [w, h];
-        };
-
-        // pick a unique color, never picked before
-        paper.pickColor = function (index, darker) {
-            if (arguments.length === 0) index = color++;
-            var dk = 1,
-                k = 0;
-            while (index >= p.colors.length) {
-                index -= p.colors.length;
-                k += dk;
-            }
-            var c = p.colors[index];
-            if (darker)
-                c = d3.rgb(c).darker(darker);
-            if (k)
-                c = d3.rgb(c).brighter(k);
-            return c;
-        };
-
-        paper.clear = function () {
-            color = 0;
-            return paper;
-        };
-
-        // Access internal options
-        paper.options = function () {
-            return p;
-        };
-
-        // Auto resize the paper
-        if (p.resize) {
-            //
-            d3.select(window).on('resize.paper', function () {
-                if (!p._resizing) {
-                    if (p.resizeDelay) {
-                        p._resizing = true;
-                        d3.timer(function () {
-                            paper.resize();
-                            return true;
-                        }, p.resizeDelay);
-                    } else {
-                        paper.resize();
-                    }
-                }
-            });
-        }
-
-        return _initPaper(paper, p);
-    };
-
-    //
-    //  Paper can be svg or canvas
-    //  This function create a paper type with support for plugins
-    g.paper.addType = function (type, constructor) {
-        var plugins = [];
-
-        g.paper[type] = function (paper, opts) {
-            constructor(paper, opts);
-
-            // Inject plugins
-            for (var i=0; i < plugins.length; ++i)
-                plugins[i](paper, opts);
-
-            return paper;
-        };
-
-        g.paper[type].plugin = function (name, defaults, plugin) {
-            g.defaults.paper[name] = defaults;
-            plugins.push(plugin);
-        };
-
-    };
-
-
-    g.paper.addType('html', function (paper, p) {
-        clear = paper.clear;
-
-        paper.clear = function () {
-            paper.element().selectAll('*').remove();
-            return clear();
-        };
-
-    });
-
-    //
-    //  SVG Paper
-    //  ================
-    //
-    g.paper.addType('svg', function (paper, p) {
-        var svg = paper.element().append('svg')
-                        .attr('class', 'giotto')
-                        .attr('id', 'giotto-paper-' + paper.uid())
-                        .attr('width', p.size[0])
-                        .attr('height', p.size[1])
-                        .attr("viewBox", "0 0 " + p.size[0] + " " + p.size[1]),
-            clear = paper.clear,
-            events = d3.dispatch('activein', 'activeout'),
-            components,
-            componentMap,
-            cidCounter,
-            current;
-
-        paper.destroy = function () {
-            svg = current = null;
-            paper.element().selectAll('*').remove();
-            return paper;
-        };
-
-        paper.refresh = function (size) {
-            if (size) {
-                p.size = size;
-                svg.attr('width', p.size[0])
-                   .attr('height', p.size[1]);
-            }
-            return paper;
-        };
-
-        //  Render the paper by executing all components
-        //  If a component id is provided, render only the matching
-        //  component
-        paper.render = function (cid) {
-            if (!arguments.length)
-                components.forEach(function (callback) {
-                    callback();
-                });
-            else if (componentMap[cid])
-                componentMap[cid]();
-        };
-
-        paper.clear = function () {
-            components = [];
-            componentMap = {};
-            cidCounter = 0;
-            svg.selectAll('*').remove();
-            current = svg.append('g')
-                        .attr("transform", "translate(" + p.margin.left + "," + p.margin.top + ")")
-                        .attr('class', 'paper');
-            return clear();
-        };
-
-        // return the current svg element
-        paper.current = function () {
-            return current;
-        };
-
-        // set the current element to be the root svg element and returns the paper
-        paper.root = function () {
-            current = svg.select('g.paper');
-            return paper;
-        };
-
-        // set the current element to be the parent and returns the paper
-        paper.parent = function () {
-            var node = current.node().parentNode;
-            if (node !== svg.node())
-                current = d3.select(node);
-            return paper;
-        };
-
-        paper.on = function (event, callback) {
-            if (events[event])
-                events.on(event, function (elem) {
-                    callback.call(elem, this);
-                });
-            else
-                current.on(event, function (e) {
-                    callback.call(this, e);
-                });
-            return paper;
-        };
-
-        paper.data = function (el) {
-            return _.isFunction(el.data) ? el.data() : el.__data__;
-        };
-
-        paper.group = function (attr) {
-            current = current.append('g');
-            if (attr)
-                current.attr(attr);
-            return current;
-        };
-
-        paper.circle = function (cx, cy, r) {
-            cx = paper.scalex(cx);
-            cy = paper.scaley(cy);
-            r = paper.scale(r);
-            return current.append('circle')
-                            .attr('cx', cx)
-                            .attr('cy', cy)
-                            .attr('r', r);
-        };
-
-        paper.rect = function (x, y, width, height, r) {
-            var X = paper.scalex(x),
-                Y = paper.scaley(y);
-            width = paper.scalex(x+width) - X;
-            height = paper.scalex(y+height) - Y;
-            var rect = current.append('rect')
-                                .attr('x', X)
-                                .attr('y', Y)
-                                .attr('width', width)
-                                .attr('height', height);
-            if (r) {
-                var rx = paper.scalex(r) - paper.scalex(0),
-                    ry = paper.scaley(r) - paper.scaley(0);
-                rect.attr('rx', rx).attr('ry', rt);
-            }
-            return rect;
-        };
-
-        // Draw a path or an area, data must be an xy array [[x1,y1], [x2, y2], ...]
-        paper.path = function (data, opts) {
-            opts || (opts = {});
-            data = data.slice();  // copy
-            chartColors(paper, copyMissing(p.line, opts));
-
-            var container = current,
-                scalex = paper.scalex,
-                scaley = paper.scaley,
-                dline = paperData(paper, opts, {}).reset();
-
-            data.paper = dline;
-
-            dline.draw = function (selection) {
-                return selection
-                    .attr('stroke', dline.color)
-                    .attr('stroke-opacity', dline.colorOpacity)
-                    .attr('stroke-width', dline.lineWidth);
-            };
-
-            return paper.addComponent(dline, function () {
-
-                var chart = container.select("path.line"),
-                    line = opts.area ? d3.svg.area() : d3.svg.line();
-
-                line.interpolate(opts.interpolate)
-                    .x(function(d) {return scalex(d.x);})
-                    .y(function(d) {return scaley(d.y);});
-
-                if (!chart.node())
-                    chart = container.append('path')
-                                        .attr('class', 'line');
-
-                dline.draw(chart
-                            .classed('area', opts.area)
-                            .datum(data)
-                            .attr('d', line));
-
-                _events(chart);
-            });
-        };
-
-        // Draw points
-        // Data is an array of {x: value, y: value} objects
-        paper.points = function (data, opts) {
-            opts || (opts = {});
-            data = data.slice();  // copy
-            chartColors(paper, copyMissing(p.point, opts));
-
-            var size = paper.scale(paper.dim(opts.size)),
-                scalex = paper.scalex,
-                scaley = paper.scaley,
-                symbol = d3.svg.symbol().type(function (d) {return d.symbol;})
-                                        .size(function (d) {return d.size();}),
-                container = current,
-                d;
-
-            function draw (selection) {
-                return _draw(selection).attr('d', symbol);
-            }
-
-            for (var i=0; i<data.length; i++) {
-                d = paperData(paper, opts, {values: data[i]});
-                d.set('size', size);
-                d.draw = draw;
-                data[i] = d.reset();
-            }
-
-            return paper.addComponent(data, function () {
-                var chart = container.select("g.points");
-
-                if (!chart.node())
-                    chart = container.append("g")
-                                    .attr('class', 'points');
-
-                chart.selectAll("path.point").remove();
-
-                _events(draw(chart.selectAll("path.point")
-                                .data(data)
-                                .enter()
-                                .append("path")
-                                .attr('class', 'point')
-                                .attr("transform", function(d) {
-                                    return "translate(" + scalex(d.values.x) + "," + scaley(d.values.y) + ")";
-                                })));
-            });
-        };
-
-        // Draw a barchart
-        paper.barchart = function (data, opts) {
-            opts || (opts = {});
-            data = data.slice();  // copy
-            chartColors(paper, copyMissing(p.bar, opts));
-
-            var size = barWidth(paper, data, opts),
-                scalex = paper.scalex,
-                scaley = paper.scaley,
-                container = current,
-                d;
-
-            function draw (selection) {
-                return _draw(selection).attr("width", function (d) {return d.size();});
-            }
-
-            for (var i=0; i<data.length; i++) {
-                d = paperData(paper, opts, {values: data[i]});
-                d.set('size', size);
-                d.draw = draw;
-                data[i] = d.reset();
-            }
-
-            return paper.addComponent(data, function () {
-
-                var zero = scaley(0),
-                    chart = container.select('g.barchart'),
-                    bar;
-
-                if (!chart.node())
-                    chart = container.append("g")
-                                .attr('class', 'barchart');
-
-                bar = draw(chart
-                        .selectAll(".bar")
-                        .data(data)
-                        .enter().append("rect")
-                        .attr('class', 'bar')
-                        .attr("x", function(d) {
-                            return scalex(d.values.x) - 0.5*d.size();
-                        })
-                        .attr("y", function(d) {return d.values.y < 0 ? zero : scaley(d.values.y); })
-                        .attr("height", function(d) {
-                            return d.values.y < 0 ? scaley(d.values.y) - zero : zero - scaley(d.values.y);
-                        }));
-
-                if (opts.radius > 0)
-                    bar.attr('rx', opts.radius).attr('ry', opts.radius);
-
-                _events(bar);
-            });
-        };
-
-        paper.pie = function (data, opts) {
-            opts || (opts = {});
-            data = data.slice();  // copy
-            copyMissing(p.pie, opts);
-            var container = current,
-                d, dd;
-
-            for (var i=0; i<data.length; i++) {
-                d = pieData(paper, opts, data[i]);
-                d.draw = _draw;
-                data[i] = d.reset();
-            }
-
-            return paper.addComponent(data, function () {
-
-                var scalex = paper.scalex,
-                    scaley = paper.scaley,
-                    width = paper.innerWidth(),
-                    height = paper.innerHeight(),
-                    radius = 0.5*Math.min(width, height),
-                    innerRadius = opts.innerRadius*radius,
-                    cornerRadius = paper.scale(paper.dim(opts.cornerRadius)),
-                    chart = container.select('g.pie'),
-                    pie = d3.layout.pie()
-                                    .value(function (d, i) {return d.value;})
-                                    .padAngle(d3_radians*opts.padAngle)(data),
-                    arc = d3.svg.arc()
-                            .cornerRadius(cornerRadius)
-                            .innerRadius(innerRadius)
-                            .outerRadius(radius),
-                    c;
-
-                for (i=0; i<pie.length; i++) {
-                    d = pie[i];
-                    dd = d.data;
-                    delete d.data;
-                    extend(dd, d);
-                    dd.draw = _draw;
-                    pie[i] = dd;
-                }
-
-                if (!chart.node())
-                    chart = container.append("g")
-                                .attr('class', 'pie')
-                                .attr("transform", "translate(" + width/2 + "," + height/2 + ")");
-
-                chart.selectAll(".slice").remove();
-
-                _events(_draw(chart
-                        .selectAll(".slice")
-                        .data(pie)
-                        .enter().append("path")
-                        .attr('class', 'slice')
-                        .attr('d', arc)));
-            });
-        };
-
-        paper.drawXaxis = function () {
-            var opts = p.xaxis,
-                py = opts.position === 'top' ? 0 : paper.innerHeight();
-            return _axis(p.xAxis, 'x-axis', 0, py, opts);
-        };
-
-        paper.drawYaxis = function () {
-            var yaxis = paper.yaxis(),
-                opts = yaxis === 1 ? p.yaxis : p.yaxis2,
-                px = opts.position === 'left' ? 0 : paper.innerWidth();
-            return _axis(paper.yAxis(), 'y-axis-' + yaxis, px, 0, opts);
-        };
-
-        paper.setBackground = function (o, background) {
-            if (_.isObject(background)) {
-                if (background.opacity !== undefined)
-                    o.attr('fill-opacity', background.opacity);
-                background = background.color;
-            }
-            if (_.isString(background))
-                o.attr('fill', background);
-
-            return paper;
-        };
-
-        // Create a gradient element to use by scg elements
-        paper.gradient = function (id, color1, color2) {
-            var svg = d3.select("body").append("svg"),
-                gradient = svg.append('linearGradient')
-                            .attr("x1", "0%")
-                            .attr("x2", "100%")
-                            .attr("y1", "0%")
-                            .attr("y2", "100%")
-                            .attr("id", id)
-                            .attr("gradientUnits", "userSpaceOnUse");
-            gradient
-                .append("stop")
-                .attr("offset", "0")
-                .attr("stop-color", color1);
-
-            gradient
-                .append("stop")
-                .attr("offset", "0.5")
-                .attr("stop-color", color2);
-        };
-
-        paper.encode = function () {
-            return btoa(unescape(encodeURIComponent(
-                svg.attr("version", "1.1")
-                    .attr("xmlns", "http://www.w3.org/2000/svg")
-                    .node().parentNode.innerHTML)));
-        };
-
-        paper.image = function () {
-            return "data:image/svg+xml;charset=utf-8;base64," + paper.encode();
-        };
-
-        paper.downloadSVG = function (e) {
-            var data = paper.image(),
-                target = e ? e.target : document;
-            d3.select(target).attr("href", data);
-        };
-
-        paper.download = paper.downloadSVG;
-
-        // LOW LEVEL FUNCTIONS - MAYBE THEY SHOULD BE PRIVATE?
-
-        // Add a new component to the paper and return the component id
-        paper.addComponent = function (component, callback) {
-            component = paperComponent(component, callback);
-            var cid = ++cidCounter;
-            components.push(component);
-            componentMap[cid] = component;
-            component.cid = cid;
-            return component;
-        };
-
-        paper.removeComponent = function (cid) {
-            if (!cid) return;
-            var callback = componentMap[cid];
-            if (callback) {
-                delete componentMap[cid];
-                var index = components.indexOf(callback);
-                if (index > -1)
-                    return components.splice(index, 1)[0];
-            }
-        };
-
-        // PRIVATE FUNCTIONS
-
-        function _axis(axis, cn, px, py, opts) {
-            var font = opts.font,
-                g = paper.root().current().select('g.' + cn);
-            if (!g.node()) {
-                g = _font(paper.current().append('g')
-                            .attr("class", "axis " + cn)
-                            .attr("transform", "translate(" + px + "," + py + ")")
-                            .attr('stroke', opts.color), opts.font);
-                paper.addComponent(paperData(paper, opts, axis), function () {
-                    g.call(axis);
-                });
-            }
-        }
-
-        function _font (element, opts) {
-            var font = p.font;
-            opts || (opts = {});
-            return element.style({
-                'font-size': opts.size || font.size,
-                'font-weight': opts.weight || font.weight,
-                'font-style': opts.style || font.style,
-                'font-family': opts.family || font.family,
-                'font-variant': opts.variant || font.variant
-            });
-        }
-
-        function _draw (selection) {
-            return selection
-                    .attr('stroke', function (d) {return d.color;})
-                    .attr('stroke-width', function (d) {return d.lineWidth;})
-                    .attr('fill', function (d) {return d.fill;})
-                    .attr('fill-opacity', function (d) {return d.fillOpacity;});
-        }
-
-        function _events (selection) {
-            p.activeEvents.forEach(function (event) {
-                selection.on(event + '.paper-active', function () {
-                    if (d3.event.type === 'mouseout')
-                        events.activeout(this);
-                    else
-                        events.activein(this);
-                });
-            });
-            return selection;
-        }
-    });
-
-    //
-    g.viz = {};
-    // Plugins for all visualization classes
-    g.vizplugins = [];
-    //
-    g.vizplugin = function (callback) {
-        g.vizplugins.push(callback);
-    };
-    //
-    // Factory of Giotto visualization factories
-    //  name: name of the visualization constructor, the constructor is
-    //        accessed via the giotto.viz object
-    //  defaults: object of default parameters
-    //  constructor: function called back with a visualization object
-    //               and an object containing options for the visualization
-    //  returns a functyion which create visualization of the ``name`` family
-    g.createviz = function (name, defaults, constructor) {
-
-        // The visualization factory
-        var plugins = [],
-            vizType = function (element, opts) {
-
-            if (isObject(element)) {
-                opts = element;
-                element = null;
-            }
-            opts = extend({}, vizType.defaults, opts);
-
-            var viz = {},
-                event = d3.dispatch.apply(d3, opts.events),
-                alpha = 0,
-                loading_data = false,
-                paper;
-
-            opts.event = event;
-
-            // Return the visualization type (a function)
-            viz.vizType = function () {
-                return vizType;
-            };
-
-            viz.vizName = function () {
-                return vizType.vizName();
-            };
-
-            viz.paper = function (createNew) {
-                if (createNew || paper === undefined) {
-                    if (paper)
-                        paper.destroy();
-                    paper = g.paper(element, opts);
-                }
-                return paper;
-            };
-
-            viz.element = function () {
-                return viz.paper().element();
-            };
-
-            viz.clear = function () {
-                viz.paper().clear();
-                return viz;
-            };
-
-            viz.alpha = function(x) {
-                if (!arguments.length) return alpha;
-
-                x = +x;
-                if (alpha) { // if we're already running
-                    if (x > 0) alpha = x; // we might keep it hot
-                    else alpha = 0; // or, next tick will dispatch "end"
-                } else if (x > 0) { // otherwise, fire it up!
-                    event.start({type: "start", alpha: alpha = x});
-                    d3.timer(viz.tick);
-                }
-
-                return viz;
-            };
-
-            viz.resume = function() {
-                return viz.alpha(0.1);
-            };
-
-            viz.stop = function() {
-                return viz.alpha(0);
-            };
-
-            viz.tick = function() {
-                if (opts.scope && opts.scope.stats)
-                    opts.scope.stats.begin();
-
-                // simulated annealing, basically
-                if ((alpha *= 0.99) < 0.005) {
-                    event.end({type: "end", alpha: alpha = 0});
-                    return true;
-                }
-
-                event.tick({type: "tick", alpha: alpha});
-
-                if (opts.scope && opts.scope.stats)
-                    opts.scope.stats.end();
-            };
-
-            // Starts the visualization
-            viz.start = function () {
-                return viz.resume();
-            };
-
-            // render the visualization by invoking the render method of the paper
-            viz.render = function () {
-                paper.render();
-                return viz;
-            };
-
-            viz.loadData = function (callback) {
-                if (opts.src && !loading_data) {
-                    loading_data = true;
-                    g.log.info('Giotto loading data from ' + opts.src);
-                    return d3.json(opts.src, function(error, json) {
-                        loading_data = false;
-                        if (!error) {
-                            viz.setData(json, callback);
-                        }
-                    });
-                }
-            };
-
-            //
-            // Set new data for the visualization
-            viz.setData = function (data, callback) {
-                if (opts.processData)
-                    data = opts.processData(data);
-                if (Object(data) === data && data.data)
-                    extend(opts, data);
-                else
-                    opts.data = data;
-                if (callback)
-                    callback();
-            };
-
-            // returns the options object
-            viz.options = function () {
-                return opts;
-            };
-
-            viz.image = function () {
-                return paper.image();
-            };
-
-            viz.xyfunction = g.math.xyfunction;
-
-            d3.rebind(viz, event, 'on');
-
-            // If constructor available, call it first
-            if (constructor)
-                constructor(viz, opts);
-
-            // Inject plugins for all visualizations
-            for (i=0; i < g.vizplugins.length; ++i)
-                g.vizplugins[i](viz, opts);
-
-            // Inject visualization plugins
-            for (var i=0; i < plugins.length; ++i)
-                plugins[i](viz, opts);
-
-            // if the onInit callback available, execute it
-            if (opts.onInit) {
-                var init = getObject(opts.onInit);
-                if (isFunction(init))
-                    init(viz, opts);
-                else
-                    g.log.error('Could not locate onInit function ' + opts.onInit);
-            }
-
-            return viz;
-        };
-
-        g.viz[name] = vizType;
-
-        vizType.defaults = extend({}, g.defaults.viz, g.defaults.paper, defaults);
-
-        vizType.vizName = function () {
-            return name;
-        };
-
-        vizType.plugin = function (callback) {
-            plugins.push(callback);
-        };
-
-        return vizType;
-    };
-
-    //
-    // Manage attributes for data to be drawn on papers
-    function paperData (paper, opts, d) {
-        // Default values
-        var values = {},
-            highlight = false,
-            _size;
-
-        pointOptions.forEach(function (name) {
-            values[name] = d[name] || opts[name];
-        });
-        values.size = 0;
-
-        if (opts.active) {
-            if (!d.active)
-                d.active = {};
-            copyMissing(opts.active, d.active);
-            activeColors(d);
-        }
-
-        d.reset = function () {
-            highlight = false;
-            pointOptions.forEach(function (name) {
-                _set(name, values[name]);
-            });
-            return d;
-        };
-
-        d.highLight = function () {
-            if (highlight) return d;
-            highlight = true;
-
-            var a = d.active,
-                v;
-            if (a) {
-                pointOptions.forEach(function (name) {
-                    v = a[name];
-                    if (v) {
-                        if (multiplyOptions.indexOf(name) > -1)
-                            v *= values[name];
-                        _set(name, v);
-                    }
-                });
-            }
-            return d;
-        };
-
-        // set a value and its default
-        d.set = function (name, value) {
-            values[name] = value;
-            _set(name, value);
-            return d;
-        };
-
-        d.size = function (x) {
-            if (!arguments.length)
-                if (d.symbol) {
-                    return _size*_size*(SymbolSize[d.symbol] || 1);
-                } else
-                    return _size;
-            else {
-                _size = +x;
-                return d;
-            }
-        };
-
-        d.options = function () {
-            return opts;
-        };
-
-        d.forEach = function (callback) {
-            callback(d);
-        };
-
-        return d;
-
-        function _set(name, value) {
-            if (typeof d[name] === 'function')
-                d[name](value);
-            else
-                d[name] = value;
-        }
-    }
-
-
-    function pieData (paper, opts, d) {
-        // Default values
-        if (_.isArray(d))
-            d = {label: d[0], value: d[1]};
-        if (!d.fill)
-            d.fill = paper.pickColor();
-        if (!d.color)
-            d.color = d3.rgb(d.fill).darker();
-
-        return paperData(paper, opts, d);
-    }
-
-    //
-    // A paper component draw an array of paperData into a paper
-    function paperComponent (data, component) {
-        var opts = data.options ? data.options() : data[0].options();
-
-        component.setOptions = function (name, value) {
-
-            if (pointOptions.indexOf(name) === -1) {
-                opts[name] = value;
-            } else {
-                data.forEach(function (d) {
-                    d.set(name, value);
-                });
-            }
-            return component;
-        };
-
-        component.data = function () {
-            return data;
-        };
-
-        return component;
-    }
-
-
-    var SymbolSize = {
-            circle: 0.7,
-            cross: 0.7,
-            diamond: 0.7,
-            "triangle-up": 0.6,
-            "triangle-down": 0.6
-        },
-
-        pointOptions = ['fill', 'color', 'fillOpacity',
-                        'colorOpacity', 'lineWidth', 'size', 'symbol'],
-
-        multiplyOptions = ['lineWidth', 'size'];
-
-    //
-    // Add mission colors for graph
-    function chartColors (paper, opts) {
-        if (!opts.color)
-            opts.color = paper.pickColor();
-
-        if (opts.fill === true)
-            opts.fill = d3.rgb(opts.color).brighter();
-
-        activeColors(opts);
-    }
-
-    function activeColors(opts) {
-        var a = opts.active;
-        if (!a)
-            a = opts.active = {};
-
-        if (a.fill === 'darker')
-            a.fill = d3.rgb(opts.fill).darker();
-        else if (a.fill === 'brighter')
-            a.fill = d3.rgb(opts.fill).brighter();
-
-        if (a.color === 'darker')
-            a.color = d3.rgb(opts.color).darker();
-        else if (a.color === 'brighter')
-            a.color = d3.rgb(opts.color).brighter();
-    }
-
-    function barWidth (paper, data, opts) {
-        if (opts.width === 'auto')
-            return d3.round(0.8*(paper.innerWidth() / data.length));
-        else
-            return opts.width;
-    }
-    //
-    //  Initaise paper
-    function _initPaper (paper, p) {
-        //
-        // Apply paper type
-        g.paper[p.type](paper, p);
-
-        // clear the paper
-        paper.clear();
-        _reset_axis(paper);
-
-        var width = paper.innerWidth(),
-            height = paper.innerHeight(),
-            allAxis = [{axis: paper.xAxis(), o: p.xaxis},
-                       {axis: paper.yaxis(2).yAxis(), o: p.yaxis2},
-                       {axis: paper.yaxis(1).yAxis(), o: p.yaxis}];
-
-        allAxis.forEach(function (a) {
-            var axis = a.axis, o = a.o;
-            axis.orient(o.position);
-            if (o.min !== null && o.max !== null)
-                axis.scale().domain([o.min, o.max]);
-            else
-                o.auto = true;
-        });
-        //
-        if (p.css)
-            addCss('#giotto-paper-' + paper.uid(), p.css);
-        //
-        return paper;
-    }
-
-    function _reset_axis (paper) {
-        var yaxis = paper.yaxis();
-        paper.xAxis().scale().range([0, paper.innerWidth()]);
-        paper.yaxis(2).yAxis().scale().range([paper.innerHeight(), 0]);
-        paper.yaxis(1).yAxis().scale().range([paper.innerHeight(), 0]);
-        return paper.yaxis(yaxis);
-    }
-
-
-    function _newPaperAttr (element, cfg) {
-        var width, height;
-
-        if (cfg) {
-            width = cfg.width;
-            height = cfg.height;
-            cfg = pick(cfg, function (value, key) {
-                if (g.defaults.paper[key] !== undefined)
-                    return value;
-            });
-        }
-        else
-            cfg = {};
-
-        var p = extend(true, {}, g.defaults.paper, cfg);
-
-        if (!width) {
-            width = getWidth(element);
-            if (width)
-                p.elwidth = getWidthElement(element);
-            else
-                width = g.constants.WIDTH;
-        }
-
-        if (!height) {
-            height = getHeight(element);
-            if (height)
-                p.elheight = getHeightElement(element);
-            else
-                height = g.constants.HEIGHT;
-        }
-        else if (typeof(height) === "string" && height.indexOf('%') === height.length-1) {
-            p.height_percentage = 0.01*parseFloat(height);
-            height = d3.round(p.height_percentage*width);
-        }
-
-        p.size = [width, height];
-
-        var v = d3[p.type];
-
-        p.xAxis = v.axis();
-        p.yAxis = [v.axis(), v.axis()];
-
-        return p;
-    }
-
 
     // same as d3.svg.arc... but for canvas
     d3.canvas.arc = function() {
@@ -2744,6 +1571,9 @@
         ctx.arc(xc, yc, radius, a1, a2, sweep<=0);
     };
 
+
+
+    // same as d3.svg.axis... but for canvas
     d3.canvas.axis = function() {
         var scale = d3.scale.linear(),
             orient = d3_canvas_axisDefaultOrient,
@@ -2752,51 +1582,55 @@
             tickPadding = 3,
             tickArguments_ = [10],
             tickValues = null,
-            tickFormat_ = null,
-            lineColor_,
-            lineWidth = 1,
-            font = g.defaults.paper.font;
+            tickFormat_ = null;
 
         function axis (canvas) {
             canvas.each(function() {
-                var ctx = this.canvas.getContext('2d');
-
-                var scale0 = this.__chart__ || scale,
+                var ctx = this.getContext('2d'),
+                    scale0 = this.__chart__ || scale,
                     scale1 = this.__chart__ = scale.copy();
 
                 // Ticks, or domain values for ordinal scales.
                 var ticks = tickValues === null ? (scale1.ticks ? scale1.ticks.apply(scale1, tickArguments_) : scale1.domain()) : tickValues,
                     tickFormat = tickFormat_ === null ? (scale1.tickFormat ? scale1.tickFormat.apply(scale1, tickArguments_) : d3_identity) : tickFormat_,
-                    tick = g.selectAll(".tick").data(ticks, scale1),
                     tickSpacing = Math.max(innerTickSize, 0) + tickPadding,
-                    lineColor = lineColor_ || font.color,
-                    tickTransform;
+                    sign = orient === "top" || orient === "left" ? -1 : 1,
+                    tickTransform,
+                    trange;
 
                 // Domain.
                 var range = d3_scaleRange(scale1);
 
-                ctx.fillStyle = font.color;
-                ctx.font = font.family;
                 // Apply axis labels on major ticks
                 if (orient === "bottom" || orient === "top") {
+                    ctx.textBaseline = sign < 0 ? 'bottom' : 'top';
+                    ctx.textAlign = 'center';
+                    ctx.moveTo(range[0], 0);
+                    ctx.lineTo(range[1], 0);
+                    ctx.moveTo(range[0], 0);
+                    ctx.lineTo(range[0], sign*outerTickSize);
+                    ctx.moveTo(range[1], 0);
+                    ctx.lineTo(range[1], sign*outerTickSize);
                     ticks.forEach(function (tick, index) {
-                        ctx.beginPath();
-                        ctx.lineWidth = lineWidth;
-                        ctx.strokeStyle = lineColor;
-                        ctx.moveTo(xStart, linePositionY);
-                        ctx.lineTo(this.width, linePositionY);
-                        ctx.stroke();
-                        ctx.closePath();
+                        trange = scale1(tick);
+                        ctx.moveTo(trange, 0);
+                        ctx.lineTo(trange, sign*innerTickSize);
+                        ctx.fillText(tickFormat(tick), trange, sign*tickSpacing);
                     });
                 } else {
+                    ctx.textBaseline = 'middle';
+                    ctx.textAlign = sign < 0 ? "end" : "start";
+                    ctx.moveTo(0, range[0]);
+                    ctx.lineTo(0, range[1]);
+                    ctx.moveTo(0, range[0]);
+                    ctx.lineTo(sign*outerTickSize, range[0]);
+                    ctx.moveTo(0, range[1]);
+                    ctx.lineTo(sign*outerTickSize, range[1]);
                     ticks.forEach(function (tick, index) {
-                        ctx.beginPath();
-                        ctx.lineWidth = lineWidth;
-                        ctx.strokeStyle = lineColor;
-                        ctx.moveTo(xStart, linePositionY);
-                        ctx.lineTo(this.width, linePositionY);
-                        ctx.stroke();
-                        ctx.closePath();
+                        trange = scale1(tick);
+                        ctx.moveTo(0, trange);
+                        ctx.lineTo(sign*innerTickSize, trange);
+                        ctx.fillText(tickFormat(tick), sign*tickSpacing, trange);
                     });
                 }
             });
@@ -2868,13 +1702,6 @@
     var d3_canvas_axisDefaultOrient = "bottom",
         d3_canvas_axisOrients = {top: 1, right: 1, bottom: 1, left: 1};
 
-    function d3_canvas_axisX(selection, x0, x1) {
-        selection.attr("transform", function(d) { var v0 = x0(d); return "translate(" + (isFinite(v0) ? v0 : x1(d)) + ",0)"; });
-    }
-
-    function d3_canvas_axisY(selection, y0, y1) {
-        selection.attr("transform", function(d) { var v0 = y0(d); return "translate(0," + (isFinite(v0) ? v0 : y1(d)) + ")"; });
-    }
 
 
     d3.canvas.retinaScale = function(ctx, width, height){
@@ -2890,6 +1717,59 @@
         }
         return window.devicePixelRatio || 1;
     };
+
+
+    d3.canvas.drawPolygon = function (ctx, pts, radius) {
+        if (radius > 0)
+            pts = getRoundedPoints(pts, radius);
+        var i, pt, len = pts.length;
+        ctx.beginPath();
+        for (i = 0; i < len; i++) {
+            pt = pts[i];
+            if (i === 0)
+                ctx.moveTo(pt[0], pt[1]);
+            else
+                ctx.lineTo(pt[0], pt[1]);
+            if (radius > 0)
+                ctx.quadraticCurveTo(pt[2], pt[3], pt[4], pt[5]);
+        }
+        ctx.closePath();
+    };
+
+    d3.canvas.rgba = function (color, opacity) {
+        if (opacity < 1) {
+            var c = d3.rgb(color);
+            return 'rgba(' + c.r + ',' + c.g + ',' + c.b + ',' + opacity + ')';
+        } else
+            return color;
+    };
+
+    function getRoundedPoints(pts, radius) {
+        var i1, i2, i3, p1, p2, p3, prevPt, nextPt,
+            len = pts.length,
+            res = new Array(len);
+        for (i2 = 0; i2 < len; i2++) {
+            i1 = i2-1;
+            i3 = i2+1;
+            if (i1 < 0)
+                i1 = len - 1;
+            if (i3 === len) i3 = 0;
+            p1 = pts[i1];
+            p2 = pts[i2];
+            p3 = pts[i3];
+            prevPt = getRoundedPoint(p1[0], p1[1], p2[0], p2[1], radius, false);
+            nextPt = getRoundedPoint(p2[0], p2[1], p3[0], p3[1], radius, true);
+            res[i2] = [prevPt[0], prevPt[1], p2[0], p2[1], nextPt[0], nextPt[1]];
+        }
+      return res;
+    }
+
+    function getRoundedPoint(x1, y1, x2, y2, radius, first) {
+        var total = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2)),
+            idx = first ? radius / total : (total - radius) / total;
+        return [x1 + (idx * (x2 - x1)), y1 + (idx * (y2 - y1))];
+    }
+
 
     // same as d3.svg.line... but for canvas
     d3.canvas.line = function() {
@@ -3349,588 +2229,1194 @@
     var d3_svg_symbolSqrt3 = Math.sqrt(3),
         d3_svg_symbolTan30 = Math.tan(30 * d3_radians);
 
+
+    d3.canvas.transition = function(selection, name) {
+        var transition = d3.transition(selection, name);
+
+        return transition;
+    };
     //
-    //  Canvas based Paper
-    //  ======================
-    //
-    g.paper.addType('canvas', function (paper, p) {
+    //  Defaults for Papers, Groups, Drawings and Visualizations
 
-        var clear = paper.clear,
-            components,
-            componentMap,
-            cidCounter,
-            factor = 1,
-            cid = null,
-            container = paper.element().append('div')
-                            .attr('class', 'canvas-container')
-                            .style('position', 'relative');
+    g.defaults = {};
 
-        // Return the container of canvas elements
-        paper.container = function () {
-            return container;
-        };
+    g.defaults.axis = {
+        tickSize: '6px',
+        outerTickSize: '6px',
+        tickPadding: '3px',
+        lineWidth: 1,
+        //minTickSize: undefined,
+        min: null,
+        max: null
+    };
 
-        paper.destroy = function () {
-            _clear();
-            return paper;
-        };
-
-        paper.refresh = function (size) {
-            if (size) {
-                var oldsize = p.size;
-                p.size = size;
-                _apply(function (ctx) {
-                    _clearCanvas(ctx, oldsize);
-                    _scaleCanvas(ctx);
-                });
+    g.defaults.paper = {
+        type: 'svg',
+        resizeDelay: 200,
+        resize: true,
+        margin: {top: 20, right: 20, bottom: 20, left: 20},
+        xaxis: extend({position: 'bottom'}, g.defaults.axis),
+        yaxis: {position: 'left', min: null, max: null},
+        yaxis2: {position: 'right', min: null, max: null},
+        colors: d3.scale.category10().range(),
+        colorIndex: 0,
+        css: null,
+        activeEvents: ["mousemove", "touchstart", "touchmove", "mouseout"],
+        line: {
+            interpolate: 'cardinal',
+            fill: 'none',
+            fillOpacity: 1,
+            colorOpacity: 1,
+            lineWidth: 2,
+            active: {
+                color: 'darker',
+                // Multiplier for lineWidth, set to 1 for no change
+                lineWidth: 1
             }
-            paper.render();
-            return paper;
-        };
-
-        paper.width = function () {
-            return factor*p.size[0];
-        };
-
-        paper.height = function () {
-            return factor*p.size[1];
-        };
-
-        paper.innerWidth = function () {
-            return factor*(p.size[0] - p.margin.left - p.margin.right);
-        };
-
-        paper.innerHeight = function () {
-            return factor*(p.size[1] - p.margin.top - p.margin.bottom);
-        };
-
-        paper.factor = function (x) {
-            if (!arguments.length) return factor;
-            factor = +x;
-            return paper;
-        };
-
-        paper.each = function (callback) {
-            _apply(callback);
-            return paper;
-        };
-
-        // Re-render the canvas/es in this paper
-        paper.render = function (ctx) {
-            arguments.length ? _apply(_render, ctx) : _apply(_render);
-            return paper;
-        };
-
-        paper.clear = function (ctx) {
-            if (ctx)
-                _clearCanvas(ctx, p.size);
-            else {
-                _clear();
-                _addCanvas();
-                return clear();
+        },
+        point: {
+            symbol: 'circle',
+            size: '8px',
+            fill: true,
+            fillOpacity: 1,
+            colorOpacity: 1,
+            lineWidth: 2,
+            active: {
+                fill: 'darker',
+                color: 'brighter',
+                // Multiplier for size, set to 1 for no change
+                size: 1.5
             }
-            return paper;
-        };
-
-        // Create a new canvas element and add it to thecanvas container
-        // Returns the new canvas Element
-        paper.group = function (attr) {
-            var canvas = _addCanvas();
-            if (attr)
-                canvas.attr(attr);
-            paper.render(cid);
-            return paper.current();
-        };
-
-        paper.on = function (event, callback) {
-            container.on(event, function () {
-                callback.call(this);
-            });
-            return paper;
-        };
-
-        paper.current = function () {
-            return cid !== null ? componentMap[cid].canvas.getContext('2d') : null;
-        };
-
-        // set the current element to be the root svg element and returns the paper
-        paper.root = function () {
-            if (components)
-                cid = components[0];
-            return paper;
-        };
-
-        // set the current element to be the parent and returns the paper
-        paper.parent = function () {
-            var index = components.indexOf(cid);
-            cid = Math.max(0, index-1);
-            return paper;
-        };
-
-        paper.get = function (x) {
-            if (x) {
-                if (x.node)
-                    x = x.node();
-                if (x && x.getContext)
-                    x = x.getContext('2d');
-                if (x)
-                    return componentMap[x.__cid__ ? x.__cid__ : x];
+        },
+        bar: {
+            width: 'auto',
+            color: null,
+            fill: true,
+            fillOpacity: 1,
+            colorOpacity: 1,
+            lineWidth: 2,
+            // Radius in pixels of rounded corners. Set to 0 for no rounded corners
+            radius: 4,
+            active: {
+                fill: 'darker',
+                color: 'brighter'
             }
-        };
-
-        paper.xfromPX = function (px) {
-            return p.xAxis.scale().invert(factor*px);
-        };
-
-        paper.yfromPX = function (px) {
-            return paper.yAxis().scale().invert(factor*px);
-        };
-
-        paper.circle = function (cx, cy, r) {
-            var ctx = paper.current();
-            ctx.beginPath();
-            cx = paper.scalex(cx);
-            cy = paper.scaley(cy);
-            r = paper.scale(r);
-            ctx.arc(cx, cy, r, 0, Math.PI * 2, false);
-            ctx.endPath();
-        };
-
-        paper.drawXaxis = function () {
-        };
-
-        paper.drawYaxis = function () {
-        };
-
-        paper.getDataAtPoint = function (point) {
-            var x = factor*point[0],
-                y = factor*point[1],
-                elements = [],
-                data;
-            _apply(function (ctx, _, component) {
-                component.callbacks.forEach(function (callback) {
-                    data = callback.data();
-                    data.forEach(function (el) {
-                        if (el.context(ctx).inRange(x, y))
-                            elements.push(el);
-                    });
-                });
-            });
-            return elements;
-        };
-
-        // Draw a path or an area
-        paper.path = function (data, opts) {
-            opts || (opts = {});
-            data = data.slice();  // copy
-            chartColors(paper, copyMissing(p.line, opts));
-            var line = canvasLine(paper, opts, data);
-
-            return paper.addComponent(line, function (ctx) {
-                line.context(ctx).draw();
-            });
-        };
-
-        paper.points = function (data, opts) {
-            opts || (opts = {});
-            data = data.slice();  // copy
-            chartColors(paper, copyMissing(p.point, opts));
-
-            var symbol = d3.canvas.symbol().type(function (d) {return d.symbol;})
-                                           .size(function (d) {return d.size();});
-
-            for (var i=0; i<data.length; ++i)
-                data[i] = canvasPoint(paper, opts, data[i], symbol);
-
-            return paper.addComponent(data, function (ctx) {
-                var size = paper.scale(paper.dim(opts.size));
-
-                for (var i=0; i<data.length; ++i)
-                    data[i].context(ctx).size(size).draw();
-            });
-        };
-
-        paper.barchart = function (data, opts) {
-            opts || (opts = {});
-            data = data.slice();  // copy
-            chartColors(paper, copyMissing(p.bar, opts));
-
-            for (var i=0; i<data.length; i++)
-                data[i] = canvasBar(paper, opts, data[i]);
-
-            return paper.addComponent(data, function (ctx) {
-                var width = barWidth(paper, data, opts);
-
-                for (var i=0; i<data.length; i++)
-                    data[i].context(ctx).size(width).draw();
-            });
-        };
-
-        paper.pie = function (data, opts) {
-            opts || (opts = {});
-            data = data.slice(); // copy
-            copyMissing(p.pie, opts);
-
-            var arc = d3.canvas.arc();
-
-            for (var i=0; i<data.length; i++)
-                data[i] = canvasSlice(paper, opts, data[i], arc);
-
-            return paper.addComponent(data, function (ctx) {
-
-                var width = paper.innerWidth(),
-                    height = paper.innerHeight(),
-                    radius = 0.5*Math.min(width, height),
-                    innerRadius = opts.innerRadius*radius,
-                    cornerRadius = paper.scale(paper.dim(opts.cornerRadius)),
-                    pie = d3.layout.pie().value(function (d, i) {return d.value;})
-                                         .padAngle(d3_radians*opts.padAngle)(data),
-                    d, dd;
-
-                arc = arc.cornerRadius(cornerRadius)
-                        .innerRadius(innerRadius)
-                        .outerRadius(radius)
-                        .context(ctx);
-
-                for (i=0; i<pie.length; ++i) {
-                    d = pie[i];
-                    dd = d.data;
-                    delete d.data;
-                    extend(dd, d);
-                    dd.context(ctx).draw();
-                }
-            });
-        };
-
-        paper.removeCanvas  = function (c) {
-            c = paper.get(c);
-            if (c) {
-                delete componentMap[c.cid];
-                var index = components.indexOf(c.cid);
-                if (index > -1)
-                    components.splice(index, 1)[0];
-                d3.select(c.canvas).remove();
-                return c.canvas;
+        },
+        pie: {
+            lineWidth: 1,
+            // pad angle in degrees
+            padAngle: 0,
+            cornerRadius: 0,
+            fillOpacity: 0.7,
+            colorOpacity: 1,
+            innerRadius: 0,
+            startAngle: 0,
+            active: {
+                fill: 'darker',
+                color: 'brighter',
+                innerRadius: 1,
+                outerRadius: 1.05
             }
-        };
-
-        paper.addComponent = function (component, callback) {
-            component = paperComponent(component, callback);
-            componentMap[cid].callbacks.push(component);
-            component.cid = cid;
-            return component;
-        };
-
-        // Download
-        paper.image = function () {
-            var canvas = _addCanvas().node(),
-                context = paper.current(),
-                img;
-
-            _apply(function (ctx) {
-                if (ctx !== context) {
-                    img = new Image();
-                    img.src = ctx.canvas.toDataURL();
-                    context.drawImage(img, 0, 0, p.size[0], p.size[1]);
-                }
-            });
-            var dataUrl = canvas.toDataURL();
-            paper.removeCanvas(canvas);
-            return dataUrl;
-        };
-
-        // INTERNALS
-        function _clear () {
-            components = [];
-            componentMap = {};
-            cidCounter = 0;
-            cid = null;
-            container.selectAll('*').remove();
+        },
+        font: {
+            color: '#444',
+            size: '11px',
+            weight: 'normal',
+            lineHeight: 13,
+            style: "normal",
+            family: "sans-serif",
+            variant: "small-caps"
         }
+    };
 
-        function _addCanvas() {
-            cid = ++cidCounter;
+    g.defaults.viz = extend({
+        //
+        // Optional callback after initialisation
+        onInit: null,
+        //
+        // Default events dispatched by the visualization
+        events: ['build', 'change', 'start', 'tick', 'end'],
 
-            var canvas = container.append("canvas")
-                            .attr("class", "giotto")
-                            .attr("id", "giottoCanvas-" + paper.uid() + "-" + cid),
-                element = canvas.node(),
-                ctx = _scaleCanvas(element.getContext('2d'));
-
-            ctx.__cid__ = cid;
-            var component = {
-                    cid: cid,
-                    canvas: element,
-                    callbacks: [],
-                    data: [],
-                };
-
-            if (components.length)
-                canvas.style({"position": "absolute", "top": "0", "left": "0"});
-
-            components.push(cid);
-            componentMap[cid] = component;
-            return canvas;
-        }
-
-        function _render (ctx) {
-            _clearCanvas(ctx, p.size);
-            //
-            // translate the axis range
-            ctx.translate(factor*p.margin.left, factor*p.margin.top);
-            //
-            // apply components
-            componentMap[cid].callbacks.forEach(function (callback) {
-                callback(ctx);
-            });
-        }
-
-        function _apply (callback, _cid) {
-            var current = cid,
-                component;
-            if (!_cid)
-                components.forEach(function (_cid) {
-                    cid = _cid;
-                    component = componentMap[cid];
-                    callback(component.canvas.getContext('2d'), component.canvas, component);
-                });
-            else {
-                component = paper.get(_cid);
-                if (component) {
-                    cid = component.cid;
-                    callback(component.canvas.getContext('2d'), component.canvas, component);
-                }
+        // Rightclick menu
+        contextmenu: [{
+            label: 'Open Image',
+            callback: function (chart) {
+                window.open(chart.image());
             }
-            cid = current;
-        }
-
-        function _clearCanvas(ctx, size) {
-            // clear previous stuff
-            ctx.setTransform(1, 0, 0, 1, 0, 0);
-            ctx.clearRect (0 , 0, factor*size[0], factor*size[1]);
-            return ctx;
-        }
-
-        function _scaleCanvas(ctx) {
-            factor = d3.canvas.retinaScale(ctx, p.size[0], p.size[1]);
-            _reset_axis(paper);
-            return ctx;
-        }
+        }]
 
     });
 
-    function rgba (color, opacity) {
-        if (opacity < 1) {
-            var c = d3.rgb(color);
-            return 'rgba(' + c.r + ',' + c.g + ',' + c.b + ',' + opacity + ')';
-        } else return color;
-    }
+    g.constants = {
+        DEFAULT_VIZ_GROUP: 'default_viz_group',
+        WIDTH: 400,
+        HEIGHT: 300,
+        leaflet: 'http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css'
+    };
+    var _idCounter = 0;
+    //
+    // Create a new paper for drawing stuff
+    g.paper = function (element, p) {
 
-    function canvasLine (paper, opts, data) {
-        var scalex = paper.scalex,
-            scaley = paper.scaley,
-            factor = paper.factor(),
-            d = paperData(paper, opts, {}),
-            ctx;
+        var paper = d3.dispatch.apply({}, p.activeEvents),
+            uid = ++_idCounter;
 
-        d.draw = function (context) {
-            context = context || ctx;
-            ctx.strokeStyle = d.color;
-            ctx.lineWidth = factor*d.lineWidth;
-            _draw(context);
-            context.stroke();
-            return d;
+        // Create a new group for this paper
+        paper.group = function (opts) {
+            // Inject plugins
+            opts = groupOptions(opts);
+            var group = g.group[opts.type](paper, opts),
+                plugin;
+
+            group.element().classed(p.giotto, true);
+            for (var i=0; i < g.paper.plugins.length; ++i) {
+                plugin = g.paper.plugins[i][opts.type];
+                if (plugin) plugin(group, opts);
+            }
+            return group;
         };
 
-        d.context = function (context) {
-            ctx = context;
-            return d;
+        paper.uid = function () {
+            return uid;
         };
 
-        d.inRange = function (ex, ey) {
-            _draw(ctx);
-            return ctx.isPointInPath(ex, ey);
+        // Select a group based on attributes
+        paper.select = function (attr) {
+            var selection = paper.svg().selectAll('.' + p.giotto),
+                node;
+            if (attr) selection = selection.filter(attr);
+            node = selection.node();
+            if (node) return node.__group__;
+            selection = paper.canvas().selectAll('.' + p.giotto);
+            if (attr) selection = selection.filter(attr);
+            node = selection.node();
+            if (node) return node.__group__;
         };
 
-        return d.reset();
-
-        function _draw (context) {
-            var line = d.area ? d3.canvas.area() : d3.canvas.line();
-
-            line.interpolate(d.interpolate)
-                .x(function (d) {
-                    return scalex(d.x);
-                })
-                .y(function (d) {
-                    return scaley(d.y);
-                }).context(context)(data);
-        }
-    }
-
-    function canvasPoint (paper, opts, d, symbol) {
-        var scalex = paper.scalex,
-            scaley = paper.scaley,
-            factor = paper.factor(),
-            ctx;
-
-        d = paperData(paper, opts, {data: d});
-
-        d.draw = function (context) {
-            context = context || ctx;
-            context.save();
-            context.fillStyle = rgba(d.fill, d.fillOpacity);
-            context.strokeStyle = rgba(d.color, d.colorOpacity);
-            context.lineWidth = factor*d.lineWidth;
-            context.translate(scalex(d.data.x), scaley(d.data.y));
-            symbol.context(context)(d);
-            context.fill();
-            context.stroke();
-            context.restore();
-            return d;
+        paper.each = function (filter, callback) {
+            if (arguments.length === 1) {
+                callback = filter;
+                filter = '*';
+            }
+            paper.svg().selectAll(filter).each(function () {
+                if (this.__group__)
+                    callback.call(this.__group__);
+            });
+            paper.canvas().selectAll(filter).each(function () {
+                if (this.__group__)
+                    callback.call(this.__group__);
+            });
+            return paper;
         };
 
-        d.context = function (context) {
-            ctx = context;
-            return d;
+        // Clear everything
+        paper.clear = function () {
+            paper.svg().remove();
+            paper.canvas().remove();
+            return paper;
         };
 
-        d.inRange = function (ex, ey) {
-            ctx.save();
-            ctx.translate(scalex(d.data.x), scaley(d.data.y));
-            symbol.context(ctx)(d);
-            var res = ctx.isPointInPath(ex, ey);
-            ctx.restore();
-            return res;
+        paper.render = function () {
+            var c, i;
+            paper.each(function () {
+                this.render();
+            });
+            return paper;
         };
 
-        return d.reset();
-    }
-
-    function canvasBar (paper, opts, d) {
-        var scalex = paper.scalex,
-            scaley = paper.scaley,
-            factor = paper.factor(),
-            radius = factor*opts.radius,
-            ctx, x, y, y0, y1, w, yb;
-
-        d = paperData(paper, opts, {data: d});
-
-        d.context = function (context) {
-            ctx = context;
-            return d;
+        paper.element = function () {
+            return d3.select(element);
         };
 
-        d.draw = function (context) {
-            context = context || ctx;
-            context.fillStyle = rgba(d.fill, d.fillOpacity);
-            context.strokeStyle = rgba(d.color, d.colorOpacity);
-            context.lineWidth = factor*d.lineWidth;
-            _draw(context);
-            context.fill();
-            context.stroke();
-            return d;
+        paper.classGroup = function (cn, opts) {
+            var gg = paper.select('.' + cn);
+            if (!gg) {
+                gg = paper.group(opts);
+                gg.element().classed(cn, true);
+            }
+            return gg;
         };
 
-        d.inRange = function (ex, ey) {
-            _draw(ctx);
-            return ctx.isPointInPath(ex, ey);
+        // Resize the paper and fire the resize event if resizing was performed
+        paper.resize = function (size) {
+            p._resizing = true;
+            if (!size) {
+                size = paper.boundingBox();
+            }
+            if (p.size[0] !== size[0] || p.size[1] !== size[1]) {
+                var oldsize = [p.size[0], p.size[1]];
+                p.size[0] = size[0];
+                p.size[1] = size[1];
+                paper.each(function () {
+                    this.resize(oldsize);
+                });
+            }
+            p._resizing = false;
         };
 
-        return d.reset();
-
-        function _draw (context) {
-            context.beginPath();
-            w = 0.5*d.size();
-            x = scalex(d.data.x);
-            y = scaley(d.data.y);
-            y0 = scaley(0);
-            drawPolygon(context, [[x-w,y0], [x+w,y0], [x+w,y], [x-w, y]], radius);
-            context.closePath();
-        }
-    }
-
-    function canvasSlice (paper, opts, d, arc) {
-        var scalex = paper.scalex,
-            scaley = paper.scaley,
-            factor = paper.factor(),
-            ctx;
-
-        d = pieData(paper, opts, d);
-
-        d.draw = function (context) {
-            context = context || ctx;
-            context.save();
-            context.translate(0.5*paper.innerWidth(), 0.5*paper.innerHeight());
-            context.fillStyle = rgba(d.fill, d.fillOpacity);
-            context.strokeStyle = rgba(d.color, d.colorOpacity);
-            context.lineWidth = factor*d.lineWidth;
-            arc.context(context)(d);
-            context.fill();
-            context.stroke();
-            context.restore();
-            return d;
-        };
-
-        d.context = function (context) {
-            ctx = context;
-            return d;
-        };
-
-        d.inRange = function (ex, ey) {
-            ctx.save();
-            ctx.translate(0.5*paper.innerWidth(), 0.5*paper.innerHeight());
-            arc.context(ctx)(d);
-            var res = ctx.isPointInPath(ex, ey);
-            ctx.restore();
-            return res;
-        };
-
-        return d.reset();
-    }
-
-
-    function drawPolygon (ctx, pts, radius) {
-        if (radius > 0)
-            pts = getRoundedPoints(pts, radius);
-        var i, pt, len = pts.length;
-        ctx.beginPath();
-        for (i = 0; i < len; i++) {
-            pt = pts[i];
-            if (i === 0)
-                ctx.moveTo(pt[0], pt[1]);
+        paper.boundingBox = function () {
+            var w = p.elwidth ? getWidth(p.elwidth) : p.size[0],
+                h;
+            if (p.height_percentage)
+                h = d3.round(w*p.height_percentage, 0);
             else
-                ctx.lineTo(pt[0], pt[1]);
-            if (radius > 0)
-                ctx.quadraticCurveTo(pt[2], pt[3], pt[4], pt[5]);
+                h = p.elheight ? getHeight(p.elheight) : p.size[1];
+            return [w, h];
+        };
+
+        // pick a color
+        paper.pickColor = function (index, darker) {
+            if (arguments.length === 0)
+                index = p.colorIndex++;
+            var dk = 1,
+                k = 0;
+            while (index >= p.colors.length) {
+                index -= p.colors.length;
+                k += dk;
+            }
+            var c = p.colors[index];
+            if (darker)
+                c = d3.rgb(c).darker(darker);
+            if (k)
+                c = d3.rgb(c).brighter(k);
+            return c;
+        };
+
+        // Access internal options
+        paper.options = function () {
+            return p;
+        };
+
+        // Create an svg container
+        paper.svg = function (build) {
+            var svg = paper.element().select('svg.giotto');
+            if (!svg.node() && build)
+                svg = paper.element().append('svg')
+                                .attr('class', 'giotto')
+                                .attr('width', p.size[0])
+                                .attr('height', p.size[1]);
+                if (!p.resize)
+                    svg.attr("viewBox", "0 0 " + p.size[0] + " " + p.size[1]);
+            return svg;
+        };
+
+        // Access the canvas container
+        paper.canvas = function (build) {
+            var canvas = paper.element().select('div.canvas-container');
+            if (!canvas.node() && build)
+                canvas = paper.element().append('div')
+                                .attr('class', 'canvas-container')
+                                .style('position', 'relative');
+            return canvas;
+        };
+
+        paper.canvasDataAtPoint = function (point) {
+            var data = [];
+            paper.canvas().selectAll('*').each(function () {
+                if (this.__group__)
+                    this.__group__.dataAtPoint(point, data);
+            });
+            return data;
+        };
+
+        paper.encodeSVG = function () {
+            var svg = paper.svg();
+            if (svg.node())
+                return btoa(unescape(encodeURIComponent(
+                    svg.attr("version", "1.1")
+                        .attr("xmlns", "http://www.w3.org/2000/svg")
+                        .node().parentNode.innerHTML)));
+        };
+
+        paper.imageSVG = function () {
+            var svg = paper.encodeSVG();
+            if (svg)
+                return "data:image/svg+xml;charset=utf-8;base64," + svg;
+        };
+
+        paper.imagePNG = function () {
+            var canvas = paper.canvas();
+            if (!canvas.node()) return;
+
+            var target = paper.group({
+                    type: 'canvas',
+                    margin: {left: 0, right: 0, top: 0, bottom: 0}
+                }),
+                ctx = target.context(),
+                img, group;
+
+            canvas.selectAll('*').each(function () {
+                group = this.__group__;
+                if (group && group !== target) {
+                    img = new Image();
+                    img.src = group.context().canvas.toDataURL();
+                    ctx.drawImage(img, 0, 0, p.size[0], p.size[1]);
+                }
+            });
+            var dataUrl = ctx.canvas.toDataURL();
+            target.remove();
+            return dataUrl;
+        };
+
+        paper.image = function () {
+            return p.type === 'svg' ? paper.imageSVG() : paper.imagePNG();
+        };
+
+        // Setup
+
+        if (isObject(element)) {
+            p = element;
+            element = null;
         }
-        ctx.closePath();
+        if (!element)
+            element = document.createElement('div');
+
+        p = _newPaperAttr(element, p);
+
+        var type = p.type;
+
+        // paper type
+        paper.type = function () {
+            return type;
+        };
+        //
+        if (p.css)
+            addCss('#giotto-paper-' + paper.uid(), p.css);
+
+        // Auto resize the paper
+        if (p.resize) {
+            //
+            d3.select(window).on('resize.paper' + paper.uid(), function () {
+                if (!p._resizing) {
+                    if (p.resizeDelay) {
+                        p._resizing = true;
+                        d3.timer(function () {
+                            paper.resize();
+                            return true;
+                        }, p.resizeDelay);
+                    } else {
+                        paper.resize();
+                    }
+                }
+            });
+        }
+        //
+        return paper;
+
+        function groupOptions (opts) {
+            opts || (opts = {});
+            if (!opts.yaxis || opts.yaxis === 1)
+                opts.yaxis = p.yaxis;
+            else if (opts.yaxis === 2)
+                opts.yaxis = p.yaxis2;
+            return copyMissing(p, opts);
+        }
+    };
+
+    g.paper.plugins = [];
+
+    g.paper.plugin = function (name, plugin) {
+        g.defaults.paper[name] = plugin.defaults;
+        g.paper.plugins.push(plugin);
+    };
+
+
+    g.group = function (paper, element, p, _) {
+        var drawings = [],
+            factor = 1,
+            d3v = d3[p.type],
+            xaxis = d3v.axis(),
+            yaxis = d3v.axis(),
+            group = {};
+
+        xaxis.options = function () {return p.xaxis;};
+        yaxis.options = function () {return p.yaxis;};
+
+        element.__group__ = group;
+
+        group.element = function () {
+            return d3.select(element);
+        };
+
+        group.options = function () {
+            return p;
+        };
+
+        group.xaxis = function () {
+            return xaxis;
+        };
+
+        group.yaxis = function () {
+            return yaxis;
+        };
+
+        group.paper = function () {
+            return paper;
+        };
+
+        // [width, height] in pixels
+        group.width = function () {
+            return factor*p.size[0];
+        };
+
+        group.height = function () {
+            return factor*p.size[1];
+        };
+
+        group.factor = function (x) {
+            if (!arguments.length) return factor;
+            factor = +x;
+            return group.resetAxis();
+        };
+
+        group.size = function () {
+            return [group.width(), group.height()];
+        };
+
+        group.innerWidth = function () {
+            return factor*(p.size[0] - p.margin.left - p.margin.right);
+        };
+
+        group.innerHeight = function () {
+            return factor*(p.size[1] - p.margin.top - p.margin.bottom);
+        };
+
+        group.aspectRatio = function () {
+            return group.innerHeight()/group.innerWidth();
+        };
+
+        group.add = function (d) {
+            drawings.push(d);
+            return d;
+        };
+
+        group.each = function (callback) {
+            for (var i=0; i<drawings.length; ++i)
+                callback.call(drawings[i]);
+            return group;
+        };
+
+        group.render = function () {
+            for (var i=0; i<drawings.length; ++i)
+                drawings[i].render();
+            return group;
+        };
+
+        // remove all drowings of a drawing by name
+        group.remove = function (name) {
+            var draw;
+            for (var i=0; i<drawings.length; ++i) {
+                draw = drawings[i];
+                if (!name)
+                    draw.remove();
+                else if (draw.name() === name) {
+                    draw.remove();
+                    return drawings.splice(i, 1);
+                }
+            }
+            if (!name) {
+                drawings = [];
+                group.clear();
+            }
+            return group;
+        };
+
+        group.resize = function (size) {
+            _.resize(group, size);
+            return group;
+        };
+
+        // clear the group without removing drawing from memory
+        group.clear = function () {
+            _.clear(group);
+            return group;
+        };
+
+        // Draw a path or an area
+        group.path = function (data, opts) {
+            opts || (opts = {});
+            chartColors(paper, copyMissing(p.line, opts));
+
+            return group.add(_.path(group, data)).options(opts);
+        };
+
+        // Draw scatter points
+        group.points = function (data, opts) {
+            opts || (opts = {});
+            chartColors(paper, copyMissing(p.point, opts));
+
+            return group.add(_.points(group))
+            .options(opts)
+            .size(point_size)
+            .dataConstructor(point_costructor)
+            .data(data);
+        };
+
+        // Draw a pie chart
+        group.barchart = function (data, opts) {
+            opts || (opts = {});
+            chartColors(paper, copyMissing(p.bar, opts));
+
+            return group.add(_.barchart(group))
+            .options(opts)
+            .dataConstructor(bar_costructor)
+            .data(data);
+        };
+
+        // Draw pie chart
+        group.pie = function (data, opts) {
+            opts || (opts = {});
+            copyMissing(p.pie, opts);
+
+            return group.add(drawing(group, function () {
+
+                var width = group.innerWidth(),
+                    height = group.innerHeight(),
+                    opts = this.options(),
+                    outerRadius = 0.5*Math.min(width, height),
+                    innerRadius = opts.innerRadius*outerRadius,
+                    cornerRadius = group.scale(group.dim(opts.cornerRadius)),
+                    value = this.y(),
+                    data = this.data(),
+                    pie = d3.layout.pie().value(function (d) {return value(d.data);})
+                                         .padAngle(d3_radians*opts.padAngle)
+                                         .startAngle(d3_radians*opts.startAngle)(data),
+                    d, dd;
+
+                this.arc = d3v.arc()
+                                .cornerRadius(cornerRadius)
+                                .innerRadius(function (d) {return d.innerRadius;})
+                                .outerRadius(function (d) {return d.outerRadius;});
+
+                // recalculate pie angles
+                for (var i=0; i<pie.length; ++i) {
+                    d = pie[i];
+                    dd = d.data;
+                    dd.set('innerRadius', innerRadius);
+                    dd.set('outerRadius', outerRadius);
+                    delete d.data;
+                    data[i] = extend(dd, d);
+                }
+
+                return _.pie(this, width, height);
+            }))
+            .options(opts)
+            .dataConstructor(pie_costructor)
+            .data(data);
+        };
+
+        // Draw X axis
+        group.drawXaxis = function () {
+            return group.add(_.axis(group, xaxis, 'x-axis')).options(p.xaxis);
+        };
+
+        group.drawYaxis = function () {
+            return group.add(_.axis(group, yaxis, 'y-axis')).options(p.yaxis);
+        };
+
+        group.scalex = function (x) {
+            return xaxis.scale()(x);
+        };
+
+        group.scaley = function (y) {
+            return yaxis.scale()(y);
+        };
+
+        group.scale = function (r) {
+            var s = xaxis.scale();
+            return Math.max(0, s(r) - s(0));
+        };
+
+        group.xfromPX = function (px) {
+            return xaxis.scale().invert(factor*px);
+        };
+
+        group.yfromPX = function (px) {
+            return yaxis.scale().invert(factor*px);
+        };
+
+        // dimension in the input domain from a 0 <= x <= 1
+        // assume a continuous domain
+        // TODO allow for multiple domain points
+        group.dim = function (x) {
+            var v = +x;
+            // assume input is in pixels
+            if (isNaN(v))
+                return group.xfromPX(x.substring(0, x.length-2));
+            // otherwise assume it is a value between 0 and 1 defined as percentage of the x axis length
+            else {
+                var d = group.xaxis().scale().domain();
+                return v*(d[d.length-1] - d[0]);
+            }
+        };
+
+        // x coordinate in the input domain
+        group.x = function (u) {
+            var d = xaxis.scale().domain();
+            return u*(d[d.length-1] - d[0]) + d[0];
+        };
+
+        // y coordinate in the input domain
+        group.y = function (u) {
+            var d = yaxis.scale().domain();
+            return u*(d[d.length-1] - d[0]) + d[0];
+        };
+
+        group.resetAxis = function () {
+            xaxis.scale().range([0, group.innerWidth()]);
+            yaxis.scale().range([group.innerHeight(), 0]);
+
+            [xaxis, yaxis].forEach(function (axis) {
+                var o = axis.options(),
+                    innerTickSize = group.scale(group.dim(o.tickSize)),
+                    outerTickSize = group.scale(group.dim(o.outerTickSize)),
+                    tickPadding = group.scale(group.dim(o.tickPadding));
+                axis.tickSize(innerTickSize, outerTickSize)
+                      .tickPadding(tickPadding)
+                      .orient(o.position);
+
+                if (isNull(o.min) || isNull(o.max))
+                    o.auto = true;
+            });
+            return group;
+        };
+
+        var
+
+        point_costructor = function (rawdata) {
+            // Default point size
+            var group = this.group(),
+                size = group.scale(group.dim(this.options().size)),
+                data = [];
+
+            for (var i=0; i<rawdata.length; i++)
+                data.push(_.point(this, rawdata[i], size));
+            return data;
+        },
+
+        bar_costructor = function (rawdata) {
+            var width = barWidth(paper, rawdata, this.options()),
+                data = [];
+
+            for (var i=0; i<rawdata.length; i++)
+                data.push(_.bar(this, rawdata[i], size));
+
+            return data;
+        },
+
+        pie_costructor = function (rawdata) {
+            var data = [];
+
+            for (var i=0; i<rawdata.length; i++)
+                data.push(_.pieslice(this, rawdata[i]));
+
+            return data;
+        };
+
+        return group.resetAxis();
+    };
+
+
+    //
+    // A drawing is drawn on a group
+    function drawing (group, renderer, draw) {
+        var uid = ++_idCounter,
+            x = d3_geom_pointX,
+            y = d3_geom_pointY,
+            size = default_size,
+            name,
+            data,
+            opts,
+            dataConstructor;
+
+        draw = highlightMixin(drawingOptions, draw);
+
+        var set = draw.set;
+
+        draw.uid = function () {
+            return 'giottodraw' + uid;
+        };
+
+        draw.remove = noop;
+
+        draw.render = function () {
+            if (renderer)
+                return renderer.call(draw);
+        };
+
+        draw.group = function () {
+            return group;
+        };
+
+        draw.factor = function () {
+            return group.factor();
+        };
+
+        draw.paper = function () {
+            return group.paper();
+        };
+
+        draw.each = function (callback) {
+            if (data)
+                data.forEach(function (d) {
+                    callback.call(d);
+                });
+            else
+                callback.call(draw);
+        };
+
+        draw.renderer = function (_) {
+            if (arguments.length === 0) return renderer;
+            renderer = _;
+            return draw;
+        };
+
+        draw.options = function (_) {
+            if (arguments.length === 0) return opts;
+            opts = _;
+            draw.init(draw, opts);
+            return draw;
+        };
+
+        // set a value and its default
+        draw.set = function (name, value) {
+            if (pointOptions.indexOf(name) === -1) {
+                opts[name] = value;
+            } else if (data) {
+                data.forEach(function (d) {
+                    d.set(name, value);
+                });
+            } else
+                set(name, value);
+            return draw;
+        };
+
+        draw.x = function (_) {
+            if (arguments.length === 0) return x;
+            x = d3_functor(_);
+            return draw;
+        };
+
+        draw.y = function (_) {
+            if (arguments.length === 0) return y;
+            y = d3_functor(_);
+            return draw;
+        };
+
+        draw.size = function (_) {
+            if (arguments.length === 0) return size;
+            size = d3_functor(_);
+            return draw;
+        };
+
+        draw.name = function (_) {
+            if (arguments.length === 0) return name;
+            name = _;
+            return draw;
+        };
+
+        draw.scalex = function () {
+            var scalex = group.xaxis().scale();
+            return function (d) {
+                return scalex(x(d));
+            };
+        };
+
+        draw.scaley = function () {
+            var scaley = group.yaxis().scale();
+            return function (d) {
+                return scaley(y(d));
+            };
+        };
+
+        draw.data = function (_) {
+            if (arguments.length === 0) return data;
+            if (dataConstructor)
+                data = dataConstructor.call(draw, _);
+            else
+                data = _;
+            return draw;
+        };
+
+        draw.dataConstructor = function (_) {
+            if (arguments.length === 0) return dataConstructor;
+            dataConstructor = d3_functor(_);
+            return draw;
+        };
+
+        return draw;
+
+        function _set(name, value) {
+            if (typeof draw[name] === 'function')
+                draw[name](value);
+            else
+                draw[name] = value;
+        }
     }
 
-    function getRoundedPoints(pts, radius) {
-        var i1, i2, i3, p1, p2, p3, prevPt, nextPt,
-            len = pts.length,
-            res = new Array(len);
-        for (i2 = 0; i2 < len; i2++) {
-            i1 = i2-1;
-            i3 = i2+1;
-            if (i1 < 0)
-                i1 = len - 1;
-            if (i3 === len) i3 = 0;
-            p1 = pts[i1];
-            p2 = pts[i2];
-            p3 = pts[i3];
-            prevPt = getRoundedPoint(p1[0], p1[1], p2[0], p2[1], radius, false);
-            nextPt = getRoundedPoint(p2[0], p2[1], p3[0], p3[1], radius, true);
-            res[i2] = [prevPt[0], prevPt[1], p2[0], p2[1], nextPt[0], nextPt[1]];
-        }
-      return res;
+    // A mixin for highlighting elements
+    //
+    // THis is used by the drawing and paperData constructors
+    function highlightMixin (parameters, d) {
+        var values = {},
+            opts,
+            highlight = false;
+
+        d || (d = {});
+
+        d.highLight = function () {
+            if (highlight) return d;
+            highlight = true;
+
+            var a = d.active,
+                v;
+            if (a) {
+                parameters.forEach(function (name) {
+                    v = a[name];
+                    if (v) {
+                        if (multiplyOptions.indexOf(name) > -1)
+                            v *= values[name];
+                        d[name] = v;
+                    }
+                });
+            }
+            return d;
+        };
+
+        // set a value and its default
+        d.set = function (name, value) {
+            if (parameters.indexOf(name) > -1) {
+                values[name] = value;
+                d[name] = value;
+            }
+            return d;
+        };
+
+        d.reset = function () {
+            highlight = false;
+            parameters.forEach(function (name) {
+                d[name] = values[name];
+            });
+            return d;
+        };
+
+        d.init = function (data, opts) {
+            parameters.forEach(function (name) {
+                values[name] = data[name] || opts[name];
+            });
+            if (opts.active) {
+                if (!data.active)
+                    data.active = {};
+                copyMissing(opts.active, data.active);
+                activeColors(data);
+            }
+            return d.reset();
+        };
+
+        return d;
+    }
+    //
+    // Manage attributes for data to be drawn on papers
+    function paperData (draw, data, parameters, d) {
+        var opts = draw.options();
+        d = highlightMixin(parameters, d);
+
+        d.init(data, opts);
+        d.active = data.active;
+        d.data = data;
+
+        d.options = function () {
+            return opts;
+        };
+
+        return d;
     }
 
-    function getRoundedPoint(x1, y1, x2, y2, radius, first) {
-        var total = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2)),
-            idx = first ? radius / total : (total - radius) / total;
-        return [x1 + (idx * (x2 - x1)), y1 + (idx * (y2 - y1))];
+    function point (draw, data, size) {
+        var d = paperData(draw, data, pointOptions);
+        d.set('size', data.size === undefined ? size : data.size);
+        return d;
     }
+
+    function pieSlice (draw, data) {
+        // Default values
+        if (!data.fill)
+            data.fill = draw.paper().pickColor();
+        if (!data.color)
+            data.color = d3.rgb(data.fill).darker();
+
+        return paperData(draw, data, pieOptions);
+    }
+
+    var SymbolSize = {
+            circle: 0.7,
+            cross: 0.7,
+            diamond: 0.7,
+            "triangle-up": 0.6,
+            "triangle-down": 0.6
+        },
+
+        drawingOptions = ['fill', 'color', 'fillOpacity',
+                        'colorOpacity', 'lineWidth'],
+
+        pointOptions = extendArray(['size', 'symbol'], drawingOptions),
+
+        pieOptions = extendArray(['innerRadius', 'outerRadius'], drawingOptions),
+
+        multiplyOptions = ['lineWidth', 'size', 'innerRadius', 'outerRadius'],
+
+        default_size = function (d) {
+            return d.size;
+        },
+
+        point_size = function (d) {
+            return d.size*d.size*(SymbolSize[d.symbol] || 1);
+        };
+
+
+    //
+    //  SVG group
+    //  ================
+    g.group.svg = function (paper, p) {
+        var container = paper.svg(true),
+            elem = p.before ? container.insert('g', p.before) : container.append('g'),
+            _ = svg_implementation(paper, p);
+
+        // translate the group element by the required margins
+        elem.attr("transform", "translate(" + p.margin.left + "," + p.margin.top + ")");
+        return g.group(paper, elem.node(), p, _);
+    };
+
+    //
+    //  Canvas
+    //  ======================
+    g.group.canvas = function (paper, p) {
+
+        var container = paper.canvas(true),
+            elem = p.before ? container.insert('canvas', p.before) : container.append('canvas'),
+            ctx = elem.node().getContext('2d'),
+            _ = canvas_implementation(paper, p);
+
+        container.selectAll('*').style({"position": "absolute", "top": "0", "left": "0"});
+        container.select('*').style({"position": "relative"});
+
+        var group = g.group(paper, elem.node(), p, _),
+            render = group.render;
+
+        group.render = function () {
+            var factor = _.clear(group, p.size);
+            ctx.translate(factor*p.margin.left, factor*p.margin.top);
+            return render();
+        };
+
+        group.context = function () {
+            return ctx;
+        };
+
+        group.dataAtPoint = function (point, elements) {
+            var factor = group.factor(),
+                x = factor*point[0],
+                y = factor*point[1],
+                data;
+            group.each(function () {
+                this.each(function () {
+                    if (this.inRange(x, y)) elements.push(this);
+                });
+            });
+        };
+
+        return group.factor(_.scale(group));
+    };
+    //
+    g.viz = {};
+    // Plugins for all visualization classes
+    g.vizplugins = [];
+    //
+    g.vizplugin = function (callback) {
+        g.vizplugins.push(callback);
+    };
+    //
+    // Factory of Giotto visualization factories
+    //  name: name of the visualization constructor, the constructor is
+    //        accessed via the giotto.viz object
+    //  defaults: object of default parameters
+    //  constructor: function called back with a visualization object
+    //               and an object containing options for the visualization
+    //  returns a functyion which create visualization of the ``name`` family
+    g.createviz = function (name, defaults, constructor) {
+
+        // The visualization factory
+        var plugins = [],
+            vizType = function (element, opts) {
+
+            if (isObject(element)) {
+                opts = element;
+                element = null;
+            }
+            opts = extend({}, vizType.defaults, opts);
+
+            var viz = {},
+                event = d3.dispatch.apply(d3, opts.events),
+                alpha = 0,
+                loading_data = false,
+                paper;
+
+            opts.event = event;
+
+            // Return the visualization type (a function)
+            viz.vizType = function () {
+                return vizType;
+            };
+
+            viz.vizName = function () {
+                return vizType.vizName();
+            };
+
+            viz.paper = function (createNew) {
+                if (createNew || paper === undefined) {
+                    if (paper)
+                        paper.clear();
+                    paper = g.paper(element, opts);
+                }
+                return paper;
+            };
+
+            viz.element = function () {
+                return viz.paper().element();
+            };
+
+            viz.clear = function () {
+                viz.paper().clear();
+                return viz;
+            };
+
+            viz.alpha = function(x) {
+                if (!arguments.length) return alpha;
+
+                x = +x;
+                if (alpha) { // if we're already running
+                    if (x > 0) alpha = x; // we might keep it hot
+                    else alpha = 0; // or, next tick will dispatch "end"
+                } else if (x > 0) { // otherwise, fire it up!
+                    event.start({type: "start", alpha: alpha = x});
+                    d3.timer(viz.tick);
+                }
+
+                return viz;
+            };
+
+            viz.resume = function() {
+                return viz.alpha(0.1);
+            };
+
+            viz.stop = function() {
+                return viz.alpha(0);
+            };
+
+            viz.tick = function() {
+                if (opts.scope && opts.scope.stats)
+                    opts.scope.stats.begin();
+
+                // simulated annealing, basically
+                if ((alpha *= 0.99) < 0.005) {
+                    event.end({type: "end", alpha: alpha = 0});
+                    return true;
+                }
+
+                event.tick({type: "tick", alpha: alpha});
+
+                if (opts.scope && opts.scope.stats)
+                    opts.scope.stats.end();
+            };
+
+            // Starts the visualization
+            viz.start = function () {
+                return viz.resume();
+            };
+
+            // render the visualization by invoking the render method of the paper
+            viz.render = function () {
+                paper.render();
+                return viz;
+            };
+
+            viz.loadData = function (callback) {
+                if (opts.src && !loading_data) {
+                    loading_data = true;
+                    g.log.info('Giotto loading data from ' + opts.src);
+                    return d3.json(opts.src, function(error, json) {
+                        loading_data = false;
+                        if (!error) {
+                            viz.setData(json, callback);
+                        }
+                    });
+                }
+            };
+
+            //
+            // Set new data for the visualization
+            viz.setData = function (data, callback) {
+                if (opts.processData)
+                    data = opts.processData(data);
+                if (Object(data) === data && data.data)
+                    extend(opts, data);
+                else
+                    opts.data = data;
+                if (callback)
+                    callback();
+            };
+
+            // returns the options object
+            viz.options = function () {
+                return opts;
+            };
+
+            viz.image = function () {
+                return paper.image();
+            };
+
+            viz.xyfunction = g.math.xyfunction;
+
+            d3.rebind(viz, event, 'on');
+
+            // If constructor available, call it first
+            if (constructor)
+                constructor(viz, opts);
+
+            // Inject plugins for all visualizations
+            for (i=0; i < g.vizplugins.length; ++i)
+                g.vizplugins[i](viz, opts);
+
+            // Inject visualization plugins
+            for (var i=0; i < plugins.length; ++i)
+                plugins[i](viz, opts);
+
+            // if the onInit callback available, execute it
+            if (opts.onInit) {
+                var init = getObject(opts.onInit);
+                if (isFunction(init))
+                    init(viz, opts);
+                else
+                    g.log.error('Could not locate onInit function ' + opts.onInit);
+            }
+
+            return viz;
+        };
+
+        g.viz[name] = vizType;
+
+        vizType.defaults = extend({}, g.defaults.viz, g.defaults.paper, defaults);
+
+        vizType.vizName = function () {
+            return name;
+        };
+
+        vizType.plugin = function (callback) {
+            plugins.push(callback);
+        };
+
+        return vizType;
+    };
 
 
     g.createviz('chart', {
@@ -3941,7 +3427,7 @@
     function (chart, opts) {
 
         var series = [],
-            xrange, yrange;
+            allranges = {};
 
         chart.numSeries = function () {
             return series.length;
@@ -3956,37 +3442,13 @@
         chart.forEach = chart.each;
 
         chart.addSeries = function (series) {
-            // Loop through data and build the graph
-            var data = [];
-
-            series.forEach(function (serie) {
-
-                if (isFunction(serie))
-                    serie = serie(chart);
-
-                serie = formatSerie(serie);
-
-                if (serie) {
-                    if (!serie.pie) {
-                        serie = xyData(serie);
-                        if (!xrange) {
-                            xrange = [Infinity, -Infinity];
-                            yrange = [Infinity, -Infinity];
-                        }
-                        xrange[0] = Math.min(xrange[0], serie.xrange[0]);
-                        xrange[1] = Math.max(xrange[1], serie.xrange[1]);
-                        yrange[0] = Math.min(yrange[0], serie.yrange[0]);
-                        yrange[1] = Math.max(yrange[1], serie.yrange[1]);
-                    }
-                    data.push(serie);
-                }
-            });
-
-            return data;
+            addSeries(series);
+            return chart;
         };
 
         chart.addSerie = function (serie) {
-            return chart.addSeries([serie]);
+            addSeries([serie]);
+            return chart;
         };
 
         chart.clear = function () {
@@ -3995,46 +3457,34 @@
             return chart;
         };
 
-        chart.draw = function () {
-            var paper = chart.paper(),
-                data = opts.data;
+        chart.draw = function (data) {
+            var paper = chart.paper();
+            data = data || opts.data;
 
             // load data if in options
-            if (data) {
-                delete opts.data;
-                if (data === undefined && opts.src)
-                    return chart.loadData(chart.draw);
-                if (g._.isFunction(data))
-                    data = data(chart);
+            if (data === undefined && opts.src) {
+                opts.data = null;
+                return chart.loadData(chart.draw);
             }
 
-            if (data)
-                data = chart.addSeries(data);
+            if (isFunction(data))
+                data = data(chart);
+
+            opts.data = null;
 
             if (data || opts.type !== paper.type()) {
+
+                if (data)
+                    data = addSeries(data);
 
                 if (opts.type !== paper.type()) {
                     paper = chart.paper(true);
                     data = series;
                 }
 
-                if (xrange) {
-                    paper.xAxis().scale().domain([ac(opts.xaxis.min, xrange[0]), ac(opts.xaxis.max, xrange[1])]);
-                    paper.yAxis().scale().domain([ac(opts.yaxis.min, yrange[0]), ac(opts.yaxis.max, yrange[1])]);
-                }
-
                 data.forEach(function (serie) {
                     drawSerie(serie);
                 });
-
-                if (data.length === series.length && xrange) {
-                    if (show(opts.xaxis))
-                        paper.drawXaxis();
-                    if (show(opts.yaxis))
-                        paper.drawYaxis();
-                    if (show(opts.yaxis2, false))
-                        paper.drawYaxis();
-                }
             }
 
             // Render the chart
@@ -4050,7 +3500,7 @@
             } else {
                 chart.each(function (serie) {
                     if (serie[type])
-                        serie[type].setOptions(field, value);
+                        serie[type].set(field, value);
                 });
             }
         };
@@ -4062,23 +3512,6 @@
             chart.draw();
         });
 
-
-        // INTERNALS
-        function show (o, d) {
-            if (o) {
-                if (o.show === undefined)
-                    return d === undefined ? true : d;
-                else
-                    return o.show;
-            }
-            return false;
-        }
-
-        function ac(val, calc) {
-            val = val === undefined || val === null ? calc : val;
-            return val;
-        }
-
         function formatSerie (serie) {
             if (!serie) return;
             if (isArray(serie)) serie = {data: serie};
@@ -4086,21 +3519,21 @@
             var paper = chart.paper(),
                 color, show, o;
 
+            serie.index = series.length;
+
             series.push(serie);
+
             if (!serie.label)
                 serie.label = 'serie ' + series.length;
 
             opts.chartTypes.forEach(function (type) {
                 o = serie[type];
-                if (o) {
-                    if (isArray(o))
-                        serie.data = o;
-                    o = {};
+                if (isArray(o) && !serie.data) {
+                    serie.data = o;
+                    o = {}; // an ampty object so that it is shown
                 }
                 if (o || opts[type].show) {
-                    if (!o) o = {};
-                    extend(o, opts[type]);
-                    serie[type] = o;
+                    serie[type] = extend({}, opts[type], o);
                     show = true;
                 }
             });
@@ -4123,38 +3556,119 @@
             return serie;
         }
 
-        function drawSerie (serie) {
-            // The serie is
-            var paper = chart.paper();
+        function addSeries (series) {
+            // Loop through data and build the graph
+            var data = [], ranges, range;
 
-            paper.group({'class': 'serie ' + slugify(serie.label)});
+            series.forEach(function (serie) {
 
-            opts.chartTypes.forEach(function (type) {
-                if (serie[type])
-                    serie[type] = chartTypes[type](chart, serie.data, serie[type]);
+                if (isFunction(serie))
+                    serie = serie(chart);
+
+                serie = formatSerie(serie);
+
+                if (serie) {
+                    if (!serie.pie) {
+                        serie = xyData(serie);
+                        if (serie.yaxis === undefined)
+                            serie.yaxis = 1;
+                        if (!serie.group) serie.group = 1;
+
+                        ranges = allranges[serie.group];
+                        if (!ranges)
+                            allranges[serie.group] = ranges = {};
+
+                        if (!isObject(serie.xaxis)) serie.xaxis = opts.xaxis;
+                        if (serie.yaxis === 2) serie.yaxis = opts.yaxis2;
+                        if (!isObject(serie.yaxis)) serie.yaxis = opts.yaxis;
+
+                        range = ranges[serie.xaxis.position];
+                        if (!range) {
+                            ranges[serie.xaxis.position] = range = [serie.xrange[0], serie.xrange[1]];
+                            serie.drawXaxis = true;
+                        } else {
+                            range[0] = Math.min(range[0], serie.xrange[0]);
+                            range[1] = Math.max(range[1], serie.xrange[1]);
+                        }
+                        range = ranges[serie.yaxis.position];
+                        if (!range) {
+                            ranges[serie.yaxis.position] = range = [serie.yrange[0], serie.yrange[1]];
+                            serie.drawYaxis = true;
+                        } else {
+                            range[0] = Math.min(range[0], serie.yrange[0]);
+                            range[1] = Math.max(range[1], serie.yrange[1]);
+                        }
+                    }
+                    data.push(serie);
+                }
             });
 
-            paper.parent();
+            return data;
+        }
+
+        function drawSerie (serie) {
+            // The serie is
+            var paper = chart.paper(),
+                group = paper.classGroup(slugify(serie.label), extend({}, serie)),
+                stype;
+
+            function domain(axis) {
+                var range = allranges[serie.group][axis.orient()],
+                    o = axis.options(),
+                    scale = axis.scale();
+
+                if (o.auto) {
+                    scale.domain([range[0], range[1]]).nice();
+                    if (!isNull(o.min))
+                        scale.domain([o.min, scale.domain()[1]]);
+                    else if (!isNull(o.max))
+                        scale.domain([scale.domain()[0], o.max]);
+                } else {
+                    scale.domain([o.min, o.max]);
+                }
+                return group;
+            }
+
+            if (serie.drawXaxis)
+                domain(group.xaxis()).drawXaxis();
+
+            if (serie.drawYaxis)
+                domain(group.yaxis()).drawYaxis();
+
+            opts.chartTypes.forEach(function (type) {
+                stype = serie[type];
+                if (stype) {
+                    if(isFunction(stype.options))
+                        stype = stype.options();
+                    serie[type] = chartTypes[type](group, serie.data, stype);
+                }
+            });
         }
 
     });
 
     var chartTypes = {
 
-        pie: function (chart, data, opts) {
-            return chart.paper().pie(data, opts);
+        pie: function (group, data, opts) {
+            return group.pie(data, opts);
         },
 
-        bar: function (chart, data, opts) {
-            return chart.paper().barchart(data, opts);
+        bar: function (group, data, opts) {
+            return group.barchart(data, opts)
+                        .x(function (d) {return d.x;})
+                        .y(function (d) {return d.y;});
         },
 
-        line: function (chart, data, opts) {
-            return chart.paper().path(data, opts);
+        line: function (group, data, opts) {
+            return group.path(data, opts)
+                        .x(function (d) {return d.x;})
+                        .y(function (d) {return d.y;});
         },
 
-        point: function (chart, data, opts) {
-            return chart.paper().points(data, opts);
+        point: function (group, data, opts) {
+            return group.points(data, opts)
+                        .x(function (d) {return d.x;})
+                        .y(function (d) {return d.y;});
         }
     };
 
@@ -5065,95 +4579,99 @@
 
     //
     //  Add brush functionality to svg paper
-    g.paper.svg.plugin('brush', {
-        axis: 'x',
-        opacity: 0.125,
-        fill: '#000'
-    },
+    g.paper.plugin('brush', {
+        defaults: {
+            axis: null, // set one of 'x', 'y' or 'xy'
+            fill: '#000',
+            fillOpacity: 0.125
+        },
 
-    function (paper, opts) {
-        var cid, brush;
+        svg: function (paper, opts) {
+            var cid, brush;
 
-        paper.brush = function () {
-            return brush;
-        };
+            paper.brush = function () {
+                return brush;
+            };
 
-        // get/set the extent for the brush
-        // When set, it re-renders in the paper
-        paper.extent = function (x) {
-            if (!arguments.length) return brush ? brush.extent() : null;
-            if (brush) {
-                brush.extent(x);
-                paper.render(cid);
-            }
-        };
+            // get/set the extent for the brush
+            // When set, it re-renders in the paper
+            paper.extent = function (x) {
+                if (!arguments.length) return brush ? brush.extent() : null;
+                if (brush) {
+                    brush.extent(x);
+                    paper.render(cid);
+                }
+            };
 
-        // Add a brush to the paper if not already available
-        paper.addBrush = function (options) {
-            if (cid) return paper;
+            // Add a brush to the paper if not already available
+            paper.addBrush = function (options) {
+                if (cid) return paper;
 
-            if (_.isObject(options))
-                extend(opts.brush, options);
+                if (_.isObject(options))
+                    extend(opts.brush, options);
 
-            brush = d3.svg.brush()
-                            .on("brushstart", brushstart)
-                            .on("brush", brushmove)
-                            .on("brushend", brushend);
+                brush = d3.svg.brush()
+                                .on("brushstart", brushstart)
+                                .on("brush", brushmove)
+                                .on("brushend", brushend);
 
-            cid = paper.addComponent(function () {
-                if (!brush) return;
+                var b = paperData(paper, opts.brush, {}).reset();
 
-                var current = paper.root().current(),
-                    gBrush = current.select('g.brush');
+                cid = paper.addComponent(b, function () {
+                    if (!brush) return;
 
-                if (opts.brush.axis === 'x') brush.x(paper.xAxis().scale());
+                    var current = paper.root().current(),
+                        gBrush = current.select('g.brush');
 
-                if (!gBrush.node()) {
-                    if (opts.brush.extent)
-                        brush.extent(opts.brush.extent);
-                    gBrush = current.append('g');
+                    if (opts.brush.axis === 'x') brush.x(paper.xAxis().scale());
+
+                    if (!gBrush.node()) {
+                        if (opts.brush.extent)
+                            brush.extent(opts.brush.extent);
+                        gBrush = current.append('g');
+                    }
 
                     var rect = gBrush.call(brush).selectAll("rect")
-                                        .attr('fill', opts.brush.fill)
-                                        .attr('fill-opacity', opts.brush.opacity);
+                                                .attr('fill', b.fill)
+                                                .attr('fill-opacity', b.fillOpacity);
 
                     if (opts.brush.axis === 'x') {
                         gBrush.attr("class", "brush x-brush");
                         rect.attr("y", -6).attr("height", paper.innerHeight() + 7);
                     }
-                } else
-                    gBrush.call(brush);
 
-                brushstart();
-                brushmove();
-                brushend();
-            });
+                    brushstart();
+                    brushmove();
+                    brushend();
+                });
 
-            return brush;
-        };
+                return brush;
+            };
 
-        paper.removeBrush = function () {
-            cid = paper.removeComponent(cid);
-            paper.root().current().select('g.brush').remove();
-            brush = null;
-        };
+            paper.removeBrush = function () {
+                cid = paper.removeComponent(cid);
+                paper.root().current().select('g.brush').remove();
+                brush = null;
+            };
 
+            function brushstart () {
+                paper.root().current().classed('selecting', true);
+                if (opts.brush.start) opts.brush.start();
+            }
 
-        function brushstart () {
-            paper.root().current().classed('selecting', true);
-            if (opts.brush.start) opts.brush.start();
-        }
+            function brushmove () {
+                if (opts.brush.move) opts.brush.move();
+            }
 
-        function brushmove () {
-            if (opts.brush.move) opts.brush.move();
-        }
+            function brushend () {
+                paper.root().current().classed('selecting', false);
+                if (opts.brush.end) opts.brush.end();
+            }
+        },
 
-        function brushend () {
-            paper.root().current().classed('selecting', false);
-            if (opts.brush.end) opts.brush.end();
+        canvas: function (paper, opts) {
         }
     });
-
 
     //
     //  Add brush functionality to charts
@@ -5161,9 +4679,9 @@
         var dimension,
             brush, brushopts;
 
-        if (opts.brush) {
+        if (opts.brush && opts.brush.axis) {
             brush = opts.brush;
-            if (!_.isObject(brush)) brush = {};
+            if (!isObject(brush)) brush = {};
             brushopts = extend({}, brush);
 
             brushopts.start = function () {
@@ -5289,131 +4807,98 @@
         }
 
     });
-    var gridDefaults = {
-        color: '#333',
-        background: {
-            color: '#c6dbef',
-            opacity: 0.4
+
+    g.paper.plugin('grid', {
+        defaults: {
+            color: '#333',
+            colorOpacity: 0.2,
+            fill: '#c6dbef',
+            fillOpacity: 0.2
         },
-        opacity: 0.3
-    };
 
-    function gridConstructor (paper, opts) {
+        svg: function (group, opts) {
 
-        var type = paper.type(),
-            inner = {},
-            xGrid, yGrid;
+            function show (axis, xy) {
+                var grid = paper.classGroup('grid', {before: '*'});
 
-        paper.showGrid = function (options) {
-            init();
-            inner[type].addgrid();
-            inner[type].showhide(xGrid, paper.xAxis(), 'x', opts.xaxis.grid);
-            inner[type].showhide(yGrid, paper.yAxis(), 'y', opts.yaxis.grid);
-            return paper;
-        };
-
-        paper.hideGrid = function () {
-            if (xGrid) {
-                inner[type].showhide(xGrid, paper.xAxis(), 'x');
-                inner[type].showhide(yGrid, paper.yAxis(), 'y');
-            }
-            return paper;
-        };
-
-        paper.xGrid = function () {
-            init();
-            return xGrid;
-        };
-
-        paper.yGrid = function () {
-            init();
-            return yGrid;
-        };
-
-        // PRIVATE FUNCTIONS
-
-        function init () {
-            if (!xGrid) {
-                opts.grid = extend({}, opts.grid, g.defaults.paper.grid);
-                if (opts.xaxis.grid === undefined) opts.xaxis.grid = true;
-                if (opts.yaxis.grid === undefined) opts.yaxis.grid = true;
-                xGrid = d3[type].axis();
-                yGrid = d3[type].axis();
-            }
-        }
-
-        inner.svg = {
-            addgrid: function () {
-                var r = paper.root().current().select('rect.grid');
-                if (!r.node()) {
-                    r = paper.current().insert("rect", "*")
-                            .attr("class", "grid")
-                            .attr("width", paper.innerWidth())
-                            .attr("height", paper.innerHeight());
-                }
-                paper.setBackground(r, opts.grid.background);
-            },
-
-            showhide: function (grid, axis, xy, show) {
-                var g = paper.root().current()
-                                .select('.' + xy + '-grid');
                 if (show) {
-                    if(!g.node()) {
-                        grid.scale(axis.scale()).ticks(axis.ticks()).tickFormat("");
-                        g = paper.group().attr('class', 'grid ' + xy + '-grid')
-                                .attr('stroke', opts.grid.color)
-                                .attr('stroke-opacity', opts.grid.opacity);
-                        if (opts.grid.background)
-                            g.attr('fill', opts.grid.backgroundColor);
 
-                        if (xy === 'x')
-                            grid.tickSize(paper.innerHeight(), 0, 0);
+                    grid.add(function () {
+                        var opts = this.options(),
+                            gg = grid.element().select('.' + xy),
+                            rect = grid.element().select('.grid-rectangle');
+
+                        if (!rect.node()) {
+                            grid.element()
+                                    .append("rect")
+                                    .attr("class", "grid-rectangle")
+                                    .attr("width", grid.innerWidth())
+                                    .attr("height", grid.innerHeight());
+                        }
+                        paper.setBackground(rect, this);
+
+                        if (!gg.node())
+                            gg = grid.element().append('g').attr('class', xy);
+                        if (xy[0] === 'x')
+                            gridaxis.tickSize(this.group().innerHeight(), 0);
                         else
-                            grid.tickSize(-paper.innerWidth(), 0, 0).orient('left');
-
-                        paper.addComponent(paperData(paper, {}, g), function () {
-                            g.call(grid);
-                        });
-                    }
-                } else
-                    g.remove();
+                            gridaxis.tickSize(-this.group().innerWidth(), 0).orient('left');
+                        gg.selectAll('*').remove();
+                        gg.call(gridaxis);
+                        gg.selectAll('line')
+                            .attr('stroke', this.color)
+                            .attr('stroke-opacity', this.colorOpacity)
+                            .attr('stroke-width', this.lineWidth);
+                        gg.selectAll('path').remove();
+                        return gg;
+                    }).options(opts.grid).name(xy);
+                }
             }
-        };
+        },
 
-        inner.canvas = {
-            addgrid: function () {
-            },
+        canvas: function (group, opts) {
 
-            showhide: function (grid, axis, xy, show) {
-            }
-        };
+        }
+    });
+
+    function grid (group, opts, show) {
+        if (opts.xaxis.grid === undefined) opts.xaxis.grid = true;
+        if (opts.yaxis.grid === undefined) opts.yaxis.grid = true;
+
+        group.xaxis().tickFormat('');
+        group.yaxis().tickFormat('');
+
+        group.add(show(group.xaxis(), 'x-grid')).options(opts.xaxis);
+        group.add(show(group.yaxis(), 'y-grid')).options(opts.yaxis);
     }
-    //
-    //  Add grid functionality to svg and canvas paper
-    g.paper.svg.plugin('grid', gridDefaults, gridConstructor);
-    g.paper.canvas.plugin('grid', gridDefaults, gridConstructor);
+
     //
     //  Add grid functionality to charts
     g.viz.chart.plugin(function (chart, opts) {
+        var grid;
         opts.grid = extend({show: false}, opts.grid);
 
         // Show grid
-        chart.showGrid = function (options) {
-            chart.paper().showGrid(options);
+        chart.showGrid = function () {
+            chart.paper().each(function (group) {
+                group.showGrid();
+            });
             return chart;
         };
 
         // Hide grid
         chart.hideGrid = function () {
-            chart.paper().hideGrid();
+            chart.paper().each(function (group) {
+                group.hideGrid();
+            });
             return chart;
         };
 
         chart.on('tick.grid', function () {
-            if (opts.grid.show)
-                chart.showGrid();
-            else
-                chart.hideGrid();
+            //if (opts.grid.show)
+            //    chart.showGrid();
+            //else
+            //    chart.hideGrid();
         });
     });
 
@@ -5562,11 +5047,16 @@
     };
 
 
-    g.paper.svg.plugin("quadtree",
+    g.paper.plugin("quadtree", {
+        defaults: {
+            color: '#ccc',
+            opacity: 1,
+            width: 1,
+            fill: 'none',
+            fillOpacity: 0.5,
+        },
 
-        quadDefaults,
-
-        function (paper, opts) {
+        svg: function (paper, opts) {
 
             paper.quadtree = function () {
                 //var sx = paper.xAxis().scale(),
@@ -5639,126 +5129,110 @@
                 });
                 return nodes;
             }
-        });
+        },
 
-    g.paper.canvas.plugin("quadtree",
+        canvas: function (paper, opts) {
 
-        quadDefaults,
-
-        function (paper, opts) {
-
-            paper.quadtree = function () {
-                return d3.geom.quadtree;
-            };
-
-        });
-
-
-    var tooltipDefaults = {
-        className: 'd3-tip',
-        show: true,
-        fill: '#333',
-        fillOpacity: 0.8,
-        color: '#fff',
-        padding: '5px',
-        radius: '3px',
-        template: function (d) {
-            return "<strong>" + d.label + ":</strong><span>" + d.value + "</span>";
         }
-    };
+    });
 
+    var tooltip;
     //
     //  Tooltip functionality for SVG paper
-    g.paper.svg.plugin('tooltip', tooltipDefaults,
+    g.paper.plugin('tooltip', {
+        defaults: {
+            className: 'd3-tip',
+            show: true,
+            fill: '#333',
+            fillOpacity: 0.8,
+            color: '#fff',
+            padding: '5px',
+            radius: '3px',
+            template: function (d) {
+                return "<strong>" + d.label + ":</strong><span>" + d.value + "</span>";
+            }
+        },
 
-        function (paper, opts) {
-            var tip = createTip(paper, opts.tooltip),
-                active;
+        svg: function (group, opts) {
+            var paper = group.paper();
 
-            paper.tooltip = function () {
-                return tip;
-            };
+            if (paper.tip || !opts.tooltip.show) return;
+
+            paper.tip = tooltip || createTip(opts.tooltip);
+
+            var active;
 
             function hide (el) {
                 if (active)
-                    active.reset().draw(el);
+                    active.reset().render(el);
                 active = null;
-                if (tip)
-                    tip.hide();
+                paper.tip.hide();
                 return el;
             }
 
-            if (tip)
-                tip.html(function () {
-                    return opts.tooltip.template(active);
-                });
-
-            paper.on('activein', function () {
-                var el = d3.select(this),
-                    a = this.__data__;
-                if (_.isArray(a)) a = a.paper;
-
-                if (a === active) return;
-                hide(el);
-                active = a;
-                if (!active) return;
-                //
-                // For lines, the data is an array, pick the first element
-                active.highLight().draw(el);
-
-                if (tip)
-                    tip.bbox(getScreenBBox(this)).show();
-
-            }).on('activeout', function () {
-                g.log.info('active out');
-                hide(d3.select(this));
+            paper.tip.html(function () {
+                return opts.tooltip.template(active);
             });
-        });
-
-    //
-    //  Tooltip functionality for CANVAS paper
-    g.paper.canvas.plugin('tooltip', tooltipDefaults,
-
-        function (paper, opts) {
-            var tip = createTip(paper, opts.tooltip),
-                active = [];
-
-            paper.tooltip = function () {
-                return tip;
-            };
 
             opts.activeEvents.forEach(function (event) {
                 paper.on(event + '.tooltip', function () {
-                    var overlay = paper.container().select('.interaction-overlay').node(),
+                    var el = d3.select(this),
+                        a = this.__data__;
+                    if (_.isArray(a)) a = a.paper;
+
+                    if (d3.event.type === 'mouseout')
+                        hide(el);
+                    else if (a !== active) {
+                        hide(el);
+                        active = a;
+                        if (!active) return;
+                        //
+                        active.highLight().render(el);
+                        paper.tip.bbox(getScreenBBox(this)).show();
+                    }
+                });
+            });
+        },
+
+        canvas: function (group, opts) {
+            var paper = group.paper();
+
+            if (paper.tip || !opts.tooltip.show) return;
+
+            paper.tip = tooltip || createTip(opts.tooltip);
+
+            var active = [];
+
+            opts.activeEvents.forEach(function (event) {
+                paper.canvas().on(event + '.tooltip', function () {
+                    var overlay = paper.select('.canvas-interaction-overlay'),
                         point;
 
                     // Create the overlay if not available
                     if (!overlay) {
-                        paper.group({'class': 'interaction-overlay'});
-                        overlay = paper.current();
-                        paper.parent();
-                    } else
-                        overlay = overlay.getContext('2d');
-
+                        overlay = paper.group(opts);
+                        overlay.element().classed('canvas-interaction-overlay', true);
+                    }
+                    overlay.remove();
                     for (var i=0; i<active.length; ++i)
-                        paper.clear(overlay);
-
+                        active[i].reset();
                     active = [];
+
                     if (d3.event.type === 'mouseout')
                         return;
                     else if (d3.event.type === 'mousemove')
                         point = d3.mouse(this);
                     else
                         point = d3.touches(this)[0];
-                    active = paper.getDataAtPoint(point);
+                    active = paper.canvasDataAtPoint(point);
 
                     //if (tip)
                     //    tip.show();
 
                     if (active.length) {
-                        paper.render(overlay);
+                        overlay.render();
                         for (i=0; i<active.length; ++i)
-                            active[i].highLight().draw(overlay);
+                            active[i].highLight().render(overlay.context());
                     }
                 });
             });
@@ -5771,14 +5245,13 @@
 
             }
 
-        });
+        }
+    });
 
 
-
-    function createTip (paper, opts) {
-        if (!opts.show) return;
-        var tip = g.tip(paper);
-        tip.attr('class', opts.className)
+    function createTip (opts) {
+        tooltip = g.tip();
+        tooltip.attr('class', opts.className)
            .style({
                 background: opts.fill,
                 opacity: opts.fillOpacity,
@@ -5791,7 +5264,7 @@
             addCss('', tooltipCss);
             tooltipCss = null;
         }
-        return tip;
+        return tooltip;
     }
     //
     // Returns a tip handle
@@ -5809,12 +5282,9 @@
         //
         // Returns a tip
         tip.show = function () {
-            var args = Array.prototype.slice.call(arguments);
-            if (args[args.length - 1] instanceof SVGElement) target = args.pop();
-
-            var content = html.apply(this, args),
-                poffset = offset.apply(this, args),
-                dir = direction.apply(this, args),
+            var content = html.call(tip),
+                poffset = offset.call(tip),
+                dir = direction.call(tip),
                 nodel = d3.select(node),
                 i = directions.length,
                 coords,
@@ -6069,71 +5539,70 @@
             return function (d) {return value;};
         }
     });
-    var zoomDefaults = {
-        x: true,
-        y: true,
-        extent: [1, 10]
-    };
     //
-    //  Add zoom functionality to an svg paper
-    g.paper.svg.plugin('zoom', zoomDefaults,
+    //  Add zoom functionality
+    g.paper.plugin('zoom', {
+        defaults: {
+            x: true,
+            y: true,
+            extent: [1, 10]
+        },
 
-    function (paper, opts) {
-        var zoom;
+        svg: function (paper, opts) {
+            var zoom;
 
-        paper.zoom = function (options) {
-            init();
-            if (options)
-                extend(opts.zoom, options);
-            if (opts.zoom.x)
-                zoom.x(paper.xAxis().scale());
-            if (opts.zoom.y)
-                zoom.y(paper.yAxis().scale());
-            if (opts.zoom.extent)
-                zoom.scaleExtent(opts.zoom.extent);
-            zoom.on('zoom', paper.render);
-            var g = paper.root().current();
-            g.call(zoom);
-            paper.showGrid();
-        };
+            paper.zoom = function (options) {
+                init();
+                if (options)
+                    extend(opts.zoom, options);
+                if (opts.zoom.x)
+                    zoom.x(paper.xAxis().scale());
+                if (opts.zoom.y)
+                    zoom.y(paper.yAxis().scale());
+                if (opts.zoom.extent)
+                    zoom.scaleExtent(opts.zoom.extent);
+                zoom.on('zoom', paper.render);
+                var g = paper.root().current();
+                g.call(zoom);
+                paper.showGrid();
+            };
 
-        // PRIVATE FUNCTIONS
+            // PRIVATE FUNCTIONS
 
-        function init () {
-            if (!zoom) {
-                zoom = d3.behavior.zoom();
-                opts.zoom = extend({}, opts.zoom, g.defaults.paper.zoom);
+            function init () {
+                if (!zoom) {
+                    zoom = d3.behavior.zoom();
+                    opts.zoom = extend({}, opts.zoom, g.defaults.paper.zoom);
+                }
             }
-        }
-    });
+        },
 
-    g.paper.canvas.plugin('zoom', zoomDefaults,
+        canvas: function (paper, opts) {
+            var zoom;
 
-    function (paper, opts) {
-        var zoom;
+            paper.zoom = function (options) {
+                init();
+                if (options)
+                    extend(opts.zoom, options);
+                if (opts.zoom.x)
+                    zoom.x(paper.xAxis().scale());
+                if (opts.zoom.y)
+                    zoom.y(paper.yAxis().scale());
+                if (opts.zoom.extent)
+                    zoom.scaleExtent(opts.zoom.extent);
+                //zoom.on('zoom', paper.render);
+                //var g = paper.root().current();
+                //g.call(zoom);
+                paper.showGrid();
+            };
 
-        paper.zoom = function (options) {
-            init();
-            if (options)
-                extend(opts.zoom, options);
-            if (opts.zoom.x)
-                zoom.x(paper.xAxis().scale());
-            if (opts.zoom.y)
-                zoom.y(paper.yAxis().scale());
-            if (opts.zoom.extent)
-                zoom.scaleExtent(opts.zoom.extent);
-            //zoom.on('zoom', paper.render);
-            //var g = paper.root().current();
-            //g.call(zoom);
-            paper.showGrid();
-        };
+            // PRIVATE FUNCTIONS
 
-        // PRIVATE FUNCTIONS
-
-        function init () {
-            if (!zoom) {
-                zoom = d3.behavior.zoom();
-                opts.zoom = extend({}, opts.zoom, g.defaults.paper.zoom);
+            function init () {
+                if (!zoom) {
+                    zoom = d3.behavior.zoom();
+                    opts.zoom = extend({}, opts.zoom, g.defaults.paper.zoom);
+                }
             }
         }
     });
@@ -6143,8 +5612,8 @@
     g.viz.chart.plugin(function (chart, opts) {
 
         chart.on('tick.zoom', function () {
-            if (opts.zoom)
-                chart.paper().zoom(opts.zoom);
+            //if (opts.zoom)
+            //    chart.paper().zoom(opts.zoom);
         });
     });
 
@@ -6390,6 +5859,599 @@
     g.crossfilter.tolerance = 1.1;
 
 
+    var rgba = d3.canvas.rgba;
+
+
+    function canvas_implementation (paper, p) {
+        var _ = {};
+
+        _.clear = function (group, size) {
+            var factor = group.factor(),
+                ctx = group.context();
+            if (!size) size = p.size;
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.clearRect (0 , 0, factor*size[0], factor*size[1]);
+            return factor;
+        };
+
+        _.scale = function (group) {
+            return d3.canvas.retinaScale(group.context(), p.size[0], p.size[1]);
+        };
+
+        _.resize = function (group, oldsize) {
+            _.clear(group, oldsize);
+            _.scale(group);
+            group.resetAxis().render();
+        };
+
+        _.point = canvasPoint;
+        _.axis = canvasAxis;
+        _.path = canvasPath;
+        _.pieslice = canvasSlice;
+
+        _.points = function (group) {
+            return drawing(group, function () {
+                this.each(function () {
+                    this.render();
+                });
+            });
+        };
+
+        _.barchart = _.points;
+
+        // Pie chart drawing on an canvas group
+        _.pie = function (draw) {
+            draw.each(function () {
+                this.render();
+            });
+        };
+
+        // Download
+        _.image = function () {
+            var canvas = _addCanvas().node(),
+                context = paper.current(),
+                img;
+
+            _apply(function (ctx) {
+                if (ctx !== context) {
+                    img = new Image();
+                    img.src = ctx.canvas.toDataURL();
+                    context.drawImage(img, 0, 0, p.size[0], p.size[1]);
+                }
+            });
+            var dataUrl = canvas.toDataURL();
+            paper.removeCanvas(canvas);
+            return dataUrl;
+        };
+
+        return _;
+    }
+
+    function canvasAxis (group, axis, xy) {
+        var d = drawing(group),
+            ctx = group.context(),
+            opts, size;
+
+        d.render = function (context) {
+            context = context || ctx;
+            // size of font
+            opts = d.options();
+            size = opts.size;
+            opts.size = group.scale(group.dim(size)) + 'px';
+            context.font = fontString(opts);
+            opts.size = size;
+            //
+            ctx.strokeStyle = d.color;
+            context.fillStyle = d.color;
+            ctx.lineWidth = group.factor()*d.lineWidth;
+            _draw(context);
+            context.stroke();
+            return d;
+        };
+
+        d.context = function (context) {
+            ctx = context;
+            return d;
+        };
+
+        d.inRange = function (ex, ey) {
+            return false;
+        };
+
+        return d;
+
+        function _draw (context) {
+            var x = 0, y = 0;
+
+            context.save();
+            opts = d.options();
+
+            if (xy[0] === 'x')
+                y = opts.position === 'top' ? 0 : group.innerHeight();
+            else
+                x = opts.position === 'left' ? 0 : group.innerWidth();
+            context.translate(x, y);
+            axis(d3.select(context.canvas));
+            context.restore();
+        }
+    }
+
+    function canvasPath (group, data) {
+        var d = drawing(group),
+            scalex = d.scalex,
+            scaley = d.scaley,
+            ctx = group.context();
+
+        d.render = function (context) {
+            context = context || ctx;
+            ctx.strokeStyle = d.color;
+            ctx.lineWidth = group.factor()*d.lineWidth;
+            _draw(context);
+            context.stroke();
+            return d;
+        };
+
+        d.context = function (context) {
+            ctx = context;
+            return d;
+        };
+
+        d.inRange = function (ex, ey) {
+            _draw(ctx);
+            return ctx.isPointInPath(ex, ey);
+        };
+
+        return d;
+
+        function _draw (context) {
+            var opts = d.options(),
+                line = opts.area ? d3.canvas.area() : d3.canvas.line();
+
+            line.interpolate(opts.interpolate)
+                .x(d.scalex())
+                .y(d.scaley())
+                .context(context)(data);
+        }
+    }
+
+    function canvasPoint (draw, data, size) {
+        var d = point(draw, data, size),
+            scalex = draw.scalex(),
+            scaley = draw.scaley(),
+            factor = draw.factor(),
+            ctx = draw.group().context();
+
+        d.render = function (context) {
+            context = context || ctx;
+            context.save();
+            context.fillStyle = rgba(d.fill, d.fillOpacity);
+            context.strokeStyle = rgba(d.color, d.colorOpacity);
+            context.lineWidth = factor*d.lineWidth;
+            _draw(context);
+            context.fill();
+            context.stroke();
+            context.restore();
+            return d;
+        };
+
+        d.context = function (context) {
+            ctx = context;
+            return d;
+        };
+
+        d.inRange = function (ex, ey) {
+            ctx.save();
+            _draw(ctx);
+            var res = ctx.isPointInPath(ex, ey);
+            ctx.restore();
+            return res;
+        };
+
+        return d;
+
+        function _draw (context) {
+            if (!draw.symbol)
+                draw.symbol = d3.canvas.symbol().type(function (d) {return d.symbol;})
+                                                .size(draw.size());
+            context.translate(scalex(d.data), scaley(d.data));
+            draw.symbol.context(context)(d);
+        }
+    }
+
+    function canvasBar (draw, opts, d) {
+        var scalex = paper.scalex,
+            scaley = paper.scaley,
+            factor = paper.factor(),
+            radius = factor*opts.radius,
+            ctx = draw.group().context(),
+            x, y, y0, y1, w, yb;
+
+        d = paperData(paper, opts, {data: d});
+
+        d.context = function (context) {
+            ctx = context;
+            return d;
+        };
+
+        d.render = function (context) {
+            context = context || ctx;
+            context.fillStyle = rgba(d.fill, d.fillOpacity);
+            context.strokeStyle = rgba(d.color, d.colorOpacity);
+            context.lineWidth = factor*d.lineWidth;
+            _draw(context);
+            context.fill();
+            context.stroke();
+            return d;
+        };
+
+        d.inRange = function (ex, ey) {
+            _draw(ctx);
+            return ctx.isPointInPath(ex, ey);
+        };
+
+        return d.reset();
+
+        function _draw (context) {
+            context.beginPath();
+            w = 0.5*d.size();
+            x = scalex(d.data.x);
+            y = scaley(d.data.y);
+            y0 = scaley(0);
+            d3.canvas.drawPolygon(context, [[x-w,y0], [x+w,y0], [x+w,y], [x-w, y]], radius);
+            context.closePath();
+        }
+    }
+
+    function canvasSlice (draw, data) {
+        var d = pieSlice(draw, data),
+            group = draw.group(),
+            factor = draw.factor(),
+            ctx = group.context();
+
+        d.render = function (context) {
+            context = context || ctx;
+            context.save();
+            context.translate(0.5*group.innerWidth(), 0.5*group.innerHeight());
+            context.fillStyle = rgba(d.fill, d.fillOpacity);
+            context.strokeStyle = rgba(d.color, d.colorOpacity);
+            context.lineWidth = factor*d.lineWidth;
+            draw.arc.context(context)(d);
+            context.fill();
+            context.stroke();
+            context.restore();
+            return d;
+        };
+
+        d.context = function (context) {
+            ctx = context;
+            return d;
+        };
+
+        d.inRange = function (ex, ey) {
+            ctx.save();
+            ctx.translate(0.5*group.innerWidth(), 0.5*group.innerHeight());
+            draw.arc.context(ctx)(d);
+            var res = ctx.isPointInPath(ex, ey);
+            ctx.restore();
+            return res;
+        };
+
+        return d;
+    }
+
+    //
+    // Add mission colors for graph
+    function chartColors (paper, opts) {
+        if (!opts.color)
+            opts.color = paper.pickColor();
+
+        if (opts.fill === true)
+            opts.fill = d3.rgb(opts.color).brighter();
+
+        activeColors(opts);
+    }
+
+    function activeColors(opts) {
+        var a = opts.active;
+        if (!a)
+            a = opts.active = {};
+
+        if (a.fill === 'darker')
+            a.fill = d3.rgb(opts.fill).darker();
+        else if (a.fill === 'brighter')
+            a.fill = d3.rgb(opts.fill).brighter();
+
+        if (a.color === 'darker')
+            a.color = d3.rgb(opts.color).darker();
+        else if (a.color === 'brighter')
+            a.color = d3.rgb(opts.color).brighter();
+    }
+
+    function barWidth (paper, data, opts) {
+        if (opts.width === 'auto')
+            return d3.round(0.8*(paper.innerWidth() / data.length));
+        else
+            return opts.width;
+    }
+
+    function _newPaperAttr (element, p) {
+        var width, height;
+
+        if (p) {
+            if (p.__paper__ === element) return p;
+            width = p.width;
+            height = p.height;
+        }
+        else
+            p = {};
+
+        copyMissing(g.defaults.paper, p, true);
+
+        if (!width) {
+            width = getWidth(element);
+            if (width)
+                p.elwidth = getWidthElement(element);
+            else
+                width = g.constants.WIDTH;
+        }
+
+        if (!height) {
+            height = getHeight(element);
+            if (height)
+                p.elheight = getHeightElement(element);
+            else
+                height = g.constants.HEIGHT;
+        }
+        else if (typeof(height) === "string" && height.indexOf('%') === height.length-1) {
+            p.height_percentage = 0.01*parseFloat(height);
+            height = d3.round(p.height_percentage*width);
+        }
+
+        // Inherit axis properties
+        copyMissing(p.font, p.xaxis);
+        copyMissing(p.xaxis, p.yaxis);
+        copyMissing(p.yaxis, p.yaxis2);
+
+        p.size = [width, height];
+        p.giotto = 'giotto-group';
+
+        p.__paper__ = element;
+
+        return p;
+    }
+
+
+    function svg_implementation (paper, p) {
+        var _ = {};
+
+        _.resize = function (group, oldsize) {
+            if (p.resize) {
+                paper.svg()
+                    .attr('width', p.size[0])
+                    .attr('height', p.size[1]);
+                group.resetAxis().render();
+            }
+        };
+
+        _.clear = function (group) {
+            group.element().selectAll('*').remove();
+        };
+
+        _.setBackground = function (o, background) {
+            if (isObject(background)) {
+                if (background.fillOpacity !== undefined)
+                    o.attr('fill-opacity', background.fillOpacity);
+                background = background.fill;
+            }
+            if (isString(background))
+                o.attr('fill', background);
+        };
+
+        // Create a gradient element to use by scg elements
+        _.gradient = function (id, color1, color2) {
+            var svg = d3.select("body").append("svg"),
+                gradient = svg.append('linearGradient')
+                            .attr("x1", "0%")
+                            .attr("x2", "100%")
+                            .attr("y1", "0%")
+                            .attr("y2", "100%")
+                            .attr("id", id)
+                            .attr("gradientUnits", "userSpaceOnUse");
+            gradient
+                .append("stop")
+                .attr("offset", "0")
+                .attr("stop-color", color1);
+
+            gradient
+                .append("stop")
+                .attr("offset", "0.5")
+                .attr("stop-color", color2);
+        };
+
+        _.point = function (draw, data, size) {
+            var p = point(draw, data, size);
+            p.render = function (element) {
+                _draw(element).attr('d', draw.symbol);
+            };
+            return p;
+        };
+
+        _.bar = point;
+
+        _.pieslice = function (draw, data) {
+            var p = pieSlice(draw, data);
+            p.render = function (element) {
+                _draw(element).attr('d', draw.arc);
+            };
+            return p;
+        };
+
+        _.points = function (group) {
+
+            return drawing(group, function () {
+
+                var pp = group.element().select("#" + this.uid()),
+                    scalex = this.scalex(),
+                    scaley = this.scaley();
+
+                this.symbol = d3.svg.symbol().type(function (d) {return d.symbol;})
+                                             .size(this.size());
+
+                if (!pp.node()) {
+                    pp = group.element().append('g').attr('id', this.uid());
+                    this.remove = function () {
+                        pp.remove();
+                    };
+                }
+
+                pp.selectAll('*').remove();
+                _events(_draw(pp.selectAll('path')
+                        .data(this.data())
+                         .enter()
+                         .append('path')
+                         .attr("transform", function(d) {
+                             return "translate(" + scalex(d.data) + "," + scaley(d.data) + ")";
+                         })
+                         .attr('d', this.symbol)));
+
+                return pp;
+            });
+        };
+
+        _.path = function (group, data) {
+
+            return drawing(group, function () {
+
+                var draw = this,
+                    opts = draw.options(),
+                    p = group.element().select("#" + draw.uid()),
+                    line = opts.area ? d3.svg.area() : d3.svg.line();
+
+                if (!p.node())
+                    p = _events(draw.group().element().append('path').attr('id', draw.uid()));
+
+                line.interpolate(opts.interpolate).x(draw.scalex()).y(draw.scaley());
+
+                return p
+                    .datum(data)
+                    .attr('d', line)
+                    .attr('stroke', draw.color)
+                    .attr('stroke-opacity', draw.colorOpacity)
+                    .attr('stroke-width', draw.lineWidth)
+                    .attr('fill', 'none');
+            });
+        };
+
+        // Draw a barchart
+        _.barchart = function (group) {
+
+            return drawing(group, function () {
+                var zero = scaley(0),
+                    chart = container.select('g.barchart'),
+                    bar;
+
+                if (!chart.node())
+                    chart = container.append("g")
+                                .attr('class', 'barchart');
+
+                bar = draw(chart
+                        .selectAll(".bar")
+                        .data(data)
+                        .enter().append("rect")
+                        .attr('class', 'bar')
+                        .attr("x", function(d) {
+                            return scalex(d.values.x) - 0.5*d.size();
+                        })
+                        .attr("y", function(d) {return d.values.y < 0 ? zero : scaley(d.values.y); })
+                        .attr("height", function(d) {
+                            return d.values.y < 0 ? scaley(d.values.y) - zero : zero - scaley(d.values.y);
+                        }));
+
+                if (opts.radius > 0)
+                    bar.attr('rx', opts.radius).attr('ry', opts.radius);
+
+                _events(bar);
+            });
+        };
+
+        // Pie chart drawing on an svg group
+        _.pie = function (draw, width, height) {
+
+            var container = draw.group().element(),
+                pp = container.select('#' + draw.uid());
+
+            if (!pp.node())
+                pp = container.append("g")
+                            .attr('id', draw.uid())
+                            .classed('pie', true);
+
+            pp.attr("transform", "translate(" + width/2 + "," + height/2 + ")")
+                .selectAll(".slice").remove();
+
+            return _events(_draw(pp
+                            .selectAll(".slice")
+                            .data(draw.data())
+                            .enter()
+                            .append("path")
+                            .attr('class', 'slice')
+                            .attr('d', draw.arc)));
+        };
+
+        _.axis = function (group, axis, xy) {
+            return drawing(group, function () {
+                var x =0,
+                    y = 0,
+                    ax = group.element().select('.' + xy),
+                    opts = this.options();
+                if (!ax.node())
+                    ax = this.group().element().append('g').attr('class', xy);
+                if (xy[0] === 'x')
+                    y = opts.position === 'top' ? 0 : this.group().innerHeight();
+                else
+                    x = opts.position === 'left' ? 0 : this.group().innerWidth();
+                ax.selectAll('*').remove();
+                ax.attr("transform", "translate(" + x + "," + y + ")").call(axis);
+                ax.selectAll('line, path')
+                     .attr('stroke', this.color)
+                     .attr('stroke-width', this.lineWidth)
+                     .attr('fill', 'none');
+                return _font(ax.selectAll('text'), opts);
+            });
+        };
+
+        return _;
+
+        // PRIVATE FUNCTIONS
+
+        function _font (selection, opts) {
+            return selection.style({
+                'fill': opts.color,
+                'font-size': opts.size ,
+                'font-weight': opts.weight,
+                'font-style': opts.style,
+                'font-family': opts.family,
+                'font-variant': opts.variant
+            });
+        }
+
+        function _draw (selection) {
+            return selection
+                    .attr('stroke', function (d) {return d.color;})
+                    .attr('stroke-opacity', function (d) {return d.colorOpacity;})
+                    .attr('stroke-width', function (d) {return d.lineWidth;})
+                    .attr('fill', function (d) {return d.fill;})
+                    .attr('fill-opacity', function (d) {return d.fillOpacity;});
+        }
+
+        function _events (selection) {
+            p.activeEvents.forEach(function (event) {
+                selection.on(event + '.' + p.giotto, function () {
+                    paper[d3.event.type].call(this);
+                });
+            });
+            return selection;
+        }
+    }
 
     return d3;
 }));

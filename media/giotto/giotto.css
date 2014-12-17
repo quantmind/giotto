@@ -2,66 +2,66 @@
 /*
 ------------------------------------------------------------------
 Created by lux in 0.0 seconds
-Date: 2014-12-11 22:59:42
+Date: 2014-12-17 10:44:04
 
 http://quantmind.github.io/lux/
 ------------------------------------------------------------------ */
 
-.giotto .sunburst text {
+.sunburst text {
     z-index: 9999;
 }
 
-.giotto .sunburst path {
+.sunburst path {
     stroke: #fff;
     fill-rule: evenodd;
 }
 
-.giotto .axis {
+.axis {
     shape-rendering: crispEdges;
     fill: none;
 }
 
-.giotto .line {
+.line {
     fill: none;
 }
 
-.giotto.d3-tip:after {
-    font-size: 16px;
-    line-height: 1;
+.d3-tip:after {
     position: absolute;
     width: 100%;
+    font-size: 16px;
     display: inline;
+    line-height: 1;
     -webkit-box-sizing: border-box;
        -moz-box-sizing: border-box;
             box-sizing: border-box;
 }
 
-.giotto.d3-tip.n:after {
-    left: 0;
+.d3-tip.n:after {
     top: 100%;
-    text-align: center;
-    content: "BC";
-    margin: -2px 0 0 0;
-}
-
-.giotto.d3-tip.e:after {
-    left: -8px;
-    top: 50%;
-    content: "C0";
-    margin: -4px 0 0 0;
-}
-
-.giotto.d3-tip.s:after {
     left: 0;
-    top: -8px;
+    margin: -2px 0 0 0;
     text-align: center;
-    content: "B2";
-    margin: 0 0 2px 0;
+    content: "\25BC";
 }
 
-.giotto.d3-tip.w:after {
-    left: 100%;
+.d3-tip.e:after {
     top: 50%;
-    content: "B6";
+    left: -8px;
+    margin: -4px 0 0 0;
+    content: "\25C0";
+}
+
+.d3-tip.s:after {
+    top: -8px;
+    left: 0;
+    margin: 0 0 2px 0;
+    text-align: center;
+    content: "\25B2";
+}
+
+.d3-tip.w:after {
+    top: 50%;
+    left: 100%;
     margin: -4px 0 0 -1px;
+    content: "\25B6";
 }
