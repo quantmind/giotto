@@ -10,13 +10,17 @@ def add_css(all):
     vars.font_size = px(18)
     vars.line_height = 1.5
     vars.color = color(0,0,0,0.8)
+    vars.index.background = '#333'
     vars.scroll.background = '#99EBFF'
 
     css('.page-header, .full-header',
         padding_top=vars.navbar.height)
 
+    css('.navbar-brand img',
+        height=vars.navbar.height)
+
     css('.page-header.index-header',
-        background='#333',
+        background=vars.index.background,
         color='#fff',
         margin=0,
         width=pc(100),
@@ -29,6 +33,16 @@ def add_css(all):
 
     css('form',
         font_size=px(14))
+
+    css('#page-main',
+        min_height=px(400),
+        padding_bottom=px(50))
+
+    css('#footer',
+        background=vars.index.background,
+        color=vars.colors.gray_light,
+        min_height=px(300),
+        padding=spacing(30, 0, 40))
 
     css('.trianglify-background',
         padding_top=px(30))

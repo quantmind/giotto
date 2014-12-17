@@ -24,7 +24,8 @@ require(rcfg.min(['lux/lux', 'giotto/giotto', 'angular-ui-router', 'angular-stra
     //
     lux.extend({
         navbar: {
-            brand: 'Giotto',
+            brand: 'GiottoJS',
+            //brandImage: lux.media('giottoweb/giotto.svg'),
             theme: 'inverse',
             top: true,
             fixed: true,

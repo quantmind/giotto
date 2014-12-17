@@ -56,6 +56,8 @@ meta_default = {'image': '$site_url$site_media/giottoweb/giotto.png',
                 'twitter:card': 'summary_large_image',
                 'template': 'partials/base.html'}
 
+example_list_meta = {'title': 'GiottoJS Examples',
+                     'description': 'A list of GiottoJS examples'}
 examples_meta = {'template': 'partials/examples.html',
                  'twitter:card': 'summary_large_image'}
 
@@ -67,7 +69,8 @@ class Extension(lux.Extension):
         examples = HtmlContent('/',
                                Sitemap('/sitemap.xml'),
                                Blog('/examples',
-                                    meta=examples_meta,
+                                    meta=example_list_meta,
+                                    meta_children=examples_meta,
                                     content=DirContent,
                                     dir='examples',
                                     drafts=False,
