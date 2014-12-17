@@ -1,6 +1,5 @@
-title: GiottoJs - API
+title: GiottoJS API
 
-# Giotto API
 
 Everything in ``giotto`` is scoped under the ``d3.giotto`` namespace.
 

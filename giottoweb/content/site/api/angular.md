@@ -1,6 +1,5 @@
-title: GiottoJs - AngularJs integration
+title: GiottoJS - AngularJS integration
 
-# AngularJs Integration
 
 GiottoJs comes with a small utility for facilitating integration with [AngularJs][].
 Once angular is loaded, a module can be created using the utility function

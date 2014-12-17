@@ -1,4 +1,4 @@
-title: GiottoJs
+title: GiottoJS
 template: partials/index.html
 image: $site_url/examples/giottologo.png
 

@@ -1,6 +1,5 @@
-title: GiottoJs - Visualization API
+title: GiottoJS - Visualization API
 
-# Visualization API
 
 A giotto visualization factory is created via the api function ``giotto.createviz``.
 The function returns a factory function which can be used to create visualization objects for a given

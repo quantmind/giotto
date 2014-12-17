@@ -1,5 +1,4 @@
-
-# Chart API
+title: GiottoJS - Chart API
 
 Charts have the same base api as all [visualizations]($site_url/api/visualization)
 
