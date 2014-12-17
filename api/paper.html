@@ -22,7 +22,7 @@
 <link href='http://giottojs.org/media/giotto/giotto.min.css' rel='stylesheet' type='text/css'>
 <link href='http://giottojs.org/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var lux = {context: {"html5mode": true, "year": 2014, "lux_version": "0.1.2-alpha.1", "brand": "Lux", "media": "/media", "apiUrls": {}, "url": "http://giottojs.org", "oauths": null, "ngModules": ["lux.google", "highlight"], "python_version": "3.4.2", "page": {"slug": "api/paper", "content_type": "text/html", "name": "api_paper", "title": "GiottoJS - paper API", "image": "http://giottojs.org/media/giottoweb/giotto.png", "api_url": "http://giottojs.org/ng/site/api/paper.json", "html_url": "http://giottojs.org/api/paper", "modified": "2014-12-17T15:49:10"}, "name": "Lux", "dateFormat": "d MMM y", "date": "2014-12-17T15-53-01", "google": {"analytics": {"ga": "ga", "id": "UA-54439804-4"}}, "navbar": {"collapseWidth": 768}, "datetimeFormat": "d MMM y, h:mm:ss a"}};
+var lux = {context: {"ngModules": ["highlight", "lux.google"], "name": "Lux", "navbar": {"collapseWidth": 768}, "html5mode": true, "apiUrls": {}, "lux_version": "0.1.2-alpha.1", "url": "http://giottojs.org", "brand": "Lux", "oauths": null, "media": "/media", "python_version": "3.4.2", "dateFormat": "d MMM y", "google": {"analytics": {"id": "UA-54439804-4", "ga": "ga"}}, "datetimeFormat": "d MMM y, h:mm:ss a", "year": 2014, "date": "2014-12-17T17-11-39", "page": {"modified": "2014-12-17T16:33:58", "html_url": "http://giottojs.org/api/paper", "slug": "api/paper", "name": "api_paper", "title": "GiottoJS - paper API", "content_type": "text/html", "image": "http://giottojs.org/media/giottoweb/giotto.png", "api_url": "http://giottojs.org/ng/site/api/paper.json"}}};
 </script>
 <script type='text/javascript'>
 lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
@@ -30,7 +30,7 @@ lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback
 var gexamples = {};
 </script>
 <script type="text/javascript">
-var require = {"waitSeconds": 200, "baseUrl": "http://giottojs.org/media/", "deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"], "paths": {}, "minify": true};
+var require = {"minify": true, "baseUrl": "http://giottojs.org/media/", "deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"], "paths": {}, "waitSeconds": 200};
 </script>
 <script src='http://quantmind.github.io/require-config-js/require.config.min.js' type='application/javascript'></script>
 <script src='//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js' type='application/javascript'></script>
@@ -52,52 +52,20 @@ var require = {"waitSeconds": 200, "baseUrl": "http://giottojs.org/media/", "dep
 <div class="page-header">
 <h2>GiottoJS - paper API</h2>
 </div>
+<div data-highlight>
 <p>A <code>giotto.paper</code> is a constructor for a <code>paper</code> object, an abstraction
 on top of the <code>svg</code> or the <code>canvas</code> element.</p>
 <pre><code>var paper = giotto.paper(options);
 </code></pre>
 <p>where <code>options</code> is an object containing several parameters to customise the
 paper.</p>
-<h2 id="identifiers">Identifiers</h2>
 <h3 id="papertype"># paper.type()</h3>
-<p>Returns the paper type, currently only <code>svg</code> is supported.</p>
+<p>Returns the default <a href="group">/api/group</a> type paper for the paper.
+It can be either <code>svg</code> (default) or <code>canvas</code>.</p>
 <h3 id="paperuid"># paper.uid()</h3>
 <p>Returns the unique identifier for the paper in the current Html document, an integer.</p>
-<h2 id="dimensions">Dimensions</h2>
 <h3 id="papersize"># paper.size()</h3>
-<p>Returns a two elements array containing the pixel dimensions of the paper, including any margin</p>
-<h3 id="paperwidth"># paper.width()</h3>
-<p>Width in pixels of the paper, equivalent to:</p>
-<pre><code>paper.size()[0]
-</code></pre>
-<h3 id="paperheight"># paper.height()</h3>
-<p>Height in pixels of the paper, equivalent to:</p>
-<pre><code>paper.size()[1]
-</code></pre>
-<h3 id="paperinnerwidth"># paper.innerWidth()</h3>
-<p>Width in pixels of the paper excluding left and right margins. Equivalent to:</p>
-<pre><code>var o = paper.options();
-paper.size()[0] - o.margin.left - o.margin.right;
-</code></pre>
-<h3 id="paperinnerheight"># paper.innerHeight()</h3>
-<p>Height in pixels of the paper excluding top and bottom margins. Equivalent to:</p>
-<pre><code>var o = paper.options();
-paper.size()[1] - o.margin.top - o.margin.bottom;
-</code></pre>
-<h3 id="paperdimvalue"># paper.dim(value)</h3>
-<p>Convert <code>value</code> into the x-axis internal range. There are two possible conversions:</p>
-<ul>
-<li>Convert from a 0 to 1 range - The input must be a number between 0 and 1</li>
-<li>Convert from pixels - The input must be a string ending with <code>"px"</code></li>
-</ul>
-<p>For example, lets assume the internal
-range is <code>[-5, 5]</code> and the <a href="#paperinnerwidth">paper.innerWidth()</a> is <code>500px</code>:</p>
-<pre><code>paper.dim(0) === -5
-paper.dim(1) === 5
-paper.dim(0.5) === 0
-paper.dim('250px') = 0
-paper.dim('500px') = 5
-</code></pre>
+<p>Returns a two elements array containing the pixel dimensions of the paper, including any margin.</p>
 <h2 id="options">Options</h2>
 <p>The internal paper options can be accessed via the <code>options</code> method:</p>
 <pre><code>var options = paper.options();
@@ -119,6 +87,7 @@ this accessor is here just in case.</p>
 <pre><code>d3.scale.category10().range()
 </code></pre>
 <p>An Array of colors to use by the visualization rendering the paper.</p>
+</div>
 </div>
 </div>
 </div>

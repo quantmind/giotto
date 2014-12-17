@@ -2626,7 +2626,8 @@
     g.group = function (paper, element, p, _) {
         var drawings = [],
             factor = 1,
-            d3v = d3[p.type],
+            type = p.type,
+            d3v = d3[type],
             xaxis = d3v.axis(),
             yaxis = d3v.axis(),
             group = {};
@@ -2635,6 +2636,10 @@
         yaxis.options = function () {return p.yaxis;};
 
         element.__group__ = group;
+
+        group.type = function () {
+            return type;
+        };
 
         group.element = function () {
             return d3.select(element);
@@ -2704,7 +2709,7 @@
             return group;
         };
 
-        // remove all drowings of a drawing by name
+        // remove all drawings or a drawing by name
         group.remove = function (name) {
             var draw;
             for (var i=0; i<drawings.length; ++i) {
@@ -2950,6 +2955,10 @@
             return group;
         };
 
+        draw.draw = function () {
+            return draw;
+        };
+
         draw.factor = function () {
             return group.factor();
         };
@@ -3137,6 +3146,14 @@
             return opts;
         };
 
+        d.draw = function () {
+            return draw;
+        };
+
+        d.group = function () {
+            return draw.group();
+        };
+
         return d;
     }
 
@@ -3231,6 +3248,13 @@
                     if (this.inRange(x, y)) elements.push(this);
                 });
             });
+        };
+
+        group.transform = function (ctx) {
+            var factor = group.factor();
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.translate(factor*p.margin.left, factor*p.margin.top);
+            return group;
         };
 
         return group.factor(_.scale(group));
@@ -5164,7 +5188,7 @@
             padding: '5px',
             radius: '3px',
             template: function (d) {
-                return "<strong>" + d.label + ":</strong><span>" + d.value + "</span>";
+                return "<strong>" + d.x + ": </strong><span>" + d.y + "</span>";
             }
         },
 
@@ -5173,9 +5197,9 @@
 
             if (paper.tip || !opts.tooltip.show) return;
 
-            paper.tip = tooltip || createTip(opts.tooltip);
+            paper.tip = tooltip || createTip(opts);
 
-            var active;
+            var active, draw;
 
             function hide (el) {
                 if (active)
@@ -5186,7 +5210,11 @@
             }
 
             paper.tip.html(function () {
-                return opts.tooltip.template(active);
+                draw = active.draw();
+                return opts.tooltip.template({
+                    x: draw.x()(active.data),
+                    y: draw.y()(active.data)
+                });
             });
 
             opts.activeEvents.forEach(function (event) {
@@ -5214,14 +5242,14 @@
 
             if (paper.tip || !opts.tooltip.show) return;
 
-            paper.tip = tooltip || createTip(opts.tooltip);
+            paper.tip = tooltip || createTip(opts);
 
             var active = [];
 
             opts.activeEvents.forEach(function (event) {
                 paper.canvas().on(event + '.tooltip', function () {
                     var overlay = paper.select('.canvas-interaction-overlay'),
-                        point;
+                        point, a;
 
                     // Create the overlay if not available
                     if (!overlay) {
@@ -5245,9 +5273,12 @@
                     //    tip.show();
 
                     if (active.length) {
-                        overlay.render();
-                        for (i=0; i<active.length; ++i)
-                            active[i].highLight().render(overlay.context());
+                        var ctx = overlay.clear().context();
+                        for (i=0; i<active.length; ++i) {
+                            a = active[i];
+                            a.group().transform(ctx);
+                            a.highLight().render(ctx);
+                        }
                     }
                 });
             });
@@ -5264,7 +5295,9 @@
     });
 
 
-    function createTip (opts) {
+    function createTip (options) {
+        var opts = options.tooltip,
+            font = extend({}, options.font, opts.font);
         tooltip = g.tip();
         tooltip.attr('class', opts.className)
            .style({
@@ -5272,8 +5305,10 @@
                 opacity: opts.fillOpacity,
                 color: opts.color,
                 padding: opts.padding,
-                'border-radius': opts.radius
+                'border-radius': opts.radius,
+                font: fontString(font)
             });
+
         if (opts.className === 'd3-tip' && tooltipCss) {
             tooltipCss['d3-tip:after'].color = opts.fill;
             addCss('', tooltipCss);

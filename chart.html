@@ -22,7 +22,7 @@
 <link href='http://giottojs.org/media/giotto/giotto.min.css' rel='stylesheet' type='text/css'>
 <link href='http://giottojs.org/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var lux = {context: {"html5mode": true, "year": 2014, "lux_version": "0.1.2-alpha.1", "brand": "Lux", "media": "/media", "apiUrls": {}, "url": "http://giottojs.org", "oauths": null, "ngModules": ["lux.google", "highlight"], "python_version": "3.4.2", "page": {"slug": "chart", "content_type": "text/html", "name": "chart", "title": "GiottoJs - Charting", "image": "http://giottojs.org/media/giottoweb/giotto.png", "api_url": "http://giottojs.org/ng/site/chart.json", "html_url": "http://giottojs.org/chart", "modified": "2014-12-17T15:47:14"}, "name": "Lux", "dateFormat": "d MMM y", "date": "2014-12-17T15-53-01", "google": {"analytics": {"ga": "ga", "id": "UA-54439804-4"}}, "navbar": {"collapseWidth": 768}, "datetimeFormat": "d MMM y, h:mm:ss a"}};
+var lux = {context: {"ngModules": ["highlight", "lux.google"], "name": "Lux", "navbar": {"collapseWidth": 768}, "html5mode": true, "apiUrls": {}, "lux_version": "0.1.2-alpha.1", "url": "http://giottojs.org", "brand": "Lux", "oauths": null, "media": "/media", "python_version": "3.4.2", "dateFormat": "d MMM y", "google": {"analytics": {"id": "UA-54439804-4", "ga": "ga"}}, "datetimeFormat": "d MMM y, h:mm:ss a", "year": 2014, "date": "2014-12-17T17-11-39", "page": {"modified": "2014-12-17T15:47:14", "html_url": "http://giottojs.org/chart", "slug": "chart", "name": "chart", "title": "GiottoJs - Charting", "content_type": "text/html", "image": "http://giottojs.org/media/giottoweb/giotto.png", "api_url": "http://giottojs.org/ng/site/chart.json"}}};
 </script>
 <script type='text/javascript'>
 lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
@@ -30,7 +30,7 @@ lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback
 var gexamples = {};
 </script>
 <script type="text/javascript">
-var require = {"waitSeconds": 200, "baseUrl": "http://giottojs.org/media/", "deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"], "paths": {}, "minify": true};
+var require = {"minify": true, "baseUrl": "http://giottojs.org/media/", "deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"], "paths": {}, "waitSeconds": 200};
 </script>
 <script src='http://quantmind.github.io/require-config-js/require.config.min.js' type='application/javascript'></script>
 <script src='//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js' type='application/javascript'></script>
@@ -52,10 +52,12 @@ var require = {"waitSeconds": 200, "baseUrl": "http://giottojs.org/media/", "dep
 <div class="page-header">
 <h2>GiottoJs - Charting</h2>
 </div>
+<div data-highlight>
 <p>Charting is the main component of GiottoJs. It is a visualization class which
 is used to draw lines, scatter plots, bar and pie charts.</p>
 <pre><code>var linechart = giotto.Chart();
 </code></pre>
+</div>
 </div>
 </div>
 </div>

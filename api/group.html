@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html data-debug='false' lang='en' prefix='og: http://ogp.me/ns#'>
+<head>
+<title>GiottoJS - group API</title>
+<meta charset='utf-8'>
+<meta content='IE=edge' http-equiv='X-UA-Compatible'>
+<meta content='width=device-width, initial-scale=1' name='viewport'>
+<meta content='A GiottoJS group maintainin a collection of drawing in memory. A group can be a g-element of an svg element or a canvas element.' name='description'>
+<meta content='website' property='og:type'>
+<meta content='http://giottojs.org/api/group' property='og:url'>
+<meta content='GiottoJS - group API' property='og:title'>
+<meta content='A GiottoJS group maintainin a collection of drawing in memory. A group can be a g-element of an svg element or a canvas element.' property='og:description'>
+<meta content='http://giottojs.org/media/giottoweb/giotto.png' property='og:image'>
+<meta content='summary_large_image' name='twitter:card'>
+<meta content='@quantmind' name='twitter:site'>
+<meta content='GiottoJS - group API' name='twitter:title'>
+<meta content='A GiottoJS group maintainin a collection of drawing in memory. A group can be a g-element of an svg element or a canvas element.' name='twitter:description'>
+<meta content='http://giottojs.org/media/giottoweb/giotto.png' name='twitter:image'>
+<link href='http://giottojs.org/media/giottoweb/favicon.ico' rel='icon' type='image/x-icon'>
+<link href='//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css' rel='stylesheet' type='text/css'>
+<link href='//netdna.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css' rel='stylesheet' type='text/css'>
+<link href='http://giottojs.org/media/giotto/giotto.min.css' rel='stylesheet' type='text/css'>
+<link href='http://giottojs.org/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
+<script type='text/javascript'>
+var lux = {context: {"ngModules": ["highlight", "lux.google"], "name": "Lux", "navbar": {"collapseWidth": 768}, "html5mode": true, "apiUrls": {}, "lux_version": "0.1.2-alpha.1", "url": "http://giottojs.org", "brand": "Lux", "oauths": null, "media": "/media", "python_version": "3.4.2", "dateFormat": "d MMM y", "google": {"analytics": {"id": "UA-54439804-4", "ga": "ga"}}, "datetimeFormat": "d MMM y, h:mm:ss a", "year": 2014, "date": "2014-12-17T17-11-39", "page": {"modified": "2014-12-17T16:44:26", "html_url": "http://giottojs.org/api/group", "slug": "api/group", "name": "api_group", "title": "GiottoJS - group API", "content_type": "text/html", "description": "A GiottoJS group maintainin a collection of drawing in memory. A group can be a g-element of an svg element or a canvas element.", "image": "http://giottojs.org/media/giottoweb/giotto.png", "api_url": "http://giottojs.org/ng/site/api/group.json"}}};
+</script>
+<script type='text/javascript'>
+lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
+<script type='text/javascript'>
+var gexamples = {};
+</script>
+<script type="text/javascript">
+var require = {"minify": true, "baseUrl": "http://giottojs.org/media/", "deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"], "paths": {}, "waitSeconds": 200};
+</script>
+<script src='http://quantmind.github.io/require-config-js/require.config.min.js' type='application/javascript'></script>
+<script src='//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js' type='application/javascript'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-54439804-4', 'auto');
+  ga('send', 'pageview');
+
+</script></head>
+<body data-ng-controller='Page' data-ng-model='page' data-page=''>
+<navbar data-options="lux.context.navbar"></navbar>
+<div class="container">
+<div class="row">
+<div class="col-sm-12">
+<div class="page-header">
+<h2>GiottoJS - group API</h2>
+</div>
+<div data-highlight>
+<p>A group is a collection af drawings in a <a href="/api/paper">paper</a>.
+It is created form a paper and it is always part of a paper.</p>
+<pre><code>group = paper.group(options);
+</code></pre>
+<p>where <code>options</code> is an object containing parameters to override the <code>paper</code> defaults.</p>
+<h1 id="drawing">Drawing</h1>
+<h3 id="grouprender"># group.render()</h3>
+<p>Render the group by re-rendering all drawings. It returns the group for chaining.</p>
+<h3 id="groupclear"># group.clear()</h3>
+<p>Clear all drawing from <code>g</code> or <code>canvas</code> element but keeps them still loaded in memory.
+Issuing <code>render</code> after the command will re-render all drawings. It returns the group for chaining.</p>
+<h1 id="dimensions">Dimensions</h1>
+<h3 id="groupfactor"># group.factor()</h3>
+<p>For <code>svg</code> it is 1, for <code>canvas</code> it depends on the resolution of your screen (for a mac-book pro retina display it is 2).</p>
+<h3 id="groupwidth"># group.width()</h3>
+<p>Width in pixels of the group, equivalent to:</p>
+<pre><code>group.size()[0]
+</code></pre>
+<h3 id="groupheight"># group.height()</h3>
+<p>Height in pixels of the group, equivalent to:</p>
+<pre><code>group.size()[1]
+</code></pre>
+<h3 id="groupinnerwidth"># group.innerWidth()</h3>
+<p>Width in pixels of the group excluding left and right margins. Equivalent to:</p>
+<pre><code>var o = group.options();
+group.width() - group.factor()*(o.margin.left + o.margin.right);
+</code></pre>
+<h3 id="groupinnerheight"># group.innerHeight()</h3>
+<p>Height in pixels of the group excluding top and bottom margins. Equivalent to:</p>
+<pre><code>var o = group.options();
+group.height() - group.factor()*(o.margin.top + o.margin.bottom);
+</code></pre>
+<h3 id="groupdimvalue"># group.dim(value)</h3>
+<p>Convert <code>value</code> into the x-axis internal range. There are two possible conversions:</p>
+<ul>
+<li>Convert from a 0 to 1 range - The input must be a number between 0 and 1</li>
+<li>Convert from pixels - The input must be a string ending with <code>"px"</code></li>
+</ul>
+<p>For example, lets assume the internal
+range is <code>[-5, 5]</code> and the <a href="#groupinnerwidth">group.innerWidth()</a> is <code>500px</code>:</p>
+<pre><code>group.dim(0) === -5
+group.dim(1) === 5
+group.dim(0.5) === 0
+group.dim('250px') = 0
+group.dim('500px') = 5
+</code></pre>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>
