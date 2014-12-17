@@ -30,6 +30,10 @@
             return group;
         };
 
+        draw.draw = function () {
+            return draw;
+        };
+
         draw.factor = function () {
             return group.factor();
         };
@@ -215,6 +219,14 @@
 
         d.options = function () {
             return opts;
+        };
+
+        d.draw = function () {
+            return draw;
+        };
+
+        d.group = function () {
+            return draw.group();
         };
 
         return d;

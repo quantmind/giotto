@@ -2,7 +2,8 @@
     g.group = function (paper, element, p, _) {
         var drawings = [],
             factor = 1,
-            d3v = d3[p.type],
+            type = p.type,
+            d3v = d3[type],
             xaxis = d3v.axis(),
             yaxis = d3v.axis(),
             group = {};
@@ -11,6 +12,10 @@
         yaxis.options = function () {return p.yaxis;};
 
         element.__group__ = group;
+
+        group.type = function () {
+            return type;
+        };
 
         group.element = function () {
             return d3.select(element);
@@ -80,7 +85,7 @@
             return group;
         };
 
-        // remove all drowings of a drawing by name
+        // remove all drawings or a drawing by name
         group.remove = function (name) {
             var draw;
             for (var i=0; i<drawings.length; ++i) {

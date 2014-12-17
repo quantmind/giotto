@@ -22,6 +22,7 @@
             cornerRadius: 0.02,
             fillOpacity: 1,
             // Accessor of values, by default it returns d[1]
+            x: function (d) {return d.label;},
             y: function (d) {return d.value;}
         },
 
