@@ -7,6 +7,7 @@ SITE_URL = 'http://quantmind.github.io/giotto'
 HTML_TITLE = 'GiottoJs Examples'
 STATIC_LOCATION = '../docs/giotto'
 CONTEXT_LOCATION = 'giottoweb/content/context'
+FAVICON = 'giottoweb/favicon.ico'
 MEDIA_URL = '/media/'
 ANGULAR_UI_ROUTER = False
 STATIC_API = 'ng'
@@ -34,7 +35,10 @@ import lux
 from lux.extensions.static import (HtmlContent, MediaBuilder, Sitemap,
                                    DirContent, Blog)
 
-examples_meta = {'template': 'examples.md',
+meta_default = {'image': '$site_url$site_media/giottoweb/giotto.png',
+                'twitter:card': 'summary_large_image'}
+
+examples_meta = {'template': 'partials/examples.md',
                  'twitter:card': 'summary_large_image'}
 
 
@@ -48,9 +52,12 @@ class Extension(lux.Extension):
                                     meta=examples_meta,
                                     content=DirContent,
                                     dir='examples',
-                                    drafts=False),
+                                    drafts=False,
+                                    html_body_template='examples.html',
+                                    index_template='partials/blogindex.html'),
                                drafts=False,
-                               dir='giottoweb/content/site')
+                               dir='giottoweb/content/site',
+                               meta=meta_default)
         dist = MediaBuilder(media_url+'giotto', 'dist', lux=False)
         return [dist, examples]
 
@@ -59,7 +66,7 @@ class Extension(lux.Extension):
 
 
 def add_css(all):
-    from lux.extensions.ui import px, Radius, Shadow, color
+    from lux.extensions.ui import px, pc, Radius, Shadow, color
 
     css = all.css
     vars = all.variables
@@ -70,6 +77,21 @@ def add_css(all):
     vars.line_height = 1.5
     vars.color = color(0,0,0,0.8)
     vars.scroll.background = '#99EBFF'
+
+    css('.page-header',
+        padding_top=vars.navbar.height)
+
+    css('.page-header.index-header',
+        background='#333',
+        color='#fff',
+        margin=0,
+        width=pc(100),
+        height=pc(100),
+        min_height=pc(100))
+
+    css('html, body, .fullpage',
+        height=pc(100),
+        min_height=pc(100))
 
     css('.trianglify-background',
         padding_top=px(30))

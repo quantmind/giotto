@@ -157,7 +157,8 @@
                     value = this.y(),
                     data = this.data(),
                     pie = d3.layout.pie().value(function (d) {return value(d.data);})
-                                         .padAngle(d3_radians*opts.padAngle)(data),
+                                         .padAngle(d3_radians*opts.padAngle)
+                                         .startAngle(d3_radians*opts.startAngle)(data),
                     d, dd;
 
                 this.arc = d3v.arc()

@@ -100,10 +100,8 @@
 
     }
 
-
-
     //
-    describe("Test svg paper", function() {
+    describe("SVG group", function() {
         var g = d3.giotto,
             _ = g._;
 
@@ -156,7 +154,7 @@
 
 
     //
-    describe("Test canvas paper", function() {
+    describe("CANVAS group", function() {
         var g = d3.giotto,
             _ = g._;
 

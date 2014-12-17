@@ -108,15 +108,12 @@
 
             opts.chartTypes.forEach(function (type) {
                 o = serie[type];
-                if (o) {
-                    if (isArray(o))
-                        serie.data = o;
-                    o = {};
+                if (isArray(o) && !serie.data) {
+                    serie.data = o;
+                    o = {}; // an ampty object so that it is shown
                 }
                 if (o || opts[type].show) {
-                    if (!o) o = {};
-                    extend(o, opts[type]);
-                    serie[type] = o;
+                    serie[type] = extend({}, opts[type], o);
                     show = true;
                 }
             });
@@ -192,10 +189,7 @@
         function drawSerie (serie) {
             // The serie is
             var paper = chart.paper(),
-                group = paper.classGroup('serie ' + slugify(serie.label), {
-                    xaxis: serie.xaxis,
-                    yaxis: serie.yaxis
-                }),
+                group = paper.classGroup(slugify(serie.label), extend({}, serie)),
                 stype;
 
             function domain(axis) {

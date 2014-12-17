@@ -38,7 +38,12 @@
 
         _.barchart = _.points;
 
-        _.pie = _.points;
+        // Pie chart drawing on an canvas group
+        _.pie = function (draw) {
+            draw.each(function () {
+                this.render();
+            });
+        };
 
         // Download
         _.image = function () {
@@ -207,7 +212,7 @@
             return d;
         };
 
-        d.draw = function (context) {
+        d.render = function (context) {
             context = context || ctx;
             context.fillStyle = rgba(d.fill, d.fillOpacity);
             context.strokeStyle = rgba(d.color, d.colorOpacity);
@@ -236,22 +241,20 @@
         }
     }
 
-    function canvasSlice (paper, opts, d, arc) {
-        var scalex = paper.scalex,
-            scaley = paper.scaley,
-            factor = paper.factor(),
-            ctx;
+    function canvasSlice (draw, data) {
+        var d = pieSlice(draw, data),
+            group = draw.group(),
+            factor = draw.factor(),
+            ctx = group.context();
 
-        d = pieData(paper, opts, d);
-
-        d.draw = function (context) {
+        d.render = function (context) {
             context = context || ctx;
             context.save();
-            context.translate(0.5*paper.innerWidth(), 0.5*paper.innerHeight());
+            context.translate(0.5*group.innerWidth(), 0.5*group.innerHeight());
             context.fillStyle = rgba(d.fill, d.fillOpacity);
             context.strokeStyle = rgba(d.color, d.colorOpacity);
             context.lineWidth = factor*d.lineWidth;
-            arc.context(context)(d);
+            draw.arc.context(context)(d);
             context.fill();
             context.stroke();
             context.restore();
@@ -265,12 +268,12 @@
 
         d.inRange = function (ex, ey) {
             ctx.save();
-            ctx.translate(0.5*paper.innerWidth(), 0.5*paper.innerHeight());
-            arc.context(ctx)(d);
+            ctx.translate(0.5*group.innerWidth(), 0.5*group.innerHeight());
+            draw.arc.context(ctx)(d);
             var res = ctx.isPointInPath(ex, ey);
             ctx.restore();
             return res;
         };
 
-        return d.reset();
+        return d;
     }

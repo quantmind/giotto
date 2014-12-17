@@ -1,8 +1,8 @@
 @charset "UTF-8";
 /*
 ------------------------------------------------------------------
-Created by lux in 0.07 seconds
-Date: 2014-12-16 21:52:16
+Created by lux in 0.12 seconds
+Date: 2014-12-17 10:42:26
 
 http://quantmind.github.io/lux/
 ------------------------------------------------------------------ */
@@ -12,11 +12,11 @@ http://quantmind.github.io/lux/
 }
 
 .lazyContainer > .content {
-    position: absolute;
-    top: 0;
     min-height: 100%;
-    width: 100%;
     left: 0;
+    width: 100%;
+    top: 0;
+    position: absolute;
 }
 
 .push-bottom {
@@ -25,12 +25,14 @@ http://quantmind.github.io/lux/
 
 .hljs-comment,.hljs-title{color:#8e908c}.hljs-variable,.hljs-attribute,.hljs-tag,.hljs-regexp,.ruby .hljs-constant,.xml .hljs-tag .hljs-title,.xml .hljs-pi,.xml .hljs-doctype,.html .hljs-doctype,.css .hljs-id,.css .hljs-class,.css .hljs-pseudo{color:#c82829}.hljs-number,.hljs-preprocessor,.hljs-pragma,.hljs-built_in,.hljs-literal,.hljs-params,.hljs-constant{color:#f5871f}.ruby .hljs-class .hljs-title,.css .hljs-rules .hljs-attribute{color:#eab700}.hljs-string,.hljs-value,.hljs-inheritance,.hljs-header,.ruby .hljs-symbol,.xml .hljs-cdata{color:#718c00}.css .hljs-hexcolor{color:#3e999f}.hljs-function,.python .hljs-decorator,.python .hljs-title,.ruby .hljs-function .hljs-title,.ruby .hljs-title .hljs-keyword,.perl .hljs-sub,.javascript .hljs-title,.coffeescript .hljs-title{color:#4271ae}.hljs-keyword,.javascript .hljs-function{color:#8959a8}.hljs{display:block;overflow-x:auto;background:white;color:#4d4d4c;padding:0.5em;-webkit-text-size-adjust:none}.coffeescript .javascript,.javascript .xml,.tex .hljs-formula,.xml .javascript,.xml .vbscript,.xml .css,.xml .hljs-cdata{opacity:0.5}
 body {
-    font-size: 18px;
     font-family: "freight-text-pro",Georgia,Cambria,"Times New Roman",Times,serif;
-    line-height: 1.5;
     color: rgba(0, 0, 0, 0.8);
+    font-size: 18px;
     background: #fff;
+    line-height: 1.5;
     font-style: normal;
+    min-height: 100%;
+    height: 100%;
 }
 
 p.form-error {
@@ -56,13 +58,13 @@ p.form-error {
 
 .katex-outer {
     display: block;
+    margin-bottom: 10px;
     margin-left: auto;
     margin-right: auto;
-    margin-bottom: 10px;
     display: block;
+    margin-bottom: 10px;
     margin-left: auto;
     margin-right: auto;
-    margin-bottom: 10px;
 }
 
 code.hljs.inline {
@@ -90,20 +92,20 @@ dl.function > dt > tt.descname {
 
 dl.class dt tt.descname,
 dl.function dt tt.descname {
-    color: rgba(0, 0, 0, 0.8);
     font-weight: bold;
     color: rgba(0, 0, 0, 0.8);
     font-weight: bold;
+    color: rgba(0, 0, 0, 0.8);
 }
 
 dl.class dt,
 dl.function dt {
-    color: #888;
-    font-size: 18px;
     font-weight: normal;
     color: #888;
     font-size: 18px;
     font-weight: normal;
+    color: #888;
+    font-size: 18px;
 }
 
 [ng\:cloak],
@@ -128,8 +130,8 @@ dl.function dt {
 }
 
 .navbar2-wrapper {
-    min-height: 100%;
     width: 100%;
+    min-height: 100%;
 }
 
 .navbar2-page {
@@ -149,10 +151,10 @@ dl.function dt {
 }
 @media all and (min-width:768px) {
     .sidebar {
-        position: absolute;
-        z-index: 1;
-        width: 200px;
         margin-top: 51px;
+        position: absolute;
+        width: 200px;
+        z-index: 1;
     }
 
 }
@@ -169,8 +171,8 @@ dl.function dt {
 }
 
 .media-list > .media > a {
-    text-decoration: none;
     color: #808080;
+    text-decoration: none;
 }
 
 .media-list > .media > a .post-body {
@@ -178,21 +180,21 @@ dl.function dt {
 }
 
 .media-list > .media > a h3 {
-    color: #333;
     font-weight: normal;
+    color: #333;
 }
 
 .post-image {
-    height: auto;
+    float: left;
     max-height: 140px;
     width: 140px;
-    float: left;
+    height: auto;
 }
 
 .post-image-xs {
+    max-height: 150px;
     width: auto;
     max-width: 90%;
-    max-height: 150px;
 }
 
 h1:hover > a.headerlink,
@@ -206,10 +208,10 @@ dt:hover > a.headerlink {
 }
 
 a.headerlink {
-    visibility: hidden;
     text-decoration: none;
-    color: #eee;
     padding: 0 4px;
+    visibility: hidden;
+    color: #eee;
 }
 
 a.headerlink:hover {
@@ -229,13 +231,32 @@ table.docutils.field-list th {
     padding: 0 20px 0 0;
 }
 
+.page-header {
+    padding-top: 50px;
+}
+
+.page-header.index-header {
+    margin: 0;
+    background: #333;
+    color: #fff;
+    width: 100%;
+    min-height: 100%;
+    height: 100%;
+}
+
+html,
+.fullpage {
+    min-height: 100%;
+    height: 100%;
+}
+
 .trianglify-background {
     padding-top: 30px;
 }
 
 .trianglify-box {
-    background: rgba(255, 255, 255, 0.6);
     padding: 20px;
+    background: rgba(255, 255, 255, 0.6);
     max-width: 400px;
     -webkit-border-radius: 5px;
        -moz-border-radius: 5px;
@@ -263,8 +284,8 @@ table.docutils.field-list th {
 }
 
 .error-message-container {
-    background: rgba(0, 0, 0, 0.4);
     padding: 40px 120px;
+    background: rgba(0, 0, 0, 0.4);
     height: 100%;
     -webkit-box-sizing: border-box;
        -moz-box-sizing: border-box;

@@ -1,4 +1,6 @@
-<h3 class="text-center">$title</h3>
+<div class="page-header">
+<h2>$title</h2>
+</div>
 
 $html_main
 <script>

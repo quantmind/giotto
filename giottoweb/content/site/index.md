@@ -1,10 +1,11 @@
 title: GiottoJs
-template: index.html
+template: partials/index.html
+image: $site_url/examples/giottologo.png
 
 Giotto is a javascript library under active development.
 
 * Built on top of [d3][]
-* ``svg`` and, eventually, ``canvas`` support
+* ``svg`` and ``canvas`` support
 
 * [Charts](/chart)
 * [API](/api)
@@ -16,8 +17,5 @@ Latest development versions
 * [giotto.css](http://quantmind.github.io/giotto/media/giotto/giotto.css)
 * [giotto.min.css](http://quantmind.github.io/giotto/media/giotto/giotto.min.css)
 
-<a href="https://travis-ci.org/quantmind/giotto" target="_self">
-<img src="https://travis-ci.org/quantmind/giotto.svg?branch=master" alt="giotto CI"></a>
-[![Coverage Status](https://img.shields.io/coveralls/quantmind/giotto.svg)](https://coveralls.io/r/quantmind/giotto?branch=master)
 
 

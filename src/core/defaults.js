@@ -73,10 +73,11 @@
             fillOpacity: 0.7,
             colorOpacity: 1,
             innerRadius: 0,
+            startAngle: 0,
             active: {
                 fill: 'darker',
                 color: 'brighter',
-                innerRadius: 1.01,
+                innerRadius: 1,
                 outerRadius: 1.05
             }
         },

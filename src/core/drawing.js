@@ -136,6 +136,9 @@
         }
     }
 
+    // A mixin for highlighting elements
+    //
+    // THis is used by the drawing and paperData constructors
     function highlightMixin (parameters, d) {
         var values = {},
             opts,

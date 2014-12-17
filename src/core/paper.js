@@ -179,6 +179,34 @@
                 return "data:image/svg+xml;charset=utf-8;base64," + svg;
         };
 
+        paper.imagePNG = function () {
+            var canvas = paper.canvas();
+            if (!canvas.node()) return;
+
+            var target = paper.group({
+                    type: 'canvas',
+                    margin: {left: 0, right: 0, top: 0, bottom: 0}
+                }),
+                ctx = target.context(),
+                img, group;
+
+            canvas.selectAll('*').each(function () {
+                group = this.__group__;
+                if (group && group !== target) {
+                    img = new Image();
+                    img.src = group.context().canvas.toDataURL();
+                    ctx.drawImage(img, 0, 0, p.size[0], p.size[1]);
+                }
+            });
+            var dataUrl = ctx.canvas.toDataURL();
+            target.remove();
+            return dataUrl;
+        };
+
+        paper.image = function () {
+            return p.type === 'svg' ? paper.imageSVG() : paper.imagePNG();
+        };
+
         // Setup
 
         if (isObject(element)) {
