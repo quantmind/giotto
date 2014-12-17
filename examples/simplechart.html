@@ -1,19 +1,26 @@
 <!DOCTYPE html>
-<html data-debug='false' lang='en'>
+<html data-debug='false' lang='en' prefix='og: http://ogp.me/ns#'>
 <head>
 <title>Simple Chart</title>
 <meta charset='utf-8'>
 <meta content='IE=edge' http-equiv='X-UA-Compatible'>
 <meta content='width=device-width, initial-scale=1' name='viewport'>
-<meta content='2014-12-06T10:58:42' name='og:modified_time'>
+<meta content='GiottoJS is a javascript visualization library built on top of d3js. It is designed to visualize both SVG and Canvas elements with a simple API. AngularJS integration' name='description'>
+<meta content='website' property='og:type'>
+<meta content='http://quantmind.github.io/giotto/giotto/examples/simplechart' property='og:url'>
+<meta content='Simple Chart' property='og:title'>
+<meta content='GiottoJS is a javascript visualization library built on top of d3js. It is designed to visualize both SVG and Canvas elements with a simple API. AngularJS integration' property='og:description'>
 <meta content='summary_large_image' name='twitter:card'>
+<meta content='@quantmind' name='twitter:site'>
+<meta content='Simple Chart' name='twitter:title'>
+<meta content='GiottoJS is a javascript visualization library built on top of d3js. It is designed to visualize both SVG and Canvas elements with a simple API. AngularJS integration' name='twitter:description'>
 <link href='http://quantmind.github.io/giotto/media/giottoweb/favicon.ico' rel='icon' type='image/x-icon'>
 <link href='//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css' rel='stylesheet' type='text/css'>
 <link href='//netdna.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css' rel='stylesheet' type='text/css'>
 <link href='http://quantmind.github.io/giotto/media/giotto/giotto.min.css' rel='stylesheet' type='text/css'>
 <link href='http://quantmind.github.io/giotto/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var lux = {context: {"python_version": "3.4.2", "brand": "Lux", "date": "2014-12-17T10-44-05", "name": "Lux", "url": "http://quantmind.github.io/giotto", "media": "/media", "lux_version": "0.1.2-alpha.1", "dateFormat": "d MMM y", "page": {"slug": "simplechart", "api_url": "http://quantmind.github.io/giotto/ng/examples/simplechart.json", "modified": "2014-12-06T10:58:42", "html_url": "http://quantmind.github.io/giotto/examples/simplechart", "name": "simplechart", "title": "Simple Chart", "content_type": "text/html"}, "navbar": {"collapseWidth": 768}, "year": 2014, "apiUrls": {}, "html5mode": true, "datetimeFormat": "d MMM y, h:mm:ss a", "ngModules": ["lux.blog", "highlight"]}};
+var lux = {context: {"lux_version": "0.1.2-alpha.1", "media": "/media", "page": {"content_type": "text/html", "api_url": "http://quantmind.github.io/giotto/ng/examples/simplechart.json", "title": "Simple Chart", "modified": "2014-12-06T10:58:42", "slug": "simplechart", "name": "simplechart", "html_url": "http://quantmind.github.io/giotto/examples/simplechart"}, "dateFormat": "d MMM y", "google": {"analytics": {"id": "UA-54439804-4", "ga": "ga"}}, "ngModules": ["lux.blog", "highlight", "lux.google"], "date": "2014-12-17T11-13-56", "url": "http://quantmind.github.io/giotto", "html5mode": true, "oauths": null, "brand": "Lux", "navbar": {"collapseWidth": 768}, "python_version": "3.4.2", "datetimeFormat": "d MMM y, h:mm:ss a", "year": 2014, "name": "Lux", "apiUrls": {}}};
 </script>
 <script type='text/javascript'>
 lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
@@ -21,11 +28,20 @@ lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback
 var gexamples = {};
 </script>
 <script type="text/javascript">
-var require = {"baseUrl": "http://quantmind.github.io/giotto/media/", "waitSeconds": 200, "paths": {}, "minify": true, "deps": ["http://quantmind.github.io/giotto/media/giottoweb/giottoweb.js"]};
+var require = {"paths": {}, "deps": ["http://quantmind.github.io/giotto/media/giottoweb/giottoweb.js"], "minify": true, "waitSeconds": 200, "baseUrl": "http://quantmind.github.io/giotto/media/"};
 </script>
 <script src='http://quantmind.github.io/require-config-js/require.config.min.js' type='application/javascript'></script>
 <script src='//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js' type='application/javascript'></script>
-</head>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-54439804-4', 'auto');
+  ga('send', 'pageview');
+
+</script></head>
 <body data-ng-controller='Page' data-ng-model='page' data-page=''>
 <navbar data-options="lux.context.navbar"></navbar>
 <div class="container">
@@ -35,7 +51,7 @@ var require = {"baseUrl": "http://quantmind.github.io/giotto/media/", "waitSecon
 <h2>Simple Chart</h2>
 </div>
 
-<div style="width: 100px" class="center-block"><lux-form data-options='luxforms.typeform_GKdr0'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.typeform_GKdr0 = {"field": {"id": "typeform_GKdr0", "type": "form", "model": "TypeForm", "showLabels": false}, "children": [{"field": {"type": "fieldset"}, "children": [{"field": {"options": ["svg", "canvas"], "required": true, "type": "select", "value": "svg", "name": "type"}}]}]};</script></lux-form></div>
+<div style="width: 100px" class="center-block"><lux-form data-options='luxforms.typeform_0wjdA'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.typeform_0wjdA = {"children": [{"children": [{"field": {"value": "svg", "name": "type", "type": "select", "options": ["svg", "canvas"], "required": true}}], "field": {"type": "fieldset"}}], "field": {"showLabels": false, "type": "form", "id": "typeform_0wjdA", "model": "TypeForm"}};</script></lux-form></div>
 
 <div data-options='gexamples.sigmoid' style='max-width: 500px' class="center-block" giotto-chart></div>
 
