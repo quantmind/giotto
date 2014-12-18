@@ -3667,15 +3667,15 @@
 
                         if (serie.yaxis === undefined)
                             serie.yaxis = 1;
-                        if (!serie.group) serie.group = 1;
+                        if (!serie.axisgroup) serie.axisgroup = 1;
 
-                        ranges = allranges[serie.group];
+                        ranges = allranges[serie.axisgroup];
 
                         if (!ranges) {
-                            // ranges not yet available for this chart group,
-                            // mark the serie as the reference for this group
+                            // ranges not yet available for this chart axisgroup,
+                            // mark the serie as the reference for this axisgroup
                             serie.reference = true;
-                            allranges[serie.group] = ranges = {};
+                            allranges[serie.axisgroup] = ranges = {};
                         }
 
                         if (!isObject(serie.xaxis)) serie.xaxis = opts.xaxis;
@@ -3730,20 +3730,20 @@
                 group = paper.classGroup(slugify(serie.label), extend({}, serie)),
                 stype;
 
-            // is this the reference serie for its group?
+            // Is this the reference serie for its axisgroup?
             group.element().classed('chart' + chart.uid(), true)
                            .classed('reference' + chart.uid(), serie.reference);
 
             // Draw X axis or set the scale of the reference X-axis
             if (serie.drawXaxis)
                 domain(group.xaxis()).drawXaxis();
-            else
+            else if (serie.axisgroup)
                 scale(group.xaxis());
 
             // Draw Y axis or set the scale of the reference Y-axis
             if (serie.drawYaxis)
                 domain(group.yaxis()).drawYaxis();
-            else
+            else if (serie.axisgroup)
                 scale(group.yaxis());
 
             opts.chartTypes.forEach(function (type) {
@@ -3753,7 +3753,7 @@
             });
 
             function domain(axis) {
-                var p = allranges[serie.group][axis.orient()],
+                var p = allranges[serie.axisgroup][axis.orient()],
                     o = axis.options(),
                     scale = axis.scale();
 
@@ -3771,7 +3771,7 @@
             }
 
             function scale (axis) {
-                var p = allranges[serie.group][axis.orient()];
+                var p = allranges[serie.axisgroup][axis.orient()];
                 axis.scale(p.scale);
             }
 
