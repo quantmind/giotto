@@ -6,6 +6,7 @@
 <meta content='IE=edge' http-equiv='X-UA-Compatible'>
 <meta content='width=device-width, initial-scale=1' name='viewport'>
 <meta content='Use the Trianglify Javascript library to create background images with Delaunay triangulation' name='description'>
+<meta content='Luca Sbardella' name='author'>
 <meta content='website' property='og:type'>
 <meta content='http://giottojs.org/examples/trianglify' property='og:url'>
 <meta content='Trianglify' property='og:title'>
@@ -22,7 +23,7 @@
 <link href='http://giottojs.org/media/giotto/giotto.min.css' rel='stylesheet' type='text/css'>
 <link href='http://giottojs.org/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var lux = {context: {"page": {"image": "http://giottojs.org/examples/trianglify.svg", "modified": "2014-12-17T19:18:55", "slug": "trianglify", "html_url": "http://giottojs.org/examples/trianglify", "content_type": "text/html", "date": "2014-12-04T00:00:00", "title": "Trianglify", "description": "Use the Trianglify Javascript library to create background images with Delaunay triangulation", "api_url": "http://giottojs.org/ng/examples/trianglify.json", "name": "trianglify"}, "google": {"analytics": {"ga": "ga", "id": "UA-54439804-4"}}, "navbar": {"collapseWidth": 768}, "year": 2014, "datetimeFormat": "d MMM y, h:mm:ss a", "lux_version": "0.1.2-alpha.1", "html5mode": true, "brand": "Lux", "python_version": "3.4.2", "ngModules": ["lux.google", "highlight", "lux.blog"], "url": "http://giottojs.org", "media": "/media", "dateFormat": "d MMM y", "oauths": null, "date": "2014-12-18T12-05-15", "name": "Lux", "apiUrls": {}}};
+var lux = {context: {"navbar": {"collapseWidth": 768}, "media": "/media", "url": "http://giottojs.org", "year": 2014, "datetimeFormat": "d MMM y, h:mm:ss a", "dateFormat": "d MMM y", "ngModules": ["highlight", "lux.blog", "lux.google"], "page": {"api_url": "http://giottojs.org/ng/examples/trianglify.json", "date": "2014-12-04T00:00:00", "description": "Use the Trianglify Javascript library to create background images with Delaunay triangulation", "name": "trianglify", "modified": "2014-12-18T13:15:31", "author": ["Luca Sbardella"], "title": "Trianglify", "image": "http://giottojs.org/examples/trianglify.svg", "html_url": "http://giottojs.org/examples/trianglify", "content_type": "text/html", "slug": "trianglify"}, "html5mode": true, "python_version": "3.4.2", "google": {"analytics": {"ga": "ga", "id": "UA-54439804-4"}}, "oauths": null, "date": "2014-12-18T14-30-26", "name": "Lux", "lux_version": "0.1.2-alpha.1", "brand": "Lux", "apiUrls": {}}};
 </script>
 <script type='text/javascript'>
 lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
@@ -30,7 +31,7 @@ lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback
 var gexamples = {};
 </script>
 <script type="text/javascript">
-var require = {"minify": true, "waitSeconds": 200, "paths": {}, "baseUrl": "http://giottojs.org/media/", "deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"]};
+var require = {"paths": {}, "baseUrl": "http://giottojs.org/media/", "minify": true, "deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"], "waitSeconds": 200};
 </script>
 <script src='http://quantmind.github.io/require-config-js/require.config.min.js' type='application/javascript'></script>
 <script src='//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js' type='application/javascript'></script>
@@ -50,7 +51,7 @@ var require = {"minify": true, "waitSeconds": 200, "paths": {}, "baseUrl": "http
 <div class="fullpage" data-options="gexamples.trianglify" data-giotto-trianglify>
 <div class="trianglify-box center-block">
 <p>The trianglify visualization uses the <a href="http://qrohlf.com/trianglify/"> Trianglify</a> javascript library.</p>
-<lux-form data-options='luxforms.trianglify_aPiHs'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.trianglify_aPiHs = {"field": {"layout": "horizontal", "model": "trianglify", "id": "trianglify_aPiHs", "type": "form", "labelSpan": 6}, "children": [{"field": {"type": "fieldset"}, "children": [{"field": {"value": 100, "max_value": 1000, "type": "number", "min_value": 1, "required": true, "label": "cell size", "name": "cellsize"}}, {"field": {"value": 1, "max_value": 1, "type": "number", "min_value": 0, "required": true, "label": "fill opacity", "name": "fillOpacity"}}, {"field": {"value": 1, "max_value": 1, "type": "number", "min_value": 0, "required": true, "label": "stroke opacity", "name": "strokeOpacity"}}, {"field": {"value": 0, "max_value": 1, "type": "number", "min_value": 0, "required": true, "label": "noise intensity", "name": "noiseIntensity"}}, {"field": {"name": "x_gradient", "type": "select", "options": [], "required": false, "label": "x gradient"}}, {"field": {"name": "y_gradient", "type": "select", "options": [], "required": false, "label": "y gradient"}}]}, {"field": {"label": "redraw", "type": "button", "disabled": "form.$invalid", "name": "redraw", "click": "luxforms.redraw"}}]};</script></lux-form>
+<lux-form data-options='luxforms.trianglify_EQEdE'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.trianglify_EQEdE = {"field": {"layout": "horizontal", "type": "form", "id": "trianglify_EQEdE", "model": "trianglify", "labelSpan": 6}, "children": [{"field": {"type": "fieldset"}, "children": [{"field": {"type": "number", "min_value": 1, "max_value": 1000, "value": 100, "name": "cellsize", "required": true, "label": "cell size"}}, {"field": {"type": "number", "min_value": 0, "max_value": 1, "value": 1, "name": "fillOpacity", "required": true, "label": "fill opacity"}}, {"field": {"type": "number", "min_value": 0, "max_value": 1, "value": 1, "name": "strokeOpacity", "required": true, "label": "stroke opacity"}}, {"field": {"type": "number", "min_value": 0, "max_value": 1, "value": 0, "name": "noiseIntensity", "required": true, "label": "noise intensity"}}, {"field": {"type": "select", "options": [], "required": false, "name": "x_gradient", "label": "x gradient"}}, {"field": {"type": "select", "options": [], "required": false, "name": "y_gradient", "label": "y gradient"}}]}, {"field": {"disabled": "form.$invalid", "type": "button", "click": "luxforms.redraw", "name": "redraw", "label": "redraw"}}]};</script></lux-form>
 </div>
 </div>
 </div>

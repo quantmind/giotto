@@ -20,7 +20,7 @@
 <link href='http://giottojs.org/media/giotto/giotto.min.css' rel='stylesheet' type='text/css'>
 <link href='http://giottojs.org/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var lux = {context: {"page": {"modified": "2014-12-10T17:16:27", "slug": "sunburst", "html_url": "http://giottojs.org/examples/sunburst", "content_type": "text/html", "description": "A list of GiottoJS examples", "title": "Zoomable Sunburst Partition", "date": "2014-11-04T00:00:00", "name": "sunburst", "api_url": "http://giottojs.org/ng/examples/sunburst.json"}, "google": {"analytics": {"ga": "ga", "id": "UA-54439804-4"}}, "navbar": {"collapseWidth": 768}, "year": 2014, "datetimeFormat": "d MMM y, h:mm:ss a", "lux_version": "0.1.2-alpha.1", "html5mode": true, "brand": "Lux", "python_version": "3.4.2", "ngModules": ["lux.google", "highlight", "lux.blog"], "url": "http://giottojs.org", "media": "/media", "dateFormat": "d MMM y", "oauths": null, "date": "2014-12-18T12-05-15", "name": "Lux", "apiUrls": {}}};
+var lux = {context: {"navbar": {"collapseWidth": 768}, "media": "/media", "url": "http://giottojs.org", "year": 2014, "datetimeFormat": "d MMM y, h:mm:ss a", "dateFormat": "d MMM y", "ngModules": ["highlight", "lux.blog", "lux.google"], "page": {"api_url": "http://giottojs.org/ng/examples/sunburst.json", "slug": "sunburst", "description": "A list of GiottoJS examples", "name": "sunburst", "modified": "2014-12-10T17:16:27", "date": "2014-11-04T00:00:00", "title": "Zoomable Sunburst Partition", "content_type": "text/html", "html_url": "http://giottojs.org/examples/sunburst"}, "html5mode": true, "python_version": "3.4.2", "google": {"analytics": {"ga": "ga", "id": "UA-54439804-4"}}, "oauths": null, "date": "2014-12-18T14-30-26", "name": "Lux", "lux_version": "0.1.2-alpha.1", "brand": "Lux", "apiUrls": {}}};
 </script>
 <script type='text/javascript'>
 lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
@@ -28,7 +28,7 @@ lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback
 var gexamples = {};
 </script>
 <script type="text/javascript">
-var require = {"minify": true, "waitSeconds": 200, "paths": {}, "baseUrl": "http://giottojs.org/media/", "deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"]};
+var require = {"paths": {}, "baseUrl": "http://giottojs.org/media/", "minify": true, "deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"], "waitSeconds": 200};
 </script>
 <script src='http://quantmind.github.io/require-config-js/require.config.min.js' type='application/javascript'></script>
 <script src='//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js' type='application/javascript'></script>
@@ -53,10 +53,10 @@ var require = {"minify": true, "waitSeconds": 200, "paths": {}, "baseUrl": "http
 </div>
 <div style="position: relative">
 <div data-options="gexamples.sunburst1" data-giotto-sunburst></div>
-<div style="position: absolute; top: 0; right: 0; width: 100px" class="hidden-xs"><lux-form data-options='luxforms.sunburstform_HKaNB'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.sunburstform_HKaNB = {"field": {"type": "form", "model": "SunburstForm", "id": "sunburstform_HKaNB"}, "children": [{"field": {"type": "fieldset"}, "children": [{"field": {"value": "sqrt", "type": "select", "options": ["sqrt", "linear"], "required": true, "name": "scale"}}]}]};</script></lux-form></div>
+<div style="position: absolute; top: 0; right: 0; width: 100px" class="hidden-xs"><lux-form data-options='luxforms.sunburstform_K4LaP'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.sunburstform_K4LaP = {"field": {"type": "form", "model": "SunburstForm", "id": "sunburstform_K4LaP"}, "children": [{"field": {"type": "fieldset"}, "children": [{"field": {"type": "select", "options": ["sqrt", "linear"], "required": true, "name": "scale", "value": "sqrt"}}]}]};</script></lux-form></div>
 </div>
 
-<div style="width: 100px" class="visible-xs center-block"><lux-form data-options='luxforms.sunburstform_HKaNB'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.sunburstform_HKaNB = {"field": {"type": "form", "model": "SunburstForm", "id": "sunburstform_HKaNB"}, "children": [{"field": {"type": "fieldset"}, "children": [{"field": {"value": "sqrt", "type": "select", "options": ["sqrt", "linear"], "required": true, "name": "scale"}}]}]};</script></lux-form></div>
+<div style="width: 100px" class="visible-xs center-block"><lux-form data-options='luxforms.sunburstform_K4LaP'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.sunburstform_K4LaP = {"field": {"type": "form", "model": "SunburstForm", "id": "sunburstform_K4LaP"}, "children": [{"field": {"type": "fieldset"}, "children": [{"field": {"type": "select", "options": ["sqrt", "linear"], "required": true, "name": "scale", "value": "sqrt"}}]}]};</script></lux-form></div>
 
 <p>Html:</p>
 <pre><code>&lt;div data-options="gexamples.sunburst1" data-giotto-sunburst&gt;&lt;/div&gt;

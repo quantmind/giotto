@@ -6,6 +6,7 @@
 <meta content='IE=edge' http-equiv='X-UA-Compatible'>
 <meta content='width=device-width, initial-scale=1' name='viewport'>
 <meta content='Illustrate several options when visualizing data with a pie chart using GiottoJS. Both canvas and svg are supported.' name='description'>
+<meta content='Luca Sbardella' name='author'>
 <meta content='website' property='og:type'>
 <meta content='http://giottojs.org/examples/wineproduction' property='og:url'>
 <meta content='2011 World Wine Production' property='og:title'>
@@ -22,7 +23,7 @@
 <link href='http://giottojs.org/media/giotto/giotto.min.css' rel='stylesheet' type='text/css'>
 <link href='http://giottojs.org/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var lux = {context: {"page": {"image": "http://giottojs.org/examples/wineproduction.png", "modified": "2014-12-11T13:44:32", "slug": "wineproduction", "html_url": "http://giottojs.org/examples/wineproduction", "content_type": "text/html", "title": "2011 World Wine Production", "description": "Illustrate several options when visualizing data with a pie chart using GiottoJS. Both canvas and svg are supported.", "name": "wineproduction", "api_url": "http://giottojs.org/ng/examples/wineproduction.json"}, "google": {"analytics": {"ga": "ga", "id": "UA-54439804-4"}}, "navbar": {"collapseWidth": 768}, "year": 2014, "datetimeFormat": "d MMM y, h:mm:ss a", "lux_version": "0.1.2-alpha.1", "html5mode": true, "brand": "Lux", "python_version": "3.4.2", "ngModules": ["lux.google", "highlight", "lux.blog"], "url": "http://giottojs.org", "media": "/media", "dateFormat": "d MMM y", "oauths": null, "date": "2014-12-18T12-05-15", "name": "Lux", "apiUrls": {}}};
+var lux = {context: {"navbar": {"collapseWidth": 768}, "media": "/media", "url": "http://giottojs.org", "year": 2014, "datetimeFormat": "d MMM y, h:mm:ss a", "dateFormat": "d MMM y", "ngModules": ["highlight", "lux.blog", "lux.google"], "page": {"api_url": "http://giottojs.org/ng/examples/wineproduction.json", "date": "2014-12-14T00:00:00", "description": "Illustrate several options when visualizing data with a pie chart using GiottoJS. Both canvas and svg are supported.", "name": "wineproduction", "modified": "2014-12-18T13:16:11", "author": ["Luca Sbardella"], "title": "2011 World Wine Production", "image": "http://giottojs.org/examples/wineproduction.png", "html_url": "http://giottojs.org/examples/wineproduction", "content_type": "text/html", "slug": "wineproduction"}, "html5mode": true, "python_version": "3.4.2", "google": {"analytics": {"ga": "ga", "id": "UA-54439804-4"}}, "oauths": null, "date": "2014-12-18T14-30-26", "name": "Lux", "lux_version": "0.1.2-alpha.1", "brand": "Lux", "apiUrls": {}}};
 </script>
 <script type='text/javascript'>
 lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
@@ -30,7 +31,7 @@ lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback
 var gexamples = {};
 </script>
 <script type="text/javascript">
-var require = {"minify": true, "waitSeconds": 200, "paths": {}, "baseUrl": "http://giottojs.org/media/", "deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"]};
+var require = {"paths": {}, "baseUrl": "http://giottojs.org/media/", "minify": true, "deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"], "waitSeconds": 200};
 </script>
 <script src='http://quantmind.github.io/require-config-js/require.config.min.js' type='application/javascript'></script>
 <script src='//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js' type='application/javascript'></script>
@@ -59,7 +60,7 @@ var require = {"minify": true, "waitSeconds": 200, "paths": {}, "baseUrl": "http
       <div data-options="gexamples.piecharts" style="width: 100%;" giotto-chart></div>
     </div>
     <div class="col-sm-2 small">
-      <lux-form data-options='luxforms.pietypeform_LFnPc'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.pietypeform_LFnPc = {"field": {"type": "form", "model": "PieTypeForm", "id": "pietypeform_LFnPc"}, "children": [{"field": {"type": "fieldset"}, "children": [{"field": {"value": "svg", "type": "select", "options": ["svg", "canvas"], "required": true, "name": "type"}}, {"field": {"value": 1, "min": 0, "type": "number", "required": false, "label": "pad angle", "max": 20, "name": "padAngle"}}, {"field": {"value": 0.01, "min": 0, "type": "number", "required": false, "label": "corner radius", "max": 30, "name": "cornerRadius"}}, {"field": {"value": 0.5, "min": 0, "type": "number", "required": false, "label": "inner radius", "max": 0.99, "name": "innerRadius"}}]}]};</script></lux-form>
+      <lux-form data-options='luxforms.pietypeform_27EL5'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.pietypeform_27EL5 = {"field": {"type": "form", "model": "PieTypeForm", "id": "pietypeform_27EL5"}, "children": [{"field": {"type": "fieldset"}, "children": [{"field": {"type": "select", "options": ["svg", "canvas"], "required": true, "name": "type", "value": "svg"}}, {"field": {"type": "number", "max": 20, "name": "padAngle", "value": 1, "min": 0, "required": false, "label": "pad angle"}}, {"field": {"type": "number", "max": 30, "name": "cornerRadius", "value": 0.01, "min": 0, "required": false, "label": "corner radius"}}, {"field": {"type": "number", "max": 0.99, "name": "innerRadius", "value": 0.5, "min": 0, "required": false, "label": "inner radius"}}]}]};</script></lux-form>
     </div>
   </div>
 </div>
