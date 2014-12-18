@@ -15,16 +15,6 @@
             group.element().selectAll('*').remove();
         };
 
-        _.setBackground = function (o, background) {
-            if (isObject(background)) {
-                if (background.fillOpacity !== undefined)
-                    o.attr('fill-opacity', background.fillOpacity);
-                background = background.fill;
-            }
-            if (isString(background))
-                o.attr('fill', background);
-        };
-
         // Create a gradient element to use by scg elements
         _.gradient = function (id, color1, color2) {
             var svg = d3.select("body").append("svg"),
@@ -191,9 +181,14 @@
                 ax.attr("transform", "translate(" + x + "," + y + ")").call(axis);
                 ax.selectAll('line, path')
                      .attr('stroke', this.color)
+                     .attr('stroke-opacity', this.colorOpacity)
                      .attr('stroke-width', this.lineWidth)
                      .attr('fill', 'none');
-                return _font(ax.selectAll('text'), opts);
+                if (opts.size === 0)
+                    ax.selectAll('text').remove();
+                else
+                    _font(ax.selectAll('text'), opts);
+                return ax;
             });
         };
 

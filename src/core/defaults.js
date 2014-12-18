@@ -31,6 +31,7 @@
             fillOpacity: 1,
             colorOpacity: 1,
             lineWidth: 2,
+            formatY: ',g3',
             active: {
                 color: 'darker',
                 // Multiplier for lineWidth, set to 1 for no change
@@ -44,6 +45,7 @@
             fillOpacity: 1,
             colorOpacity: 1,
             lineWidth: 2,
+            formatY: ',g3',
             active: {
                 fill: 'darker',
                 color: 'brighter',
@@ -58,6 +60,7 @@
             fillOpacity: 1,
             colorOpacity: 1,
             lineWidth: 2,
+            formatY: ',g3',
             // Radius in pixels of rounded corners. Set to 0 for no rounded corners
             radius: 4,
             active: {
@@ -74,6 +77,7 @@
             colorOpacity: 1,
             innerRadius: 0,
             startAngle: 0,
+            formatY: ',g3',
             active: {
                 fill: 'darker',
                 color: 'brighter',

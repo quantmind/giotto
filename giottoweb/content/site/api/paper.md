@@ -31,6 +31,19 @@ Returns the selected group or ``undefined``:
     paper.select('*')   // returns the first group in the paper
     paper.select('#plot1') // select the group with id plot1
 
+### # paper.each([filter], callback)
+
+Invokes the specified ``callback`` function for each group in the paper, passing the index ``i``
+with the ``this`` context of the current group. If the optional ``filter`` parameter is given,
+it invokes the ``callback`` only on the mathing groups.
+
+    paper.each(function (i) {
+        this.yaxis.tickSize(5);
+    });
+
+    paper.each('.timeseries', function (i) {
+        this.yaxis.tickSize(5);
+    });
 
 ## Options
 

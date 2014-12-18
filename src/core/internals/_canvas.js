@@ -80,7 +80,7 @@
             context.font = fontString(opts);
             opts.size = size;
             //
-            ctx.strokeStyle = d.color;
+            ctx.strokeStyle = d3.canvas.rgba(d.color, d.colorOpacity);
             context.fillStyle = d.color;
             ctx.lineWidth = group.factor()*d.lineWidth;
             _draw(context);

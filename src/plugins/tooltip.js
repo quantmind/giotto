@@ -4,7 +4,7 @@
     g.paper.plugin('tooltip', {
         defaults: {
             className: 'd3-tip',
-            show: true,
+            show: false,
             fill: '#333',
             fillOpacity: 0.8,
             color: '#fff',
@@ -12,6 +12,9 @@
             radius: '3px',
             template: function (d) {
                 return "<strong>" + d.x + ": </strong><span>" + d.y + "</span>";
+            },
+            font: {
+                size: '14px'
             }
         },
 
@@ -36,7 +39,7 @@
                 draw = active.draw();
                 return opts.tooltip.template({
                     x: draw.x()(active.data),
-                    y: draw.y()(active.data)
+                    y: draw.formatY(draw.y()(active.data))
                 });
             });
 

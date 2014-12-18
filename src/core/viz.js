@@ -17,8 +17,11 @@
     g.createviz = function (name, defaults, constructor) {
 
         // The visualization factory
-        var plugins = [],
-            vizType = function (element, opts) {
+        var
+
+        plugins = [],
+
+        vizType = function (element, opts) {
 
             if (isObject(element)) {
                 opts = element;
@@ -27,6 +30,7 @@
             opts = extend({}, vizType.defaults, opts);
 
             var viz = {},
+                uid = ++_idCounter,
                 event = d3.dispatch.apply(d3, opts.events),
                 alpha = 0,
                 loading_data = false,
@@ -41,6 +45,10 @@
 
             viz.vizName = function () {
                 return vizType.vizName();
+            };
+
+            viz.uid = function () {
+                return uid;
             };
 
             viz.paper = function (createNew) {

@@ -1,67 +1,87 @@
 
+    function gridplugin (group, opts) {
+        var grid, gopts;
+
+        group.showGrid = function () {
+            if (!grid) {
+                // First time here, setup grid options for y and x coordinates
+                if (!gopts) {
+                    gopts = extend({
+                        position: 'top',
+                        size: 0,
+                        show: opts.xaxis.grid === undefined || opts.xaxis.grid
+                    }, opts.grid);
+                    opts.xaxis = gopts;
+                    opts.yaxis = extend({
+                        position: 'left',
+                        size: 0,
+                        show: opts.yaxis.grid === undefined || opts.yaxis.grid
+                    }, opts.grid);
+                }
+
+                opts.before = '*';
+                grid = group.paper().group(opts);
+                grid.element().classed('grid', true);
+                grid.xaxis().tickFormat(notick).scale(group.xaxis().scale());
+                grid.yaxis().tickFormat(notick).scale(group.yaxis().scale());
+                grid.add(rectangle).options(opts.grid);
+                if (opts.xaxis.show) grid.drawXaxis();
+                if (opts.yaxis.show) grid.drawYaxis();
+                grid.render();
+            } else
+                grid.clear().render();
+            return group;
+        };
+
+        group.hideGrid = function () {
+            if (grid)
+                grid.remove();
+            return group;
+        };
+
+        // The redering function of the grid rectangle
+        var rectangle = function () {
+            var width = grid.innerWidth(),
+                height = grid.innerHeight();
+
+            if (grid.type() === 'svg') {
+                // svg
+                var rect = grid.element().select('.grid-rectangle');
+
+                if (!rect.node())
+                    rect = grid.element()
+                                .append("rect")
+                                .attr("class", "grid-rectangle");
+
+                rect.attr("width", width).attr("height", height);
+                this.setBackground(rect);
+            } else {
+                // canvas
+                var ctx = grid.context();
+                ctx.beginPath();
+                ctx.rect(0, 0, width, height);
+                this.setBackground(ctx);
+                ctx.fill();
+            }
+
+            grid.xaxis().tickSize(-height, 0);
+            grid.yaxis().tickSize(-width, 0);
+        };
+
+        function notick () {return '';}
+    }
+
     g.paper.plugin('grid', {
         defaults: {
             color: '#333',
-            colorOpacity: 0.2,
+            colorOpacity: 0.3,
             fill: '#c6dbef',
-            fillOpacity: 0.2
+            fillOpacity: 0.2,
+            lineWidth: 0.5
         },
-
-        svg: function (group, opts) {
-
-            function show (axis, xy) {
-                var grid = paper.classGroup('grid', {before: '*'});
-
-                if (show) {
-
-                    grid.add(function () {
-                        var opts = this.options(),
-                            gg = grid.element().select('.' + xy),
-                            rect = grid.element().select('.grid-rectangle');
-
-                        if (!rect.node()) {
-                            grid.element()
-                                    .append("rect")
-                                    .attr("class", "grid-rectangle")
-                                    .attr("width", grid.innerWidth())
-                                    .attr("height", grid.innerHeight());
-                        }
-                        paper.setBackground(rect, this);
-
-                        if (!gg.node())
-                            gg = grid.element().append('g').attr('class', xy);
-                        if (xy[0] === 'x')
-                            gridaxis.tickSize(this.group().innerHeight(), 0);
-                        else
-                            gridaxis.tickSize(-this.group().innerWidth(), 0).orient('left');
-                        gg.selectAll('*').remove();
-                        gg.call(gridaxis);
-                        gg.selectAll('line')
-                            .attr('stroke', this.color)
-                            .attr('stroke-opacity', this.colorOpacity)
-                            .attr('stroke-width', this.lineWidth);
-                        gg.selectAll('path').remove();
-                        return gg;
-                    }).options(opts.grid).name(xy);
-                }
-            }
-        },
-
-        canvas: function (group, opts) {
-
-        }
+        svg: gridplugin,
+        canvas: gridplugin
     });
-
-    function grid (group, opts, show) {
-        if (opts.xaxis.grid === undefined) opts.xaxis.grid = true;
-        if (opts.yaxis.grid === undefined) opts.yaxis.grid = true;
-
-        group.xaxis().tickFormat('');
-        group.yaxis().tickFormat('');
-
-        group.add(show(group.xaxis(), 'x-grid')).options(opts.xaxis);
-        group.add(show(group.yaxis(), 'y-grid')).options(opts.yaxis);
-    }
 
     //
     //  Add grid functionality to charts
@@ -71,24 +91,24 @@
 
         // Show grid
         chart.showGrid = function () {
-            chart.paper().each(function (group) {
-                group.showGrid();
+            chart.paper().each('.reference' + chart.uid(), function () {
+                this.showGrid();
             });
             return chart;
         };
 
         // Hide grid
         chart.hideGrid = function () {
-            chart.paper().each(function (group) {
-                group.hideGrid();
+            chart.paper().each('.reference' + chart.uid(), function () {
+                this.hideGrid();
             });
             return chart;
         };
 
         chart.on('tick.grid', function () {
-            //if (opts.grid.show)
-            //    chart.showGrid();
-            //else
-            //    chart.hideGrid();
+            if (opts.grid.show)
+                chart.showGrid();
+            else
+                chart.hideGrid();
         });
     });

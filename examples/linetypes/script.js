@@ -2,6 +2,10 @@
     gexamples.linetypes = {
         height: '70%',
 
+        tooltip: {
+          show: true
+        },
+
         point: {
             show: true,
             lineWidth: 3,

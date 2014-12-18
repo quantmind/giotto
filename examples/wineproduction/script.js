@@ -16,6 +16,10 @@
     gexamples.piecharts = {
         height: '80%',
 
+        tooltip: {
+          show: true
+        },
+
         data: [{pie: oivdata}],
 
         // Callback for angular directive

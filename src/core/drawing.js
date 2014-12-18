@@ -9,6 +9,7 @@
             name,
             data,
             opts,
+            formatY,
             dataConstructor;
 
         draw = highlightMixin(drawingOptions, draw);
@@ -89,6 +90,11 @@
             if (arguments.length === 0) return y;
             y = d3_functor(_);
             return draw;
+        };
+
+        draw.formatY = function (y) {
+            if (!formatY) formatY = d3.format(opts.formatY || 'n');
+            return formatY(y);
         };
 
         draw.size = function (_) {
@@ -199,6 +205,11 @@
                 activeColors(data);
             }
             return d.reset();
+        };
+
+        d.setBackground = function (e) {
+            d.group().setBackground(d, e);
+            return d;
         };
 
         return d;

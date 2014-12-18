@@ -8,6 +8,7 @@
             ctx = elem.node().getContext('2d'),
             _ = canvas_implementation(paper, p);
 
+        delete p.before;
         container.selectAll('*').style({"position": "absolute", "top": "0", "left": "0"});
         container.select('*').style({"position": "relative"});
 
@@ -40,6 +41,13 @@
             var factor = group.factor();
             ctx.setTransform(1, 0, 0, 1, 0, 0);
             ctx.translate(factor*p.margin.left, factor*p.margin.top);
+            return group;
+        };
+
+        group.setBackground = function (b, context) {
+            context = context || ctx;
+            if (isObject(b)) context.fillStyle = d3.canvas.rgba(b.fill, b.fillOpacity);
+            else if (isString(b)) context.fillStyle = b;
             return group;
         };
 

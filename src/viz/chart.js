@@ -68,7 +68,7 @@
             }
 
             // Render the chart
-            chart.render();
+            return chart.render();
         };
 
         chart.setSerieOption = function (type, field, value) {
@@ -91,6 +91,8 @@
             chart.stop();
             chart.draw();
         });
+
+        // INTERNALS
 
         function formatSerie (serie) {
             if (!serie) return;
@@ -137,7 +139,8 @@
         }
 
         function addSeries (series) {
-            // Loop through data and build the graph
+            // Loop through series and add them to the chart series collection
+            // No drawing nor rendering involved
             var data = [], ranges, range;
 
             series.forEach(function (serie) {
@@ -148,15 +151,23 @@
                 serie = formatSerie(serie);
 
                 if (serie) {
+                    // Not a pie chart, check axis and ranges
                     if (!serie.pie) {
+
                         serie = xyData(serie);
+
                         if (serie.yaxis === undefined)
                             serie.yaxis = 1;
                         if (!serie.group) serie.group = 1;
 
                         ranges = allranges[serie.group];
-                        if (!ranges)
+
+                        if (!ranges) {
+                            // ranges not yet available for this chart group,
+                            // mark the serie as the reference for this group
+                            serie.reference = true;
                             allranges[serie.group] = ranges = {};
+                        }
 
                         if (!isObject(serie.xaxis)) serie.xaxis = opts.xaxis;
                         if (serie.yaxis === 2) serie.yaxis = opts.yaxis2;
@@ -187,8 +198,9 @@
         }
 
         function drawSerie (serie) {
+            // Draw a serie
 
-            // Remove serie drawing if any
+            // Remove previous serie drawing if any
             opts.chartTypes.forEach(function (type) {
                 stype = serie[type];
                 if (stype) {
@@ -198,9 +210,14 @@
                 }
             });
 
+            // Create the group for the serie
             var paper = chart.paper(),
                 group = paper.classGroup(slugify(serie.label), extend({}, serie)),
                 stype;
+
+            // is this the reference serie for its group?
+            group.element().classed('chart' + chart.uid(), true)
+                           .classed('reference' + chart.uid(), serie.reference);
 
             function domain(axis) {
                 var range = allranges[serie.group][axis.orient()],

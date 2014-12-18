@@ -68,9 +68,10 @@
             return group.innerHeight()/group.innerWidth();
         };
 
-        group.add = function (d) {
-            drawings.push(d);
-            return d;
+        group.add = function (draw) {
+            if (isFunction(draw)) draw = drawing(group, draw);
+            drawings.push(draw);
+            return draw;
         };
 
         group.each = function (callback) {
@@ -222,6 +223,8 @@
         // assume a continuous domain
         // TODO allow for multiple domain points
         group.dim = function (x) {
+            if (!x) return 0;
+
             var v = +x;
             // assume input is in pixels
             if (isNaN(v))
