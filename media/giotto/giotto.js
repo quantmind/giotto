@@ -1,6 +1,6 @@
 //      Giotto - v0.1.0
 
-//      Compiled 2014-12-17.
+//      Compiled 2014-12-18.
 //      Copyright (c) 2014 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -2268,6 +2268,7 @@
             fillOpacity: 1,
             colorOpacity: 1,
             lineWidth: 2,
+            formatY: ',g3',
             active: {
                 color: 'darker',
                 // Multiplier for lineWidth, set to 1 for no change
@@ -2281,6 +2282,7 @@
             fillOpacity: 1,
             colorOpacity: 1,
             lineWidth: 2,
+            formatY: ',g3',
             active: {
                 fill: 'darker',
                 color: 'brighter',
@@ -2295,6 +2297,7 @@
             fillOpacity: 1,
             colorOpacity: 1,
             lineWidth: 2,
+            formatY: ',g3',
             // Radius in pixels of rounded corners. Set to 0 for no rounded corners
             radius: 4,
             active: {
@@ -2311,6 +2314,7 @@
             colorOpacity: 1,
             innerRadius: 0,
             startAngle: 0,
+            formatY: ',g3',
             active: {
                 fill: 'darker',
                 color: 'brighter',
@@ -2697,9 +2701,10 @@
             return group.innerHeight()/group.innerWidth();
         };
 
-        group.add = function (d) {
-            drawings.push(d);
-            return d;
+        group.add = function (draw) {
+            if (isFunction(draw)) draw = drawing(group, draw);
+            drawings.push(draw);
+            return draw;
         };
 
         group.each = function (callback) {
@@ -2851,6 +2856,8 @@
         // assume a continuous domain
         // TODO allow for multiple domain points
         group.dim = function (x) {
+            if (!x) return 0;
+
             var v = +x;
             // assume input is in pixels
             if (isNaN(v))
@@ -2939,6 +2946,7 @@
             name,
             data,
             opts,
+            formatY,
             dataConstructor;
 
         draw = highlightMixin(drawingOptions, draw);
@@ -3019,6 +3027,11 @@
             if (arguments.length === 0) return y;
             y = d3_functor(_);
             return draw;
+        };
+
+        draw.formatY = function (y) {
+            if (!formatY) formatY = d3.format(opts.formatY || 'n');
+            return formatY(y);
         };
 
         draw.size = function (_) {
@@ -3131,6 +3144,11 @@
             return d.reset();
         };
 
+        d.setBackground = function (e) {
+            d.group().setBackground(d, e);
+            return d;
+        };
+
         return d;
     }
     //
@@ -3212,9 +3230,25 @@
             elem = p.before ? container.insert('g', p.before) : container.append('g'),
             _ = svg_implementation(paper, p);
 
+        delete p.before;
         // translate the group element by the required margins
         elem.attr("transform", "translate(" + p.margin.left + "," + p.margin.top + ")");
-        return g.group(paper, elem.node(), p, _);
+        var group = g.group(paper, elem.node(), p, _);
+
+        group.setBackground = function (b, o) {
+            if (!o) return;
+
+            if (isObject(b)) {
+                if (b.fillOpacity !== undefined)
+                    o.attr('fill-opacity', b.fillOpacity);
+                b = b.fill;
+            }
+            if (isString(b))
+                o.attr('fill', b);
+            return group;
+        };
+
+        return group;
     };
 
     //
@@ -3227,6 +3261,7 @@
             ctx = elem.node().getContext('2d'),
             _ = canvas_implementation(paper, p);
 
+        delete p.before;
         container.selectAll('*').style({"position": "absolute", "top": "0", "left": "0"});
         container.select('*').style({"position": "relative"});
 
@@ -3262,6 +3297,13 @@
             return group;
         };
 
+        group.setBackground = function (b, context) {
+            context = context || ctx;
+            if (isObject(b)) context.fillStyle = d3.canvas.rgba(b.fill, b.fillOpacity);
+            else if (isString(b)) context.fillStyle = b;
+            return group;
+        };
+
         return group.factor(_.scale(group));
     };
     //
@@ -3283,8 +3325,11 @@
     g.createviz = function (name, defaults, constructor) {
 
         // The visualization factory
-        var plugins = [],
-            vizType = function (element, opts) {
+        var
+
+        plugins = [],
+
+        vizType = function (element, opts) {
 
             if (isObject(element)) {
                 opts = element;
@@ -3293,6 +3338,7 @@
             opts = extend({}, vizType.defaults, opts);
 
             var viz = {},
+                uid = ++_idCounter,
                 event = d3.dispatch.apply(d3, opts.events),
                 alpha = 0,
                 loading_data = false,
@@ -3307,6 +3353,10 @@
 
             viz.vizName = function () {
                 return vizType.vizName();
+            };
+
+            viz.uid = function () {
+                return uid;
             };
 
             viz.paper = function (createNew) {
@@ -3525,7 +3575,7 @@
             }
 
             // Render the chart
-            chart.render();
+            return chart.render();
         };
 
         chart.setSerieOption = function (type, field, value) {
@@ -3548,6 +3598,8 @@
             chart.stop();
             chart.draw();
         });
+
+        // INTERNALS
 
         function formatSerie (serie) {
             if (!serie) return;
@@ -3594,7 +3646,8 @@
         }
 
         function addSeries (series) {
-            // Loop through data and build the graph
+            // Loop through series and add them to the chart series collection
+            // No drawing nor rendering involved
             var data = [], ranges, range;
 
             series.forEach(function (serie) {
@@ -3605,15 +3658,23 @@
                 serie = formatSerie(serie);
 
                 if (serie) {
+                    // Not a pie chart, check axis and ranges
                     if (!serie.pie) {
+
                         serie = xyData(serie);
+
                         if (serie.yaxis === undefined)
                             serie.yaxis = 1;
                         if (!serie.group) serie.group = 1;
 
                         ranges = allranges[serie.group];
-                        if (!ranges)
+
+                        if (!ranges) {
+                            // ranges not yet available for this chart group,
+                            // mark the serie as the reference for this group
+                            serie.reference = true;
                             allranges[serie.group] = ranges = {};
+                        }
 
                         if (!isObject(serie.xaxis)) serie.xaxis = opts.xaxis;
                         if (serie.yaxis === 2) serie.yaxis = opts.yaxis2;
@@ -3644,8 +3705,9 @@
         }
 
         function drawSerie (serie) {
+            // Draw a serie
 
-            // Remove serie drawing if any
+            // Remove previous serie drawing if any
             opts.chartTypes.forEach(function (type) {
                 stype = serie[type];
                 if (stype) {
@@ -3655,9 +3717,14 @@
                 }
             });
 
+            // Create the group for the serie
             var paper = chart.paper(),
                 group = paper.classGroup(slugify(serie.label), extend({}, serie)),
                 stype;
+
+            // is this the reference serie for its group?
+            group.element().classed('chart' + chart.uid(), true)
+                           .classed('reference' + chart.uid(), serie.reference);
 
             function domain(axis) {
                 var range = allranges[serie.group][axis.orient()],
@@ -4856,69 +4923,89 @@
 
     });
 
+    function gridplugin (group, opts) {
+        var grid, gopts;
+
+        group.showGrid = function () {
+            if (!grid) {
+                // First time here, setup grid options for y and x coordinates
+                if (!gopts) {
+                    gopts = extend({
+                        position: 'top',
+                        size: 0,
+                        show: opts.xaxis.grid === undefined || opts.xaxis.grid
+                    }, opts.grid);
+                    opts.xaxis = gopts;
+                    opts.yaxis = extend({
+                        position: 'left',
+                        size: 0,
+                        show: opts.yaxis.grid === undefined || opts.yaxis.grid
+                    }, opts.grid);
+                }
+
+                opts.before = '*';
+                grid = group.paper().group(opts);
+                grid.element().classed('grid', true);
+                grid.xaxis().tickFormat(notick).scale(group.xaxis().scale());
+                grid.yaxis().tickFormat(notick).scale(group.yaxis().scale());
+                grid.add(rectangle).options(opts.grid);
+                if (opts.xaxis.show) grid.drawXaxis();
+                if (opts.yaxis.show) grid.drawYaxis();
+                grid.render();
+            } else
+                grid.clear().render();
+            return group;
+        };
+
+        group.hideGrid = function () {
+            if (grid)
+                grid.remove();
+            return group;
+        };
+
+        // The redering function of the grid rectangle
+        var rectangle = function () {
+            var width = grid.innerWidth(),
+                height = grid.innerHeight();
+
+            if (grid.type() === 'svg') {
+                // svg
+                var rect = grid.element().select('.grid-rectangle');
+
+                if (!rect.node())
+                    rect = grid.element()
+                                .append("rect")
+                                .attr("class", "grid-rectangle");
+
+                rect.attr("width", width).attr("height", height);
+                this.setBackground(rect);
+            } else {
+                // canvas
+                var ctx = grid.context();
+                ctx.beginPath();
+                ctx.rect(0, 0, width, height);
+                this.setBackground(ctx);
+                ctx.fill();
+            }
+
+            grid.xaxis().tickSize(-height, 0);
+            grid.yaxis().tickSize(-width, 0);
+        };
+
+        function notick () {return '';}
+    }
+
     g.paper.plugin('grid', {
         defaults: {
             color: '#333',
-            colorOpacity: 0.2,
+            colorOpacity: 0.3,
             fill: '#c6dbef',
-            fillOpacity: 0.2
+            fillOpacity: 0.2,
+            lineWidth: 0.5
         },
-
-        svg: function (group, opts) {
-
-            function show (axis, xy) {
-                var grid = paper.classGroup('grid', {before: '*'});
-
-                if (show) {
-
-                    grid.add(function () {
-                        var opts = this.options(),
-                            gg = grid.element().select('.' + xy),
-                            rect = grid.element().select('.grid-rectangle');
-
-                        if (!rect.node()) {
-                            grid.element()
-                                    .append("rect")
-                                    .attr("class", "grid-rectangle")
-                                    .attr("width", grid.innerWidth())
-                                    .attr("height", grid.innerHeight());
-                        }
-                        paper.setBackground(rect, this);
-
-                        if (!gg.node())
-                            gg = grid.element().append('g').attr('class', xy);
-                        if (xy[0] === 'x')
-                            gridaxis.tickSize(this.group().innerHeight(), 0);
-                        else
-                            gridaxis.tickSize(-this.group().innerWidth(), 0).orient('left');
-                        gg.selectAll('*').remove();
-                        gg.call(gridaxis);
-                        gg.selectAll('line')
-                            .attr('stroke', this.color)
-                            .attr('stroke-opacity', this.colorOpacity)
-                            .attr('stroke-width', this.lineWidth);
-                        gg.selectAll('path').remove();
-                        return gg;
-                    }).options(opts.grid).name(xy);
-                }
-            }
-        },
-
-        canvas: function (group, opts) {
-
-        }
+        svg: gridplugin,
+        canvas: gridplugin
     });
-
-    function grid (group, opts, show) {
-        if (opts.xaxis.grid === undefined) opts.xaxis.grid = true;
-        if (opts.yaxis.grid === undefined) opts.yaxis.grid = true;
-
-        group.xaxis().tickFormat('');
-        group.yaxis().tickFormat('');
-
-        group.add(show(group.xaxis(), 'x-grid')).options(opts.xaxis);
-        group.add(show(group.yaxis(), 'y-grid')).options(opts.yaxis);
-    }
 
     //
     //  Add grid functionality to charts
@@ -4928,25 +5015,25 @@
 
         // Show grid
         chart.showGrid = function () {
-            chart.paper().each(function (group) {
-                group.showGrid();
+            chart.paper().each('.reference' + chart.uid(), function () {
+                this.showGrid();
             });
             return chart;
         };
 
         // Hide grid
         chart.hideGrid = function () {
-            chart.paper().each(function (group) {
-                group.hideGrid();
+            chart.paper().each('.reference' + chart.uid(), function () {
+                this.hideGrid();
             });
             return chart;
         };
 
         chart.on('tick.grid', function () {
-            //if (opts.grid.show)
-            //    chart.showGrid();
-            //else
-            //    chart.hideGrid();
+            if (opts.grid.show)
+                chart.showGrid();
+            else
+                chart.hideGrid();
         });
     });
 
@@ -5190,7 +5277,7 @@
     g.paper.plugin('tooltip', {
         defaults: {
             className: 'd3-tip',
-            show: true,
+            show: false,
             fill: '#333',
             fillOpacity: 0.8,
             color: '#fff',
@@ -5198,6 +5285,9 @@
             radius: '3px',
             template: function (d) {
                 return "<strong>" + d.x + ": </strong><span>" + d.y + "</span>";
+            },
+            font: {
+                size: '14px'
             }
         },
 
@@ -5222,7 +5312,7 @@
                 draw = active.draw();
                 return opts.tooltip.template({
                     x: draw.x()(active.data),
-                    y: draw.y()(active.data)
+                    y: draw.formatY(draw.y()(active.data))
                 });
             });
 
@@ -6000,7 +6090,7 @@
             context.font = fontString(opts);
             opts.size = size;
             //
-            ctx.strokeStyle = d.color;
+            ctx.strokeStyle = d3.canvas.rgba(d.color, d.colorOpacity);
             context.fillStyle = d.color;
             ctx.lineWidth = group.factor()*d.lineWidth;
             _draw(context);
@@ -6296,16 +6386,6 @@
             group.element().selectAll('*').remove();
         };
 
-        _.setBackground = function (o, background) {
-            if (isObject(background)) {
-                if (background.fillOpacity !== undefined)
-                    o.attr('fill-opacity', background.fillOpacity);
-                background = background.fill;
-            }
-            if (isString(background))
-                o.attr('fill', background);
-        };
-
         // Create a gradient element to use by scg elements
         _.gradient = function (id, color1, color2) {
             var svg = d3.select("body").append("svg"),
@@ -6472,9 +6552,14 @@
                 ax.attr("transform", "translate(" + x + "," + y + ")").call(axis);
                 ax.selectAll('line, path')
                      .attr('stroke', this.color)
+                     .attr('stroke-opacity', this.colorOpacity)
                      .attr('stroke-width', this.lineWidth)
                      .attr('fill', 'none');
-                return _font(ax.selectAll('text'), opts);
+                if (opts.size === 0)
+                    ax.selectAll('text').remove();
+                else
+                    _font(ax.selectAll('text'), opts);
+                return ax;
             });
         };
 

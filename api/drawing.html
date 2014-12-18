@@ -1,19 +1,19 @@
 <!DOCTYPE html>
 <html data-debug='false' lang='en' prefix='og: http://ogp.me/ns#'>
 <head>
-<title>GiottoJS - Chart API</title>
+<title>GiottoJS - drawing API</title>
 <meta charset='utf-8'>
 <meta content='IE=edge' http-equiv='X-UA-Compatible'>
 <meta content='width=device-width, initial-scale=1' name='viewport'>
 <meta content='GiottoJS is a javascript visualization library built on top of d3js. It is designed to visualize both SVG and Canvas elements with a simple API. AngularJS integration' name='description'>
 <meta content='website' property='og:type'>
-<meta content='http://giottojs.org/api/chart' property='og:url'>
-<meta content='GiottoJS - Chart API' property='og:title'>
+<meta content='http://giottojs.org/api/drawing' property='og:url'>
+<meta content='GiottoJS - drawing API' property='og:title'>
 <meta content='GiottoJS is a javascript visualization library built on top of d3js. It is designed to visualize both SVG and Canvas elements with a simple API. AngularJS integration' property='og:description'>
 <meta content='http://giottojs.org/media/giottoweb/giotto.png' property='og:image'>
 <meta content='summary_large_image' name='twitter:card'>
 <meta content='@quantmind' name='twitter:site'>
-<meta content='GiottoJS - Chart API' name='twitter:title'>
+<meta content='GiottoJS - drawing API' name='twitter:title'>
 <meta content='GiottoJS is a javascript visualization library built on top of d3js. It is designed to visualize both SVG and Canvas elements with a simple API. AngularJS integration' name='twitter:description'>
 <meta content='http://giottojs.org/media/giottoweb/giotto.png' name='twitter:image'>
 <link href='http://giottojs.org/media/giottoweb/favicon.ico' rel='icon' type='image/x-icon'>
@@ -22,7 +22,7 @@
 <link href='http://giottojs.org/media/giotto/giotto.min.css' rel='stylesheet' type='text/css'>
 <link href='http://giottojs.org/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var lux = {context: {"page": {"title": "GiottoJS - Chart API", "api_url": "http://giottojs.org/ng/site/api/chart.json", "name": "api_chart", "content_type": "text/html", "modified": "2014-12-17T15:48:06", "image": "http://giottojs.org/media/giottoweb/giotto.png", "slug": "api/chart", "html_url": "http://giottojs.org/api/chart"}, "apiUrls": {}, "ngModules": ["lux.google", "highlight"], "name": "Lux", "datetimeFormat": "d MMM y, h:mm:ss a", "url": "http://giottojs.org", "html5mode": true, "lux_version": "0.1.2-alpha.1", "google": {"analytics": {"id": "UA-54439804-4", "ga": "ga"}}, "oauths": null, "dateFormat": "d MMM y", "navbar": {"collapseWidth": 768}, "date": "2014-12-18T11-57-52", "media": "/media", "year": 2014, "brand": "Lux", "python_version": "3.4.2"}};
+var lux = {context: {"page": {"title": "GiottoJS - drawing API", "api_url": "http://giottojs.org/ng/site/api/drawing.json", "name": "api_drawing", "content_type": "text/html", "modified": "2014-12-18T08:21:01", "image": "http://giottojs.org/media/giottoweb/giotto.png", "slug": "api/drawing", "html_url": "http://giottojs.org/api/drawing"}, "apiUrls": {}, "ngModules": ["lux.google", "highlight"], "name": "Lux", "datetimeFormat": "d MMM y, h:mm:ss a", "url": "http://giottojs.org", "html5mode": true, "lux_version": "0.1.2-alpha.1", "google": {"analytics": {"id": "UA-54439804-4", "ga": "ga"}}, "oauths": null, "dateFormat": "d MMM y", "navbar": {"collapseWidth": 768}, "date": "2014-12-18T11-57-52", "media": "/media", "year": 2014, "brand": "Lux", "python_version": "3.4.2"}};
 </script>
 <script type='text/javascript'>
 lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
@@ -51,17 +51,28 @@ var require = {"baseUrl": "http://giottojs.org/media/", "waitSeconds": 200, "dep
 <div class="row">
 <div class="col-sm-12">
 <div class="page-header">
-<h2>GiottoJS - Chart API</h2>
+<h2>GiottoJS - drawing API</h2>
 </div>
 <div data-highlight>
-<p>Charts have the same base api as all <a href="http://giottojs.org/api/visualization">visualizations</a></p>
-<h3 id="chartaddseries"># chart.addSeries(series)</h3>
-<p>Add additional data series to the chart. The chart is not rendered, call
-<a href="http://giottojs.org/api/visualization">render</a> to draw the series.</p>
-<p>Redraw the chart</p>
-<h3 id="chartdraw"># chart.draw()</h3>
-<p>Redraw the chart</p>
-<h2 id="options">Options</h2>
+<p>A drawing is created in a <a href="/api/group">group</a> object.</p>
+<h3 id="drawingxx"># drawing.x([x])</h3>
+<p>If x is specified, sets the x-accessor to the specified function or constant.
+If x is not specified, returns the current x-accessor. This accessor is invoked
+for each element in the data array passed to the drawing generator.
+The default accessor assumes that each input element is a two-element array of numbers:</p>
+<pre><code>function (d) {
+    return d[0];
+}
+</code></pre>
+<h3 id="drawingyy"># drawing.y([y])</h3>
+<p>If y is specified, sets the y-accessor to the specified function or constant.
+If y is not specified, returns the current y-accessor. This accessor is invoked
+for each element in the data array passed to the drawing generator.
+The default accessor assumes that each input element is a two-element array of numbers:</p>
+<pre><code>function y(d) {
+    return d[1];
+}
+</code></pre>
 </div>
 </div>
 </div>
