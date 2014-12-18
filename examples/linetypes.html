@@ -5,22 +5,24 @@
 <meta charset='utf-8'>
 <meta content='IE=edge' http-equiv='X-UA-Compatible'>
 <meta content='width=device-width, initial-scale=1' name='viewport'>
-<meta content='A run-through of all the options available when plotting lines and points on a chart.' name='description'>
+<meta content='A run-through of all the options available when plotting lines and points on a chart. It shows how to use d3js line and symbol for both SVG and CANVAS.' name='description'>
 <meta content='website' property='og:type'>
 <meta content='http://giottojs.org/examples/linetypes' property='og:url'>
 <meta content='Lines and Symbols' property='og:title'>
-<meta content='A run-through of all the options available when plotting lines and points on a chart.' property='og:description'>
+<meta content='A run-through of all the options available when plotting lines and points on a chart. It shows how to use d3js line and symbol for both SVG and CANVAS.' property='og:description'>
+<meta content='http://giottojs.org/examples/linetypes.png' property='og:image'>
 <meta content='summary_large_image' name='twitter:card'>
 <meta content='@quantmind' name='twitter:site'>
 <meta content='Lines and Symbols' name='twitter:title'>
-<meta content='A run-through of all the options available when plotting lines and points on a chart.' name='twitter:description'>
+<meta content='A run-through of all the options available when plotting lines and points on a chart. It shows how to use d3js line and symbol for both SVG and CANVAS.' name='twitter:description'>
+<meta content='http://giottojs.org/examples/linetypes.png' name='twitter:image'>
 <link href='http://giottojs.org/media/giottoweb/favicon.ico' rel='icon' type='image/x-icon'>
 <link href='//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css' rel='stylesheet' type='text/css'>
 <link href='//netdna.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css' rel='stylesheet' type='text/css'>
 <link href='http://giottojs.org/media/giotto/giotto.min.css' rel='stylesheet' type='text/css'>
 <link href='http://giottojs.org/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var lux = {context: {"date": "2014-12-18T12-04-31", "apiUrls": {}, "media": "/media", "oauths": null, "ngModules": ["lux.blog", "highlight", "lux.google"], "dateFormat": "d MMM y", "name": "Lux", "page": {"modified": "2014-12-18T12:04:19", "title": "Lines and Symbols", "name": "linetypes", "content_type": "text/html", "html_url": "http://giottojs.org/examples/linetypes", "api_url": "http://giottojs.org/ng/examples/linetypes.json", "slug": "linetypes", "description": "A run-through of all the options available when plotting lines and points on a chart."}, "url": "http://giottojs.org", "datetimeFormat": "d MMM y, h:mm:ss a", "navbar": {"collapseWidth": 768}, "lux_version": "0.1.2-alpha.1", "html5mode": true, "python_version": "3.4.2", "brand": "Lux", "year": 2014, "google": {"analytics": {"ga": "ga", "id": "UA-54439804-4"}}}};
+var lux = {context: {"page": {"image": "http://giottojs.org/examples/linetypes.png", "modified": "2014-12-18T12:05:10", "slug": "linetypes", "html_url": "http://giottojs.org/examples/linetypes", "content_type": "text/html", "description": "A run-through of all the options available when plotting lines and points on a chart. It shows how to use d3js line and symbol for both SVG and CANVAS.", "title": "Lines and Symbols", "date": "2014-12-14T00:00:00", "api_url": "http://giottojs.org/ng/examples/linetypes.json", "name": "linetypes"}, "google": {"analytics": {"ga": "ga", "id": "UA-54439804-4"}}, "navbar": {"collapseWidth": 768}, "year": 2014, "datetimeFormat": "d MMM y, h:mm:ss a", "lux_version": "0.1.2-alpha.1", "html5mode": true, "brand": "Lux", "python_version": "3.4.2", "ngModules": ["lux.google", "highlight", "lux.blog"], "url": "http://giottojs.org", "media": "/media", "dateFormat": "d MMM y", "oauths": null, "date": "2014-12-18T12-05-15", "name": "Lux", "apiUrls": {}}};
 </script>
 <script type='text/javascript'>
 lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
@@ -28,7 +30,7 @@ lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback
 var gexamples = {};
 </script>
 <script type="text/javascript">
-var require = {"baseUrl": "http://giottojs.org/media/", "minify": true, "paths": {}, "deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"], "waitSeconds": 200};
+var require = {"minify": true, "waitSeconds": 200, "paths": {}, "baseUrl": "http://giottojs.org/media/", "deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"]};
 </script>
 <script src='http://quantmind.github.io/require-config-js/require.config.min.js' type='application/javascript'></script>
 <script src='//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js' type='application/javascript'></script>
@@ -51,16 +53,13 @@ var require = {"baseUrl": "http://giottojs.org/media/", "minify": true, "paths":
 <div class="page-header">
 <h2>Lines and Symbols</h2>
 </div>
-<p>It shows how to use d3js line and symbol for both SVG and CANVAS.
-image: http://giottojs.org/examples/linetypes.png
-date: 14 december 2014</p>
 <div class="container-fluid">
   <div class="row">
     <div class="col-sm-10">
       <div data-options='gexamples.linetypes' style='max-width: 700px' class="center-block" giotto-chart></div>
     </div>
     <div class="col-sm-2 small">
-      <lux-form data-options='luxforms.linetypeform_q7pRg'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.linetypeform_q7pRg = {"field": {"id": "linetypeform_q7pRg", "type": "form", "showLabels": false, "model": "LineTypeForm"}, "children": [{"field": {"type": "fieldset"}, "children": [{"field": {"required": true, "options": ["svg", "canvas"], "type": "select", "name": "type", "value": "svg"}}, {"field": {"required": true, "options": ["linear", "linear-closed", "step", "step-before", "step-after", "basis", "basis-open", "basis-closed", "bundle", "cardinal", "cardinal-open", "cardinal-closed", "monotone"], "type": "select", "name": "interpolate", "value": "linear"}}, {"field": {"required": true, "options": ["circle", "cross", "diamond", "square", "triangle-down", "triangle-up"], "type": "select", "name": "symbol", "value": "circle"}}]}]};</script></lux-form>
+      <lux-form data-options='luxforms.linetypeform_itsvz'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.linetypeform_itsvz = {"field": {"type": "form", "model": "LineTypeForm", "showLabels": false, "id": "linetypeform_itsvz"}, "children": [{"field": {"type": "fieldset"}, "children": [{"field": {"value": "svg", "type": "select", "options": ["svg", "canvas"], "required": true, "name": "type"}}, {"field": {"value": "linear", "type": "select", "options": ["linear", "linear-closed", "step", "step-before", "step-after", "basis", "basis-open", "basis-closed", "bundle", "cardinal", "cardinal-open", "cardinal-closed", "monotone"], "required": true, "name": "interpolate"}}, {"field": {"value": "circle", "type": "select", "options": ["circle", "cross", "diamond", "square", "triangle-down", "triangle-up"], "required": true, "name": "symbol"}}]}]};</script></lux-form>
     </div>
   </div>
 </div>
