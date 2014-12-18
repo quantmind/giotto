@@ -1,7 +1,8 @@
 title: Lines and Symbols
-description: A ranthrough of all the options available when plotting lines and points on a chart. Both SVG and Canavs supported.
+description: A run-through of all the options available when plotting lines and points on a chart. It shows how to use d3js line and symbol for both SVG and CANVAS.
 image: $site_url/examples/linetypes.png
 date: 14 december 2014
+author: Luca Sbardella
 
 <div class="container-fluid">
   <div class="row">
@@ -13,3 +14,6 @@ date: 14 december 2014
     </div>
   </div>
 </div>
+
+A run-through of all the options available when plotting lines and points on a chart.
+It shows how to use [d3][] ``line`` and ``symbol`` for both SVG and CANVAS.

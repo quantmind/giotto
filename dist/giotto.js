@@ -2845,11 +2845,13 @@
         };
 
         group.xfromPX = function (px) {
-            return xaxis.scale().invert(factor*px);
+            var s = xaxis.scale().invert;
+            return s(factor*px) - s(0);
         };
 
         group.yfromPX = function (px) {
-            return yaxis.scale().invert(factor*px);
+            var s = yaxis.scale().invert;
+            return s(factor*px) - s(0);
         };
 
         // dimension in the input domain from a 0 <= x <= 1
@@ -2914,11 +2916,14 @@
         },
 
         bar_costructor = function (rawdata) {
-            var width = barWidth(paper, rawdata, this.options()),
-                data = [];
+            var group = this.group(),
+                opts = this.options(),
+                data = [],
+                width = opts.width === 'auto' ?
+                    d3.round(0.8*(group.innerWidth() / rawdata.length)) : opts.width;
 
             for (var i=0; i<rawdata.length; i++)
-                data.push(_.bar(this, rawdata[i], size));
+                data.push(_.bar(this, rawdata[i], width));
 
             return data;
         },
@@ -3648,7 +3653,7 @@
         function addSeries (series) {
             // Loop through series and add them to the chart series collection
             // No drawing nor rendering involved
-            var data = [], ranges, range;
+            var data = [], ranges, p;
 
             series.forEach(function (serie) {
 
@@ -3680,21 +3685,27 @@
                         if (serie.yaxis === 2) serie.yaxis = opts.yaxis2;
                         if (!isObject(serie.yaxis)) serie.yaxis = opts.yaxis;
 
-                        range = ranges[serie.xaxis.position];
-                        if (!range) {
-                            ranges[serie.xaxis.position] = range = [serie.xrange[0], serie.xrange[1]];
+                        p = ranges[serie.xaxis.position];
+                        if (!p) {
+                            ranges[serie.xaxis.position] = p = {
+                                range: [serie.xrange[0], serie.xrange[1]],
+                                serie: serie
+                            };
                             serie.drawXaxis = true;
                         } else {
-                            range[0] = Math.min(range[0], serie.xrange[0]);
-                            range[1] = Math.max(range[1], serie.xrange[1]);
+                            p.range[0] = Math.min(p.range[0], serie.xrange[0]);
+                            p.range[1] = Math.max(p.range[1], serie.xrange[1]);
                         }
-                        range = ranges[serie.yaxis.position];
-                        if (!range) {
-                            ranges[serie.yaxis.position] = range = [serie.yrange[0], serie.yrange[1]];
+                        p = ranges[serie.yaxis.position];
+                        if (!p) {
+                            ranges[serie.yaxis.position] = p = {
+                                range: [serie.yrange[0], serie.yrange[1]],
+                                serie: serie
+                            };
                             serie.drawYaxis = true;
                         } else {
-                            range[0] = Math.min(range[0], serie.yrange[0]);
-                            range[1] = Math.max(range[1], serie.yrange[1]);
+                            p.range[0] = Math.min(p.range[0], serie.yrange[0]);
+                            p.range[1] = Math.max(p.range[1], serie.yrange[1]);
                         }
                     }
                     data.push(serie);
@@ -3726,13 +3737,32 @@
             group.element().classed('chart' + chart.uid(), true)
                            .classed('reference' + chart.uid(), serie.reference);
 
+            // Draw X axis or set the scale of the reference X-axis
+            if (serie.drawXaxis)
+                domain(group.xaxis()).drawXaxis();
+            else
+                scale(group.xaxis());
+
+            // Draw Y axis or set the scale of the reference Y-axis
+            if (serie.drawYaxis)
+                domain(group.yaxis()).drawYaxis();
+            else
+                scale(group.yaxis());
+
+            opts.chartTypes.forEach(function (type) {
+                stype = serie[type];
+                if (stype)
+                    serie[type] = chartTypes[type](group, serie.data, stype);
+            });
+
             function domain(axis) {
-                var range = allranges[serie.group][axis.orient()],
+                var p = allranges[serie.group][axis.orient()],
                     o = axis.options(),
                     scale = axis.scale();
 
+                p.scale = scale;
                 if (o.auto) {
-                    scale.domain([range[0], range[1]]).nice();
+                    scale.domain([p.range[0], p.range[1]]).nice();
                     if (!isNull(o.min))
                         scale.domain([o.min, scale.domain()[1]]);
                     else if (!isNull(o.max))
@@ -3743,17 +3773,11 @@
                 return group;
             }
 
-            if (serie.drawXaxis)
-                domain(group.xaxis()).drawXaxis();
+            function scale (axis) {
+                var p = allranges[serie.group][axis.orient()];
+                axis.scale(p.scale);
+            }
 
-            if (serie.drawYaxis)
-                domain(group.yaxis()).drawYaxis();
-
-            opts.chartTypes.forEach(function (type) {
-                stype = serie[type];
-                if (stype)
-                    serie[type] = chartTypes[type](group, serie.data, stype);
-            });
         }
 
     });
@@ -6037,6 +6061,7 @@
         _.axis = canvasAxis;
         _.path = canvasPath;
         _.pieslice = canvasSlice;
+        _.bar = canvasBar;
 
         _.points = function (group) {
             return drawing(group, function () {
@@ -6207,25 +6232,20 @@
         }
     }
 
-    function canvasBar (draw, opts, d) {
-        var scalex = paper.scalex,
-            scaley = paper.scaley,
-            factor = paper.factor(),
-            radius = factor*opts.radius,
+    function canvasBar (draw, data, siz) {
+        var d = point(draw, data, siz),
+            scalex = draw.scalex(),
+            scaley = draw.scaley(),
+            size = draw.size(),
+            factor = draw.factor(),
+            group = draw.group(),
             ctx = draw.group().context(),
-            x, y, y0, y1, w, yb;
-
-        d = paperData(paper, opts, {data: d});
-
-        d.context = function (context) {
-            ctx = context;
-            return d;
-        };
+            x, y, y0, y1, w, yb, radius;
 
         d.render = function (context) {
             context = context || ctx;
-            context.fillStyle = rgba(d.fill, d.fillOpacity);
-            context.strokeStyle = rgba(d.color, d.colorOpacity);
+            context.fillStyle = d3.canvas.rgba(d.fill, d.fillOpacity);
+            context.strokeStyle = d3.canvas.rgba(d.color, d.colorOpacity);
             context.lineWidth = factor*d.lineWidth;
             _draw(context);
             context.fill();
@@ -6238,15 +6258,16 @@
             return ctx.isPointInPath(ex, ey);
         };
 
-        return d.reset();
+        return d;
 
         function _draw (context) {
+            radius = factor*draw.options().radius;
             context.beginPath();
-            w = 0.5*d.size();
-            x = scalex(d.data.x);
-            y = scaley(d.data.y);
-            y0 = scaley(0);
-            d3.canvas.drawPolygon(context, [[x-w,y0], [x+w,y0], [x+w,y], [x-w, y]], radius);
+            w = 0.5*size(d);
+            x = scalex(d.data);
+            y = scaley(d.data);
+            y0 = group.scaley(0);
+            d3.canvas.drawPolygon(context, [[x-w, y0], [x+w, y0], [x+w, y], [x-w, y]], radius);
             context.closePath();
         }
     }
@@ -6316,12 +6337,6 @@
             a.color = d3.rgb(opts.color).brighter().toString();
     }
 
-    function barWidth (paper, data, opts) {
-        if (opts.width === 'auto')
-            return d3.round(0.8*(paper.innerWidth() / data.length));
-        else
-            return opts.width;
-    }
 
     function _newPaperAttr (element, p) {
         var width, height;
@@ -6415,7 +6430,13 @@
             return p;
         };
 
-        _.bar = point;
+        _.bar = function (draw, data, size) {
+            var p = point(draw, data, size);
+            p.render = function (element) {
+                _draw(element);
+            };
+            return p;
+        };
 
         _.pieslice = function (draw, data) {
             var p = pieSlice(draw, data);
@@ -6484,33 +6505,43 @@
         // Draw a barchart
         _.barchart = function (group) {
 
-            return drawing(group, function () {
-                var zero = scaley(0),
-                    chart = container.select('g.barchart'),
-                    bar;
+            return function () {
+                var chart = group.element().select("#" + this.uid()),
+                    opts = this.options(),
+                    scalex = this.scalex(),
+                    scaley = this.scaley(),
+                    size = this.size(),
+                    zero = group.scaley(0),
+                    bar, y;
 
                 if (!chart.node())
-                    chart = container.append("g")
-                                .attr('class', 'barchart');
+                    chart = group.element().append("g")
+                                .attr('id', this.uid());
 
-                bar = draw(chart
+                chart.selectAll('*').remove();
+
+                bar = _draw(chart
                         .selectAll(".bar")
-                        .data(data)
+                        .data(this.data())
                         .enter().append("rect")
                         .attr('class', 'bar')
                         .attr("x", function(d) {
-                            return scalex(d.values.x) - 0.5*d.size();
+                            return scalex(d.data) - 0.5*size(d);
                         })
-                        .attr("y", function(d) {return d.values.y < 0 ? zero : scaley(d.values.y); })
+                        .attr("y", function(d) {
+                            return Math.min(zero, scaley(d.data));
+                        })
                         .attr("height", function(d) {
-                            return d.values.y < 0 ? scaley(d.values.y) - zero : zero - scaley(d.values.y);
-                        }));
+                            return abs(scaley(d.data) - zero);
+                        })
+                        .attr("width", size));
 
                 if (opts.radius > 0)
                     bar.attr('rx', opts.radius).attr('ry', opts.radius);
 
                 _events(bar);
-            });
+                return chart;
+            };
         };
 
         // Pie chart drawing on an svg group

@@ -2,6 +2,7 @@ title: GiottoJS Logo
 description: GiottoJS logo created using nested pie charts. It uses the latest d3js pie layout features such as pad angles and curved corners. Both SVG and Canvas supported.
 image: $site_url/examples/giottologo.png
 date: 17 december 2014
+author: Luca Sbardella
 
 
 <div class="container">

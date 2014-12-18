@@ -44,7 +44,13 @@
             return p;
         };
 
-        _.bar = point;
+        _.bar = function (draw, data, size) {
+            var p = point(draw, data, size);
+            p.render = function (element) {
+                _draw(element);
+            };
+            return p;
+        };
 
         _.pieslice = function (draw, data) {
             var p = pieSlice(draw, data);
@@ -113,33 +119,43 @@
         // Draw a barchart
         _.barchart = function (group) {
 
-            return drawing(group, function () {
-                var zero = scaley(0),
-                    chart = container.select('g.barchart'),
-                    bar;
+            return function () {
+                var chart = group.element().select("#" + this.uid()),
+                    opts = this.options(),
+                    scalex = this.scalex(),
+                    scaley = this.scaley(),
+                    size = this.size(),
+                    zero = group.scaley(0),
+                    bar, y;
 
                 if (!chart.node())
-                    chart = container.append("g")
-                                .attr('class', 'barchart');
+                    chart = group.element().append("g")
+                                .attr('id', this.uid());
 
-                bar = draw(chart
+                chart.selectAll('*').remove();
+
+                bar = _draw(chart
                         .selectAll(".bar")
-                        .data(data)
+                        .data(this.data())
                         .enter().append("rect")
                         .attr('class', 'bar')
                         .attr("x", function(d) {
-                            return scalex(d.values.x) - 0.5*d.size();
+                            return scalex(d.data) - 0.5*size(d);
                         })
-                        .attr("y", function(d) {return d.values.y < 0 ? zero : scaley(d.values.y); })
+                        .attr("y", function(d) {
+                            return Math.min(zero, scaley(d.data));
+                        })
                         .attr("height", function(d) {
-                            return d.values.y < 0 ? scaley(d.values.y) - zero : zero - scaley(d.values.y);
-                        }));
+                            return abs(scaley(d.data) - zero);
+                        })
+                        .attr("width", size));
 
                 if (opts.radius > 0)
                     bar.attr('rx', opts.radius).attr('ry', opts.radius);
 
                 _events(bar);
-            });
+                return chart;
+            };
         };
 
         // Pie chart drawing on an svg group

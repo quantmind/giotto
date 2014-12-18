@@ -212,11 +212,13 @@
         };
 
         group.xfromPX = function (px) {
-            return xaxis.scale().invert(factor*px);
+            var s = xaxis.scale().invert;
+            return s(factor*px) - s(0);
         };
 
         group.yfromPX = function (px) {
-            return yaxis.scale().invert(factor*px);
+            var s = yaxis.scale().invert;
+            return s(factor*px) - s(0);
         };
 
         // dimension in the input domain from a 0 <= x <= 1
@@ -281,11 +283,14 @@
         },
 
         bar_costructor = function (rawdata) {
-            var width = barWidth(paper, rawdata, this.options()),
-                data = [];
+            var group = this.group(),
+                opts = this.options(),
+                data = [],
+                width = opts.width === 'auto' ?
+                    d3.round(0.8*(group.innerWidth() / rawdata.length)) : opts.width;
 
             for (var i=0; i<rawdata.length; i++)
-                data.push(_.bar(this, rawdata[i], size));
+                data.push(_.bar(this, rawdata[i], width));
 
             return data;
         },

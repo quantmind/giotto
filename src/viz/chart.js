@@ -141,7 +141,7 @@
         function addSeries (series) {
             // Loop through series and add them to the chart series collection
             // No drawing nor rendering involved
-            var data = [], ranges, range;
+            var data = [], ranges, p;
 
             series.forEach(function (serie) {
 
@@ -173,21 +173,27 @@
                         if (serie.yaxis === 2) serie.yaxis = opts.yaxis2;
                         if (!isObject(serie.yaxis)) serie.yaxis = opts.yaxis;
 
-                        range = ranges[serie.xaxis.position];
-                        if (!range) {
-                            ranges[serie.xaxis.position] = range = [serie.xrange[0], serie.xrange[1]];
+                        p = ranges[serie.xaxis.position];
+                        if (!p) {
+                            ranges[serie.xaxis.position] = p = {
+                                range: [serie.xrange[0], serie.xrange[1]],
+                                serie: serie
+                            };
                             serie.drawXaxis = true;
                         } else {
-                            range[0] = Math.min(range[0], serie.xrange[0]);
-                            range[1] = Math.max(range[1], serie.xrange[1]);
+                            p.range[0] = Math.min(p.range[0], serie.xrange[0]);
+                            p.range[1] = Math.max(p.range[1], serie.xrange[1]);
                         }
-                        range = ranges[serie.yaxis.position];
-                        if (!range) {
-                            ranges[serie.yaxis.position] = range = [serie.yrange[0], serie.yrange[1]];
+                        p = ranges[serie.yaxis.position];
+                        if (!p) {
+                            ranges[serie.yaxis.position] = p = {
+                                range: [serie.yrange[0], serie.yrange[1]],
+                                serie: serie
+                            };
                             serie.drawYaxis = true;
                         } else {
-                            range[0] = Math.min(range[0], serie.yrange[0]);
-                            range[1] = Math.max(range[1], serie.yrange[1]);
+                            p.range[0] = Math.min(p.range[0], serie.yrange[0]);
+                            p.range[1] = Math.max(p.range[1], serie.yrange[1]);
                         }
                     }
                     data.push(serie);
@@ -219,13 +225,32 @@
             group.element().classed('chart' + chart.uid(), true)
                            .classed('reference' + chart.uid(), serie.reference);
 
+            // Draw X axis or set the scale of the reference X-axis
+            if (serie.drawXaxis)
+                domain(group.xaxis()).drawXaxis();
+            else
+                scale(group.xaxis());
+
+            // Draw Y axis or set the scale of the reference Y-axis
+            if (serie.drawYaxis)
+                domain(group.yaxis()).drawYaxis();
+            else
+                scale(group.yaxis());
+
+            opts.chartTypes.forEach(function (type) {
+                stype = serie[type];
+                if (stype)
+                    serie[type] = chartTypes[type](group, serie.data, stype);
+            });
+
             function domain(axis) {
-                var range = allranges[serie.group][axis.orient()],
+                var p = allranges[serie.group][axis.orient()],
                     o = axis.options(),
                     scale = axis.scale();
 
+                p.scale = scale;
                 if (o.auto) {
-                    scale.domain([range[0], range[1]]).nice();
+                    scale.domain([p.range[0], p.range[1]]).nice();
                     if (!isNull(o.min))
                         scale.domain([o.min, scale.domain()[1]]);
                     else if (!isNull(o.max))
@@ -236,17 +261,11 @@
                 return group;
             }
 
-            if (serie.drawXaxis)
-                domain(group.xaxis()).drawXaxis();
+            function scale (axis) {
+                var p = allranges[serie.group][axis.orient()];
+                axis.scale(p.scale);
+            }
 
-            if (serie.drawYaxis)
-                domain(group.yaxis()).drawYaxis();
-
-            opts.chartTypes.forEach(function (type) {
-                stype = serie[type];
-                if (stype)
-                    serie[type] = chartTypes[type](group, serie.data, stype);
-            });
         }
 
     });

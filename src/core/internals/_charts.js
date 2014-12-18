@@ -25,10 +25,3 @@
         else if (a.color === 'brighter')
             a.color = d3.rgb(opts.color).brighter().toString();
     }
-
-    function barWidth (paper, data, opts) {
-        if (opts.width === 'auto')
-            return d3.round(0.8*(paper.innerWidth() / data.length));
-        else
-            return opts.width;
-    }

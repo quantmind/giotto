@@ -3,6 +3,7 @@ description: Use the Trianglify Javascript library to create background images w
 template: partials/fullpage.html
 image: $site_url/examples/trianglify.svg
 date: 4 december 2014
+author: Luca Sbardella
 
 <div class="fullpage" data-options="gexamples.trianglify" data-giotto-trianglify>
 <div class="trianglify-box center-block">

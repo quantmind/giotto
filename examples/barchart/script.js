@@ -2,6 +2,10 @@
     gexamples.barchart = {
         height: '80%',
 
+        tooltip: {
+            show: true,
+        },
+
         line: {show: true},
 
         bar: {show: true},

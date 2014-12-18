@@ -27,6 +27,7 @@
         _.axis = canvasAxis;
         _.path = canvasPath;
         _.pieslice = canvasSlice;
+        _.bar = canvasBar;
 
         _.points = function (group) {
             return drawing(group, function () {
@@ -197,25 +198,20 @@
         }
     }
 
-    function canvasBar (draw, opts, d) {
-        var scalex = paper.scalex,
-            scaley = paper.scaley,
-            factor = paper.factor(),
-            radius = factor*opts.radius,
+    function canvasBar (draw, data, siz) {
+        var d = point(draw, data, siz),
+            scalex = draw.scalex(),
+            scaley = draw.scaley(),
+            size = draw.size(),
+            factor = draw.factor(),
+            group = draw.group(),
             ctx = draw.group().context(),
-            x, y, y0, y1, w, yb;
-
-        d = paperData(paper, opts, {data: d});
-
-        d.context = function (context) {
-            ctx = context;
-            return d;
-        };
+            x, y, y0, y1, w, yb, radius;
 
         d.render = function (context) {
             context = context || ctx;
-            context.fillStyle = rgba(d.fill, d.fillOpacity);
-            context.strokeStyle = rgba(d.color, d.colorOpacity);
+            context.fillStyle = d3.canvas.rgba(d.fill, d.fillOpacity);
+            context.strokeStyle = d3.canvas.rgba(d.color, d.colorOpacity);
             context.lineWidth = factor*d.lineWidth;
             _draw(context);
             context.fill();
@@ -228,15 +224,16 @@
             return ctx.isPointInPath(ex, ey);
         };
 
-        return d.reset();
+        return d;
 
         function _draw (context) {
+            radius = factor*draw.options().radius;
             context.beginPath();
-            w = 0.5*d.size();
-            x = scalex(d.data.x);
-            y = scaley(d.data.y);
-            y0 = scaley(0);
-            d3.canvas.drawPolygon(context, [[x-w,y0], [x+w,y0], [x+w,y], [x-w, y]], radius);
+            w = 0.5*size(d);
+            x = scalex(d.data);
+            y = scaley(d.data);
+            y0 = group.scaley(0);
+            d3.canvas.drawPolygon(context, [[x-w, y0], [x+w, y0], [x+w, y], [x-w, y]], radius);
             context.closePath();
         }
     }

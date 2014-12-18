@@ -1,6 +1,8 @@
 title: 2011 World Wine Production
 description: Illustrate several options when visualizing data with a pie chart using GiottoJS. Both canvas and svg are supported.
 image: $site_url/examples/wineproduction.png
+date: 14 December 2014
+author: Luca Sbardella
 
 
 <div class="container-fluid">
