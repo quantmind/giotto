@@ -31,12 +31,7 @@
             fillOpacity: 1,
             colorOpacity: 1,
             lineWidth: 2,
-            formatY: ',g3',
-            active: {
-                color: 'darker',
-                // Multiplier for lineWidth, set to 1 for no change
-                lineWidth: 1
-            }
+            formatY: ',g3'
         },
         point: {
             symbol: 'circle',

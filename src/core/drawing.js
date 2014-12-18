@@ -212,6 +212,8 @@
             return d;
         };
 
+        d.inRange = noop;
+
         return d;
     }
     //

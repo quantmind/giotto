@@ -136,10 +136,10 @@
             return d;
         };
 
-        d.inRange = function (ex, ey) {
-            _draw(ctx);
-            return ctx.isPointInPath(ex, ey);
-        };
+        //d.inRange = function (ex, ey) {
+        //    _draw(ctx);
+        //    return ctx.isPointInPath(ex, ey);
+        //};
 
         return d;
 

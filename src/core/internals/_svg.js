@@ -193,7 +193,7 @@
                     y = opts.position === 'top' ? 0 : this.group().innerHeight();
                 else
                     x = opts.position === 'left' ? 0 : this.group().innerWidth();
-                ax.selectAll('*').remove();
+                //ax.selectAll('*').remove();
                 ax.attr("transform", "translate(" + x + "," + y + ")").call(axis);
                 ax.selectAll('line, path')
                      .attr('stroke', this.color)

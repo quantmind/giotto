@@ -2,16 +2,14 @@
     gexamples.zooming1 = {
 
         height: '70%',
-
+        tooltip: {show: true},
         grid: {
             show: true,
-            backgroundColor: '#aec7e8'
+            zoomx: true
         },
 
-        zoom: {
-            x: true,
-            y: false
-        },
+        point: {show: true},
+        line: {show: true},
 
         data: function (chart) {
             var X = d3.range(-5, 5, 0.1);
@@ -28,13 +26,9 @@
         // Callback for angular directive
         angular: function (chart, opts) {
 
-            opts.scope.$on('formFieldChange', function (e, model) {
-                var value = model.form[model.field];
-
-                if (model.field === 'type') {
-                    // rebuild paper
-                    opts.type = value;
-                    chart.paper(true);
+            opts.scope.$on('formFieldChange', function (e, form, field) {
+                if (field === 'type') {
+                    opts.type = form[field];
                     chart.resume();
                 }
             });
