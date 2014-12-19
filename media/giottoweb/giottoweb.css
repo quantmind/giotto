@@ -1,8 +1,8 @@
 @charset "UTF-8";
 /*
 ------------------------------------------------------------------
-Created by lux in 0.22 seconds
-Date: 2014-12-18 18:23:14
+Created by lux in 0.09 seconds
+Date: 2014-12-19 10:47:26
 
 http://quantmind.github.io/lux/
 ------------------------------------------------------------------ */
@@ -12,11 +12,11 @@ http://quantmind.github.io/lux/
 }
 
 .lazyContainer > .content {
+    left: 0;
     width: 100%;
-    top: 0;
     min-height: 100%;
     position: absolute;
-    left: 0;
+    top: 0;
 }
 
 .push-bottom {
@@ -25,14 +25,14 @@ http://quantmind.github.io/lux/
 
 .hljs-comment,.hljs-title{color:#8e908c}.hljs-variable,.hljs-attribute,.hljs-tag,.hljs-regexp,.ruby .hljs-constant,.xml .hljs-tag .hljs-title,.xml .hljs-pi,.xml .hljs-doctype,.html .hljs-doctype,.css .hljs-id,.css .hljs-class,.css .hljs-pseudo{color:#c82829}.hljs-number,.hljs-preprocessor,.hljs-pragma,.hljs-built_in,.hljs-literal,.hljs-params,.hljs-constant{color:#f5871f}.ruby .hljs-class .hljs-title,.css .hljs-rules .hljs-attribute{color:#eab700}.hljs-string,.hljs-value,.hljs-inheritance,.hljs-header,.ruby .hljs-symbol,.xml .hljs-cdata{color:#718c00}.css .hljs-hexcolor{color:#3e999f}.hljs-function,.python .hljs-decorator,.python .hljs-title,.ruby .hljs-function .hljs-title,.ruby .hljs-title .hljs-keyword,.perl .hljs-sub,.javascript .hljs-title,.coffeescript .hljs-title{color:#4271ae}.hljs-keyword,.javascript .hljs-function{color:#8959a8}.hljs{display:block;overflow-x:auto;background:white;color:#4d4d4c;padding:0.5em;-webkit-text-size-adjust:none}.coffeescript .javascript,.javascript .xml,.tex .hljs-formula,.xml .javascript,.xml .vbscript,.xml .css,.xml .hljs-cdata{opacity:0.5}
 body {
+    line-height: 1.5;
+    font-style: normal;
+    font-size: 18px;
+    background: #fff;
     font-family: "freight-text-pro",Georgia,Cambria,"Times New Roman",Times,serif;
     color: rgba(0, 0, 0, 0.8);
-    background: #fff;
-    font-size: 18px;
-    font-style: normal;
-    line-height: 1.5;
-    min-height: 100%;
     height: 100%;
+    min-height: 100%;
 }
 
 p.form-error {
@@ -57,21 +57,21 @@ p.form-error {
 }
 
 .katex-outer {
-    margin-left: auto;
-    margin-bottom: 10px;
     display: block;
     margin-right: auto;
-    margin-left: auto;
     margin-bottom: 10px;
+    margin-left: auto;
     display: block;
     margin-right: auto;
+    margin-bottom: 10px;
+    margin-left: auto;
 }
 
 code.hljs.inline {
-    padding: 2px 4px;
     display: inline;
     padding: 2px 4px;
     display: inline;
+    padding: 2px 4px;
 }
 
 dl dd {
@@ -135,8 +135,8 @@ dl.function dt {
 }
 
 .navbar2-page {
-    padding: 70px 15px 0;
     background: #fff;
+    padding: 70px 15px 0;
 }
 
 @media all and (min-width:768px) {
@@ -153,8 +153,8 @@ dl.function dt {
     .sidebar {
         z-index: 1;
         width: 200px;
-        position: absolute;
         margin-top: 51px;
+        position: absolute;
     }
 
 }
@@ -171,8 +171,8 @@ dl.function dt {
 }
 
 .media-list > .media > a {
-    color: #808080;
     text-decoration: none;
+    color: #808080;
 }
 
 .media-list > .media > a .post-body {
@@ -180,20 +180,20 @@ dl.function dt {
 }
 
 .media-list > .media > a h3 {
-    color: #333;
     font-weight: normal;
+    color: #333;
 }
 
 .post-image {
-    max-height: 140px;
     width: 140px;
-    float: left;
     height: auto;
+    max-height: 140px;
+    float: left;
 }
 
 .post-image-xs {
-    max-height: 150px;
     width: auto;
+    max-height: 150px;
     max-width: 90%;
 }
 
@@ -208,9 +208,9 @@ dt:hover > a.headerlink {
 }
 
 a.headerlink {
-    padding: 0 4px;
-    color: #eee;
     text-decoration: none;
+    color: #eee;
+    padding: 0 4px;
     visibility: hidden;
 }
 
@@ -242,17 +242,17 @@ table.docutils.field-list th {
 
 .page-header.index-header {
     width: 100%;
-    color: #fff;
-    background: #333;
-    margin: 0;
-    min-height: 100%;
     height: 100%;
+    min-height: 100%;
+    background: #333;
+    color: #fff;
+    margin: 0;
 }
 
 html,
 .fullpage {
-    min-height: 100%;
     height: 100%;
+    min-height: 100%;
 }
 
 form {
@@ -260,15 +260,15 @@ form {
 }
 
 #page-main {
-    padding-bottom: 50px;
     min-height: 400px;
+    padding-bottom: 50px;
 }
 
 #footer {
-    min-height: 300px;
-    color: #b3b3b3;
     background: #333;
     padding: 30px 0 40px;
+    color: #b3b3b3;
+    min-height: 300px;
 }
 
 .trianglify-background {
@@ -276,8 +276,8 @@ form {
 }
 
 .trianglify-box {
-    padding: 20px;
     background: rgba(255, 255, 255, 0.6);
+    padding: 20px;
     max-width: 400px;
     -webkit-border-radius: 5px;
        -moz-border-radius: 5px;
@@ -300,14 +300,14 @@ form {
 
 #page-error a,
 #page-error a:hover {
-    color: #fff;
     text-decoration: underline;
+    color: #fff;
 }
 
 .error-message-container {
-    padding: 40px 120px;
     background: rgba(0, 0, 0, 0.4);
     height: 100%;
+    padding: 40px 120px;
     -webkit-box-sizing: border-box;
        -moz-box-sizing: border-box;
             box-sizing: border-box;
@@ -323,8 +323,8 @@ form {
     }
 
     .error-message-container {
-        padding: 40px 0;
         text-align: center;
+        padding: 40px 0;
     }
 
 }

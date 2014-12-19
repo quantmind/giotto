@@ -1,29 +1,27 @@
 <!DOCTYPE html>
 <html data-debug='false' lang='en' prefix='og: http://ogp.me/ns#'>
 <head>
-<title>Zoomable Sunburst Partition</title>
+<title>Sobol</title>
 <meta charset='utf-8'>
 <meta content='IE=edge' http-equiv='X-UA-Compatible'>
 <meta content='width=device-width, initial-scale=1' name='viewport'>
 <meta content='A list of GiottoJS examples' name='description'>
 <meta content='Luca Sbardella' name='author'>
 <meta content='website' property='og:type'>
-<meta content='http://giottojs.org/examples/sunburst' property='og:url'>
-<meta content='Zoomable Sunburst Partition' property='og:title'>
+<meta content='http://giottojs.org/examples/sobol' property='og:url'>
+<meta content='Sobol' property='og:title'>
 <meta content='A list of GiottoJS examples' property='og:description'>
-<meta content='http://giottojs.org/examples/sunburst.png' property='og:image'>
 <meta content='summary_large_image' name='twitter:card'>
 <meta content='@quantmind' name='twitter:site'>
-<meta content='Zoomable Sunburst Partition' name='twitter:title'>
+<meta content='Sobol' name='twitter:title'>
 <meta content='A list of GiottoJS examples' name='twitter:description'>
-<meta content='http://giottojs.org/examples/sunburst.png' name='twitter:image'>
 <link href='http://giottojs.org/media/giottoweb/favicon.ico' rel='icon' type='image/x-icon'>
 <link href='//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css' rel='stylesheet' type='text/css'>
 <link href='//netdna.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css' rel='stylesheet' type='text/css'>
 <link href='http://giottojs.org/media/giotto/giotto.css' rel='stylesheet' type='text/css'>
 <link href='http://giottojs.org/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var lux = {context: {"year": 2014, "url": "http://giottojs.org", "oauths": null, "media": "/media", "dateFormat": "d MMM y", "name": "Lux", "google": {"analytics": {"ga": "ga", "id": "UA-54439804-4"}}, "lux_version": "0.1.2-alpha.1", "html5mode": true, "datetimeFormat": "d MMM y, h:mm:ss a", "brand": "Lux", "navbar": {"collapseWidth": 768}, "page": {"content_type": "text/html", "slug": "sunburst", "title": "Zoomable Sunburst Partition", "date": "2014-11-04T00:00:00", "image": "http://giottojs.org/examples/sunburst.png", "name": "sunburst", "description": "A list of GiottoJS examples", "modified": "2014-12-19T10:45:09", "html_url": "http://giottojs.org/examples/sunburst", "author": ["Luca Sbardella"], "api_url": "http://giottojs.org/ng/examples/sunburst.json"}, "python_version": "3.4.2", "date": "2014-12-19T10-47-26", "ngModules": ["lux.blog", "highlight", "lux.google"], "apiUrls": {}}};
+var lux = {context: {"year": 2014, "url": "http://giottojs.org", "oauths": null, "media": "/media", "dateFormat": "d MMM y", "name": "Lux", "google": {"analytics": {"ga": "ga", "id": "UA-54439804-4"}}, "lux_version": "0.1.2-alpha.1", "html5mode": true, "datetimeFormat": "d MMM y, h:mm:ss a", "brand": "Lux", "navbar": {"collapseWidth": 768}, "page": {"priority": "0", "content_type": "text/html", "title": "Sobol", "slug": "sobol", "name": "sobol", "description": "A list of GiottoJS examples", "robots": ["noindex", "nofollow"], "modified": "2014-12-18T18:32:20", "html_url": "http://giottojs.org/examples/sobol", "author": ["Luca Sbardella"], "api_url": "http://giottojs.org/ng/examples/sobol.json"}, "python_version": "3.4.2", "date": "2014-12-19T10-47-26", "ngModules": ["lux.blog", "highlight", "lux.google"], "apiUrls": {}}};
 </script>
 <script type='text/javascript'>
 lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
@@ -52,34 +50,21 @@ var require = {"minify": true, "paths": {}, "waitSeconds": 200, "baseUrl": "http
 <div class="row">
 <div class="col-sm-12" data-highlight>
 <div class="page-header">
-<h2>Zoomable Sunburst Partition</h2>
-</div>
-<div style="position: relative">
-<div data-options="gexamples.sunburst1" data-giotto-sunburst></div>
-<div style="position: absolute; top: 0; right: 0; width: 100px" class="hidden-xs"><lux-form data-options='luxforms.sunburstform_UNuJZ'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.sunburstform_UNuJZ = {"field": {"model": "SunburstForm", "type": "form", "id": "sunburstform_UNuJZ"}, "children": [{"field": {"type": "fieldset"}, "children": [{"field": {"value": "sqrt", "required": true, "type": "select", "options": ["sqrt", "linear"], "name": "scale"}}]}]};</script></lux-form></div>
+<h2>Sobol</h2>
 </div>
 
-<div style="width: 100px" class="visible-xs center-block"><lux-form data-options='luxforms.sunburstform_UNuJZ'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.sunburstform_UNuJZ = {"field": {"model": "SunburstForm", "type": "form", "id": "sunburstform_UNuJZ"}, "children": [{"field": {"type": "fieldset"}, "children": [{"field": {"value": "sqrt", "required": true, "type": "select", "options": ["sqrt", "linear"], "name": "scale"}}]}]};</script></lux-form></div>
-
-<p>Html:</p>
-<pre><code>&lt;div data-options="gexamples.sunburst1" data-giotto-sunburst&gt;&lt;/div&gt;
-</code></pre>
 <h3>Javascript code</h3>
-<pre><code>gexamples.sunburst1 = {
+<pre><code>gexamples.sobol = {
     height: '80%',
 
-    src: "https://gist.githubusercontent.com/lsbardel/f3d21f35a685a96706bf/raw",
+    // Callback for angular directive
+    angular: function (chart, opts) {
 
-    addorder: true,
-
-    margin: {top: 40, left:20, right: 20, bottom: 40},
-
-    colors: function (d3) {return d3.scale.category20().range();},
-
-    angular: function (viz, opts) {
-        opts.scope.$on('formFieldChange', function (e, o) {
-            if (o.scale)
-                viz.scale(o.scale).resume();
+        opts.scope.$on('formFieldChange', function (e, form, field) {
+            if (field === 'type') {
+                opts.type = form[field];
+                chart.resume();
+            }
         });
     }
 };
@@ -90,25 +75,20 @@ var require = {"minify": true, "paths": {}, "waitSeconds": 200, "baseUrl": "http
 </div>
 <script>
 
-    gexamples.sunburst1 = {
+    gexamples.sobol = {
         height: '80%',
 
-        src: "https://gist.githubusercontent.com/lsbardel/f3d21f35a685a96706bf/raw",
+        // Callback for angular directive
+        angular: function (chart, opts) {
 
-        addorder: true,
-
-        margin: {top: 40, left:20, right: 20, bottom: 40},
-
-        colors: function (d3) {return d3.scale.category20().range();},
-
-        angular: function (viz, opts) {
-            opts.scope.$on('formFieldChange', function (e, o) {
-                if (o.scale)
-                    viz.scale(o.scale).resume();
+            opts.scope.$on('formFieldChange', function (e, form, field) {
+                if (field === 'type') {
+                    opts.type = form[field];
+                    chart.resume();
+                }
             });
         }
     };
-
 </script>
 <div id="footer">
 <div class="container">
