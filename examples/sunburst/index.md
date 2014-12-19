@@ -1,5 +1,7 @@
 title: Zoomable Sunburst Partition
 date: 2014 November 4
+author: Luca Sbardella
+image: $site_url/examples/sunburst.png
 
 <div style="position: relative">
 <div data-options="gexamples.sunburst1" data-giotto-sunburst></div>

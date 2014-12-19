@@ -1,6 +1,6 @@
 //      Giotto - v0.1.0
 
-//      Compiled 2014-12-18.
+//      Compiled 2014-12-19.
 //      Copyright (c) 2014 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -2353,6 +2353,7 @@
         HEIGHT: 300,
         leaflet: 'http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css'
     };
+
     var _idCounter = 0;
     //
     // Create a new paper for drawing stuff
@@ -3667,15 +3668,15 @@
 
                         if (serie.yaxis === undefined)
                             serie.yaxis = 1;
-                        if (!serie.group) serie.group = 1;
+                        if (!serie.axisgroup) serie.axisgroup = 1;
 
-                        ranges = allranges[serie.group];
+                        ranges = allranges[serie.axisgroup];
 
                         if (!ranges) {
-                            // ranges not yet available for this chart group,
-                            // mark the serie as the reference for this group
+                            // ranges not yet available for this chart axisgroup,
+                            // mark the serie as the reference for this axisgroup
                             serie.reference = true;
-                            allranges[serie.group] = ranges = {};
+                            allranges[serie.axisgroup] = ranges = {};
                         }
 
                         if (!isObject(serie.xaxis)) serie.xaxis = opts.xaxis;
@@ -3730,20 +3731,20 @@
                 group = paper.classGroup(slugify(serie.label), extend({}, serie)),
                 stype;
 
-            // is this the reference serie for its group?
+            // Is this the reference serie for its axisgroup?
             group.element().classed('chart' + chart.uid(), true)
                            .classed('reference' + chart.uid(), serie.reference);
 
             // Draw X axis or set the scale of the reference X-axis
             if (serie.drawXaxis)
                 domain(group.xaxis()).drawXaxis();
-            else
+            else if (serie.axisgroup)
                 scale(group.xaxis());
 
             // Draw Y axis or set the scale of the reference Y-axis
             if (serie.drawYaxis)
                 domain(group.yaxis()).drawYaxis();
-            else
+            else if (serie.axisgroup)
                 scale(group.yaxis());
 
             opts.chartTypes.forEach(function (type) {
@@ -3753,7 +3754,7 @@
             });
 
             function domain(axis) {
-                var p = allranges[serie.group][axis.orient()],
+                var p = allranges[serie.axisgroup][axis.orient()],
                     o = axis.options(),
                     scale = axis.scale();
 
@@ -3771,7 +3772,7 @@
             }
 
             function scale (axis) {
-                var p = allranges[serie.group][axis.orient()];
+                var p = allranges[serie.axisgroup][axis.orient()];
                 axis.scale(p.scale);
             }
 
@@ -4302,46 +4303,37 @@
         scale: 'sqrt',
         //
         initNode: null
-    }, function (self, opts) {
+    },
 
-        var current,
-            loading = false,
-            paper = self.paper(),
-            textSize = calcTextSize(),
-            color = d3.scale.category20c(),
-            transition = +opts.transition,
-            x = d3.scale.linear().range([0, 2 * Math.PI]),  // angular position
-            y,
-            arc = d3.svg.arc()
-                    .startAngle(function(d) { return Math.max(0, Math.min(2 * Math.PI, x(d.x))); })
-                    .endAngle(function(d) { return Math.max(0, Math.min(2 * Math.PI, x(d.x + d.dx))); })
-                    .innerRadius(function(d) { return Math.max(0, y(d.y)); })
-                    .outerRadius(function(d) { return Math.max(0, y(d.y + d.dy)); }),
+    function (self, opts) {
+
+        var namecolors = {},
+            current,
+            paper,
+            group,
+            textSize,
             radius,
             textContainer,
             dummyPath,
             text,
             positions,
-            depth,
-            path;
+            path, x, y, arc;
+
 
         self.on('tick.main', function (e) {
-            // Load data if not already available
-            if (!opts.data)
-                return self.loadData();
-            else {
-                self.stop();
-                build();
-            }
+            self.stop();
+            self.draw();
         });
 
         // API
         //
         // Select a path
-        self.select = function (path) {
+        self.select = function (node, transition) {
             if (!current) return;
-            var node = opts.data;
-            if (path && path.length) {
+
+            if (isArray(node)) {
+                node = current;
+                var path = node;
                 for (var n=0; n<path.length; ++n) {
                     var name = path[n];
                     if (node.children) {
@@ -4356,111 +4348,92 @@
                     }
                 }
             }
-            return select(node);
+            return select(node, transition);
         };
 
         // Set the scale or returns it
         self.scale = function (scale) {
             if (!arguments.length) return opts.scale;
-            if (opts.scale !== scale) {
-                opts.scale = scale;
-                self.resume();
-            }
+            opts.scale = scale;
             return self;
         };
 
-        // Private methods
+        // draw
+        self.draw = function (data) {
+            data = data || opts.data;
 
-        // Calculate the text size to use from dimensions
-        function calcTextSize () {
-            var dim = Math.min(paper.innerWidth(), paper.innerHeight());
-            if (dim < 400)
-                return Math.round(100 - 0.15*(500-dim));
-            else
-                return 100;
-        }
+            // load data if in options
+            if (data === undefined && opts.src) {
+                opts.data = null;
+                return self.loadData(self.draw);
+            }
+            opts.data = null;
 
-        function select (node) {
-            if (node === current) return;
-
-            if (text) text.transition().attr("opacity", 0);
-            //
-            function visible (e) {
-                return e.x >= node.x && e.x < (node.x + node.dx);
+            if (!paper || opts.type !== group.type()) {
+                paper = self.paper(true);
+                group = paper.group();
+                group.element().classed('sunburst', true);
             }
 
-            var arct = arcTween(node);
-            depth = node.depth;
-
-            path.transition()
-                .duration(transition)
-                .attrTween("d", arct)
-                .each('end', function (e, i) {
-                    if (node === e) {
-                        self.current = e;
-                        self.fire('change');
-                    }
-                });
-
-            if (text) {
-                positions = [];
-                dummyPath.transition()
-                    .duration(transition)
-                    .attrTween("d", arct)
-                    .each('end', function (e, i) {
-                        // check if the animated element's data lies within the visible angle span given in d
-                        if (e.depth >= depth && visible(e)) {
-                            // fade in the text element and recalculate positions
-                            alignText(d3.select(this.parentNode)
-                                        .select("text")
-                                        .transition().duration(transition)
-                                        .attr("opacity", 1));
-                        }
-                    });
-            }
-            return true;
-        }
-
-        //
-        function build () {
-
-            var width = 0.5*paper.innerWidth(),
-                height = 0.5*paper.innerHeight(),
-                // Create the partition layout
-                partition = d3.layout.partition()
+            if (data) {
+                data = d3.layout.partition()
                     .value(function(d) { return d.size; })
-                    .sort(function (d) { return d.order === undefined ? d.size : d.order;}),
-                svg = paper.group()
-                          .attr("transform", "translate(" + width + "," + height + ")"),
-                sunburst = svg.append('g').attr('class', 'sunburst');
+                    .sort(function (d) { return d.order === undefined ? d.size : d.order;})
+                    .nodes(data);
+                current = opts.initNode || data[0];
 
+                group.add(function () {
+                    build(data, current);
+                });
+            }
+
+            self.render();
+        };
+
+        // Private methods
+        //
+        function build (data, initNode) {
+
+            var width = 0.5*group.innerWidth(),
+                height = 0.5*group.innerHeight(),
+                sunburst = group.element().attr("transform", "translate(" + width + "," + height + ")");
+
+            current = data[0];
             radius = Math.min(width, height);
+            textSize = calcTextSize();
+            x = d3.scale.linear().range([0, 2 * Math.PI]);  // angular position
             y = scale(radius);  // radial position
-            depth = 0;
-            current = opts.data;
+            arc = d3[group.type()].arc()
+                    .startAngle(function(d) { return Math.max(0, Math.min(2 * Math.PI, x(d.x))); })
+                    .endAngle(function(d) { return Math.max(0, Math.min(2 * Math.PI, x(d.x + d.dx))); })
+                    .innerRadius(function(d) { return Math.max(0, y(d.y)); })
+                    .outerRadius(function(d) { return Math.max(0, y(d.y + d.dy)); });
 
-            var y0 = y(0),
-                yr = y(radius);
+            sunburst.selectAll('*').remove();
 
             path = sunburst.selectAll("path")
-                    .data(partition.nodes(current))
+                    .data(data)
                     .enter()
                     .append('path')
                     .attr("d", arc)
-                    .style("fill", function(d) { return color((d.children ? d : d.parent).name); });
+                    .style("fill", function(d) {
+                        var name = (d.children ? d : d.parent).name;
+                        if (!namecolors[name])
+                            namecolors[name] = paper.pickColor();
+                        return namecolors[name];
+                    });
 
             if (opts.labels) {
-                var data = path.data();
                 positions = [];
-                textContainer = svg.append('g')
+                textContainer = sunburst.append('g')
                                 .attr('class', 'text')
                                 .selectAll('g')
-                                .data(data)
+                                .data(path.data())
                                 .enter().append('g');
                 dummyPath = textContainer.append('path')
                         .attr("d", arc)
                         .attr("opacity", 0)
-                        .on("click", click);
+                        .on("click", function (d) {select(d);});
                 text = textContainer.append('text')
                         .text(function(d) {
                             if (opts.addorder !== undefined && d.order !== undefined)
@@ -4472,7 +4445,7 @@
             }
 
             //
-            if (!self.select(opts.initNode))
+            if (!self.select(initNode, 0))
                 opts.event.change({type: 'change', viz: self});
         }
 
@@ -4485,22 +4458,33 @@
                 return d3.scale.sqrt().range([0, radius]);
         }
 
-        function click (d) {
-            // Fade out all text elements
-            if (depth === d.depth) return;
+        // Calculate the text size to use from dimensions
+        function calcTextSize () {
+            var dim = Math.min(group.innerWidth(), group.innerHeight());
+            if (dim < 400)
+                return Math.round(100 - 0.15*(500-dim));
+            else
+                return 100;
+        }
+
+        function select (node, transition) {
+            if (node === current) return;
+            if (transition === undefined) transition = +opts.transition;
+
             if (text) text.transition().attr("opacity", 0);
-            depth = d.depth;
             //
             function visible (e) {
-                return e.x >= d.x && e.x < (d.x + d.dx);
+                return e.x >= node.x && e.x < (node.x + node.dx);
             }
-            //
+
+            var arct = arcTween(node);
+
             path.transition()
                 .duration(transition)
-                .attrTween("d", arcTween(d))
+                .attrTween("d", arct)
                 .each('end', function (e, i) {
-                    if (e.depth === depth && visible(e)) {
-                        self.current = e;
+                    if (node === e) {
+                        current = e;
                         opts.event.change({type: 'change', viz: self});
                     }
                 });
@@ -4509,10 +4493,10 @@
                 positions = [];
                 dummyPath.transition()
                     .duration(transition)
-                    .attrTween("d", arcTween(d))
+                    .attrTween("d", arct)
                     .each('end', function (e, i) {
                         // check if the animated element's data lies within the visible angle span given in d
-                        if (e.depth >= depth && visible(e)) {
+                        if (e.depth >= current.depth && visible(e)) {
                             // fade in the text element and recalculate positions
                             alignText(d3.select(this.parentNode)
                                         .select("text")
@@ -4521,6 +4505,7 @@
                         }
                     });
             }
+            return true;
         }
 
         function calculateAngle (d) {
@@ -4550,13 +4535,14 @@
 
         // Align text when labels are displaid
         function alignText (text) {
-            var a;
+            var depth = current.depth,
+                a;
             return text.attr("x", function(d, i) {
                 // Set the Radial position
                 if (d.depth === depth)
                     return 0;
                 else {
-                    a = calculateAngle(d);
+                    a = calculateAngle(d, x, y);
                     this.__data__.angle = a;
                     return a > Math.PI ? -y(d.y) : y(d.y);
                 }
@@ -6348,6 +6334,9 @@
             p = {};
 
         copyMissing(g.defaults.paper, p, true);
+
+        if (isFunction (p.colors))
+            p.colors = p.colors(d3);
 
         if (!width) {
             width = getWidth(element);

@@ -8,10 +8,12 @@
 
         margin: {top: 40, left:20, right: 20, bottom: 40},
 
-        angular: function (chart, opts) {
-            opts.scope.$on('formFieldChange', function (e, o, value) {
-                if (o && o.field === 'scale')
-                    viz.scale(o.form.scale);
+        colors: function (d3) {return d3.scale.category20().range();},
+
+        angular: function (viz, opts) {
+            opts.scope.$on('formFieldChange', function (e, o) {
+                if (o.scale)
+                    viz.scale(o.scale).resume();
             });
         }
     };

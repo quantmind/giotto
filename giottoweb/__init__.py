@@ -26,7 +26,7 @@ EXTENSIONS = ['lux.extensions.base',
               'lux.extensions.oauth',
               'lux.extensions.code',
               'giottoweb.giotto']
-HTML_LINKS = ['giotto/giotto',
+HTML_LINKS = ['giotto/giotto.css',
               'giottoweb/giottoweb.css']
 REQUIREJS = ['.giottoweb/giottoweb.js']
 

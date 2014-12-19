@@ -12,6 +12,9 @@
 
         copyMissing(g.defaults.paper, p, true);
 
+        if (isFunction (p.colors))
+            p.colors = p.colors(d3);
+
         if (!width) {
             width = getWidth(element);
             if (width)

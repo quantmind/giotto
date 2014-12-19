@@ -12,7 +12,7 @@ paper.
 
 ### # paper.type()
 
-Returns the default [group](/api/group) type paper for the paper.
+Returns the default [group](/api/group) type for the paper.
 It can be either ``svg`` (default) or ``canvas``.
 
 ### # paper.uid()
