@@ -13,7 +13,7 @@
             size: '12px',
             active: {
                 fill: '#fff',
-                size: 1.5
+                size: '150%'
             }
         },
 

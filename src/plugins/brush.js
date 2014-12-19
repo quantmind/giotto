@@ -6,145 +6,171 @@
             fill: '#000',
             fillOpacity: 0.125
         },
+        svg: brushplugin,
+        canvas: brushplugin
+    });
 
-        svg: function (paper, opts) {
-            var cid, brush;
+    //  Add brush functionality to charts
+    g.viz.chart.plugin(function (chart, opts) {
+        var brush, brushopts;
 
-            paper.brush = function () {
-                return brush;
+        // Show grid
+        chart.addBrush = function () {
+
+            brush = opts.brush;
+
+            var start = brush.start,
+                move = brush.move,
+                end = brush.end;
+
+            brush.start = function () {
+                if (start) start(chart);
             };
 
-            // get/set the extent for the brush
-            // When set, it re-renders in the paper
-            paper.extent = function (x) {
-                if (!arguments.length) return brush ? brush.extent() : null;
-                if (brush) {
-                    brush.extent(x);
-                    paper.render(cid);
-                }
-            };
+            brush.move = function () {
+                //
+                // loop through series and add selected class
+                chart.each(function (serie) {
+                    var group = chart.axisGroup(serie),
+                        brush = group ? group.brush() : null;
 
-            // Add a brush to the paper if not already available
-            paper.addBrush = function (options) {
-                if (cid) return paper;
-
-                if (_.isObject(options))
-                    extend(opts.brush, options);
-
-                brush = d3.svg.brush()
-                                .on("brushstart", brushstart)
-                                .on("brush", brushmove)
-                                .on("brushend", brushend);
-
-                var b = paperData(paper, opts.brush, {}).reset();
-
-                cid = paper.addComponent(b, function () {
                     if (!brush) return;
 
-                    var current = paper.root().current(),
-                        gBrush = current.select('g.brush');
+                    if (serie.point)
+                        brush.selectDraw(serie.point);
+                    if (serie.bar)
+                        brush.selectDraw(serie.bar);
+                });
+                if (move) move(chart);
+            };
 
-                    if (opts.brush.axis === 'x') brush.x(paper.xAxis().scale());
+            brush.end = function () {
+                if (end) end(chart);
+            };
 
-                    if (!gBrush.node()) {
-                        if (opts.brush.extent)
-                            brush.extent(opts.brush.extent);
-                        gBrush = current.append('g');
+            chart.paper().each('.reference' + chart.uid(), function () {
+                this.addBrush(brushopts).render();
+            });
+            return chart;
+        };
+
+        chart.on('tick.brush', function () {
+            if (opts.brush && opts.brush.axis)
+                chart.addBrush();
+        });
+
+    });
+
+
+    function brushplugin (group, opts) {
+        var brush, brushDrawing;
+
+        group.brush = function () {
+            return brush;
+        };
+
+        // Add a brush to the paper if not already available
+        group.addBrush = function (options) {
+            if (brushDrawing) return brushDrawing;
+            extend(opts.brush, options);
+
+            brushDrawing = group.add(function () {
+                var draw = this;
+
+                if (!brush) {
+                    var type = group.type(),
+                        x, y;
+
+                    brush = d3[type].brush()
+                            .on("brushstart", brushstart)
+                            .on("brush", brushmove)
+                            .on("brushend", brushend);
+
+                    if (opts.brush.axis === 'x' || opts.brush.axis === 'xy') {
+                        x = true;
+                        brush.x(group.xaxis().scale());
                     }
 
-                    var rect = gBrush.call(brush).selectAll("rect")
-                                                .attr('fill', b.fill)
-                                                .attr('fill-opacity', b.fillOpacity);
+                    if (opts.brush.axis === 'y' || opts.brush.axis === 'xy') {
+                        y = true;
+                        brush.y(group.yaxis().scale());
+                    }
 
-                    if (opts.brush.axis === 'x') {
-                        gBrush.attr("class", "brush x-brush");
-                        rect.attr("y", -6).attr("height", paper.innerHeight() + 7);
+                    if (opts.brush.extent) brush.extent(opts.brush.extent);
+
+                    if (type === 'svg') {
+                        brush.selectDraw = selectDraw;
+                        var gb = group.element().select('.brush');
+
+                        if (!gb.node())
+                            gb = group.element().append('g').classed('brush', true);
+
+                        var rect = gb.call(brush).selectAll("rect");
+
+                        this.setBackground(rect);
+
+                        if (opts.brush.axis === 'x')
+                            rect.attr("y", -6).attr("height", group.innerHeight() + 7);
+                    } else {
+
+                        var overlay = group.paper().canvasOverlay();
+
+                        brush.selectDraw = function (draw) {
+                            selectDraw(draw, overlay.node().getContext('2d'));
+                        };
+
+                        overlay.call(brush.draw(function (ctx) {
+                            ctx.fillStyle = d3.canvas.rgba(draw.fill, draw.fillOpacity);
+                            ctx.fill();
+                        }).rect([group.marginLeft(), group.marginTop(),
+                                 group.innerHeight(), group.innerWidth()]));
                     }
 
                     brushstart();
                     brushmove();
                     brushend();
-                });
+                }
+            });
 
-                return brush;
-            };
-
-            paper.removeBrush = function () {
-                cid = paper.removeComponent(cid);
-                paper.root().current().select('g.brush').remove();
-                brush = null;
-            };
-
-            function brushstart () {
-                paper.root().current().classed('selecting', true);
-                if (opts.brush.start) opts.brush.start();
-            }
-
-            function brushmove () {
-                if (opts.brush.move) opts.brush.move();
-            }
-
-            function brushend () {
-                paper.root().current().classed('selecting', false);
-                if (opts.brush.end) opts.brush.end();
-            }
-        },
-
-        canvas: function (paper, opts) {
-        }
-    });
-
-    //
-    //  Add brush functionality to charts
-    g.viz.chart.plugin(function (chart, opts) {
-        var dimension,
-            brush, brushopts;
-
-        if (opts.brush && opts.brush.axis) {
-            brush = opts.brush;
-            if (!isObject(brush)) brush = {};
-            brushopts = extend({}, brush);
-
-            brushopts.start = function () {
-                if (brush.start) brush.start(chart);
-            };
-
-            brushopts.move = function () {
-                //
-                // loop through series and add selected class
-                chart.each(function (serie) {
-                    var brush = chart.paper().brush(),
-                        s = brush.extent();
-
-                    if (serie.point.chart)
-                        serie.point.chart.selectAll('.point')
-                            .classed("selected", function(d) {
-                                return s[0] <= d.x && d.x <= s[1];
-                            });
-                    if (serie.bar.chart)
-                        serie.bar.chart.selectAll('.bar')
-                            .classed("selected", function(d) {
-                                return s[0] <= d.x && d.x <= s[1];
-                            });
-                });
-                if (brush.move) brush.move(chart);
-            };
-
-            brushopts.end = function () {
-                if (brush.end) brush.end(chart);
-            };
-        }
-
-        chart.dimension = function (x) {
-            init();
-            if (!arguments.length) return dimension;
-            dimension = x;
-            return chart;
+            return brushDrawing.options(opts.brush);
         };
 
-        chart.on('tick.brush', function () {
-            if (brushopts)
-                chart.paper().addBrush(brushopts);
-        });
+        function brushstart () {
+            group.element().classed('selecting', true);
+            if (opts.brush.start) opts.brush.start();
+        }
 
-    });
+        function brushmove () {
+            if (opts.brush.move) opts.brush.move();
+        }
+
+        function brushend () {
+            group.element().classed('selecting', false);
+            if (opts.brush.end) opts.brush.end();
+        }
+
+        function selectDraw (drawing, ctx) {
+            var x = drawing.x(),
+                selected = [],
+                xval,
+                s = brush.extent();
+
+            drawing.each(function () {
+                if (this.data) {
+                    xval = x(this.data);
+                    if (s[0] <= xval && xval <= s[1]) {
+                        this.highLight();
+                        if (ctx) this.render(ctx);
+                        selected.push(this);
+                    }
+                    else
+                        this.reset();
+                }
+            });
+
+            if (!ctx) drawing.render();
+
+            return selected;
+        }
+    }
+

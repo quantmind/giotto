@@ -164,12 +164,16 @@
         d.render = function (context) {
             context = context || ctx;
             context.save();
-            context.fillStyle = rgba(d.fill, d.fillOpacity);
-            context.strokeStyle = rgba(d.color, d.colorOpacity);
-            context.lineWidth = factor*d.lineWidth;
             _draw(context);
-            context.fill();
-            context.stroke();
+            if (d.fill) {
+                context.fillStyle = rgba(d.fill, d.fillOpacity);
+                context.fill();
+            }
+            if (d.color && d.lineWidth) {
+                context.strokeStyle = rgba(d.color, d.colorOpacity);
+                context.lineWidth = factor*d.lineWidth;
+                context.stroke();
+            }
             context.restore();
             return d;
         };

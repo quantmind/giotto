@@ -85,6 +85,12 @@
             }
         };
 
+        // Return the giotto group which manage the axis for a serie
+        chart.axisGroup = function (serie) {
+            if (serie && serie.axisgroup)
+                return chart.paper().select('.' + axisGroupId(serie.axisgroup));
+        };
+
 
         chart.on('tick.main', function () {
             // Chart don't need ticking unless explicitly required (real time updates for example)
@@ -222,8 +228,11 @@
                 stype;
 
             // Is this the reference serie for its axisgroup?
-            group.element().classed('chart' + chart.uid(), true)
-                           .classed('reference' + chart.uid(), serie.reference);
+            group.element().classed('chart' + chart.uid(), true);
+
+            if (serie.reference)
+                group.element().classed('reference' + chart.uid(), true)
+                               .classed(axisGroupId(serie.axisgroup), true);
 
             // Draw X axis or set the scale of the reference X-axis
             if (serie.drawXaxis)
@@ -266,6 +275,10 @@
                 axis.scale(p.scale);
             }
 
+        }
+
+        function axisGroupId (axisgroup) {
+            return 'axisgroup' + chart.uid() + '-' + axisgroup;
         }
 
     });

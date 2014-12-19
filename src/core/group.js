@@ -2,6 +2,7 @@
     g.group = function (paper, element, p, _) {
         var drawings = [],
             factor = 1,
+            rendering = false,
             type = p.type,
             d3v = d3[type],
             xaxis = d3v.axis(),
@@ -68,6 +69,22 @@
             return group.innerHeight()/group.innerWidth();
         };
 
+        group.marginLeft = function () {
+            return factor*p.margin.left;
+        };
+
+        group.marginRight = function () {
+            return factor*p.margin.right;
+        };
+
+        group.marginTop = function () {
+            return factor*p.margin.top;
+        };
+
+        group.marginBottom = function () {
+            return factor*p.margin.bottom;
+        };
+
         group.add = function (draw) {
             if (isFunction(draw)) draw = drawing(group, draw);
             drawings.push(draw);
@@ -81,9 +98,16 @@
         };
 
         group.render = function () {
+            if (rendering) return;
+            rendering = true;
             for (var i=0; i<drawings.length; ++i)
                 drawings[i].render();
+            rendering = false;
             return group;
+        };
+
+        group.rendering = function () {
+            return rendering;
         };
 
         // remove all drawings or a drawing by name

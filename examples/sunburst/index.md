@@ -1,4 +1,5 @@
 title: Zoomable Sunburst Partition
+description: Zoomable Sunburst Partition with labels and resizing. Only SVG supported for now
 date: 2014 November 4
 author: Luca Sbardella
 image: $site_url/examples/sunburst.png

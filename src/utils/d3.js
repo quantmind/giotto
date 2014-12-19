@@ -1,5 +1,5 @@
 
-    // D3 internal functions used by GiottoJS
+    // D3 internal functions used by GiottoJS, mainly by the canvas module
     // These are copied from d3.js
 
     function d3_identity(d) {
@@ -217,3 +217,21 @@
             [cx0 * r1 / r, cy0 * r1 / r]
         ];
     }
+
+    var d3_svg_brushCursor = {
+        n: "ns-resize",
+        e: "ew-resize",
+        s: "ns-resize",
+        w: "ew-resize",
+        nw: "nwse-resize",
+        ne: "nesw-resize",
+        se: "nwse-resize",
+        sw: "nesw-resize"
+    };
+
+    var d3_svg_brushResizes = [
+      ["n", "e", "s", "w", "nw", "ne", "se", "sw"],
+      ["e", "w"],
+      ["n", "s"],
+      []
+    ];

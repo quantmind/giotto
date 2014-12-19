@@ -20,7 +20,14 @@
           show: true
         },
 
-        data: [{pie: oivdata}],
+        pie: {
+            show: true,
+            active: {
+                outerRadius: '105%'
+            }
+        },
+
+        data: [oivdata],
 
         // Callback for angular directive
         angular: function (chart, opts) {

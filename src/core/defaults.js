@@ -44,8 +44,8 @@
             active: {
                 fill: 'darker',
                 color: 'brighter',
-                // Multiplier for size, set to 1 for no change
-                size: 1.5
+                // Multiplier for size, set to 100% for no change
+                size: '150%'
             }
         },
         bar: {
@@ -76,8 +76,8 @@
             active: {
                 fill: 'darker',
                 color: 'brighter',
-                innerRadius: 1,
-                outerRadius: 1.05,
+                //innerRadius: 100%,
+                //outerRadius: 105%,
                 fillOpacity: 1
             }
         },

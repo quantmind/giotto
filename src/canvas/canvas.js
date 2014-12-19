@@ -10,7 +10,17 @@
             ctx.canvas.height = height * window.devicePixelRatio;
             ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
         }
+
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0 , 0, ctx.canvas.width, ctx.canvas.height);
         return window.devicePixelRatio || 1;
+    };
+
+
+    d3.canvas.resize = function (ctx, width, height) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect (0 , 0, ctx.canvas.width, ctx.canvas.height);
+        return d3.canvas.retinaScale(ctx, width, height);
     };
 
 

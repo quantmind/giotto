@@ -62,6 +62,7 @@
         paper.clear = function () {
             paper.svg().remove();
             paper.canvas().remove();
+            paper.canvasOverlay().remove();
             p.colorIndex = 0;
             return paper;
         };
@@ -100,6 +101,7 @@
                 paper.each(function () {
                     this.resize(oldsize);
                 });
+                paper.canvasOverlay();
                 paper.change();
             }
             p._resizing = false;
@@ -154,10 +156,26 @@
         // Access the canvas container
         paper.canvas = function (build) {
             var canvas = paper.element().select('div.canvas-container');
-            if (!canvas.node() && build)
+            if (!canvas.node() && build) {
                 canvas = paper.element().append('div')
                                 .attr('class', 'canvas-container')
                                 .style('position', 'relative');
+            }
+            return canvas;
+        };
+
+        paper.canvasOverlay = function () {
+            var canvas = paper.element().select('.canvas-overlay'),
+                node = canvas.node();
+
+            if (!node && paper.canvas().node()) {
+                canvas = paper.element().append('canvas')
+                                .attr('class', 'canvas-overlay')
+                                .style({'position': 'absolute', "top": "0", "left": "0"});
+                node = canvas.node();
+                d3.canvas.retinaScale(node.getContext('2d'), p.size[0], p.size[1]);
+            } else if (node)
+                d3.canvas.resize(node.getContext('2d'), p.size[0], p.size[1]);
             return canvas;
         };
 

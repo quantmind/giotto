@@ -43,7 +43,7 @@
         p.size = [width, height];
         p.giotto = 'giotto-group';
 
-        p.__paper__ = element;
+        p.__paper__ = d3.select(element).style('position', 'relative').node();
 
         return p;
     }

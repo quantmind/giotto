@@ -24,7 +24,7 @@
 
         draw.render = function () {
             if (renderer)
-                return renderer.call(draw);
+                return renderer.apply(draw);
         };
 
         draw.group = function () {
@@ -50,6 +50,7 @@
                 });
             else
                 callback.call(draw);
+            return draw;
         };
 
         draw.renderer = function (_) {
@@ -168,8 +169,8 @@
                 parameters.forEach(function (name) {
                     v = a[name];
                     if (v) {
-                        if (multiplyOptions.indexOf(name) > -1)
-                            v *= values[name];
+                        if (typeof v === 'string' && v.substring(v.length-1) === '%')
+                            v = 0.01 * v.substring(0,v.length-1) * values[name];
                         d[name] = v;
                     }
                 });
@@ -275,8 +276,6 @@
         pointOptions = extendArray(['size', 'symbol'], drawingOptions),
 
         pieOptions = extendArray(['innerRadius', 'outerRadius'], drawingOptions),
-
-        multiplyOptions = ['lineWidth', 'size', 'innerRadius', 'outerRadius'],
 
         default_size = function (d) {
             return d.size;
