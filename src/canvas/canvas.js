@@ -1,4 +1,10 @@
 
+    d3.canvas.clear = function (ctx) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0 , 0, ctx.canvas.width, ctx.canvas.height);
+    };
+
+
     d3.canvas.retinaScale = function(ctx, width, height){
         ctx.canvas.width = width;
         ctx.canvas.height = height;
@@ -11,8 +17,7 @@
             ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
         }
 
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.clearRect(0 , 0, ctx.canvas.width, ctx.canvas.height);
+        d3.canvas.clear(ctx);
         return window.devicePixelRatio || 1;
     };
 
@@ -47,6 +52,15 @@
             return 'rgba(' + c.r + ',' + c.g + ',' + c.b + ',' + opacity + ')';
         } else
             return color;
+    };
+
+    d3.canvas.mouse = function (container) {
+        var point = d3.mouse(container);
+        if (container.getContext && window.devicePixelRatio) {
+            point[0] *= window.devicePixelRatio;
+            point[1] *= window.devicePixelRatio;
+        }
+        return point;
     };
 
     function getRoundedPoints(pts, radius) {

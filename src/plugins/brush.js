@@ -29,7 +29,7 @@
 
             brush.move = function () {
                 //
-                // loop through series and add selected class
+                // loop through series
                 chart.each(function (serie) {
                     var group = chart.axisGroup(serie),
                         brush = group ? group.brush() : null;
@@ -111,24 +111,26 @@
 
                         if (opts.brush.axis === 'x')
                             rect.attr("y", -6).attr("height", group.innerHeight() + 7);
+
+                        brushstart();
+                        brushmove();
+                        brushend();
                     } else {
 
+                        // Get the canvas ovrlay
                         var overlay = group.paper().canvasOverlay();
+
+                        brush.fillStyle(d3.canvas.rgba(this.fill, this.fillOpacity))
+                             .rect([group.marginLeft(), group.marginTop(),
+                                    group.innerWidth(), group.innerHeight()]);
+
 
                         brush.selectDraw = function (draw) {
                             selectDraw(draw, overlay.node().getContext('2d'));
                         };
 
-                        overlay.call(brush.draw(function (ctx) {
-                            ctx.fillStyle = d3.canvas.rgba(draw.fill, draw.fillOpacity);
-                            ctx.fill();
-                        }).rect([group.marginLeft(), group.marginTop(),
-                                 group.innerHeight(), group.innerWidth()]));
+                        overlay.call(brush);
                     }
-
-                    brushstart();
-                    brushmove();
-                    brushend();
                 }
             });
 
@@ -149,13 +151,19 @@
             if (opts.brush.end) opts.brush.end();
         }
 
-        function selectDraw (drawing, ctx) {
-            var x = drawing.x(),
+        function selectDraw (draw, ctx) {
+            var x = draw.x(),
                 selected = [],
                 xval,
                 s = brush.extent();
 
-            drawing.each(function () {
+            if (ctx) {
+                var group = draw.group();
+                ctx.save();
+                ctx.translate(group.marginLeft(), group.marginTop());
+            }
+
+            draw.each(function () {
                 if (this.data) {
                     xval = x(this.data);
                     if (s[0] <= xval && xval <= s[1]) {
@@ -168,7 +176,8 @@
                 }
             });
 
-            if (!ctx) drawing.render();
+            if (ctx) ctx.restore();
+            else draw.render();
 
             return selected;
         }

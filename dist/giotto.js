@@ -1,6 +1,6 @@
 //      Giotto - v0.1.0
 
-//      Compiled 2014-12-19.
+//      Compiled 2014-12-21.
 //      Copyright (c) 2014 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -1723,30 +1723,49 @@
 
 
     d3.canvas.brush = function() {
-        var rangex = null,
-            rangey = null,
+        var event = d3.dispatch("brushstart", "brush", "brushend"),
+            x = null, // x-scale, optional
+            y = null, // y-scale, optional
+            xExtent = [0, 0], // [x0, x1] in integer pixels
+            yExtent = [0, 0], // [y0, y1] in integer pixels
+            xExtentDomain, // x-extent in data space
+            yExtentDomain, // y-extent in data space
+            xClamp = true, // whether to clamp the x-extent to the range
+            yClamp = true, // whether to clamp the y-extent to the range
             resizes = d3_svg_brushResizes[0],
-            inner = d3.svg.brush(),
             rect = [0,0,0,0],
-            draw_;
+            factor = window.devicePixelRatio || 1,
+            p = 3*factor,
+            fillStyle,
+            draw_sn,
+            draw_we;
 
         function brush(canvas) {
+
             canvas.each(function () {
                 d3.select(this)
-                    //.style("pointer-events", "all")
-                    //.style("-webkit-tap-highlight-color", "rgba(0,0,0,0)")
+                    .style("pointer-events", "all")
+                    .style("-webkit-tap-highlight-color", "rgba(0,0,0,0)")
                     .on("mousedown.brush", Brushstart)
                     .on("touchstart.brush", Brushstart)
                     .on("mousemove.brushover", Brushover);
-                redraw(this.getContext('2d'));
+                event.brushstart.call(this);
+                event.brush.call(this);
+                event.brushend.call(this);
+                brushfill(this.getContext('2d'));
             });
         }
 
+        function brushfill (ctx) {
+            if (fillStyle) {
+                draw(ctx);
+                ctx.fillStyle = fillStyle;
+                ctx.fill();
+            }
+        }
+
         function draw (ctx) {
-            var x = inner.x(),
-                y = inner.y(),
-                extent = inner.extent(),
-                x0, y0;
+            var x0, y0;
 
             ctx.beginPath();
 
@@ -1755,46 +1774,72 @@
                 y0 = y(extent[1][0]);
             }
             else if (x) {
-                x0 = x(extent[0]);
-                ctx.rect(x0 + rect[0], rect[1], x(extent[1])-x0, rect[3] || ctx.canvas.height);
+                x0 = xExtent[0];
+                ctx.rect(x0 + rect[0], rect[1], xExtent[1]-x0, rect[3] || ctx.canvas.height);
             }
             else if (y)
                 ctx.rect(0, extent[0][0], ctx.canvas.width, extent[0][1]-extent[0][0]);
         }
 
-        function redraw (ctx) {
-            draw(ctx);
-            if (draw_) draw_(ctx);
+        function draw_sn_ (ctx, sn) {
+        }
+
+        function draw_we_ (ctx, ew) {
+            var xv = xExtent[ew];
+            ctx.beginPath();
+            ctx.rect(xv-p, rect[1], 2*p, rect[3] || ctx.canvas.height);
         }
 
         function Brushover () {
-            var target = this,
-                ctx = target.getContext('2d'),
-                origin = d3.mouse(target),
-                factor = window.devicePixelRatio || 1;
+            var canvas = d3.select(this),
+                ctx = this.getContext('2d'),
+                origin = d3.canvas.mouse(this),
+                xp = origin[0],
+                yp = origin[1],
+                resize = '';
+
+            if (y) {
+                draw_sn(ctx, 0);
+                if (ctx.isPointInPath(xp, yp)) resize = 's';
+                else {
+                    draw_sn(ctx, 1);
+                    if (ctx.isPointInPath(xp, yp)) resize = 'n';
+                }
+            }
+            if (x) {
+                draw_we(ctx, 0);
+                if (ctx.isPointInPath(xp, yp)) resize += 'w';
+                else {
+                    draw_we_(ctx, 1);
+                    if (ctx.isPointInPath(xp, yp)) resize += 'e';
+                }
+            }
             draw(ctx);
-            if (ctx.isPointInPath(factor*origin[0], factor*origin[1]))
-                d3.select(target).style('cursor', 'move');
-            else
-                d3.select(target).style('cursor', 'crosshair');
+            if (resize) {
+                canvas.style('cursor', d3_svg_brushCursor[resize])
+                    .datum(resize).classed('extent', false);
+            } else {
+                if (ctx.isPointInPath(xp, yp))
+                    canvas.style('cursor', 'move').classed('extent', true).datum('');
+                else
+                    canvas.style('cursor', 'crosshair').classed('extent', false).datum('');
+            }
         }
 
         function Brushstart() {
             var target = this,
-
-                eventTarget = d3.select(d3.event.target),
-                event_ = event.of(target, arguments),
+                ctx = target.getContext('2d'),
+                origin = d3.canvas.mouse(target),
+                //event_ = event.of(target, arguments),
                 canvas = d3.select(target),
-                resizing = eventTarget.datum(),
+                resizing = canvas.datum(),
                 resizingX = !/^(n|s)$/.test(resizing) && x,
                 resizingY = !/^(e|w)$/.test(resizing) && y,
-                dragging = eventTarget.classed("extent"),
-                dragRestore = d3_event_dragSuppress(),
+                dragging = canvas.classed("extent"),
                 center,
-                origin = d3.mouse(target),
                 offset;
 
-            var w = d3.select(d3_window)
+            var w = d3.select(window)
                 .on("keydown.brush", keydown)
                 .on("keyup.brush", keyup);
 
@@ -1828,11 +1873,11 @@
             else if (d3.event.altKey) center = origin.slice();
 
             // Propagate the active cursor to the body for the drag duration.
-            g.style("pointer-events", "none").selectAll(".resize").style("display", null);
-            d3.select("body").style("cursor", eventTarget.style("cursor"));
+            d3.select("body").style("cursor", canvas.style("cursor"));
 
             // Notify listeners.
-            event_({type: "brushstart"});
+            event.brushstart({type: "brushstart"});
+
             brushmove();
 
             function keydown() {
@@ -1843,7 +1888,7 @@
                         origin[1] -= yExtent[1];
                         dragging = 2;
                     }
-                    d3_eventPreventDefault();
+                    d3.event.preventDefault();
                 }
             }
 
@@ -1852,13 +1897,14 @@
                     origin[0] += xExtent[1];
                     origin[1] += yExtent[1];
                     dragging = 0;
-                    d3_eventPreventDefault();
+                    d3.event.preventDefault();
                 }
             }
 
             function brushmove() {
-                var point = d3.mouse(target),
-                moved = false;
+                var point = d3.canvas.mouse(target);
+
+                d3.canvas.clear(ctx);
 
                 // Preserve the offset for thick resizers.
                 if (offset) {
@@ -1881,37 +1927,31 @@
                     else center = null;
                 }
 
-                // Update the brush extent for each dimension.
-                if (resizingX && move1(point, x, 0)) {
-                    redrawX(g);
-                    moved = true;
-                }
-                if (resizingY && move1(point, y, 1)) {
-                    redrawY(g);
-                    moved = true;
-                }
+                var ev = {type: "brush"};
 
                 // Final redraw and notify listeners.
-                if (moved) {
-                    redraw(g);
-                    event_({type: "brush", mode: dragging ? "move" : "resize"});
-                }
+                if ((resizingX && move1(point, x, 0)) ||
+                    (resizingY && move1(point, y, 1)))
+                    ev.mode = dragging ? "move" : "resize";
+
+                event.brush.call(ctx, {type: "brush", mode: dragging ? "move" : "resize"});
+                brushfill(ctx);
             }
 
             function move1(point, scale, i) {
                 var range = d3_scaleRange(scale),
-                r0 = range[0],
-                r1 = range[1],
-                position = origin[i],
-                extent = i ? yExtent : xExtent,
-                size = extent[1] - extent[0],
-                min,
-                max;
+                    r0 = range[0],
+                    r1 = range[1],
+                    position = origin[i],
+                    extent = i ? yExtent : xExtent,
+                    size = extent[1] - extent[0],
+                    min,
+                    max;
 
                 // When dragging, reduce the range by the extent size and position.
                 if (dragging) {
-                r0 -= position;
-                r1 -= size + position;
+                    r0 -= position;
+                    r1 -= size + position;
                 }
 
                 // Clamp the point (unless clamp set to false) so that the extent fits within the range extent.
@@ -1919,28 +1959,28 @@
 
                 // Compute the new extent bounds.
                 if (dragging) {
-                max = (min += position) + size;
+                    max = (min += position) + size;
                 } else {
 
-                // If the ALT key is pressed, then preserve the center of the extent.
-                if (center) position = Math.max(r0, Math.min(r1, 2 * center[i] - min));
+                    // If the ALT key is pressed, then preserve the center of the extent.
+                    if (center) position = Math.max(r0, Math.min(r1, 2 * center[i] - min));
 
-                // Compute the min and max of the position and point.
-                if (position < min) {
-                max = min;
-                min = position;
-                } else {
-                max = position;
-                }
+                    // Compute the min and max of the position and point.
+                    if (position < min) {
+                        max = min;
+                        min = position;
+                    } else {
+                        max = position;
+                    }
                 }
 
                 // Update the stored bounds.
                 if (extent[0] != min || extent[1] != max) {
-                if (i) yExtentDomain = null;
-                else xExtentDomain = null;
-                extent[0] = min;
-                extent[1] = max;
-                return true;
+                    if (i) yExtentDomain = null;
+                    else xExtentDomain = null;
+                    extent[0] = min;
+                    extent[1] = max;
+                    return true;
                 }
             }
 
@@ -1948,42 +1988,34 @@
                 brushmove();
 
                 // reset the cursor styles
-                g.style("pointer-events", "all").selectAll(".resize").style("display", brush.empty() ? "none" : null);
                 d3.select("body").style("cursor", null);
 
-                w .on("mousemove.brush", null)
-                .on("mouseup.brush", null)
-                .on("touchmove.brush", null)
-                .on("touchend.brush", null)
-                .on("keydown.brush", null)
-                .on("keyup.brush", null);
+                w.on("mousemove.brush", null)
+                    .on("mouseup.brush", null)
+                    .on("touchmove.brush", null)
+                    .on("touchend.brush", null)
+                    .on("keydown.brush", null)
+                    .on("keyup.brush", null);
 
-                dragRestore();
-                event_({type: "brushend"});
+                event.brushend.call(ctx, {type: "brushend"});
             }
         }
 
-        brush.draw = function (_) {
-            if (!arguments.length) return draw_;
-            draw_ = d3_functor(_);
+        brush.draw_sn = function (_) {
+            if (!arguments.length) return draw_sn;
+            draw_sn = d3_functor(_);
             return brush;
         };
 
-        brush.extent = function (_) {
-            if (!arguments.length) return inner.extent();
-            inner.extent(_);
+        brush.draw_we = function (_) {
+            if (!arguments.length) return draw_we;
+            draw_we = d3_functor(_);
             return brush;
         };
 
-        brush.x = function(z) {
-            if (!arguments.length) return inner.x();
-            resizes = d3_svg_brushResizes[!inner.x(z).x() << 1 | !inner.y()]; // fore!
-            return brush;
-        };
-
-        brush.y = function(z) {
-            if (!arguments.length) return inner.y();
-            resizes = d3_svg_brushResizes[!inner.x() << 1 | !inner.y(z).y()]; // fore!
+        brush.fillStyle = function (_) {
+            if (!arguments.length) return fillStyle;
+            fillStyle = _;
             return brush;
         };
 
@@ -1993,21 +2025,97 @@
             return brush;
         };
 
-        brush.clamp = function(z) {
-            if (!arguments.length) return inner.clamp();
-            inner.clamp(z);
+        brush.x = function(z) {
+            if (!arguments.length) return x;
+            x = z;
+            resizes = d3_svg_brushResizes[!x << 1 | !y]; // fore!
             return brush;
         };
+
+        brush.y = function(z) {
+            if (!arguments.length) return y;
+            y = z;
+            resizes = d3_svg_brushResizes[!x << 1 | !y]; // fore!
+            return brush;
+        };
+
+        brush.clamp = function(z) {
+            if (!arguments.length) return x && y ? [xClamp, yClamp] : x ? xClamp : y ? yClamp : null;
+            if (x && y) xClamp = !!z[0], yClamp = !!z[1];
+            else if (x) xClamp = !!z;
+            else if (y) yClamp = !!z;
+            return brush;
+        };
+
+        brush.extent = function(z) {
+            var x0, x1, y0, y1, t;
+
+            // Invert the pixel extent to data-space.
+            if (!arguments.length) {
+              if (x) {
+                if (xExtentDomain) {
+                  x0 = xExtentDomain[0], x1 = xExtentDomain[1];
+                } else {
+                  x0 = xExtent[0], x1 = xExtent[1];
+                  if (x.invert) x0 = x.invert(x0), x1 = x.invert(x1);
+                  if (x1 < x0) t = x0, x0 = x1, x1 = t;
+                }
+              }
+              if (y) {
+                if (yExtentDomain) {
+                  y0 = yExtentDomain[0], y1 = yExtentDomain[1];
+                } else {
+                  y0 = yExtent[0], y1 = yExtent[1];
+                  if (y.invert) y0 = y.invert(y0), y1 = y.invert(y1);
+                  if (y1 < y0) t = y0, y0 = y1, y1 = t;
+                }
+              }
+              return x && y ? [[x0, y0], [x1, y1]] : x ? [x0, x1] : y && [y0, y1];
+            }
+
+            // Scale the data-space extent to pixels.
+            if (x) {
+              x0 = z[0], x1 = z[1];
+              if (y) x0 = x0[0], x1 = x1[0];
+              xExtentDomain = [x0, x1];
+              if (x.invert) x0 = x(x0), x1 = x(x1);
+              if (x1 < x0) t = x0, x0 = x1, x1 = t;
+              if (x0 != xExtent[0] || x1 != xExtent[1]) xExtent = [x0, x1]; // copy-on-write
+            }
+            if (y) {
+              y0 = z[0], y1 = z[1];
+              if (x) y0 = y0[1], y1 = y1[1];
+              yExtentDomain = [y0, y1];
+              if (y.invert) y0 = y(y0), y1 = y(y1);
+              if (y1 < y0) t = y0, y0 = y1, y1 = t;
+              if (y0 != yExtent[0] || y1 != yExtent[1]) yExtent = [y0, y1]; // copy-on-write
+            }
+
+            return brush;
+          };
 
         brush.clear = function() {
-            inner.clear();
+            if (!brush.empty()) {
+              xExtent = [0, 0], yExtent = [0, 0]; // copy-on-write
+              xExtentDomain = yExtentDomain = null;
+            }
             return brush;
         };
 
-        brush.empty = inner.empty;
+        brush.empty = function() {
+            return !!x && xExtent[0] == xExtent[1] || !!y && yExtent[0] == yExtent[1];
+        };
 
-        return d3.rebind(brush, inner, "on");
+        brush.draw_sn(draw_sn_).draw_we(draw_we_);
 
+        return d3.rebind(brush, event, "on");
+
+    };
+
+
+    d3.canvas.clear = function (ctx) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0 , 0, ctx.canvas.width, ctx.canvas.height);
     };
 
 
@@ -2023,8 +2131,7 @@
             ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
         }
 
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.clearRect(0 , 0, ctx.canvas.width, ctx.canvas.height);
+        d3.canvas.clear(ctx);
         return window.devicePixelRatio || 1;
     };
 
@@ -2059,6 +2166,15 @@
             return 'rgba(' + c.r + ',' + c.g + ',' + c.b + ',' + opacity + ')';
         } else
             return color;
+    };
+
+    d3.canvas.mouse = function (container) {
+        var point = d3.mouse(container);
+        if (container.getContext && window.devicePixelRatio) {
+            point[0] *= window.devicePixelRatio;
+            point[1] *= window.devicePixelRatio;
+        }
+        return point;
     };
 
     function getRoundedPoints(pts, radius) {
@@ -5101,7 +5217,7 @@
 
             brush.move = function () {
                 //
-                // loop through series and add selected class
+                // loop through series
                 chart.each(function (serie) {
                     var group = chart.axisGroup(serie),
                         brush = group ? group.brush() : null;
@@ -5183,24 +5299,26 @@
 
                         if (opts.brush.axis === 'x')
                             rect.attr("y", -6).attr("height", group.innerHeight() + 7);
+
+                        brushstart();
+                        brushmove();
+                        brushend();
                     } else {
 
+                        // Get the canvas ovrlay
                         var overlay = group.paper().canvasOverlay();
+
+                        brush.fillStyle(d3.canvas.rgba(this.fill, this.fillOpacity))
+                             .rect([group.marginLeft(), group.marginTop(),
+                                    group.innerWidth(), group.innerHeight()]);
+
 
                         brush.selectDraw = function (draw) {
                             selectDraw(draw, overlay.node().getContext('2d'));
                         };
 
-                        overlay.call(brush.draw(function (ctx) {
-                            ctx.fillStyle = d3.canvas.rgba(draw.fill, draw.fillOpacity);
-                            ctx.fill();
-                        }).rect([group.marginLeft(), group.marginTop(),
-                                 group.innerHeight(), group.innerWidth()]));
+                        overlay.call(brush);
                     }
-
-                    brushstart();
-                    brushmove();
-                    brushend();
                 }
             });
 
@@ -5221,13 +5339,19 @@
             if (opts.brush.end) opts.brush.end();
         }
 
-        function selectDraw (drawing, ctx) {
-            var x = drawing.x(),
+        function selectDraw (draw, ctx) {
+            var x = draw.x(),
                 selected = [],
                 xval,
                 s = brush.extent();
 
-            drawing.each(function () {
+            if (ctx) {
+                var group = draw.group();
+                ctx.save();
+                ctx.translate(group.marginLeft(), group.marginTop());
+            }
+
+            draw.each(function () {
                 if (this.data) {
                     xval = x(this.data);
                     if (s[0] <= xval && xval <= s[1]) {
@@ -5240,7 +5364,8 @@
                 }
             });
 
-            if (!ctx) drawing.render();
+            if (ctx) ctx.restore();
+            else draw.render();
 
             return selected;
         }
