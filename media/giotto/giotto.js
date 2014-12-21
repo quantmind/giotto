@@ -1733,7 +1733,7 @@
             xClamp = true, // whether to clamp the x-extent to the range
             yClamp = true, // whether to clamp the y-extent to the range
             resizes = d3_svg_brushResizes[0],
-            rect = [0,0,0,0],
+            rect = [0, 0, 0, 0], // specify a rectangle in the canvas where to limit the extent
             factor = window.devicePixelRatio || 1,
             p = 3*factor,
             fillStyle,
@@ -1787,7 +1787,7 @@
         function draw_we_ (ctx, ew) {
             var xv = xExtent[ew];
             ctx.beginPath();
-            ctx.rect(xv-p, rect[1], 2*p, rect[3] || ctx.canvas.height);
+            ctx.rect(xv - p + rect[0], rect[1], 2*p, rect[3] || ctx.canvas.height);
         }
 
         function Brushover () {
