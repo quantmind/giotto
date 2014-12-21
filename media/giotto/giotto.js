@@ -1,6 +1,6 @@
 //      Giotto - v0.1.0
 
-//      Compiled 2014-12-19.
+//      Compiled 2014-12-21.
 //      Copyright (c) 2014 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -50,7 +50,7 @@
 
 
 
-    // D3 internal functions used by GiottoJS
+    // D3 internal functions used by GiottoJS, mainly by the canvas module
     // These are copied from d3.js
 
     function d3_identity(d) {
@@ -268,6 +268,24 @@
             [cx0 * r1 / r, cy0 * r1 / r]
         ];
     }
+
+    var d3_svg_brushCursor = {
+        n: "ns-resize",
+        e: "ew-resize",
+        s: "ns-resize",
+        w: "ew-resize",
+        nw: "nwse-resize",
+        ne: "nesw-resize",
+        se: "nwse-resize",
+        sw: "nesw-resize"
+    };
+
+    var d3_svg_brushResizes = [
+      ["n", "e", "s", "w", "nw", "ne", "se", "sw"],
+      ["e", "w"],
+      ["n", "s"],
+      []
+    ];
 
     function noop () {}
 
@@ -1704,6 +1722,403 @@
 
 
 
+    d3.canvas.brush = function() {
+        var event = d3.dispatch("brushstart", "brush", "brushend"),
+            x = null, // x-scale, optional
+            y = null, // y-scale, optional
+            xExtent = [0, 0], // [x0, x1] in integer pixels
+            yExtent = [0, 0], // [y0, y1] in integer pixels
+            xExtentDomain, // x-extent in data space
+            yExtentDomain, // y-extent in data space
+            xClamp = true, // whether to clamp the x-extent to the range
+            yClamp = true, // whether to clamp the y-extent to the range
+            resizes = d3_svg_brushResizes[0],
+            rect = [0,0,0,0],
+            factor = window.devicePixelRatio || 1,
+            p = 3*factor,
+            fillStyle,
+            draw_sn,
+            draw_we;
+
+        function brush(canvas) {
+
+            canvas.each(function () {
+                d3.select(this)
+                    .style("pointer-events", "all")
+                    .style("-webkit-tap-highlight-color", "rgba(0,0,0,0)")
+                    .on("mousedown.brush", Brushstart)
+                    .on("touchstart.brush", Brushstart)
+                    .on("mousemove.brushover", Brushover);
+                event.brushstart.call(this);
+                event.brush.call(this);
+                event.brushend.call(this);
+                brushfill(this.getContext('2d'));
+            });
+        }
+
+        function brushfill (ctx) {
+            if (fillStyle) {
+                draw(ctx);
+                ctx.fillStyle = fillStyle;
+                ctx.fill();
+            }
+        }
+
+        function draw (ctx) {
+            var x0, y0;
+
+            ctx.beginPath();
+
+            if (x & y) {
+                x0 = x(extent[0][0]);
+                y0 = y(extent[1][0]);
+            }
+            else if (x) {
+                x0 = xExtent[0];
+                ctx.rect(x0 + rect[0], rect[1], xExtent[1]-x0, rect[3] || ctx.canvas.height);
+            }
+            else if (y)
+                ctx.rect(0, extent[0][0], ctx.canvas.width, extent[0][1]-extent[0][0]);
+        }
+
+        function draw_sn_ (ctx, sn) {
+        }
+
+        function draw_we_ (ctx, ew) {
+            var xv = xExtent[ew];
+            ctx.beginPath();
+            ctx.rect(xv-p, rect[1], 2*p, rect[3] || ctx.canvas.height);
+        }
+
+        function Brushover () {
+            var canvas = d3.select(this),
+                ctx = this.getContext('2d'),
+                origin = d3.canvas.mouse(this),
+                xp = origin[0],
+                yp = origin[1],
+                resize = '';
+
+            if (y) {
+                draw_sn(ctx, 0);
+                if (ctx.isPointInPath(xp, yp)) resize = 's';
+                else {
+                    draw_sn(ctx, 1);
+                    if (ctx.isPointInPath(xp, yp)) resize = 'n';
+                }
+            }
+            if (x) {
+                draw_we(ctx, 0);
+                if (ctx.isPointInPath(xp, yp)) resize += 'w';
+                else {
+                    draw_we_(ctx, 1);
+                    if (ctx.isPointInPath(xp, yp)) resize += 'e';
+                }
+            }
+            draw(ctx);
+            if (resize) {
+                canvas.style('cursor', d3_svg_brushCursor[resize])
+                    .datum(resize).classed('extent', false);
+            } else {
+                if (ctx.isPointInPath(xp, yp))
+                    canvas.style('cursor', 'move').classed('extent', true).datum('');
+                else
+                    canvas.style('cursor', 'crosshair').classed('extent', false).datum('');
+            }
+        }
+
+        function Brushstart() {
+            var target = this,
+                ctx = target.getContext('2d'),
+                origin = d3.canvas.mouse(target),
+                //event_ = event.of(target, arguments),
+                canvas = d3.select(target),
+                resizing = canvas.datum(),
+                resizingX = !/^(n|s)$/.test(resizing) && x,
+                resizingY = !/^(e|w)$/.test(resizing) && y,
+                dragging = canvas.classed("extent"),
+                center,
+                offset;
+
+            var w = d3.select(window)
+                .on("keydown.brush", keydown)
+                .on("keyup.brush", keyup);
+
+            if (d3.event.changedTouches) {
+                w.on("touchmove.brush", brushmove).on("touchend.brush", brushend);
+            } else {
+                w.on("mousemove.brush", brushmove).on("mouseup.brush", brushend);
+            }
+
+            // Interrupt the transition, if any.
+            canvas.interrupt().selectAll("*").interrupt();
+
+            // If the extent was clicked on, drag rather than brush;
+            // store the point between the mouse and extent origin instead.
+            if (dragging) {
+                origin[0] = xExtent[0] - origin[0];
+                origin[1] = yExtent[0] - origin[1];
+            }
+
+            // If a resizer was clicked on, record which side is to be resized.
+            // Also, set the origin to the opposite side.
+            else if (resizing) {
+                var ex = +/w$/.test(resizing),
+                ey = +/^n/.test(resizing);
+                offset = [xExtent[1 - ex] - origin[0], yExtent[1 - ey] - origin[1]];
+                origin[0] = xExtent[ex];
+                origin[1] = yExtent[ey];
+            }
+
+            // If the ALT key is down when starting a brush, the center is at the mouse.
+            else if (d3.event.altKey) center = origin.slice();
+
+            // Propagate the active cursor to the body for the drag duration.
+            d3.select("body").style("cursor", canvas.style("cursor"));
+
+            // Notify listeners.
+            event.brushstart({type: "brushstart"});
+
+            brushmove();
+
+            function keydown() {
+                if (d3.event.keyCode == 32) {
+                    if (!dragging) {
+                        center = null;
+                        origin[0] -= xExtent[1];
+                        origin[1] -= yExtent[1];
+                        dragging = 2;
+                    }
+                    d3.event.preventDefault();
+                }
+            }
+
+            function keyup() {
+                if (d3.event.keyCode == 32 && dragging == 2) {
+                    origin[0] += xExtent[1];
+                    origin[1] += yExtent[1];
+                    dragging = 0;
+                    d3.event.preventDefault();
+                }
+            }
+
+            function brushmove() {
+                var point = d3.canvas.mouse(target);
+
+                d3.canvas.clear(ctx);
+
+                // Preserve the offset for thick resizers.
+                if (offset) {
+                    point[0] += offset[0];
+                    point[1] += offset[1];
+                }
+
+                if (!dragging) {
+
+                    // If needed, determine the center from the current extent.
+                    if (d3.event.altKey) {
+                        if (!center) center = [(xExtent[0] + xExtent[1]) / 2, (yExtent[0] + yExtent[1]) / 2];
+
+                        // Update the origin, for when the ALT key is released.
+                        origin[0] = xExtent[+(point[0] < center[0])];
+                        origin[1] = yExtent[+(point[1] < center[1])];
+                    }
+
+                    // When the ALT key is released, we clear the center.
+                    else center = null;
+                }
+
+                var ev = {type: "brush"};
+
+                // Final redraw and notify listeners.
+                if ((resizingX && move1(point, x, 0)) ||
+                    (resizingY && move1(point, y, 1)))
+                    ev.mode = dragging ? "move" : "resize";
+
+                event.brush.call(ctx, {type: "brush", mode: dragging ? "move" : "resize"});
+                brushfill(ctx);
+            }
+
+            function move1(point, scale, i) {
+                var range = d3_scaleRange(scale),
+                    r0 = range[0],
+                    r1 = range[1],
+                    position = origin[i],
+                    extent = i ? yExtent : xExtent,
+                    size = extent[1] - extent[0],
+                    min,
+                    max;
+
+                // When dragging, reduce the range by the extent size and position.
+                if (dragging) {
+                    r0 -= position;
+                    r1 -= size + position;
+                }
+
+                // Clamp the point (unless clamp set to false) so that the extent fits within the range extent.
+                min = (i ? yClamp : xClamp) ? Math.max(r0, Math.min(r1, point[i])) : point[i];
+
+                // Compute the new extent bounds.
+                if (dragging) {
+                    max = (min += position) + size;
+                } else {
+
+                    // If the ALT key is pressed, then preserve the center of the extent.
+                    if (center) position = Math.max(r0, Math.min(r1, 2 * center[i] - min));
+
+                    // Compute the min and max of the position and point.
+                    if (position < min) {
+                        max = min;
+                        min = position;
+                    } else {
+                        max = position;
+                    }
+                }
+
+                // Update the stored bounds.
+                if (extent[0] != min || extent[1] != max) {
+                    if (i) yExtentDomain = null;
+                    else xExtentDomain = null;
+                    extent[0] = min;
+                    extent[1] = max;
+                    return true;
+                }
+            }
+
+            function brushend() {
+                brushmove();
+
+                // reset the cursor styles
+                d3.select("body").style("cursor", null);
+
+                w.on("mousemove.brush", null)
+                    .on("mouseup.brush", null)
+                    .on("touchmove.brush", null)
+                    .on("touchend.brush", null)
+                    .on("keydown.brush", null)
+                    .on("keyup.brush", null);
+
+                event.brushend.call(ctx, {type: "brushend"});
+            }
+        }
+
+        brush.draw_sn = function (_) {
+            if (!arguments.length) return draw_sn;
+            draw_sn = d3_functor(_);
+            return brush;
+        };
+
+        brush.draw_we = function (_) {
+            if (!arguments.length) return draw_we;
+            draw_we = d3_functor(_);
+            return brush;
+        };
+
+        brush.fillStyle = function (_) {
+            if (!arguments.length) return fillStyle;
+            fillStyle = _;
+            return brush;
+        };
+
+        brush.rect = function (_) {
+            if (!arguments.length) return rect;
+            rect = _;
+            return brush;
+        };
+
+        brush.x = function(z) {
+            if (!arguments.length) return x;
+            x = z;
+            resizes = d3_svg_brushResizes[!x << 1 | !y]; // fore!
+            return brush;
+        };
+
+        brush.y = function(z) {
+            if (!arguments.length) return y;
+            y = z;
+            resizes = d3_svg_brushResizes[!x << 1 | !y]; // fore!
+            return brush;
+        };
+
+        brush.clamp = function(z) {
+            if (!arguments.length) return x && y ? [xClamp, yClamp] : x ? xClamp : y ? yClamp : null;
+            if (x && y) xClamp = !!z[0], yClamp = !!z[1];
+            else if (x) xClamp = !!z;
+            else if (y) yClamp = !!z;
+            return brush;
+        };
+
+        brush.extent = function(z) {
+            var x0, x1, y0, y1, t;
+
+            // Invert the pixel extent to data-space.
+            if (!arguments.length) {
+              if (x) {
+                if (xExtentDomain) {
+                  x0 = xExtentDomain[0], x1 = xExtentDomain[1];
+                } else {
+                  x0 = xExtent[0], x1 = xExtent[1];
+                  if (x.invert) x0 = x.invert(x0), x1 = x.invert(x1);
+                  if (x1 < x0) t = x0, x0 = x1, x1 = t;
+                }
+              }
+              if (y) {
+                if (yExtentDomain) {
+                  y0 = yExtentDomain[0], y1 = yExtentDomain[1];
+                } else {
+                  y0 = yExtent[0], y1 = yExtent[1];
+                  if (y.invert) y0 = y.invert(y0), y1 = y.invert(y1);
+                  if (y1 < y0) t = y0, y0 = y1, y1 = t;
+                }
+              }
+              return x && y ? [[x0, y0], [x1, y1]] : x ? [x0, x1] : y && [y0, y1];
+            }
+
+            // Scale the data-space extent to pixels.
+            if (x) {
+              x0 = z[0], x1 = z[1];
+              if (y) x0 = x0[0], x1 = x1[0];
+              xExtentDomain = [x0, x1];
+              if (x.invert) x0 = x(x0), x1 = x(x1);
+              if (x1 < x0) t = x0, x0 = x1, x1 = t;
+              if (x0 != xExtent[0] || x1 != xExtent[1]) xExtent = [x0, x1]; // copy-on-write
+            }
+            if (y) {
+              y0 = z[0], y1 = z[1];
+              if (x) y0 = y0[1], y1 = y1[1];
+              yExtentDomain = [y0, y1];
+              if (y.invert) y0 = y(y0), y1 = y(y1);
+              if (y1 < y0) t = y0, y0 = y1, y1 = t;
+              if (y0 != yExtent[0] || y1 != yExtent[1]) yExtent = [y0, y1]; // copy-on-write
+            }
+
+            return brush;
+          };
+
+        brush.clear = function() {
+            if (!brush.empty()) {
+              xExtent = [0, 0], yExtent = [0, 0]; // copy-on-write
+              xExtentDomain = yExtentDomain = null;
+            }
+            return brush;
+        };
+
+        brush.empty = function() {
+            return !!x && xExtent[0] == xExtent[1] || !!y && yExtent[0] == yExtent[1];
+        };
+
+        brush.draw_sn(draw_sn_).draw_we(draw_we_);
+
+        return d3.rebind(brush, event, "on");
+
+    };
+
+
+    d3.canvas.clear = function (ctx) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0 , 0, ctx.canvas.width, ctx.canvas.height);
+    };
+
+
     d3.canvas.retinaScale = function(ctx, width, height){
         ctx.canvas.width = width;
         ctx.canvas.height = height;
@@ -1715,7 +2130,16 @@
             ctx.canvas.height = height * window.devicePixelRatio;
             ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
         }
+
+        d3.canvas.clear(ctx);
         return window.devicePixelRatio || 1;
+    };
+
+
+    d3.canvas.resize = function (ctx, width, height) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect (0 , 0, ctx.canvas.width, ctx.canvas.height);
+        return d3.canvas.retinaScale(ctx, width, height);
     };
 
 
@@ -1742,6 +2166,15 @@
             return 'rgba(' + c.r + ',' + c.g + ',' + c.b + ',' + opacity + ')';
         } else
             return color;
+    };
+
+    d3.canvas.mouse = function (container) {
+        var point = d3.mouse(container);
+        if (container.getContext && window.devicePixelRatio) {
+            point[0] *= window.devicePixelRatio;
+            point[1] *= window.devicePixelRatio;
+        }
+        return point;
     };
 
     function getRoundedPoints(pts, radius) {
@@ -2281,8 +2714,8 @@
             active: {
                 fill: 'darker',
                 color: 'brighter',
-                // Multiplier for size, set to 1 for no change
-                size: 1.5
+                // Multiplier for size, set to 100% for no change
+                size: '150%'
             }
         },
         bar: {
@@ -2313,8 +2746,8 @@
             active: {
                 fill: 'darker',
                 color: 'brighter',
-                innerRadius: 1,
-                outerRadius: 1.05,
+                //innerRadius: 100%,
+                //outerRadius: 105%,
                 fillOpacity: 1
             }
         },
@@ -2418,6 +2851,7 @@
         paper.clear = function () {
             paper.svg().remove();
             paper.canvas().remove();
+            paper.canvasOverlay().remove();
             p.colorIndex = 0;
             return paper;
         };
@@ -2456,6 +2890,7 @@
                 paper.each(function () {
                     this.resize(oldsize);
                 });
+                paper.canvasOverlay();
                 paper.change();
             }
             p._resizing = false;
@@ -2510,10 +2945,26 @@
         // Access the canvas container
         paper.canvas = function (build) {
             var canvas = paper.element().select('div.canvas-container');
-            if (!canvas.node() && build)
+            if (!canvas.node() && build) {
                 canvas = paper.element().append('div')
                                 .attr('class', 'canvas-container')
                                 .style('position', 'relative');
+            }
+            return canvas;
+        };
+
+        paper.canvasOverlay = function () {
+            var canvas = paper.element().select('.canvas-overlay'),
+                node = canvas.node();
+
+            if (!node && paper.canvas().node()) {
+                canvas = paper.element().append('canvas')
+                                .attr('class', 'canvas-overlay')
+                                .style({'position': 'absolute', "top": "0", "left": "0"});
+                node = canvas.node();
+                d3.canvas.retinaScale(node.getContext('2d'), p.size[0], p.size[1]);
+            } else if (node)
+                d3.canvas.resize(node.getContext('2d'), p.size[0], p.size[1]);
             return canvas;
         };
 
@@ -2631,6 +3082,7 @@
     g.group = function (paper, element, p, _) {
         var drawings = [],
             factor = 1,
+            rendering = false,
             type = p.type,
             d3v = d3[type],
             xaxis = d3v.axis(),
@@ -2697,6 +3149,22 @@
             return group.innerHeight()/group.innerWidth();
         };
 
+        group.marginLeft = function () {
+            return factor*p.margin.left;
+        };
+
+        group.marginRight = function () {
+            return factor*p.margin.right;
+        };
+
+        group.marginTop = function () {
+            return factor*p.margin.top;
+        };
+
+        group.marginBottom = function () {
+            return factor*p.margin.bottom;
+        };
+
         group.add = function (draw) {
             if (isFunction(draw)) draw = drawing(group, draw);
             drawings.push(draw);
@@ -2710,9 +3178,16 @@
         };
 
         group.render = function () {
+            if (rendering) return;
+            rendering = true;
             for (var i=0; i<drawings.length; ++i)
                 drawings[i].render();
+            rendering = false;
             return group;
+        };
+
+        group.rendering = function () {
+            return rendering;
         };
 
         // remove all drawings or a drawing by name
@@ -2962,7 +3437,7 @@
 
         draw.render = function () {
             if (renderer)
-                return renderer.call(draw);
+                return renderer.apply(draw);
         };
 
         draw.group = function () {
@@ -2988,6 +3463,7 @@
                 });
             else
                 callback.call(draw);
+            return draw;
         };
 
         draw.renderer = function (_) {
@@ -3106,8 +3582,8 @@
                 parameters.forEach(function (name) {
                     v = a[name];
                     if (v) {
-                        if (multiplyOptions.indexOf(name) > -1)
-                            v *= values[name];
+                        if (typeof v === 'string' && v.substring(v.length-1) === '%')
+                            v = 0.01 * v.substring(0,v.length-1) * values[name];
                         d[name] = v;
                     }
                 });
@@ -3213,8 +3689,6 @@
         pointOptions = extendArray(['size', 'symbol'], drawingOptions),
 
         pieOptions = extendArray(['innerRadius', 'outerRadius'], drawingOptions),
-
-        multiplyOptions = ['lineWidth', 'size', 'innerRadius', 'outerRadius'],
 
         default_size = function (d) {
             return d.size;
@@ -3595,6 +4069,12 @@
             }
         };
 
+        // Return the giotto group which manage the axis for a serie
+        chart.axisGroup = function (serie) {
+            if (serie && serie.axisgroup)
+                return chart.paper().select('.' + axisGroupId(serie.axisgroup));
+        };
+
 
         chart.on('tick.main', function () {
             // Chart don't need ticking unless explicitly required (real time updates for example)
@@ -3732,8 +4212,11 @@
                 stype;
 
             // Is this the reference serie for its axisgroup?
-            group.element().classed('chart' + chart.uid(), true)
-                           .classed('reference' + chart.uid(), serie.reference);
+            group.element().classed('chart' + chart.uid(), true);
+
+            if (serie.reference)
+                group.element().classed('reference' + chart.uid(), true)
+                               .classed(axisGroupId(serie.axisgroup), true);
 
             // Draw X axis or set the scale of the reference X-axis
             if (serie.drawXaxis)
@@ -3776,6 +4259,10 @@
                 axis.scale(p.scale);
             }
 
+        }
+
+        function axisGroupId (axisgroup) {
+            return 'axisgroup' + chart.uid() + '-' + axisgroup;
         }
 
     });
@@ -4707,148 +5194,184 @@
             fill: '#000',
             fillOpacity: 0.125
         },
-
-        svg: function (paper, opts) {
-            var cid, brush;
-
-            paper.brush = function () {
-                return brush;
-            };
-
-            // get/set the extent for the brush
-            // When set, it re-renders in the paper
-            paper.extent = function (x) {
-                if (!arguments.length) return brush ? brush.extent() : null;
-                if (brush) {
-                    brush.extent(x);
-                    paper.render(cid);
-                }
-            };
-
-            // Add a brush to the paper if not already available
-            paper.addBrush = function (options) {
-                if (cid) return paper;
-
-                if (_.isObject(options))
-                    extend(opts.brush, options);
-
-                brush = d3.svg.brush()
-                                .on("brushstart", brushstart)
-                                .on("brush", brushmove)
-                                .on("brushend", brushend);
-
-                var b = paperData(paper, opts.brush, {}).reset();
-
-                cid = paper.addComponent(b, function () {
-                    if (!brush) return;
-
-                    var current = paper.root().current(),
-                        gBrush = current.select('g.brush');
-
-                    if (opts.brush.axis === 'x') brush.x(paper.xAxis().scale());
-
-                    if (!gBrush.node()) {
-                        if (opts.brush.extent)
-                            brush.extent(opts.brush.extent);
-                        gBrush = current.append('g');
-                    }
-
-                    var rect = gBrush.call(brush).selectAll("rect")
-                                                .attr('fill', b.fill)
-                                                .attr('fill-opacity', b.fillOpacity);
-
-                    if (opts.brush.axis === 'x') {
-                        gBrush.attr("class", "brush x-brush");
-                        rect.attr("y", -6).attr("height", paper.innerHeight() + 7);
-                    }
-
-                    brushstart();
-                    brushmove();
-                    brushend();
-                });
-
-                return brush;
-            };
-
-            paper.removeBrush = function () {
-                cid = paper.removeComponent(cid);
-                paper.root().current().select('g.brush').remove();
-                brush = null;
-            };
-
-            function brushstart () {
-                paper.root().current().classed('selecting', true);
-                if (opts.brush.start) opts.brush.start();
-            }
-
-            function brushmove () {
-                if (opts.brush.move) opts.brush.move();
-            }
-
-            function brushend () {
-                paper.root().current().classed('selecting', false);
-                if (opts.brush.end) opts.brush.end();
-            }
-        },
-
-        canvas: function (paper, opts) {
-        }
+        svg: brushplugin,
+        canvas: brushplugin
     });
 
-    //
     //  Add brush functionality to charts
     g.viz.chart.plugin(function (chart, opts) {
-        var dimension,
-            brush, brushopts;
+        var brush, brushopts;
 
-        if (opts.brush && opts.brush.axis) {
+        // Show grid
+        chart.addBrush = function () {
+
             brush = opts.brush;
-            if (!isObject(brush)) brush = {};
-            brushopts = extend({}, brush);
 
-            brushopts.start = function () {
-                if (brush.start) brush.start(chart);
+            var start = brush.start,
+                move = brush.move,
+                end = brush.end;
+
+            brush.start = function () {
+                if (start) start(chart);
             };
 
-            brushopts.move = function () {
+            brush.move = function () {
                 //
-                // loop through series and add selected class
+                // loop through series
                 chart.each(function (serie) {
-                    var brush = chart.paper().brush(),
-                        s = brush.extent();
+                    var group = chart.axisGroup(serie),
+                        brush = group ? group.brush() : null;
 
-                    if (serie.point.chart)
-                        serie.point.chart.selectAll('.point')
-                            .classed("selected", function(d) {
-                                return s[0] <= d.x && d.x <= s[1];
-                            });
-                    if (serie.bar.chart)
-                        serie.bar.chart.selectAll('.bar')
-                            .classed("selected", function(d) {
-                                return s[0] <= d.x && d.x <= s[1];
-                            });
+                    if (!brush) return;
+
+                    if (serie.point)
+                        brush.selectDraw(serie.point);
+                    if (serie.bar)
+                        brush.selectDraw(serie.bar);
                 });
-                if (brush.move) brush.move(chart);
+                if (move) move(chart);
             };
 
-            brushopts.end = function () {
-                if (brush.end) brush.end(chart);
+            brush.end = function () {
+                if (end) end(chart);
             };
-        }
 
-        chart.dimension = function (x) {
-            init();
-            if (!arguments.length) return dimension;
-            dimension = x;
+            chart.paper().each('.reference' + chart.uid(), function () {
+                this.addBrush(brushopts).render();
+            });
             return chart;
         };
 
         chart.on('tick.brush', function () {
-            if (brushopts)
-                chart.paper().addBrush(brushopts);
+            if (opts.brush && opts.brush.axis)
+                chart.addBrush();
         });
 
     });
+
+
+    function brushplugin (group, opts) {
+        var brush, brushDrawing;
+
+        group.brush = function () {
+            return brush;
+        };
+
+        // Add a brush to the paper if not already available
+        group.addBrush = function (options) {
+            if (brushDrawing) return brushDrawing;
+            extend(opts.brush, options);
+
+            brushDrawing = group.add(function () {
+                var draw = this;
+
+                if (!brush) {
+                    var type = group.type(),
+                        x, y;
+
+                    brush = d3[type].brush()
+                            .on("brushstart", brushstart)
+                            .on("brush", brushmove)
+                            .on("brushend", brushend);
+
+                    if (opts.brush.axis === 'x' || opts.brush.axis === 'xy') {
+                        x = true;
+                        brush.x(group.xaxis().scale());
+                    }
+
+                    if (opts.brush.axis === 'y' || opts.brush.axis === 'xy') {
+                        y = true;
+                        brush.y(group.yaxis().scale());
+                    }
+
+                    if (opts.brush.extent) brush.extent(opts.brush.extent);
+
+                    if (type === 'svg') {
+                        brush.selectDraw = selectDraw;
+                        var gb = group.element().select('.brush');
+
+                        if (!gb.node())
+                            gb = group.element().append('g').classed('brush', true);
+
+                        var rect = gb.call(brush).selectAll("rect");
+
+                        this.setBackground(rect);
+
+                        if (opts.brush.axis === 'x')
+                            rect.attr("y", -6).attr("height", group.innerHeight() + 7);
+
+                        brushstart();
+                        brushmove();
+                        brushend();
+                    } else {
+
+                        // Get the canvas ovrlay
+                        var overlay = group.paper().canvasOverlay();
+
+                        brush.fillStyle(d3.canvas.rgba(this.fill, this.fillOpacity))
+                             .rect([group.marginLeft(), group.marginTop(),
+                                    group.innerWidth(), group.innerHeight()]);
+
+
+                        brush.selectDraw = function (draw) {
+                            selectDraw(draw, overlay.node().getContext('2d'));
+                        };
+
+                        overlay.call(brush);
+                    }
+                }
+            });
+
+            return brushDrawing.options(opts.brush);
+        };
+
+        function brushstart () {
+            group.element().classed('selecting', true);
+            if (opts.brush.start) opts.brush.start();
+        }
+
+        function brushmove () {
+            if (opts.brush.move) opts.brush.move();
+        }
+
+        function brushend () {
+            group.element().classed('selecting', false);
+            if (opts.brush.end) opts.brush.end();
+        }
+
+        function selectDraw (draw, ctx) {
+            var x = draw.x(),
+                selected = [],
+                xval,
+                s = brush.extent();
+
+            if (ctx) {
+                var group = draw.group();
+                ctx.save();
+                ctx.translate(group.marginLeft(), group.marginTop());
+            }
+
+            draw.each(function () {
+                if (this.data) {
+                    xval = x(this.data);
+                    if (s[0] <= xval && xval <= s[1]) {
+                        this.highLight();
+                        if (ctx) this.render(ctx);
+                        selected.push(this);
+                    }
+                    else
+                        this.reset();
+                }
+            });
+
+            if (ctx) ctx.restore();
+            else draw.render();
+
+            return selected;
+        }
+    }
+
+
 
     g.viz.force.plugin(function (force, opts) {
         g._.copyMissing({collidePadding: 0.002, collideBuffer: 0.02}, opts);
@@ -6182,12 +6705,16 @@
         d.render = function (context) {
             context = context || ctx;
             context.save();
-            context.fillStyle = rgba(d.fill, d.fillOpacity);
-            context.strokeStyle = rgba(d.color, d.colorOpacity);
-            context.lineWidth = factor*d.lineWidth;
             _draw(context);
-            context.fill();
-            context.stroke();
+            if (d.fill) {
+                context.fillStyle = rgba(d.fill, d.fillOpacity);
+                context.fill();
+            }
+            if (d.color && d.lineWidth) {
+                context.strokeStyle = rgba(d.color, d.colorOpacity);
+                context.lineWidth = factor*d.lineWidth;
+                context.stroke();
+            }
             context.restore();
             return d;
         };
@@ -6366,7 +6893,7 @@
         p.size = [width, height];
         p.giotto = 'giotto-group';
 
-        p.__paper__ = element;
+        p.__paper__ = d3.select(element).style('position', 'relative').node();
 
         return p;
     }

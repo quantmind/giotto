@@ -1,29 +1,29 @@
 <!DOCTYPE html>
 <html data-debug='false' lang='en' prefix='og: http://ogp.me/ns#'>
 <head>
-<title>Zooming</title>
+<title>Horizontal Brush</title>
 <meta charset='utf-8'>
 <meta content='IE=edge' http-equiv='X-UA-Compatible'>
 <meta content='width=device-width, initial-scale=1' name='viewport'>
-<meta content='Zooming on SVG and Canvas with GiottoJS using d3js behavour zoom' name='description'>
+<meta content='GiottoJS supports horizontal brush for both canvas and svg charts' name='description'>
 <meta content='Luca Sbardella' name='author'>
 <meta content='website' property='og:type'>
-<meta content='http://giottojs.org/examples/zooming' property='og:url'>
-<meta content='Zooming' property='og:title'>
-<meta content='Zooming on SVG and Canvas with GiottoJS using d3js behavour zoom' property='og:description'>
-<meta content='http://giottojs.org/examples/zooming.png' property='og:image'>
+<meta content='http://giottojs.org/examples/horizontalbrush' property='og:url'>
+<meta content='Horizontal Brush' property='og:title'>
+<meta content='GiottoJS supports horizontal brush for both canvas and svg charts' property='og:description'>
+<meta content='http://giottojs.org/examples/horizontalbrush.png' property='og:image'>
 <meta content='summary_large_image' name='twitter:card'>
 <meta content='@quantmind' name='twitter:site'>
-<meta content='Zooming' name='twitter:title'>
-<meta content='Zooming on SVG and Canvas with GiottoJS using d3js behavour zoom' name='twitter:description'>
-<meta content='http://giottojs.org/examples/zooming.png' name='twitter:image'>
+<meta content='Horizontal Brush' name='twitter:title'>
+<meta content='GiottoJS supports horizontal brush for both canvas and svg charts' name='twitter:description'>
+<meta content='http://giottojs.org/examples/horizontalbrush.png' name='twitter:image'>
 <link href='http://giottojs.org/media/giottoweb/favicon.ico' rel='icon' type='image/x-icon'>
 <link href='//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css' rel='stylesheet' type='text/css'>
 <link href='//netdna.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css' rel='stylesheet' type='text/css'>
 <link href='http://giottojs.org/media/giotto/giotto.css' rel='stylesheet' type='text/css'>
 <link href='http://giottojs.org/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var lux = {context: {"navbar": {"collapseWidth": 768}, "year": 2014, "apiUrls": {}, "lux_version": "0.1.2-alpha.1", "dateFormat": "d MMM y", "google": {"analytics": {"ga": "ga", "id": "UA-54439804-4"}}, "oauths": null, "page": {"date": "2014-12-18T00:00:00", "modified": "2014-12-18T17:55:56", "name": "zooming", "image": "http://giottojs.org/examples/zooming.png", "slug": "zooming", "content_type": "text/html", "description": "Zooming on SVG and Canvas with GiottoJS using d3js behavour zoom", "api_url": "http://giottojs.org/ng/examples/zooming.json", "title": "Zooming", "html_url": "http://giottojs.org/examples/zooming", "author": ["Luca Sbardella"]}, "datetimeFormat": "d MMM y, h:mm:ss a", "html5mode": true, "brand": "Lux", "date": "2014-12-21T16-29-56", "ngModules": ["lux.google", "highlight", "lux.blog"], "name": "Lux", "media": "/media", "url": "http://giottojs.org", "python_version": "3.4.2"}};
+var lux = {context: {"navbar": {"collapseWidth": 768}, "year": 2014, "apiUrls": {}, "lux_version": "0.1.2-alpha.1", "dateFormat": "d MMM y", "google": {"analytics": {"ga": "ga", "id": "UA-54439804-4"}}, "oauths": null, "page": {"date": "2014-12-21T00:00:00", "modified": "2014-12-21T16:28:30", "name": "horizontalbrush", "image": "http://giottojs.org/examples/horizontalbrush.png", "slug": "horizontalbrush", "content_type": "text/html", "description": "GiottoJS supports horizontal brush for both canvas and svg charts", "api_url": "http://giottojs.org/ng/examples/horizontalbrush.json", "title": "Horizontal Brush", "html_url": "http://giottojs.org/examples/horizontalbrush", "author": ["Luca Sbardella"]}, "datetimeFormat": "d MMM y, h:mm:ss a", "html5mode": true, "brand": "Lux", "date": "2014-12-21T16-29-56", "ngModules": ["lux.google", "highlight", "lux.blog"], "name": "Lux", "media": "/media", "url": "http://giottojs.org", "python_version": "3.4.2"}};
 </script>
 <script type='text/javascript'>
 lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
@@ -52,40 +52,48 @@ var require = {"minify": true, "paths": {}, "deps": ["http://giottojs.org/media/
 <div class="row">
 <div class="col-sm-12" data-highlight>
 <div class="page-header">
-<h2>Zooming</h2>
+<h2>Horizontal Brush</h2>
 </div>
 <div style="width: 100px" class="center-block"><lux-form data-options='luxforms.typeform_XlYUc'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.typeform_XlYUc = {"children": [{"children": [{"field": {"options": ["svg", "canvas"], "type": "select", "value": "svg", "name": "type", "required": true}}], "field": {"type": "fieldset"}}], "field": {"model": "TypeForm", "showLabels": false, "id": "typeform_XlYUc", "type": "form"}};</script></lux-form></div>
 
-<div data-options='gexamples.zooming1' style="max-width: 600px" class="center-block" giotto-chart></div>
+<div data-options='gexamples.brush1' style='width: 90%;' class="center-block" giotto-chart></div>
 
-<p>GiottoJS charts can zoom along the x and y coordinates by simply enabling it
-in the grid parameter as shown below.</p>
-<p>Under the hood, it uses <code>d3.behaviour.zoom</code> from <a href="http://d3js.org/" title="d3">d3</a> for both canvas and svg.</p>
+<p>GiottoJS extends <a href="http://d3js.org/" title="d3">d3</a> support for brushes to the canvas element using a similar API.
+This example uses the <code>brush</code> plugin for charts. Under the hood, brush support for canvas is implemented in the
+<code>d3.canvas.brush</code> function.</p>
 <p>Html:</p>
-<pre><code>&lt;div data-options='gexamples.zooming1' style="max-width: 600px" class="center-block" giotto-chart&gt;&lt;/div&gt;
+<pre><code>&lt;div data-options='gexamples.brush1' style='width: 90%;' class="center-block" giotto-chart&gt;&lt;/div&gt;
 </code></pre>
 <h3>Javascript code</h3>
-<pre><code>gexamples.zooming1 = {
+<pre><code>gexamples.brush1 = {
+    height: '20%',
 
-    height: '70%',
-    tooltip: {show: true},
-    grid: {
-        show: true,
-        zoomx: true
+    yaxis: {
+        min: 0,
+        max: 1
     },
 
-    point: {show: true},
-    line: {show: true},
+    point: {
+        show: true,
+        color: '#fff',
+        fill: '#6baed6',
+        lineWidth: 1,
+        active: {
+            size: '100%',
+            color: '#333'
+        }
+    },
+
+    brush: {
+        axis: 'x',
+        extent: [0.4, 0.6],
+        fillOpacity: 0.2
+    },
 
     data: function (chart) {
-        var X = d3.range(-5, 5, 0.1);
-
-        return [chart.xyfunction(X, function (x) {
-                    return 1/(1+Math.exp(-x));
-                }),
-                chart.xyfunction(X, function (x) {
-                    var d = 1/(1+Math.exp(-x));
-                    return d*(1 - d);
+        var norm = d3.random.normal(0.5, 0.1);
+        return [d3.range(800).map(function () {
+                    return [Math.random(), norm()];
                 })];
     },
 
@@ -107,27 +115,35 @@ in the grid parameter as shown below.</p>
 </div>
 <script>
 
-    gexamples.zooming1 = {
+    gexamples.brush1 = {
+        height: '20%',
 
-        height: '70%',
-        tooltip: {show: true},
-        grid: {
-            show: true,
-            zoomx: true
+        yaxis: {
+            min: 0,
+            max: 1
         },
 
-        point: {show: true},
-        line: {show: true},
+        point: {
+            show: true,
+            color: '#fff',
+            fill: '#6baed6',
+            lineWidth: 1,
+            active: {
+                size: '100%',
+                color: '#333'
+            }
+        },
+
+        brush: {
+            axis: 'x',
+            extent: [0.4, 0.6],
+            fillOpacity: 0.2
+        },
 
         data: function (chart) {
-            var X = d3.range(-5, 5, 0.1);
-
-            return [chart.xyfunction(X, function (x) {
-                        return 1/(1+Math.exp(-x));
-                    }),
-                    chart.xyfunction(X, function (x) {
-                        var d = 1/(1+Math.exp(-x));
-                        return d*(1 - d);
+            var norm = d3.random.normal(0.5, 0.1);
+            return [d3.range(800).map(function () {
+                        return [Math.random(), norm()];
                     })];
         },
 
@@ -142,6 +158,7 @@ in the grid parameter as shown below.</p>
             });
         }
     };
+
 </script>
 <div id="footer">
 <div class="container">
