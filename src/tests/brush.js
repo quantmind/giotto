@@ -4,14 +4,15 @@
             _ = g._;
 
         it("Check defaults", function() {
-            var defaults = g.defaults.paper.brush
+            var defaults = g.defaults.paper.brush;
             expect(_.isObject(defaults)).toBe(true);
-            expect(defaults.axis).toBe('x');
-            expect(defaults.opacity).toBe(0.125);
+            expect(defaults.axis).toBe(null);
+            expect(defaults.fiilOpacity).toBe(0.125);
         });
 
         it("Check basic properties", function () {
-            var p = g.paper();
+            var p = g.paper(),
+                group = p.group();
 
             expect(p.type()).toBe('svg');
             var brush = p.addBrush();

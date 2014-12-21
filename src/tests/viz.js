@@ -1,8 +1,9 @@
     //
     describe("Test visualization base class", function() {
         var g = d3.giotto,
-            _ = g._
-            g.createviz('dummy');
+            _ = g._;
+
+        g.createviz('dummy');
 
         it("Check basic properties", function() {
             var v = g.viz.dummy();

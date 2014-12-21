@@ -4,7 +4,7 @@
             _ = g._;
 
         it("Api", function() {
-            var menu = g.rightmenu;
+            var menu = g.contextmenu;
 
             expect(_.isObject(menu)).toBe(true);
             expect(menu.disabled()).toBe(false);

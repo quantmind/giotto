@@ -1,25 +1,25 @@
-    function testPaper (type) {
+    function testGroup (type) {
 
         var g = d3.giotto,
+            paper = g.paper(),
             _ = g._;
 
-        function paper (opts) {
+        function group (opts) {
             opts || (opts = {});
             opts.type = type;
-            return g.paper(opts);
+            return paper.group(opts);
         }
 
         it("Axis", function () {
-            var p = paper(),
-                xaxis = p.xAxis(),
-                yaxis = p.yAxis();
+            var group = group(),
+                xaxis = group.xaxis(),
+                yaxis = group.yaxis();
 
             expect(_.isFunction(xaxis.scale())).toBe(true);
             expect(xaxis.orient()).toBe('bottom');
             expect(yaxis.orient()).toBe('left');
             expect(p.scaley(0)).toBe(p.innerHeight());
             expect(p.scaley(1)).toBe(0);
-            expect(p.yaxis(2).yAxis().orient()).toBe('right');
         });
 
         it("Check axis linear scale", function () {
@@ -167,5 +167,5 @@
             expect(paper.factor(2*factor).factor()).toBe(2*factor);
         });
 
-        testPaper('canvas');
+        testGroup('canvas');
     });

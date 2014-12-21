@@ -49,7 +49,7 @@
             o = {bla: {foo: 5}, key: {bla: 5, a: 'c'}};
             var b = {bla: 6, key: {bla: 7, b: 'd'}, c: {a: 'hello'}};
             _.extend(true, o, b);
-            expect(_.size(o), 3)
+            expect(_.size(o), 3);
             expect(o.bla).toBe(6);
             expect(o.key.bla).toBe(7);
             expect(o.key.a).toBe('c');

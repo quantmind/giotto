@@ -137,13 +137,14 @@ module.exports = function (grunt) {
     grunt.registerTask('all', 'Compile lint and test all libraries',
             ['build', 'jasmine']);
     grunt.registerTask('default', ['build', 'jasmine:test']);
-    //
+
+
     for_each(libs, function (name) {
-        var tasks = ['concat:' + name, 'jshint:' + name];
-        if (this.minify !== false)
-            tasks.push('uglify:' + name);
+        var tasks = [];
+        if (concats[name]) tasks.push('concat:' + name);
+        tasks.push('jshint:' + name);
+        if (this.minify !== false) tasks.push('uglify:' + name);
         //
-        grunt.registerTask(name,
-            'Compile & lint "' + name + '" library into ' + this.dest, tasks);
+        grunt.registerTask(name, tasks.join(', '), tasks);
     });
 };

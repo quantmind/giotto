@@ -4,7 +4,7 @@
             _ = g._;
 
         it("Check defaults", function() {
-            var defaults = g.defaults.paper.zoom
+            var defaults = g.defaults.paper.zoom;
             expect(_.isObject(defaults)).toBe(true);
             expect(defaults.x).toBe(true);
             expect(defaults.y).toBe(true);

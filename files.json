@@ -28,6 +28,11 @@
         "minify": false
     },
     "examples": {
-        "src": ["examples/*/*.js"]
+        "src": ["examples/*/*.js"],
+        "minify": false
+    },
+    "tests": {
+        "src": ["src/tests/*.js"],
+        "minify": false
     }
 }

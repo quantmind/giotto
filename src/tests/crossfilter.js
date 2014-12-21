@@ -38,7 +38,7 @@
                         g0;
                     for (var j=1; j<group.length; ++j) {
                         g0 = g1;
-                        g1 = group[j]
+                        g1 = group[j];
                         expect(g1.time > g0.time).toBe(true);
                     }
                     done();
