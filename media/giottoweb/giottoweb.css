@@ -1,8 +1,8 @@
 @charset "UTF-8";
 /*
 ------------------------------------------------------------------
-Created by lux in 0.16 seconds
-Date: 2014-12-21 16:48:20
+Created by lux in 0.09 seconds
+Date: 2014-12-22 10:36:59
 
 http://quantmind.github.io/lux/
 ------------------------------------------------------------------ */
@@ -12,11 +12,11 @@ http://quantmind.github.io/lux/
 }
 
 .lazyContainer > .content {
-    position: absolute;
-    min-height: 100%;
     top: 0;
-    left: 0;
+    min-height: 100%;
+    position: absolute;
     width: 100%;
+    left: 0;
 }
 
 .push-bottom {
@@ -25,14 +25,14 @@ http://quantmind.github.io/lux/
 
 .hljs-comment,.hljs-title{color:#8e908c}.hljs-variable,.hljs-attribute,.hljs-tag,.hljs-regexp,.ruby .hljs-constant,.xml .hljs-tag .hljs-title,.xml .hljs-pi,.xml .hljs-doctype,.html .hljs-doctype,.css .hljs-id,.css .hljs-class,.css .hljs-pseudo{color:#c82829}.hljs-number,.hljs-preprocessor,.hljs-pragma,.hljs-built_in,.hljs-literal,.hljs-params,.hljs-constant{color:#f5871f}.ruby .hljs-class .hljs-title,.css .hljs-rules .hljs-attribute{color:#eab700}.hljs-string,.hljs-value,.hljs-inheritance,.hljs-header,.ruby .hljs-symbol,.xml .hljs-cdata{color:#718c00}.css .hljs-hexcolor{color:#3e999f}.hljs-function,.python .hljs-decorator,.python .hljs-title,.ruby .hljs-function .hljs-title,.ruby .hljs-title .hljs-keyword,.perl .hljs-sub,.javascript .hljs-title,.coffeescript .hljs-title{color:#4271ae}.hljs-keyword,.javascript .hljs-function{color:#8959a8}.hljs{display:block;overflow-x:auto;background:white;color:#4d4d4c;padding:0.5em;-webkit-text-size-adjust:none}.coffeescript .javascript,.javascript .xml,.tex .hljs-formula,.xml .javascript,.xml .vbscript,.xml .css,.xml .hljs-cdata{opacity:0.5}
 body {
+    line-height: 1.5;
     font-size: 18px;
     background: #fff;
     font-family: "freight-text-pro",Georgia,Cambria,"Times New Roman",Times,serif;
     color: rgba(0, 0, 0, 0.8);
     font-style: normal;
-    line-height: 1.5;
-    height: 100%;
     min-height: 100%;
+    height: 100%;
 }
 
 p.form-error {
@@ -58,13 +58,13 @@ p.form-error {
 
 .katex-outer {
     display: block;
-    margin-left: auto;
-    margin-bottom: 10px;
     margin-right: auto;
+    margin-bottom: 10px;
+    margin-left: auto;
     display: block;
-    margin-left: auto;
-    margin-bottom: 10px;
     margin-right: auto;
+    margin-bottom: 10px;
+    margin-left: auto;
 }
 
 code.hljs.inline {
@@ -92,20 +92,20 @@ dl.function > dt > tt.descname {
 
 dl.class dt tt.descname,
 dl.function dt tt.descname {
-    font-weight: bold;
     color: rgba(0, 0, 0, 0.8);
     font-weight: bold;
     color: rgba(0, 0, 0, 0.8);
+    font-weight: bold;
 }
 
 dl.class dt,
 dl.function dt {
-    font-weight: normal;
     font-size: 18px;
     color: #888;
     font-weight: normal;
     font-size: 18px;
     color: #888;
+    font-weight: normal;
 }
 
 [ng\:cloak],
@@ -151,9 +151,9 @@ dl.function dt {
 }
 @media all and (min-width:768px) {
     .sidebar {
+        margin-top: 51px;
         position: absolute;
         z-index: 1;
-        margin-top: 51px;
         width: 200px;
     }
 
@@ -171,8 +171,8 @@ dl.function dt {
 }
 
 .media-list > .media > a {
-    color: #808080;
     text-decoration: none;
+    color: #808080;
 }
 
 .media-list > .media > a .post-body {
@@ -185,10 +185,10 @@ dl.function dt {
 }
 
 .post-image {
-    float: left;
     max-height: 140px;
     height: auto;
     width: 140px;
+    float: left;
 }
 
 .post-image-xs {
@@ -208,9 +208,9 @@ dt:hover > a.headerlink {
 }
 
 a.headerlink {
-    color: #eee;
-    visibility: hidden;
     text-decoration: none;
+    visibility: hidden;
+    color: #eee;
     padding: 0 4px;
 }
 
@@ -241,18 +241,18 @@ table.docutils.field-list th {
 }
 
 .page-header.index-header {
-    height: 100%;
     background: #333;
+    height: 100%;
     margin: 0;
-    width: 100%;
-    color: #fff;
     min-height: 100%;
+    color: #fff;
+    width: 100%;
 }
 
 html,
 .fullpage {
-    height: 100%;
     min-height: 100%;
+    height: 100%;
 }
 
 form {
@@ -260,14 +260,14 @@ form {
 }
 
 #page-main {
-    padding-bottom: 50px;
     min-height: 400px;
+    padding-bottom: 50px;
 }
 
 #footer {
-    color: #b3b3b3;
     background: #333;
     min-height: 300px;
+    color: #b3b3b3;
     padding: 30px 0 40px;
 }
 
@@ -276,8 +276,8 @@ form {
 }
 
 .trianglify-box {
-    max-width: 400px;
     background: rgba(255, 255, 255, 0.6);
+    max-width: 400px;
     padding: 20px;
     -webkit-border-radius: 5px;
        -moz-border-radius: 5px;
@@ -300,13 +300,13 @@ form {
 
 #page-error a,
 #page-error a:hover {
-    color: #fff;
     text-decoration: underline;
+    color: #fff;
 }
 
 .error-message-container {
-    height: 100%;
     background: rgba(0, 0, 0, 0.4);
+    height: 100%;
     padding: 40px 120px;
     -webkit-box-sizing: border-box;
        -moz-box-sizing: border-box;

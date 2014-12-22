@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-<url><loc>http://giottojs.org/examples/</loc><lastmod>2014-12-21</lastmod><priority>1</priority></url>
+<url><loc>http://giottojs.org/examples/</loc><lastmod>2014-12-22</lastmod><priority>1</priority></url>
 <url><loc>http://giottojs.org/examples/barchart</loc><lastmod>2014-12-18</lastmod></url>
 <url><loc>http://giottojs.org/examples/giottologo</loc><lastmod>2014-12-18</lastmod></url>
-<url><loc>http://giottojs.org/examples/horizontalbrush</loc><lastmod>2014-12-21</lastmod></url>
+<url><loc>http://giottojs.org/examples/horizontalbrush</loc><lastmod>2014-12-22</lastmod></url>
 <url><loc>http://giottojs.org/examples/linetypes</loc><lastmod>2014-12-18</lastmod></url>
 <url><loc>http://giottojs.org/examples/simplechart</loc><lastmod>2014-12-18</lastmod></url>
 <url><loc>http://giottojs.org/examples/sunburst</loc><lastmod>2014-12-19</lastmod></url>
