@@ -26,9 +26,8 @@
         };
 
         group.dataAtPoint = function (point, elements) {
-            var factor = group.factor(),
-                x = factor*point[0],
-                y = factor*point[1],
+            var x = point[0],
+                y = point[1],
                 data;
             group.each(function () {
                 this.each(function () {

@@ -32,7 +32,7 @@
         _.points = function (group) {
             return drawing(group, function () {
                 this.each(function () {
-                    this.render();
+                    this.reset().render();
                 });
             });
         };
@@ -42,7 +42,7 @@
         // Pie chart drawing on an canvas group
         _.pie = function (draw) {
             draw.each(function () {
-                this.render();
+                this.reset().render();
             });
         };
 

@@ -66,7 +66,8 @@
 
                 var pp = group.element().select("#" + this.uid()),
                     scalex = this.scalex(),
-                    scaley = this.scaley();
+                    scaley = this.scaley(),
+                    data = this.data();
 
                 this.symbol = d3.svg.symbol().type(function (d) {return d.symbol;})
                                              .size(this.size());
@@ -78,11 +79,15 @@
                     };
                 }
 
-                pp.selectAll('*').remove();
-                _events(_draw(pp.selectAll('path')
-                        .data(this.data())
-                         .enter()
-                         .append('path')
+                var points = pp.selectAll('*');
+                if (data.length != points.length) {
+                    points.remove();
+                    points = pp.selectAll('*')
+                            .data(this.data())
+                            .enter()
+                            .append('path');
+                }
+                _events(_draw(points
                          .attr("transform", function(d) {
                              return "translate(" + scalex(d.data) + "," + scaley(d.data) + ")";
                          })

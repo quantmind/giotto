@@ -3,6 +3,7 @@
         var drawings = [],
             factor = 1,
             rendering = false,
+            resizing = false,
             type = p.type,
             d3v = d3[type],
             xaxis = d3v.axis(),
@@ -130,8 +131,14 @@
         };
 
         group.resize = function (size) {
+            resizing = true;
             _.resize(group, size);
+            resizing = false;
             return group;
+        };
+
+        group.resizing = function () {
+            return resizing;
         };
 
         // clear the group without removing drawing from memory

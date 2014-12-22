@@ -1,7 +1,5 @@
 
     gexamples.brush1 = {
-        height: '20%',
-
         yaxis: {
             min: 0,
             max: 1

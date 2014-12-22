@@ -75,31 +75,41 @@
             extend(opts.brush, options);
 
             brushDrawing = group.add(function () {
-                var draw = this;
+
+                var draw = this,
+                    type = group.type(),
+                    resizing = group.resizing();
 
                 if (!brush) {
-                    var type = group.type(),
-                        x, y;
-
+                    resizing = true;
                     brush = d3[type].brush()
                             .on("brushstart", brushstart)
                             .on("brush", brushmove)
                             .on("brushend", brushend);
 
-                    if (opts.brush.axis === 'x' || opts.brush.axis === 'xy') {
-                        x = true;
+                    if (opts.brush.axis === 'x' || opts.brush.axis === 'xy')
                         brush.x(group.xaxis().scale());
-                    }
 
-                    if (opts.brush.axis === 'y' || opts.brush.axis === 'xy') {
-                        y = true;
+                    if (opts.brush.axis === 'y' || opts.brush.axis === 'xy')
                         brush.y(group.yaxis().scale());
-                    }
 
                     if (opts.brush.extent) brush.extent(opts.brush.extent);
 
                     if (type === 'svg') {
                         brush.selectDraw = selectDraw;
+
+                    } else {
+
+                        brush.selectDraw = function (draw) {
+                            selectDraw(draw, group.paper().canvasOverlay().node().getContext('2d'));
+                        };
+                    }
+                }
+
+                if (resizing) {
+                    brush.extent(brush.extent());
+
+                    if (type === 'svg') {
                         var gb = group.element().select('.brush');
 
                         if (!gb.node())
@@ -116,22 +126,13 @@
                         brushmove();
                         brushend();
                     } else {
-
-                        // Get the canvas ovrlay
-                        var overlay = group.paper().canvasOverlay();
-
                         brush.fillStyle(d3.canvas.rgba(this.fill, this.fillOpacity))
                              .rect([group.marginLeft(), group.marginTop(),
                                     group.innerWidth(), group.innerHeight()]);
-
-
-                        brush.selectDraw = function (draw) {
-                            selectDraw(draw, overlay.node().getContext('2d'));
-                        };
-
-                        overlay.call(brush);
+                        group.paper().canvasOverlay().call(brush);
                     }
                 }
+
             });
 
             return brushDrawing.options(opts.brush);

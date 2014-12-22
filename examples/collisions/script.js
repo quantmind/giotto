@@ -22,6 +22,7 @@
             var opts = force.options(),
                 root = {fixed: true, radius: 0, x: -1, y: -1},
                 paper = force.paper(),
+                group = force.group(),
                 charge = force.charge();
 
             // Add nodes
@@ -29,7 +30,7 @@
                 var minRadius = +opts.minRadius,
                     maxRadius = +opts.maxRadius,
                     dr = maxRadius > minRadius ? maxRadius - minRadius : 0;
-                return {radius: paper.dim(Math.random() * dr + minRadius)};
+                return {radius: group.dim(Math.random() * dr + minRadius)};
             })).addNode(root);
 
             if (typeof charge !== 'function')

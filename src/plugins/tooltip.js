@@ -72,34 +72,30 @@
 
             var active = [];
 
+            var overlay = paper.canvasOverlay();
+
             opts.activeEvents.forEach(function (event) {
-                paper.canvas().on(event + '.tooltip', function () {
-                    var overlay = paper.select('.canvas-interaction-overlay'),
+
+                overlay.on(event + '.tooltip', function () {
+                    var ctx = this.getContext('2d'),
                         point, a;
 
-                    // Create the overlay if not available
-                    if (!overlay) {
-                        overlay = paper.group(opts);
-                        overlay.element().classed('canvas-interaction-overlay', true);
-                    }
-                    overlay.remove();
+                    d3.canvas.clear(ctx);
+
                     for (var i=0; i<active.length; ++i)
                         active[i].reset();
                     active = [];
 
                     if (d3.event.type === 'mouseout')
                         return;
-                    else if (d3.event.type === 'mousemove')
-                        point = d3.mouse(this);
-                    else
-                        point = d3.touches(this)[0];
+                    point = d3.canvas.mouse(this);
                     active = paper.canvasDataAtPoint(point);
 
                     //if (tip)
                     //    tip.show();
 
                     if (active.length) {
-                        var ctx = overlay.clear().context();
+
                         for (i=0; i<active.length; ++i) {
                             a = active[i];
                             a.group().transform(ctx);
@@ -108,15 +104,6 @@
                     }
                 });
             });
-
-            function tooltipEvent (ctx, p) {
-
-            }
-
-            function clearActive () {
-
-            }
-
         }
     });
 

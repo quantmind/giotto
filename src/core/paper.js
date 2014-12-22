@@ -4,7 +4,8 @@
     g.paper = function (element, p) {
 
         var paper = d3.dispatch.apply({}, extendArray(['change'], p.activeEvents)),
-            uid = ++_idCounter;
+            uid = ++_idCounter,
+            resizing = false;
 
         // Create a new group for this paper
         paper.group = function (opts) {
@@ -90,7 +91,7 @@
 
         // Resize the paper and fire the resize event if resizing was performed
         paper.resize = function (size) {
-            p._resizing = true;
+            resizing = true;
             if (!size) {
                 size = paper.boundingBox();
             }
@@ -98,13 +99,13 @@
                 var oldsize = [p.size[0], p.size[1]];
                 p.size[0] = size[0];
                 p.size[1] = size[1];
+                paper.canvasOverlay();
                 paper.each(function () {
                     this.resize(oldsize);
                 });
-                paper.canvasOverlay();
                 paper.change();
             }
-            p._resizing = false;
+            resizing = false;
         };
 
         paper.boundingBox = function () {
@@ -256,9 +257,9 @@
         if (p.resize) {
             //
             d3.select(window).on('resize.paper' + paper.uid(), function () {
-                if (!p._resizing) {
+                if (!resizing) {
                     if (p.resizeDelay) {
-                        p._resizing = true;
+                        resizing = true;
                         d3.timer(function () {
                             paper.resize();
                             return true;
