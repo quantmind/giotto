@@ -34,7 +34,15 @@ This method returns the ``drawing`` object added to the group drawing collection
 Create a new path and add it to the drawings collection. Returns the new path
 drawing object which can be act upon via the [drawing api](/api/drawing). The control
 points of the path are given in the ``data`` array which default it is assumed to
-be an array of two elements array ``[x, y]``. This can be changed by modifying the
+be an array of two elements arrays ``[x, y]``. This can be changed by modifying the
+[drawing.x()](/api/drawing#drawingxx) and [drawing.y()](/api/drawing#drawingyy)
+accessors.
+
+### # group.points(data, [opts])
+
+Create a new [drawing](/api/drawing) of points from ``data`` which by default
+it is assumed to be an array of two elements arrays ``[x, y]``.
+This can be changed by modifying the
 [drawing.x()](/api/drawing#drawingxx) and [drawing.y()](/api/drawing#drawingyy)
 accessors.
 

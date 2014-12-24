@@ -13,6 +13,11 @@
         max: null
     };
 
+    g.defaults.transition = {
+        duration: 0,
+        ease: 'easeInOutCubic'
+    };
+
     g.defaults.paper = {
         type: 'svg',
         resizeDelay: 200,
@@ -31,7 +36,8 @@
             fillOpacity: 1,
             colorOpacity: 1,
             lineWidth: 2,
-            formatY: ',g3'
+            formatY: ',g3',
+            transition: extend({}, g.defaults.transition)
         },
         point: {
             symbol: 'circle',
@@ -46,7 +52,8 @@
                 color: 'brighter',
                 // Multiplier for size, set to 100% for no change
                 size: '150%'
-            }
+            },
+            transition: extend({}, g.defaults.transition)
         },
         bar: {
             width: 'auto',
@@ -61,7 +68,8 @@
             active: {
                 fill: 'darker',
                 color: 'brighter'
-            }
+            },
+            transition: extend({}, g.defaults.transition)
         },
         pie: {
             lineWidth: 1,
@@ -79,7 +87,8 @@
                 //innerRadius: 100%,
                 //outerRadius: 105%,
                 fillOpacity: 1
-            }
+            },
+            transition: extend({}, g.defaults.transition)
         },
         font: {
             color: '#444',

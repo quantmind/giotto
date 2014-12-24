@@ -100,12 +100,18 @@
 
         // INTERNALS
 
-        function formatSerie (serie) {
-            if (!serie) return;
-            if (isArray(serie)) serie = {data: serie};
-
+        function chartSerie (data) {
             var paper = chart.paper(),
-                color, show, o;
+                serie = {},
+                color, show;
+
+            if (data && !isArray(data)) {
+                extend(serie, data);
+                data = serie.data;
+                delete serie.data;
+            } else serie = {};
+
+            if (!data) return;
 
             serie.index = series.length;
 
@@ -115,7 +121,7 @@
                 serie.label = 'serie ' + series.length;
 
             opts.chartTypes.forEach(function (type) {
-                o = serie[type];
+                var o = serie[type];
                 if (isArray(o) && !serie.data) {
                     serie.data = o;
                     o = {}; // an ampty object so that it is shown
@@ -131,17 +137,85 @@
                 serie.line = extend({}, opts.line);
 
             opts.chartTypes.forEach(function (type) {
-                o = serie[type];
+                var o = serie[type];
 
-                if (o && type !== 'pie' && !o.color) {
+                if (o && type !== 'pie') {
                     // pick a default color if one is not given
                     if (!color)
-                        color = paper.pickColor();
-                    o.color = color;
+                        color = chartColor(paper, o);
+                    if (!o.color)
+                        o.color = color;
                 }
             });
 
-            return serie;
+            if (!serie.pie) {
+                if (serie.yaxis === undefined)
+                    serie.yaxis = 1;
+                if (!serie.axisgroup) serie.axisgroup = 1;
+
+                var ranges = allranges[serie.axisgroup];
+
+                if (!ranges) {
+                    // ranges not yet available for this chart axisgroup,
+                    // mark the serie as the reference for this axisgroup
+                    serie.reference = true;
+                    allranges[serie.axisgroup] = ranges = {};
+                }
+
+                if (!isObject(serie.xaxis)) serie.xaxis = opts.xaxis;
+                if (serie.yaxis === 2) serie.yaxis = opts.yaxis2;
+                if (!isObject(serie.yaxis)) serie.yaxis = opts.yaxis;
+            }
+
+
+            serie.data = function (_) {
+                if (!arguments.length) return data;
+
+                // Not a pie chart, check axis and ranges
+                if (!serie.pie) {
+
+                    var ranges = allranges[serie.axisgroup],
+                        p = ranges[serie.xaxis.position],
+                        xy = xyData(_),
+                        stype;
+
+                    _ = xy.data;
+
+                    if (!p) {
+                        ranges[serie.xaxis.position] = p = {
+                            range: xy.xrange,
+                            serie: serie
+                        };
+                        serie.drawXaxis = true;
+                    } else {
+                        p.range[0] = Math.min(p.range[0], xy.xrange[0]);
+                        p.range[1] = Math.max(p.range[1], xy.xrange[1]);
+                    }
+
+                    p = ranges[serie.yaxis.position];
+                    if (!p) {
+                        ranges[serie.yaxis.position] = p = {
+                            range: xy.yrange,
+                            serie: serie
+                        };
+                        serie.drawYaxis = true;
+                    } else {
+                        p.range[0] = Math.min(p.range[0], xy.yrange[0]);
+                        p.range[1] = Math.max(p.range[1], xy.yrange[1]);
+                    }
+                }
+                data = _;
+
+                opts.chartTypes.forEach(function (type) {
+                    stype = serie[type];
+                    if (stype && isFunction(stype.data))
+                        stype.data(data);
+                });
+
+                return serie;
+            };
+
+            return serie.data(data);
         }
 
         function addSeries (series) {
@@ -154,56 +228,10 @@
                 if (isFunction(serie))
                     serie = serie(chart);
 
-                serie = formatSerie(serie);
+                serie = chartSerie(serie);
 
-                if (serie) {
-                    // Not a pie chart, check axis and ranges
-                    if (!serie.pie) {
-
-                        serie = xyData(serie);
-
-                        if (serie.yaxis === undefined)
-                            serie.yaxis = 1;
-                        if (!serie.axisgroup) serie.axisgroup = 1;
-
-                        ranges = allranges[serie.axisgroup];
-
-                        if (!ranges) {
-                            // ranges not yet available for this chart axisgroup,
-                            // mark the serie as the reference for this axisgroup
-                            serie.reference = true;
-                            allranges[serie.axisgroup] = ranges = {};
-                        }
-
-                        if (!isObject(serie.xaxis)) serie.xaxis = opts.xaxis;
-                        if (serie.yaxis === 2) serie.yaxis = opts.yaxis2;
-                        if (!isObject(serie.yaxis)) serie.yaxis = opts.yaxis;
-
-                        p = ranges[serie.xaxis.position];
-                        if (!p) {
-                            ranges[serie.xaxis.position] = p = {
-                                range: [serie.xrange[0], serie.xrange[1]],
-                                serie: serie
-                            };
-                            serie.drawXaxis = true;
-                        } else {
-                            p.range[0] = Math.min(p.range[0], serie.xrange[0]);
-                            p.range[1] = Math.max(p.range[1], serie.xrange[1]);
-                        }
-                        p = ranges[serie.yaxis.position];
-                        if (!p) {
-                            ranges[serie.yaxis.position] = p = {
-                                range: [serie.yrange[0], serie.yrange[1]],
-                                serie: serie
-                            };
-                            serie.drawYaxis = true;
-                        } else {
-                            p.range[0] = Math.min(p.range[0], serie.yrange[0]);
-                            p.range[1] = Math.max(p.range[1], serie.yrange[1]);
-                        }
-                    }
+                if (serie)
                     data.push(serie);
-                }
             });
 
             return data;
@@ -249,7 +277,7 @@
             opts.chartTypes.forEach(function (type) {
                 stype = serie[type];
                 if (stype)
-                    serie[type] = chartTypes[type](group, serie.data, stype);
+                    serie[type] = chartTypes[type](group, serie.data(), stype);
             });
 
             function domain(axis) {
@@ -307,6 +335,9 @@
                         .y(function (d) {return d.y;});
         }
     };
+
+    g.Chart = g.viz.Chart;
+
 
     var xyData = function (data) {
         if (!data) return;

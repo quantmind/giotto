@@ -38,7 +38,8 @@ HTML_META = [{'http-equiv': 'X-UA-Compatible',
 
 LINKS = {'AngularJS': 'https://angularjs.org/',
          'RequireJS': 'http://requirejs.org/',
-         'd3': 'http://d3js.org/'}
+         'd3': 'http://d3js.org/',
+         'd3js': 'http://d3js.org/'}
 
 OAUTH_PROVIDERS = {'google': {'analytics': {'id': 'UA-54439804-4'}},
                    'twitter': {'site': '@quantmind'}}

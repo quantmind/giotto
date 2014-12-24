@@ -4,10 +4,13 @@
     g.createviz('force', {
         theta: 0.8,
         friction: 0.9,
+
     }, function (force, opts) {
 
         var nodes = [],
             forces = [],
+            scalex = d3.scale.linear(),
+            scaley = d3.scale.linear(),
             neighbors, friction,
             q, i, j, o, l, s, t, x, y, k;
 
@@ -17,6 +20,20 @@
             nodes = x;
             for (i = 0; i < nodes.length; ++i)
                 initNode(nodes[i]).index = i;
+            return force;
+        };
+
+        // internal x-scale to and from [0, 1]
+        force.scalex = function (_) {
+            if (!arguments.length) return scalex;
+            scalex = _;
+            return force;
+        };
+
+        // internal y-scale to and from [0, 1]
+        force.scaley = function (_) {
+            if (!arguments.length) return scaley;
+            scaley = _;
             return force;
         };
 
@@ -41,10 +58,7 @@
 
         force.quadtree = function (createNew) {
             if (!q || createNew)
-                q = force.paper().quadtree()(nodes);
-                //q = paper.quadtree().x(function (d) {return d.x;})
-                //                    .y(function (d) {return d.y;})
-                //                    (nodes);
+                q = d3.geom.quadtree(nodes);
             return q;
         };
 
@@ -53,9 +67,11 @@
         };
 
         // Draw points in the paper
-        force.drawPoints = function () {
-            var colors = force.paper().options().colors,
+        force.drawPoints = function (group) {
+            var colors = opts.colors,
                 j = 0;
+
+            if (!group) group = force.paper().classGroup('force');
 
             for (i=0; i<nodes.length; i++) {
                 if (!nodes[i].fill) {
@@ -64,7 +80,7 @@
                 }
             }
 
-            return force.paper().points(nodes);
+            return group.points(nodes);
         };
 
         force.drawQuadTree = function (options) {
@@ -96,10 +112,9 @@
         });
 
         function initNode (o) {
-            var paper = force.paper();
             o.weight = 0;
-            if (isNaN(o.x)) o.x = paper.x(Math.random());
-            if (isNaN(o.y)) o.y = paper.y(Math.random());
+            if (isNaN(o.x)) o.x = scalex(Math.random());
+            if (isNaN(o.y)) o.y = scaley(Math.random());
             return o;
         }
     });
@@ -200,8 +215,8 @@
             k = force.alpha() * opts.gravity;
             nodes = force.nodes();
 
-            var xc = force.paper().x(0.5),
-                yc = force.paper().y(0.5);
+            var xc = force.scalex()(0.5),
+                yc = force.scaley()(0.5);
             for (i = 0; i < nodes.length; ++i) {
                 o = nodes[i];
                 if (!o.fixed) {
@@ -215,8 +230,7 @@
     //
     // Charge plugin
     g.viz.force.plugin(function (force, opts) {
-        var paper = force.paper(),
-            charges,
+        var charges,
             charge, nodes, q, i, k, o,
             chargeDistance2;
 
@@ -298,7 +312,9 @@
         }
 
         function d3_layout_forceAccumulate(quad, alpha, charges) {
-            var cx = 0,
+            var scalex = force.scalex(),
+                scaley = force.scaley(),
+                cx = 0,
                 cy = 0;
             quad.charge = 0;
             if (!quad.leaf) {
@@ -318,9 +334,8 @@
             if (quad.point) {
                 // jitter internal nodes that are coincident
                 if (!quad.leaf) {
-                    var paper = force.paper();
-                    quad.point.x += paper.x(Math.random()) - paper.x(0.5);
-                    quad.point.y += paper.y(Math.random()) - paper.y(0.5);
+                    quad.point.x += scalex(Math.random()) - scalex(0.5);
+                    quad.point.y += scaley(Math.random()) - scaley(0.5);
                 }
                 var k = alpha * charges[quad.point.index];
                 quad.charge += quad.pointCharge = k;

@@ -23,13 +23,13 @@ def add_css(all):
         background=vars.index.background,
         color='#fff',
         margin=0,
-        width=pc(100),
-        height=pc(100),
+        width=pc(101),
+        height=pc(101),
         min_height=pc(100))
 
     css('html, body, .fullpage',
-        height=pc(100),
-        min_height=pc(100))
+        height=pc(101),
+        min_height=pc(101))
 
     css('form',
         font_size=px(14))
@@ -54,6 +54,7 @@ def add_css(all):
         max_width=px(400),
         background=color(255, 255, 255, 0.6))
 
+    features(all)
     error_page(all)
 
 
@@ -87,3 +88,22 @@ def error_page(all):
         '.error-message-container',
         text_align='center',
         padding=spacing(40, 0))
+
+
+def features(all):
+    css = all.css
+    media = all.media
+
+    css('.features article',
+        Clearfix(),
+        float='left',
+        padding=px(30),
+        width=pc(33.33))
+
+    media(max_width=px(978)).css('.features article',
+        width=pc(50))
+
+    media(max_width=px(600)).css('.features article',
+        width='auto',
+        float='none')
+

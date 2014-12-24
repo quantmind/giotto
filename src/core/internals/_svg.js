@@ -60,41 +60,39 @@
             return p;
         };
 
-        _.points = function (group) {
+        _.points = function () {
 
-            return drawing(group, function () {
+            var group = this.group(),
+                pp = group.element().select("#" + this.uid()),
+                scalex = this.scalex(),
+                scaley = this.scaley(),
+                data = this.data();
 
-                var pp = group.element().select("#" + this.uid()),
-                    scalex = this.scalex(),
-                    scaley = this.scaley(),
-                    data = this.data();
+            this.symbol = d3.svg.symbol().type(function (d) {return d.symbol;})
+                                         .size(this.size());
 
-                this.symbol = d3.svg.symbol().type(function (d) {return d.symbol;})
-                                             .size(this.size());
+            if (!pp.node()) {
+                pp = group.element().append('g').attr('id', this.uid());
+                this.remove = function () {
+                    pp.remove();
+                };
+            }
 
-                if (!pp.node()) {
-                    pp = group.element().append('g').attr('id', this.uid());
-                    this.remove = function () {
-                        pp.remove();
-                    };
-                }
+            var points = pp.selectAll('*');
+            if (data.length != points.length) {
+                points.remove();
+                points = pp.selectAll('*')
+                        .data(this.data())
+                        .enter()
+                        .append('path');
+            }
+            _events(_draw(points
+                     .attr("transform", function(d) {
+                         return "translate(" + scalex(d.data) + "," + scaley(d.data) + ")";
+                     })
+                     .attr('d', this.symbol)));
 
-                var points = pp.selectAll('*');
-                if (data.length != points.length) {
-                    points.remove();
-                    points = pp.selectAll('*')
-                            .data(this.data())
-                            .enter()
-                            .append('path');
-                }
-                _events(_draw(points
-                         .attr("transform", function(d) {
-                             return "translate(" + scalex(d.data) + "," + scaley(d.data) + ")";
-                         })
-                         .attr('d', this.symbol)));
-
-                return pp;
-            });
+            return pp;
         };
 
         _.path = function (group, data) {
@@ -107,12 +105,16 @@
                     line = opts.area ? d3.svg.area() : d3.svg.line();
 
                 if (!p.node())
-                    p = _events(draw.group().element().append('path').attr('id', draw.uid()));
+                    p = _events(draw.group().element().append('path').attr('id', draw.uid())).datum(data);
+                else {
+                    p = p.datum(data);
+                    if (opts.transition.delay)
+                        p = p.transition().delay(opts.transition.delay).ease(opts.transition.ease);
+                }
 
                 line.interpolate(opts.interpolate).x(draw.scalex()).y(draw.scaley());
 
                 return p
-                    .datum(data)
                     .attr('d', line)
                     .attr('stroke', draw.color)
                     .attr('stroke-opacity', draw.colorOpacity)
@@ -122,45 +124,52 @@
         };
 
         // Draw a barchart
-        _.barchart = function (group) {
+        _.barchart = function () {
+            var group = this.group(),
+                chart = group.element().select("#" + this.uid()),
+                opts = this.options(),
+                scalex = this.scalex(),
+                scaley = this.scaley(),
+                size = this.size(),
+                zero = group.scaley(0),
+                data = this.data(),
+                trans = opts.transition,
+                bar, y;
 
-            return function () {
-                var chart = group.element().select("#" + this.uid()),
-                    opts = this.options(),
-                    scalex = this.scalex(),
-                    scaley = this.scaley(),
-                    size = this.size(),
-                    zero = group.scaley(0),
-                    bar, y;
+            if (!chart.node())
+                chart = group.element().append("g")
+                            .attr('id', this.uid());
 
-                if (!chart.node())
-                    chart = group.element().append("g")
-                                .attr('id', this.uid());
+            bar = chart.selectAll(".bar");
 
-                chart.selectAll('*').remove();
-
-                bar = _draw(chart
+            if (bar.size() !== data.length) {
+                bar.remove();
+                bar = _events(_draw(chart
                         .selectAll(".bar")
-                        .data(this.data())
+                        .data(data)
                         .enter().append("rect")
-                        .attr('class', 'bar')
-                        .attr("x", function(d) {
-                            return scalex(d.data) - 0.5*size(d);
-                        })
-                        .attr("y", function(d) {
-                            return Math.min(zero, scaley(d.data));
-                        })
-                        .attr("height", function(d) {
-                            return abs(scaley(d.data) - zero);
-                        })
-                        .attr("width", size));
+                        .attr('class', 'bar')));
+            } else
+                bar.data(data);
 
-                if (opts.radius > 0)
-                    bar.attr('rx', opts.radius).attr('ry', opts.radius);
+            if (!group.resizing() && trans && trans.duration)
+                bar = bar.transition().duration(trans.duration).ease(trans.ease);
 
-                _events(bar);
-                return chart;
-            };
+            bar.attr("x", function(d) {
+                    return scalex(d.data) - 0.5*size(d);
+                })
+                .attr("y", function(d) {
+                    return Math.min(zero, scaley(d.data));
+                })
+                .attr("height", function(d) {
+                    return abs(scaley(d.data) - zero);
+                })
+                .attr("width", size);
+
+            if (opts.radius > 0)
+                bar.attr('rx', opts.radius).attr('ry', opts.radius);
+
+            return chart;
         };
 
         // Pie chart drawing on an svg group
@@ -192,6 +201,10 @@
                     y = 0,
                     ax = group.element().select('.' + xy),
                     opts = this.options();
+                if (opts.show === false) {
+                    ax.remove();
+                    return;
+                }
                 if (!ax.node())
                     ax = this.group().element().append('g').attr('class', xy);
                 if (xy[0] === 'x')

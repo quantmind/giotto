@@ -1,13 +1,21 @@
     //
     // Add mission colors for graph
     function chartColors (paper, opts) {
+        chartColor(paper, opts);
+        activeColors(opts);
+    }
+
+    function chartColor(paper, opts) {
         if (!opts.color)
-            opts.color = paper.pickColor();
+            if (opts.fill && opts.fill !== true && opts.fill !== 'none')
+                opts.color = d3.rgb(opts.fill).darker().toString();
+            else
+                opts.color = paper.pickColor();
 
         if (opts.fill === true)
             opts.fill = d3.rgb(opts.color).brighter().toString();
 
-        activeColors(opts);
+        return opts.color;
     }
 
     function activeColors(opts) {

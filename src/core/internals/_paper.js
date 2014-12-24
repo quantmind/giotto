@@ -10,6 +10,11 @@
         else
             p = {};
 
+        if (p.margin !== undefined && !isObject(p.margin)) {
+            var m = p.margin;
+            p.margin = {left: m, right: m, top: m, bottom: m};
+        }
+
         copyMissing(g.defaults.paper, p, true);
 
         if (isFunction (p.colors))

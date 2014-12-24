@@ -18,17 +18,6 @@
 
         svg: function (paper, opts) {
 
-            paper.quadtree = function () {
-                //var sx = paper.xAxis().scale(),
-                //    sy = paper.yAxis().scale(),
-                //    x0 = sx.invert(-1),
-                //    y1 = sy.invert(-1),
-                //    x1 = sx.invert(paper.innerWidth()+1),
-                //    y0 = sy.invert(paper.innerHeight()+1);
-                //return d3.geom.quadtree().extent([[x0, y0], [x1, y1]]);
-                return d3.geom.quadtree;
-            };
-
             // Draw a quad tree on the paper
             paper.drawQuadTree = function (factory, options) {
                 g.extend(opts.quadtree, options);

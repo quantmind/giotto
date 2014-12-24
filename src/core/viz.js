@@ -196,3 +196,5 @@
 
         return vizType;
     };
+
+    g.createviz('viz');

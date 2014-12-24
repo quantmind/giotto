@@ -6,6 +6,7 @@
             x = d3_geom_pointX,
             y = d3_geom_pointY,
             size = default_size,
+            changed,
             name,
             data,
             opts,
@@ -124,12 +125,24 @@
             };
         };
 
+        // replace the data for this drawing
         draw.data = function (_) {
             if (arguments.length === 0) return data;
+            changed = true;
             if (dataConstructor)
                 data = dataConstructor.call(draw, _);
             else
                 data = _;
+            return draw;
+        };
+
+        draw.add = function (d) {
+            if (dataConstructor)
+                d = dataConstructor.call(draw, [d]);
+            if (data)
+                data.push(d[0]);
+            else
+                data = d;
             return draw;
         };
 

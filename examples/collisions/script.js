@@ -9,49 +9,53 @@
 
         height: '60%',
 
-        model: 'CollisionFormModel',
-
         point: {
             color: '#555',
             width: 1,
             fillOpacity: 1
         },
 
-        onInit: function (force) {
+        onInit: function (force, opts) {
 
-            var opts = force.options(),
-                root = {fixed: true, radius: 0, x: -1, y: -1},
-                paper = force.paper(),
-                group = force.group(),
-                charge = force.charge();
+            var root = {fixed: true, size: 0, x: -1, y: -1},
+                charge = force.charge(),
+                paper;
 
             // Add nodes
             force.nodes(d3.range(+opts.nodes).map(function() {
                 var minRadius = +opts.minRadius,
                     maxRadius = +opts.maxRadius,
                     dr = maxRadius > minRadius ? maxRadius - minRadius : 0;
-                return {radius: group.dim(Math.random() * dr + minRadius)};
+                return {size: Math.random() * dr + minRadius};
             })).addNode(root);
 
             if (typeof charge !== 'function')
                 force.charge(opts._charge(charge));
 
-            //force.drawQuadTree();
-            force.drawPoints();
+            function init () {
+                paper = force.paper(true);
 
-            paper.on("mousemove", function() {
-                var p1 = d3.mouse(this);
-                root.x = paper.xfromPX(p1[0]);
-                root.y = paper.yfromPX(p1[1]);
-                force.resume();
-            }).on("touchmove", function() {
-                var p1 = d3.touches(this);
-                root.x = paper.xfromPX(p1[0][0]);
-                root.y = paper.yfromPX(p1[0][1]);
-                force.resume();
-            });
+                var group = paper.group();
+                group.points(force.nodes())
+                        .x(function (d) {return d.x;})
+                        .y(function (d) {return d.y;});
 
-            force.on("tick", function(e) {
+                paper.on("mousemove", function() {
+                    var p1 = d3.mouse(this);
+                    root.x = paper.xfromPX(p1[0]);
+                    root.y = paper.yfromPX(p1[1]);
+                    force.resume();
+                }).on("touchmove", function() {
+                    var p1 = d3.touches(this);
+                    root.x = paper.xfromPX(p1[0][0]);
+                    root.y = paper.yfromPX(p1[0][1]);
+                    force.resume();
+                });
+            }
+
+
+            force.on("tick.collide", function(e) {
+                if (!paper || opts.type !== paper.type()) init();
                 force.collide();
                 paper.render();
             });

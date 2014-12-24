@@ -29,11 +29,9 @@
         _.pieslice = canvasSlice;
         _.bar = canvasBar;
 
-        _.points = function (group) {
-            return drawing(group, function () {
-                this.each(function () {
-                    this.reset().render();
-                });
+        _.points = function () {
+            this.each(function () {
+                this.reset().render();
             });
         };
 
@@ -44,24 +42,6 @@
             draw.each(function () {
                 this.reset().render();
             });
-        };
-
-        // Download
-        _.image = function () {
-            var canvas = _addCanvas().node(),
-                context = paper.current(),
-                img;
-
-            _apply(function (ctx) {
-                if (ctx !== context) {
-                    img = new Image();
-                    img.src = ctx.canvas.toDataURL();
-                    context.drawImage(img, 0, 0, p.size[0], p.size[1]);
-                }
-            });
-            var dataUrl = canvas.toDataURL();
-            paper.removeCanvas(canvas);
-            return dataUrl;
         };
 
         return _;
@@ -76,6 +56,7 @@
             context = context || ctx;
             // size of font
             opts = d.options();
+            if (opts.show === false) return d;
             size = opts.size;
             opts.size = group.scale(group.dim(size)) + 'px';
             context.font = fontString(opts);

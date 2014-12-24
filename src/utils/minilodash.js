@@ -87,9 +87,8 @@
             options = getRootAttribute(attrs.options);
             if (typeof options === 'function')
                 options = options();
-        } else {
-            options = {};
         }
+        if (!options) options = {};
         if (isObject(options))
             forEach(attrs, function (value, name) {
                 if (name.substring(0, 1) !== '$' && name !== 'options')
@@ -128,7 +127,7 @@
         if (obj.forEach) return obj.forEach(callback);
         for (var key in obj) {
             if (obj.hasOwnProperty(key))
-                callback(obj[keys], key);
+                callback(obj[key], key);
         }
     },
     //

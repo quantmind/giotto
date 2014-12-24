@@ -19,7 +19,10 @@
 
         line: {
             show: true,
-            lineWidth: 3
+            lineWidth: 3,
+            transition: {
+                delay: 250
+            }
         },
 
         grid: {

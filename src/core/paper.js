@@ -220,7 +220,7 @@
                 if (group && group !== target) {
                     img = new Image();
                     img.src = group.context().canvas.toDataURL();
-                    ctx.drawImage(img, 0, 0, p.size[0], p.size[1]);
+                    ctx.drawImage(img, 0, 0, ctx.canvas.width, ctx.canvas.height);
                 }
             });
             var dataUrl = ctx.canvas.toDataURL();

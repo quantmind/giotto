@@ -160,7 +160,7 @@
             opts || (opts = {});
             chartColors(paper, copyMissing(p.point, opts));
 
-            return group.add(_.points(group))
+            return group.add(_.points)
             .size(point_size)
             .options(opts)
             .dataConstructor(point_costructor)
@@ -172,7 +172,7 @@
             opts || (opts = {});
             chartColors(paper, copyMissing(p.bar, opts));
 
-            return group.add(_.barchart(group))
+            return group.add(_.barchart)
             .options(opts)
             .dataConstructor(bar_costructor)
             .data(data);
@@ -299,6 +299,7 @@
             });
             return group;
         };
+
 
         var
 

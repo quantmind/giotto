@@ -1,6 +1,6 @@
 //      Giotto - v0.1.0
 
-//      Compiled 2014-12-22.
+//      Compiled 2014-12-24.
 //      Copyright (c) 2014 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -439,9 +439,8 @@
             options = getRootAttribute(attrs.options);
             if (typeof options === 'function')
                 options = options();
-        } else {
-            options = {};
         }
+        if (!options) options = {};
         if (isObject(options))
             forEach(attrs, function (value, name) {
                 if (name.substring(0, 1) !== '$' && name !== 'options')
@@ -480,7 +479,7 @@
         if (obj.forEach) return obj.forEach(callback);
         for (var key in obj) {
             if (obj.hasOwnProperty(key))
-                callback(obj[keys], key);
+                callback(obj[key], key);
         }
     },
     //
@@ -2683,6 +2682,11 @@
         max: null
     };
 
+    g.defaults.transition = {
+        duration: 0,
+        ease: 'easeInOutCubic'
+    };
+
     g.defaults.paper = {
         type: 'svg',
         resizeDelay: 200,
@@ -2701,7 +2705,8 @@
             fillOpacity: 1,
             colorOpacity: 1,
             lineWidth: 2,
-            formatY: ',g3'
+            formatY: ',g3',
+            transition: extend({}, g.defaults.transition)
         },
         point: {
             symbol: 'circle',
@@ -2716,7 +2721,8 @@
                 color: 'brighter',
                 // Multiplier for size, set to 100% for no change
                 size: '150%'
-            }
+            },
+            transition: extend({}, g.defaults.transition)
         },
         bar: {
             width: 'auto',
@@ -2731,7 +2737,8 @@
             active: {
                 fill: 'darker',
                 color: 'brighter'
-            }
+            },
+            transition: extend({}, g.defaults.transition)
         },
         pie: {
             lineWidth: 1,
@@ -2749,7 +2756,8 @@
                 //innerRadius: 100%,
                 //outerRadius: 105%,
                 fillOpacity: 1
-            }
+            },
+            transition: extend({}, g.defaults.transition)
         },
         font: {
             color: '#444',
@@ -3009,7 +3017,7 @@
                 if (group && group !== target) {
                     img = new Image();
                     img.src = group.context().canvas.toDataURL();
-                    ctx.drawImage(img, 0, 0, p.size[0], p.size[1]);
+                    ctx.drawImage(img, 0, 0, ctx.canvas.width, ctx.canvas.height);
                 }
             });
             var dataUrl = ctx.canvas.toDataURL();
@@ -3241,7 +3249,7 @@
             opts || (opts = {});
             chartColors(paper, copyMissing(p.point, opts));
 
-            return group.add(_.points(group))
+            return group.add(_.points)
             .size(point_size)
             .options(opts)
             .dataConstructor(point_costructor)
@@ -3253,7 +3261,7 @@
             opts || (opts = {});
             chartColors(paper, copyMissing(p.bar, opts));
 
-            return group.add(_.barchart(group))
+            return group.add(_.barchart)
             .options(opts)
             .dataConstructor(bar_costructor)
             .data(data);
@@ -3381,6 +3389,7 @@
             return group;
         };
 
+
         var
 
         point_costructor = function (rawdata) {
@@ -3427,6 +3436,7 @@
             x = d3_geom_pointX,
             y = d3_geom_pointY,
             size = default_size,
+            changed,
             name,
             data,
             opts,
@@ -3545,12 +3555,24 @@
             };
         };
 
+        // replace the data for this drawing
         draw.data = function (_) {
             if (arguments.length === 0) return data;
+            changed = true;
             if (dataConstructor)
                 data = dataConstructor.call(draw, _);
             else
                 data = _;
+            return draw;
+        };
+
+        draw.add = function (d) {
+            if (dataConstructor)
+                d = dataConstructor.call(draw, [d]);
+            if (data)
+                data.push(d[0]);
+            else
+                data = d;
             return draw;
         };
 
@@ -3989,6 +4011,8 @@
         return vizType;
     };
 
+    g.createviz('viz');
+
 
     g.createviz('chart', {
         margin: {top: 30, right: 30, bottom: 30, left: 30},
@@ -4091,12 +4115,18 @@
 
         // INTERNALS
 
-        function formatSerie (serie) {
-            if (!serie) return;
-            if (isArray(serie)) serie = {data: serie};
-
+        function chartSerie (data) {
             var paper = chart.paper(),
-                color, show, o;
+                serie = {},
+                color, show;
+
+            if (data && !isArray(data)) {
+                extend(serie, data);
+                data = serie.data;
+                delete serie.data;
+            } else serie = {};
+
+            if (!data) return;
 
             serie.index = series.length;
 
@@ -4106,7 +4136,7 @@
                 serie.label = 'serie ' + series.length;
 
             opts.chartTypes.forEach(function (type) {
-                o = serie[type];
+                var o = serie[type];
                 if (isArray(o) && !serie.data) {
                     serie.data = o;
                     o = {}; // an ampty object so that it is shown
@@ -4122,17 +4152,85 @@
                 serie.line = extend({}, opts.line);
 
             opts.chartTypes.forEach(function (type) {
-                o = serie[type];
+                var o = serie[type];
 
-                if (o && type !== 'pie' && !o.color) {
+                if (o && type !== 'pie') {
                     // pick a default color if one is not given
                     if (!color)
-                        color = paper.pickColor();
-                    o.color = color;
+                        color = chartColor(paper, o);
+                    if (!o.color)
+                        o.color = color;
                 }
             });
 
-            return serie;
+            if (!serie.pie) {
+                if (serie.yaxis === undefined)
+                    serie.yaxis = 1;
+                if (!serie.axisgroup) serie.axisgroup = 1;
+
+                var ranges = allranges[serie.axisgroup];
+
+                if (!ranges) {
+                    // ranges not yet available for this chart axisgroup,
+                    // mark the serie as the reference for this axisgroup
+                    serie.reference = true;
+                    allranges[serie.axisgroup] = ranges = {};
+                }
+
+                if (!isObject(serie.xaxis)) serie.xaxis = opts.xaxis;
+                if (serie.yaxis === 2) serie.yaxis = opts.yaxis2;
+                if (!isObject(serie.yaxis)) serie.yaxis = opts.yaxis;
+            }
+
+
+            serie.data = function (_) {
+                if (!arguments.length) return data;
+
+                // Not a pie chart, check axis and ranges
+                if (!serie.pie) {
+
+                    var ranges = allranges[serie.axisgroup],
+                        p = ranges[serie.xaxis.position],
+                        xy = xyData(_),
+                        stype;
+
+                    _ = xy.data;
+
+                    if (!p) {
+                        ranges[serie.xaxis.position] = p = {
+                            range: xy.xrange,
+                            serie: serie
+                        };
+                        serie.drawXaxis = true;
+                    } else {
+                        p.range[0] = Math.min(p.range[0], xy.xrange[0]);
+                        p.range[1] = Math.max(p.range[1], xy.xrange[1]);
+                    }
+
+                    p = ranges[serie.yaxis.position];
+                    if (!p) {
+                        ranges[serie.yaxis.position] = p = {
+                            range: xy.yrange,
+                            serie: serie
+                        };
+                        serie.drawYaxis = true;
+                    } else {
+                        p.range[0] = Math.min(p.range[0], xy.yrange[0]);
+                        p.range[1] = Math.max(p.range[1], xy.yrange[1]);
+                    }
+                }
+                data = _;
+
+                opts.chartTypes.forEach(function (type) {
+                    stype = serie[type];
+                    if (stype && isFunction(stype.data))
+                        stype.data(data);
+                });
+
+                return serie;
+            };
+
+            return serie.data(data);
         }
 
         function addSeries (series) {
@@ -4145,56 +4243,10 @@
                 if (isFunction(serie))
                     serie = serie(chart);
 
-                serie = formatSerie(serie);
+                serie = chartSerie(serie);
 
-                if (serie) {
-                    // Not a pie chart, check axis and ranges
-                    if (!serie.pie) {
-
-                        serie = xyData(serie);
-
-                        if (serie.yaxis === undefined)
-                            serie.yaxis = 1;
-                        if (!serie.axisgroup) serie.axisgroup = 1;
-
-                        ranges = allranges[serie.axisgroup];
-
-                        if (!ranges) {
-                            // ranges not yet available for this chart axisgroup,
-                            // mark the serie as the reference for this axisgroup
-                            serie.reference = true;
-                            allranges[serie.axisgroup] = ranges = {};
-                        }
-
-                        if (!isObject(serie.xaxis)) serie.xaxis = opts.xaxis;
-                        if (serie.yaxis === 2) serie.yaxis = opts.yaxis2;
-                        if (!isObject(serie.yaxis)) serie.yaxis = opts.yaxis;
-
-                        p = ranges[serie.xaxis.position];
-                        if (!p) {
-                            ranges[serie.xaxis.position] = p = {
-                                range: [serie.xrange[0], serie.xrange[1]],
-                                serie: serie
-                            };
-                            serie.drawXaxis = true;
-                        } else {
-                            p.range[0] = Math.min(p.range[0], serie.xrange[0]);
-                            p.range[1] = Math.max(p.range[1], serie.xrange[1]);
-                        }
-                        p = ranges[serie.yaxis.position];
-                        if (!p) {
-                            ranges[serie.yaxis.position] = p = {
-                                range: [serie.yrange[0], serie.yrange[1]],
-                                serie: serie
-                            };
-                            serie.drawYaxis = true;
-                        } else {
-                            p.range[0] = Math.min(p.range[0], serie.yrange[0]);
-                            p.range[1] = Math.max(p.range[1], serie.yrange[1]);
-                        }
-                    }
+                if (serie)
                     data.push(serie);
-                }
             });
 
             return data;
@@ -4240,7 +4292,7 @@
             opts.chartTypes.forEach(function (type) {
                 stype = serie[type];
                 if (stype)
-                    serie[type] = chartTypes[type](group, serie.data, stype);
+                    serie[type] = chartTypes[type](group, serie.data(), stype);
             });
 
             function domain(axis) {
@@ -4299,6 +4351,9 @@
         }
     };
 
+    g.Chart = g.viz.Chart;
+
+
     var xyData = function (data) {
         if (!data) return;
         if (!data.data) data = {data: data};
@@ -4342,10 +4397,13 @@
     g.createviz('force', {
         theta: 0.8,
         friction: 0.9,
+
     }, function (force, opts) {
 
         var nodes = [],
             forces = [],
+            scalex = d3.scale.linear(),
+            scaley = d3.scale.linear(),
             neighbors, friction,
             q, i, j, o, l, s, t, x, y, k;
 
@@ -4355,6 +4413,20 @@
             nodes = x;
             for (i = 0; i < nodes.length; ++i)
                 initNode(nodes[i]).index = i;
+            return force;
+        };
+
+        // internal x-scale to and from [0, 1]
+        force.scalex = function (_) {
+            if (!arguments.length) return scalex;
+            scalex = _;
+            return force;
+        };
+
+        // internal y-scale to and from [0, 1]
+        force.scaley = function (_) {
+            if (!arguments.length) return scaley;
+            scaley = _;
             return force;
         };
 
@@ -4379,10 +4451,7 @@
 
         force.quadtree = function (createNew) {
             if (!q || createNew)
-                q = force.paper().quadtree()(nodes);
-                //q = paper.quadtree().x(function (d) {return d.x;})
-                //                    .y(function (d) {return d.y;})
-                //                    (nodes);
+                q = d3.geom.quadtree(nodes);
             return q;
         };
 
@@ -4391,9 +4460,11 @@
         };
 
         // Draw points in the paper
-        force.drawPoints = function () {
-            var colors = force.paper().options().colors,
+        force.drawPoints = function (group) {
+            var colors = opts.colors,
                 j = 0;
+
+            if (!group) group = force.paper().classGroup('force');
 
             for (i=0; i<nodes.length; i++) {
                 if (!nodes[i].fill) {
@@ -4402,7 +4473,7 @@
                 }
             }
 
-            return force.paper().points(nodes);
+            return group.points(nodes);
         };
 
         force.drawQuadTree = function (options) {
@@ -4434,10 +4505,9 @@
         });
 
         function initNode (o) {
-            var paper = force.paper();
             o.weight = 0;
-            if (isNaN(o.x)) o.x = paper.x(Math.random());
-            if (isNaN(o.y)) o.y = paper.y(Math.random());
+            if (isNaN(o.x)) o.x = scalex(Math.random());
+            if (isNaN(o.y)) o.y = scaley(Math.random());
             return o;
         }
     });
@@ -4538,8 +4608,8 @@
             k = force.alpha() * opts.gravity;
             nodes = force.nodes();
 
-            var xc = force.paper().x(0.5),
-                yc = force.paper().y(0.5);
+            var xc = force.scalex()(0.5),
+                yc = force.scaley()(0.5);
             for (i = 0; i < nodes.length; ++i) {
                 o = nodes[i];
                 if (!o.fixed) {
@@ -4553,8 +4623,7 @@
     //
     // Charge plugin
     g.viz.force.plugin(function (force, opts) {
-        var paper = force.paper(),
-            charges,
+        var charges,
             charge, nodes, q, i, k, o,
             chargeDistance2;
 
@@ -4636,7 +4705,9 @@
         }
 
         function d3_layout_forceAccumulate(quad, alpha, charges) {
-            var cx = 0,
+            var scalex = force.scalex(),
+                scaley = force.scaley(),
+                cx = 0,
                 cy = 0;
             quad.charge = 0;
             if (!quad.leaf) {
@@ -4656,9 +4727,8 @@
             if (quad.point) {
                 // jitter internal nodes that are coincident
                 if (!quad.leaf) {
-                    var paper = force.paper();
-                    quad.point.x += paper.x(Math.random()) - paper.x(0.5);
-                    quad.point.y += paper.y(Math.random()) - paper.y(0.5);
+                    quad.point.x += scalex(Math.random()) - scalex(0.5);
+                    quad.point.y += scaley(Math.random()) - scaley(0.5);
                 }
                 var k = alpha * charges[quad.point.index];
                 quad.charge += quad.pointCharge = k;
@@ -5387,42 +5457,20 @@
         force.collide = function () {
             var snodes = [],
                 nodes = force.nodes(),
-                paper = force.paper(),
-                scalex = paper.scalex,
-                scaley = paper.scaley,
-                invertx = paper.xAxis().scale().invert,
-                inverty = paper.yAxis().scale().invert,
-                scale = paper.scale,
-                buffer = scale(paper.dim(opts.collideBuffer)),
-                padding = paper.dim(opts.collidePadding),
+                scalex = force.scalex(),
+                scaley = force.scaley(),
+                buffer = scalex(opts.collideBuffer),
+                padding = scalex(opts.collidePadding),
+                q = force.quadtree(),
                 node;
 
-            for (var i=0; i<nodes.length; ++i) {
-                node = nodes[i];
-                if (node.radius)
-                    snodes.push({
-                        x: scalex(node.x),
-                        y: scaley(node.y),
-                        index: node.index,
-                        radius: scale(node.radius + padding)
-                    });
-            }
-
-            var q = d3.geom.quadtree(snodes);
-
-            for (i=0; i<snodes.length; ++i)
-                q.visit(circleCollide(snodes[i], buffer));
-
-            for (i=0; i<snodes.length; ++i) {
-                node = snodes[i];
-                nodes[node.index].x = invertx(node.x);
-                nodes[node.index].y = inverty(node.y);
-            }
+            for (var i=0; i<nodes.length; ++i)
+                q.visit(circleCollide(nodes[i], buffer));
         };
 
         function circleCollide (node, buffer) {
 
-            var r = node.radius + buffer,
+            var r = node.size + buffer,
                 nx1 = node.x - r,
                 nx2 = node.x + r,
                 ny1 = node.y - r,
@@ -5434,7 +5482,7 @@
                     dx = node.x - quad.point.x;
                     dy = node.y - quad.point.y;
                     d = Math.sqrt(dx * dx + dy * dy);
-                    r = node.radius + quad.point.radius;
+                    r = node.size + quad.point.size;
                     if (d < r) {
                         d = 0.5 * (r - d) / d;
                         dx *= d;
@@ -5460,6 +5508,7 @@
         }
 
     });
+
     //
     //  Add grid functionality
     g.paper.plugin('grid', {
@@ -5789,104 +5838,6 @@
             g.contextmenu.bind(viz.element(), function (menu) {
                 return viz.contextmenu(menu);
             });
-    });
-
-    var quadDefaults = {
-        color: '#ccc',
-        opacity: 1,
-        width: 1,
-        fill: 'none',
-        fillOpacity: 0.5,
-    };
-
-
-    g.paper.plugin("quadtree", {
-        defaults: {
-            color: '#ccc',
-            opacity: 1,
-            width: 1,
-            fill: 'none',
-            fillOpacity: 0.5,
-        },
-
-        svg: function (paper, opts) {
-
-            paper.quadtree = function () {
-                //var sx = paper.xAxis().scale(),
-                //    sy = paper.yAxis().scale(),
-                //    x0 = sx.invert(-1),
-                //    y1 = sy.invert(-1),
-                //    x1 = sx.invert(paper.innerWidth()+1),
-                //    y0 = sy.invert(paper.innerHeight()+1);
-                //return d3.geom.quadtree().extent([[x0, y0], [x1, y1]]);
-                return d3.geom.quadtree;
-            };
-
-            // Draw a quad tree on the paper
-            paper.drawQuadTree = function (factory, options) {
-                g.extend(opts.quadtree, options);
-
-                var container = paper.current(),
-                    o = opts.quadtree;
-
-                return paper.addComponent(function () {
-                    var gc = container.select('g.quadtree'),
-                        quadtree = factory();
-
-                    if (!gc.node())
-                        gc = container.append('g')
-                                        .attr('class', 'quadtree')
-                                        .attr('stroke', o.color)
-                                        .attr('stroke-width', o.width)
-                                        .attr('stroke-opacity', o.opacity)
-                                        .attr('fill', o.fill)
-                                        .attr('fill-opacity', o.fillOpacity)
-                                        .style('shape-rendering', 'crispEdges');
-                    else
-                        gc.selectAll(".quad-node").remove();
-
-                    gc.selectAll(".quad-node")
-                        .data(qnodes(quadtree))
-                        .enter().append("rect")
-                        .attr("class", "quad-node")
-                        .attr("x", function(d) { return d.x1; })
-                        .attr("y", function(d) { return d.y1; })
-                        .attr("width", function(d) { return d.x2 - d.x1; })
-                        .attr("height", function(d) { return d.y2 - d.y1; });
-
-                    return {chart: gc};
-                });
-            };
-
-            function nice (s, maxs) {
-                return s <= 0 ? 0 : s >= maxs ? maxs : s;
-            }
-
-            function qnodes (quadtree) {
-                var nodes = [],
-                    scalex = paper.scalex,
-                    scaley = paper.scaley,
-                    width = paper.innerWidth(),
-                    height = paper.innerHeight();
-
-                quadtree.depth = 0; // root
-                quadtree.visit(function(node, x1, y1, x2, y2) {
-                    node.x1 = nice(scalex(x1), width);
-                    node.y1 = nice(scaley(y2), height);
-                    node.x2 = nice(scalex(x2), width);
-                    node.y2 = nice(scaley(y1), height);
-                    nodes.push(node);
-                    for (var i=0; i<4; i++) {
-                        if (node.nodes[i]) node.nodes[i].depth = node.depth+1;
-                    }
-                });
-                return nodes;
-            }
-        },
-
-        canvas: function (paper, opts) {
-
-        }
     });
 
     var tooltip;
@@ -6565,11 +6516,9 @@
         _.pieslice = canvasSlice;
         _.bar = canvasBar;
 
-        _.points = function (group) {
-            return drawing(group, function () {
-                this.each(function () {
-                    this.reset().render();
-                });
+        _.points = function () {
+            this.each(function () {
+                this.reset().render();
             });
         };
 
@@ -6580,24 +6529,6 @@
             draw.each(function () {
                 this.reset().render();
             });
-        };
-
-        // Download
-        _.image = function () {
-            var canvas = _addCanvas().node(),
-                context = paper.current(),
-                img;
-
-            _apply(function (ctx) {
-                if (ctx !== context) {
-                    img = new Image();
-                    img.src = ctx.canvas.toDataURL();
-                    context.drawImage(img, 0, 0, p.size[0], p.size[1]);
-                }
-            });
-            var dataUrl = canvas.toDataURL();
-            paper.removeCanvas(canvas);
-            return dataUrl;
         };
 
         return _;
@@ -6612,6 +6543,7 @@
             context = context || ctx;
             // size of font
             opts = d.options();
+            if (opts.show === false) return d;
             size = opts.size;
             opts.size = group.scale(group.dim(size)) + 'px';
             context.font = fontString(opts);
@@ -6818,13 +6750,21 @@
     //
     // Add mission colors for graph
     function chartColors (paper, opts) {
+        chartColor(paper, opts);
+        activeColors(opts);
+    }
+
+    function chartColor(paper, opts) {
         if (!opts.color)
-            opts.color = paper.pickColor();
+            if (opts.fill && opts.fill !== true && opts.fill !== 'none')
+                opts.color = d3.rgb(opts.fill).darker().toString();
+            else
+                opts.color = paper.pickColor();
 
         if (opts.fill === true)
             opts.fill = d3.rgb(opts.color).brighter().toString();
 
-        activeColors(opts);
+        return opts.color;
     }
 
     function activeColors(opts) {
@@ -6854,6 +6794,11 @@
         }
         else
             p = {};
+
+        if (p.margin !== undefined && !isObject(p.margin)) {
+            var m = p.margin;
+            p.margin = {left: m, right: m, top: m, bottom: m};
+        }
 
         copyMissing(g.defaults.paper, p, true);
 
@@ -6955,41 +6900,39 @@
             return p;
         };
 
-        _.points = function (group) {
+        _.points = function () {
 
-            return drawing(group, function () {
+            var group = this.group(),
+                pp = group.element().select("#" + this.uid()),
+                scalex = this.scalex(),
+                scaley = this.scaley(),
+                data = this.data();
 
-                var pp = group.element().select("#" + this.uid()),
-                    scalex = this.scalex(),
-                    scaley = this.scaley(),
-                    data = this.data();
+            this.symbol = d3.svg.symbol().type(function (d) {return d.symbol;})
+                                         .size(this.size());
 
-                this.symbol = d3.svg.symbol().type(function (d) {return d.symbol;})
-                                             .size(this.size());
+            if (!pp.node()) {
+                pp = group.element().append('g').attr('id', this.uid());
+                this.remove = function () {
+                    pp.remove();
+                };
+            }
 
-                if (!pp.node()) {
-                    pp = group.element().append('g').attr('id', this.uid());
-                    this.remove = function () {
-                        pp.remove();
-                    };
-                }
+            var points = pp.selectAll('*');
+            if (data.length != points.length) {
+                points.remove();
+                points = pp.selectAll('*')
+                        .data(this.data())
+                        .enter()
+                        .append('path');
+            }
+            _events(_draw(points
+                     .attr("transform", function(d) {
+                         return "translate(" + scalex(d.data) + "," + scaley(d.data) + ")";
+                     })
+                     .attr('d', this.symbol)));
 
-                var points = pp.selectAll('*');
-                if (data.length != points.length) {
-                    points.remove();
-                    points = pp.selectAll('*')
-                            .data(this.data())
-                            .enter()
-                            .append('path');
-                }
-                _events(_draw(points
-                         .attr("transform", function(d) {
-                             return "translate(" + scalex(d.data) + "," + scaley(d.data) + ")";
-                         })
-                         .attr('d', this.symbol)));
-
-                return pp;
-            });
+            return pp;
         };
 
         _.path = function (group, data) {
@@ -7002,12 +6945,16 @@
                     line = opts.area ? d3.svg.area() : d3.svg.line();
 
                 if (!p.node())
-                    p = _events(draw.group().element().append('path').attr('id', draw.uid()));
+                    p = _events(draw.group().element().append('path').attr('id', draw.uid())).datum(data);
+                else {
+                    p = p.datum(data);
+                    if (opts.transition.delay)
+                        p = p.transition().delay(opts.transition.delay).ease(opts.transition.ease);
+                }
 
                 line.interpolate(opts.interpolate).x(draw.scalex()).y(draw.scaley());
 
                 return p
-                    .datum(data)
                     .attr('d', line)
                     .attr('stroke', draw.color)
                     .attr('stroke-opacity', draw.colorOpacity)
@@ -7017,45 +6964,52 @@
         };
 
         // Draw a barchart
-        _.barchart = function (group) {
+        _.barchart = function () {
+            var group = this.group(),
+                chart = group.element().select("#" + this.uid()),
+                opts = this.options(),
+                scalex = this.scalex(),
+                scaley = this.scaley(),
+                size = this.size(),
+                zero = group.scaley(0),
+                data = this.data(),
+                trans = opts.transition,
+                bar, y;
 
-            return function () {
-                var chart = group.element().select("#" + this.uid()),
-                    opts = this.options(),
-                    scalex = this.scalex(),
-                    scaley = this.scaley(),
-                    size = this.size(),
-                    zero = group.scaley(0),
-                    bar, y;
+            if (!chart.node())
+                chart = group.element().append("g")
+                            .attr('id', this.uid());
 
-                if (!chart.node())
-                    chart = group.element().append("g")
-                                .attr('id', this.uid());
+            bar = chart.selectAll(".bar");
 
-                chart.selectAll('*').remove();
-
-                bar = _draw(chart
+            if (bar.size() !== data.length) {
+                bar.remove();
+                bar = _events(_draw(chart
                         .selectAll(".bar")
-                        .data(this.data())
+                        .data(data)
                         .enter().append("rect")
-                        .attr('class', 'bar')
-                        .attr("x", function(d) {
-                            return scalex(d.data) - 0.5*size(d);
-                        })
-                        .attr("y", function(d) {
-                            return Math.min(zero, scaley(d.data));
-                        })
-                        .attr("height", function(d) {
-                            return abs(scaley(d.data) - zero);
-                        })
-                        .attr("width", size));
+                        .attr('class', 'bar')));
+            } else
+                bar.data(data);
 
-                if (opts.radius > 0)
-                    bar.attr('rx', opts.radius).attr('ry', opts.radius);
+            if (!group.resizing() && trans && trans.duration)
+                bar = bar.transition().duration(trans.duration).ease(trans.ease);
 
-                _events(bar);
-                return chart;
-            };
+            bar.attr("x", function(d) {
+                    return scalex(d.data) - 0.5*size(d);
+                })
+                .attr("y", function(d) {
+                    return Math.min(zero, scaley(d.data));
+                })
+                .attr("height", function(d) {
+                    return abs(scaley(d.data) - zero);
+                })
+                .attr("width", size);
+
+            if (opts.radius > 0)
+                bar.attr('rx', opts.radius).attr('ry', opts.radius);
+
+            return chart;
         };
 
         // Pie chart drawing on an svg group
@@ -7087,6 +7041,10 @@
                     y = 0,
                     ax = group.element().select('.' + xy),
                     opts = this.options();
+                if (opts.show === false) {
+                    ax.remove();
+                    return;
+                }
                 if (!ax.node())
                     ax = this.group().element().append('g').attr('class', xy);
                 if (xy[0] === 'x')
