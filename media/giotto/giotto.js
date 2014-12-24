@@ -2730,7 +2730,7 @@
             fill: true,
             fillOpacity: 1,
             colorOpacity: 1,
-            lineWidth: 2,
+            lineWidth: 1,
             formatY: ',g3',
             // Radius in pixels of rounded corners. Set to 0 for no rounded corners
             radius: 4,
@@ -3262,6 +3262,7 @@
             chartColors(paper, copyMissing(p.bar, opts));
 
             return group.add(_.barchart)
+            .size(bar_size)
             .options(opts)
             .dataConstructor(bar_costructor)
             .data(data);
@@ -3405,10 +3406,14 @@
 
         bar_costructor = function (rawdata) {
             var group = this.group(),
+                draw = this,
                 opts = this.options(),
                 data = [],
-                width = opts.width === 'auto' ?
-                    d3.round(0.8*(group.innerWidth() / rawdata.length)) : opts.width;
+                width = opts.width;
+            if (width === 'auto')
+                width = function () {
+                    return d3.round(0.8*(group.innerWidth() / draw.data().length));
+                };
 
             for (var i=0; i<rawdata.length; i++)
                 data.push(_.bar(this, rawdata[i], width));
@@ -3726,6 +3731,12 @@
 
         point_size = function (d) {
             return d.size*d.size*(SymbolSize[d.symbol] || 1);
+        },
+
+        bar_size = function (d) {
+            var w = d.size;
+            if (typeof w === 'function') w = w();
+            return w;
         };
 
 

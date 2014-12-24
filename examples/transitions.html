@@ -23,7 +23,7 @@
 <link href='http://giottojs.org/media/giotto/giotto.css' rel='stylesheet' type='text/css'>
 <link href='http://giottojs.org/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var lux = {context: {"url": "http://giottojs.org", "oauths": null, "apiUrls": {}, "name": "Lux", "dateFormat": "d MMM y", "google": {"analytics": {"id": "UA-54439804-4", "ga": "ga"}}, "ngModules": ["lux.google", "lux.blog", "highlight"], "datetimeFormat": "d MMM y, h:mm:ss a", "page": {"author": ["Luca Sbardella"], "image": "http://giottojs.org/examples/transitions.png", "name": "transitions", "description": "Transitions on a bar chart", "api_url": "http://giottojs.org/ng/examples/transitions.json", "title": "Transitions", "slug": "transitions", "modified": "2014-12-24T09:24:18", "html_url": "http://giottojs.org/examples/transitions", "content_type": "text/html", "date": "2014-12-24T00:00:00"}, "navbar": {"collapseWidth": 768}, "date": "2014-12-24T10-39-55", "year": 2014, "html5mode": true, "media": "/media", "python_version": "3.4.2", "lux_version": "0.1.2-alpha.1", "brand": "Lux"}};
+var lux = {context: {"navbar": {"collapseWidth": 768}, "page": {"image": "http://giottojs.org/examples/transitions.png", "title": "Transitions", "api_url": "http://giottojs.org/ng/examples/transitions.json", "content_type": "text/html", "name": "transitions", "description": "Transitions on a bar chart", "author": ["Luca Sbardella"], "modified": "2014-12-24T11:49:18", "date": "2014-12-24T00:00:00", "html_url": "http://giottojs.org/examples/transitions", "slug": "transitions"}, "apiUrls": {}, "lux_version": "0.1.2-alpha.1", "name": "Lux", "date": "2014-12-24T12-17-17", "ngModules": ["lux.google", "highlight", "lux.blog"], "html5mode": true, "dateFormat": "d MMM y", "brand": "Lux", "media": "/media", "year": 2014, "datetimeFormat": "d MMM y, h:mm:ss a", "google": {"analytics": {"id": "UA-54439804-4", "ga": "ga"}}, "python_version": "3.4.2", "oauths": null, "url": "http://giottojs.org"}};
 </script>
 <script type='text/javascript'>
 lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
@@ -31,7 +31,7 @@ lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback
 var gexamples = {};
 </script>
 <script type="text/javascript">
-var require = {"waitSeconds": 200, "minify": true, "paths": {}, "baseUrl": "http://giottojs.org/media/", "deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"]};
+var require = {"paths": {}, "deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"], "waitSeconds": 200, "baseUrl": "http://giottojs.org/media/", "minify": true};
 </script>
 <script src='http://quantmind.github.io/require-config-js/require.config.min.js' type='application/javascript'></script>
 <script src='//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js' type='application/javascript'></script>
@@ -54,13 +54,13 @@ var require = {"waitSeconds": 200, "minify": true, "paths": {}, "baseUrl": "http
 <div class="page-header">
 <h2>Transitions</h2>
 </div>
-<div style="width: 100px" class="center-block"><lux-form data-options='luxforms.typeform_KIdBm'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.typeform_KIdBm = {"children": [{"children": [{"field": {"type": "select", "required": true, "name": "type", "options": ["svg", "canvas"], "value": "svg"}}], "field": {"type": "fieldset"}}], "field": {"showLabels": false, "model": "TypeForm", "type": "form", "id": "typeform_KIdBm"}};</script></lux-form></div>
+<div style="width: 100px" class="center-block"><lux-form data-options='luxforms.typeform_yTkhd'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.typeform_yTkhd = {"children": [{"children": [{"field": {"name": "type", "options": ["svg", "canvas"], "type": "select", "value": "svg", "required": true}}], "field": {"type": "fieldset"}}], "field": {"model": "TypeForm", "id": "typeform_yTkhd", "showLabels": false, "type": "form"}};</script></lux-form></div>
 
-<div data-options='gexamples.transition1' style='max-width: 500px' class="center-block" giotto-chart></div>
+<div data-options='gexamples.transition1' style='max-width: 600px' class="center-block" giotto-chart></div>
 
 <p>Transitions are easily implemented using the <code>d3.transition</code> api. To enable transition on
 a GiottoJS chart, set a positive <code>transition.duration</code> on a chart type.
-Currently, transitions only work on <code>svg</code> elements.</p>
+Currently, <a href="https://github.com/quantmind/giotto/issues/9">transitions work on svg elements only</a>.</p>
 <p>Html:</p>
 <pre><code>&lt;div data-options='gexamples.transition1' giotto-chart&gt;&lt;/div&gt;
 </code></pre>
