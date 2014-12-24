@@ -2705,7 +2705,6 @@
             fillOpacity: 1,
             colorOpacity: 1,
             lineWidth: 2,
-            formatY: ',g3',
             transition: extend({}, g.defaults.transition)
         },
         point: {
@@ -2715,7 +2714,6 @@
             fillOpacity: 1,
             colorOpacity: 1,
             lineWidth: 2,
-            formatY: ',g3',
             active: {
                 fill: 'darker',
                 color: 'brighter',
@@ -2731,7 +2729,6 @@
             fillOpacity: 1,
             colorOpacity: 1,
             lineWidth: 1,
-            formatY: ',g3',
             // Radius in pixels of rounded corners. Set to 0 for no rounded corners
             radius: 4,
             active: {
@@ -2749,7 +2746,6 @@
             colorOpacity: 1,
             innerRadius: 0,
             startAngle: 0,
-            formatY: ',g3',
             active: {
                 fill: 'darker',
                 color: 'brighter',
@@ -3239,6 +3235,7 @@
         // Draw a path or an area
         group.path = function (data, opts) {
             opts || (opts = {});
+            chartFormats(group, opts);
             chartColors(paper, copyMissing(p.line, opts));
 
             return group.add(_.path(group, data)).options(opts);
@@ -3247,6 +3244,7 @@
         // Draw scatter points
         group.points = function (data, opts) {
             opts || (opts = {});
+            chartFormats(group, opts);
             chartColors(paper, copyMissing(p.point, opts));
 
             return group.add(_.points)
@@ -3259,6 +3257,7 @@
         // Draw a pie chart
         group.barchart = function (data, opts) {
             opts || (opts = {});
+            chartFormats(group, opts);
             chartColors(paper, copyMissing(p.bar, opts));
 
             return group.add(_.barchart)
@@ -3271,6 +3270,7 @@
         // Draw pie chart
         group.pie = function (data, opts) {
             opts || (opts = {});
+            chartFormats(group, opts);
             copyMissing(p.pie, opts);
 
             return group.add(drawing(group, function () {
@@ -3445,6 +3445,7 @@
             name,
             data,
             opts,
+            formatX,
             formatY,
             dataConstructor;
 
@@ -3500,6 +3501,8 @@
             opts = _;
             if (isFunction(opts.x)) draw.x(opts.x);
             if (isFunction(opts.y)) draw.y(opts.y);
+            if (opts.formatX) formatX = _format(opts.formatX);
+            if (opts.formatY) formatY = _format(opts.formatY);
             draw.init(draw, opts);
             return draw;
         };
@@ -3529,8 +3532,13 @@
             return draw;
         };
 
+        draw.formatX = function (x) {
+            if (!formatX) formatX = d3.format('n');
+            return formatX(x);
+        };
+
         draw.formatY = function (y) {
-            if (!formatY) formatY = d3.format(opts.formatY || 'n');
+            if (!formatY) formatY = d3.format('n');
             return formatY(y);
         };
 
@@ -3594,6 +3602,10 @@
                 draw[name](value);
             else
                 draw[name] = value;
+        }
+
+        function _format (format) {
+            return isFunction(format) ? format : d3.format(format);
         }
     }
 
@@ -6776,6 +6788,13 @@
             opts.fill = d3.rgb(opts.color).brighter().toString();
 
         return opts.color;
+    }
+
+    function chartFormats (group, opts) {
+        var xaxis = group.xaxis(),
+            yaxis = group.yaxis();
+        if (!opts.formatX) opts.formatX = xaxis.tickFormat() || xaxis.scale().tickFormat();
+        if (!opts.formatY) opts.formatY = yaxis.tickFormat() || yaxis.scale().tickFormat();
     }
 
     function activeColors(opts) {
