@@ -1,27 +1,27 @@
 <!DOCTYPE html>
 <html data-debug='false' lang='en' prefix='og: http://ogp.me/ns#'>
 <head>
-<title>Sobol</title>
+<title>Using transitions with groups</title>
 <meta charset='utf-8'>
 <meta content='IE=edge' http-equiv='X-UA-Compatible'>
 <meta content='width=device-width, initial-scale=1' name='viewport'>
-<meta content='A list of GiottoJS examples' name='description'>
+<meta content='A simple bar chart on canvas or svg' name='description'>
 <meta content='Luca Sbardella' name='author'>
 <meta content='website' property='og:type'>
-<meta content='http://giottojs.org/examples/sobol' property='og:url'>
-<meta content='Sobol' property='og:title'>
-<meta content='A list of GiottoJS examples' property='og:description'>
+<meta content='http://giottojs.org/examples/transition1' property='og:url'>
+<meta content='Using transitions with groups' property='og:title'>
+<meta content='A simple bar chart on canvas or svg' property='og:description'>
 <meta content='summary_large_image' name='twitter:card'>
 <meta content='@quantmind' name='twitter:site'>
-<meta content='Sobol' name='twitter:title'>
-<meta content='A list of GiottoJS examples' name='twitter:description'>
+<meta content='Using transitions with groups' name='twitter:title'>
+<meta content='A simple bar chart on canvas or svg' name='twitter:description'>
 <link href='http://giottojs.org/media/giottoweb/favicon.ico' rel='icon' type='image/x-icon'>
 <link href='//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css' rel='stylesheet' type='text/css'>
 <link href='//netdna.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css' rel='stylesheet' type='text/css'>
 <link href='http://giottojs.org/media/giotto/giotto.css' rel='stylesheet' type='text/css'>
 <link href='http://giottojs.org/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var lux = {context: {"url": "http://giottojs.org", "oauths": null, "apiUrls": {}, "name": "Lux", "dateFormat": "d MMM y", "google": {"analytics": {"id": "UA-54439804-4", "ga": "ga"}}, "ngModules": ["lux.google", "lux.blog", "highlight"], "datetimeFormat": "d MMM y, h:mm:ss a", "page": {"author": ["Luca Sbardella"], "priority": "0", "name": "sobol", "description": "A list of GiottoJS examples", "api_url": "http://giottojs.org/ng/examples/sobol.json", "title": "Sobol", "slug": "sobol", "modified": "2014-12-18T18:32:20", "html_url": "http://giottojs.org/examples/sobol", "content_type": "text/html", "robots": ["noindex", "nofollow"]}, "navbar": {"collapseWidth": 768}, "date": "2014-12-24T10-39-55", "year": 2014, "html5mode": true, "media": "/media", "python_version": "3.4.2", "lux_version": "0.1.2-alpha.1", "brand": "Lux"}};
+var lux = {context: {"url": "http://giottojs.org", "oauths": null, "apiUrls": {}, "name": "Lux", "dateFormat": "d MMM y", "google": {"analytics": {"id": "UA-54439804-4", "ga": "ga"}}, "ngModules": ["lux.google", "lux.blog", "highlight"], "datetimeFormat": "d MMM y, h:mm:ss a", "page": {"author": ["Luca Sbardella"], "priority": "0", "name": "transition1", "description": "A simple bar chart on canvas or svg", "api_url": "http://giottojs.org/ng/examples/transition1.json", "title": "Using transitions with groups", "slug": "transition1", "modified": "2014-12-24T09:11:53", "html_url": "http://giottojs.org/examples/transition1", "content_type": "text/html", "robots": ["noindex", "nofollow"]}, "navbar": {"collapseWidth": 768}, "date": "2014-12-24T10-39-55", "year": 2014, "html5mode": true, "media": "/media", "python_version": "3.4.2", "lux_version": "0.1.2-alpha.1", "brand": "Lux"}};
 </script>
 <script type='text/javascript'>
 lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
@@ -50,22 +50,34 @@ var require = {"waitSeconds": 200, "minify": true, "paths": {}, "baseUrl": "http
 <div class="row">
 <div class="col-sm-12" data-highlight>
 <div class="page-header">
-<h2>Sobol</h2>
+<h2>Using transitions with groups</h2>
 </div>
+<div style="width: 100px" class="center-block"><lux-form data-options='luxforms.typeform_KIdBm'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.typeform_KIdBm = {"children": [{"children": [{"field": {"type": "select", "required": true, "name": "type", "options": ["svg", "canvas"], "value": "svg"}}], "field": {"type": "fieldset"}}], "field": {"showLabels": false, "model": "TypeForm", "type": "form", "id": "typeform_KIdBm"}};</script></lux-form></div>
 
+<div data-options='gexamples.transition1' class="center-block" giotto-viz></div>
+
+<p>Html:</p>
+<pre><code>&lt;div data-options='gexamples.transition1' giotto-chart&gt;&lt;/div&gt;
+</code></pre>
 <h3>Javascript code</h3>
-<pre><code>gexamples.sobol = {
-    height: '80%',
+<pre><code>gexamples.transition1 = {
+    height: '60%',
 
-    // Callback for angular directive
-    angular: function (chart, opts) {
+    onInit: function (viz) {
 
-        opts.scope.$on('formFieldChange', function (e, form, field) {
-            if (field === 'type') {
-                opts.type = form[field];
-                chart.resume();
-            }
-        });
+        var paper = viz.paper(),
+            group = paper.group(),
+            points = group.points([]).transition();
+
+        group.element().transition().style("color", "red");
+
+        function animate () {
+            points.add([Math.random(), Math.random()]).render();
+            d3.timer(animate, 1000);
+            return true;
+        }
+
+        d3.timer(animate, 1000);
     }
 };
 </code></pre>
@@ -75,18 +87,24 @@ var require = {"waitSeconds": 200, "minify": true, "paths": {}, "baseUrl": "http
 </div>
 <script>
 
-    gexamples.sobol = {
-        height: '80%',
+    gexamples.transition1 = {
+        height: '60%',
 
-        // Callback for angular directive
-        angular: function (chart, opts) {
+        onInit: function (viz) {
 
-            opts.scope.$on('formFieldChange', function (e, form, field) {
-                if (field === 'type') {
-                    opts.type = form[field];
-                    chart.resume();
-                }
-            });
+            var paper = viz.paper(),
+                group = paper.group(),
+                points = group.points([]).transition();
+
+            group.element().transition().style("color", "red");
+
+            function animate () {
+                points.add([Math.random(), Math.random()]).render();
+                d3.timer(animate, 1000);
+                return true;
+            }
+
+            d3.timer(animate, 1000);
         }
     };
 </script>

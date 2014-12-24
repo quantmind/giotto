@@ -22,7 +22,7 @@
 <link href='http://giottojs.org/media/giotto/giotto.css' rel='stylesheet' type='text/css'>
 <link href='http://giottojs.org/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var lux = {context: {"html5mode": true, "dateFormat": "d MMM y", "ngModules": ["lux.google", "highlight"], "apiUrls": {}, "lux_version": "0.1.2-alpha.1", "url": "http://giottojs.org", "google": {"analytics": {"id": "UA-54439804-4", "ga": "ga"}}, "datetimeFormat": "d MMM y, h:mm:ss a", "brand": "Lux", "page": {"modified": "2014-12-18T10:05:51", "html_url": "http://giottojs.org/api/group", "title": "GiottoJS - group API", "name": "api_group", "description": "A GiottoJS group maintainin a collection of drawing in memory. A group can be a g-element of an svg element or a canvas element.", "api_url": "http://giottojs.org/ng/site/api/group.json", "slug": "api/group", "image": "http://giottojs.org/media/giottoweb/giotto.png", "content_type": "text/html"}, "oauths": null, "media": "/media", "python_version": "3.4.2", "name": "Lux", "navbar": {"collapseWidth": 768}, "year": 2014, "date": "2014-12-22T10-36-59"}};
+var lux = {context: {"url": "http://giottojs.org", "oauths": null, "apiUrls": {}, "name": "Lux", "dateFormat": "d MMM y", "google": {"analytics": {"id": "UA-54439804-4", "ga": "ga"}}, "ngModules": ["lux.google", "highlight"], "datetimeFormat": "d MMM y, h:mm:ss a", "page": {"image": "http://giottojs.org/media/giottoweb/giotto.png", "name": "api_group", "description": "A GiottoJS group maintainin a collection of drawing in memory. A group can be a g-element of an svg element or a canvas element.", "api_url": "http://giottojs.org/ng/site/api/group.json", "title": "GiottoJS - group API", "modified": "2014-12-22T18:31:29", "html_url": "http://giottojs.org/api/group", "content_type": "text/html", "slug": "api/group"}, "navbar": {"collapseWidth": 768}, "date": "2014-12-24T10-39-55", "year": 2014, "html5mode": true, "media": "/media", "python_version": "3.4.2", "lux_version": "0.1.2-alpha.1", "brand": "Lux"}};
 </script>
 <script type='text/javascript'>
 lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
@@ -30,7 +30,7 @@ lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback
 var gexamples = {};
 </script>
 <script type="text/javascript">
-var require = {"minify": true, "deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"], "waitSeconds": 200, "paths": {}, "baseUrl": "http://giottojs.org/media/"};
+var require = {"waitSeconds": 200, "minify": true, "paths": {}, "baseUrl": "http://giottojs.org/media/", "deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"]};
 </script>
 <script src='http://quantmind.github.io/require-config-js/require.config.min.js' type='application/javascript'></script>
 <script src='//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js' type='application/javascript'></script>
@@ -77,7 +77,13 @@ a function which render the drawing:</p>
 <p>Create a new path and add it to the drawings collection. Returns the new path
 drawing object which can be act upon via the <a href="/api/drawing">drawing api</a>. The control
 points of the path are given in the <code>data</code> array which default it is assumed to
-be an array of two elements array <code>[x, y]</code>. This can be changed by modifying the
+be an array of two elements arrays <code>[x, y]</code>. This can be changed by modifying the
+<a href="/api/drawing#drawingxx">drawing.x()</a> and <a href="/api/drawing#drawingyy">drawing.y()</a>
+accessors.</p>
+<h3 id="grouppointsdata-opts"># group.points(data, [opts])</h3>
+<p>Create a new <a href="/api/drawing">drawing</a> of points from <code>data</code> which by default
+it is assumed to be an array of two elements arrays <code>[x, y]</code>.
+This can be changed by modifying the
 <a href="/api/drawing#drawingxx">drawing.x()</a> and <a href="/api/drawing#drawingyy">drawing.y()</a>
 accessors.</p>
 <h3 id="grouprender"># group.render()</h3>

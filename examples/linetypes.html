@@ -23,7 +23,7 @@
 <link href='http://giottojs.org/media/giotto/giotto.css' rel='stylesheet' type='text/css'>
 <link href='http://giottojs.org/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var lux = {context: {"html5mode": true, "dateFormat": "d MMM y", "ngModules": ["lux.blog", "lux.google", "highlight"], "apiUrls": {}, "lux_version": "0.1.2-alpha.1", "url": "http://giottojs.org", "google": {"analytics": {"id": "UA-54439804-4", "ga": "ga"}}, "datetimeFormat": "d MMM y, h:mm:ss a", "brand": "Lux", "page": {"modified": "2014-12-18T13:15:10", "html_url": "http://giottojs.org/examples/linetypes", "title": "Lines and Symbols", "date": "2014-12-14T00:00:00", "author": ["Luca Sbardella"], "slug": "linetypes", "api_url": "http://giottojs.org/ng/examples/linetypes.json", "name": "linetypes", "description": "A run-through of all the options available when plotting lines and points on a chart. It shows how to use d3js line and symbol for both SVG and CANVAS.", "image": "http://giottojs.org/examples/linetypes.png", "content_type": "text/html"}, "oauths": null, "media": "/media", "python_version": "3.4.2", "name": "Lux", "navbar": {"collapseWidth": 768}, "year": 2014, "date": "2014-12-22T10-36-59"}};
+var lux = {context: {"url": "http://giottojs.org", "oauths": null, "apiUrls": {}, "name": "Lux", "dateFormat": "d MMM y", "google": {"analytics": {"id": "UA-54439804-4", "ga": "ga"}}, "ngModules": ["lux.google", "lux.blog", "highlight"], "datetimeFormat": "d MMM y, h:mm:ss a", "page": {"author": ["Luca Sbardella"], "image": "http://giottojs.org/examples/linetypes.png", "name": "linetypes", "description": "A run-through of all the options available when plotting lines and points on a chart. It shows how to use d3js line and symbol for both SVG and CANVAS.", "api_url": "http://giottojs.org/ng/examples/linetypes.json", "title": "Lines and Symbols", "slug": "linetypes", "modified": "2014-12-18T13:15:10", "html_url": "http://giottojs.org/examples/linetypes", "content_type": "text/html", "date": "2014-12-14T00:00:00"}, "navbar": {"collapseWidth": 768}, "date": "2014-12-24T10-39-55", "year": 2014, "html5mode": true, "media": "/media", "python_version": "3.4.2", "lux_version": "0.1.2-alpha.1", "brand": "Lux"}};
 </script>
 <script type='text/javascript'>
 lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
@@ -31,7 +31,7 @@ lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback
 var gexamples = {};
 </script>
 <script type="text/javascript">
-var require = {"minify": true, "deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"], "waitSeconds": 200, "paths": {}, "baseUrl": "http://giottojs.org/media/"};
+var require = {"waitSeconds": 200, "minify": true, "paths": {}, "baseUrl": "http://giottojs.org/media/", "deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"]};
 </script>
 <script src='http://quantmind.github.io/require-config-js/require.config.min.js' type='application/javascript'></script>
 <script src='//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js' type='application/javascript'></script>
@@ -60,7 +60,7 @@ var require = {"minify": true, "deps": ["http://giottojs.org/media/giottoweb/gio
       <div data-options='gexamples.linetypes' style='max-width: 700px' class="center-block" giotto-chart></div>
     </div>
     <div class="col-sm-2 small">
-      <lux-form data-options='luxforms.linetypeform_ULuh4'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.linetypeform_ULuh4 = {"field": {"model": "LineTypeForm", "id": "linetypeform_ULuh4", "showLabels": false, "type": "form"}, "children": [{"field": {"type": "fieldset"}, "children": [{"field": {"options": ["svg", "canvas"], "name": "type", "type": "select", "value": "svg", "required": true}}, {"field": {"options": ["linear", "linear-closed", "step", "step-before", "step-after", "basis", "basis-open", "basis-closed", "bundle", "cardinal", "cardinal-open", "cardinal-closed", "monotone"], "name": "interpolate", "type": "select", "value": "linear", "required": true}}, {"field": {"options": ["circle", "cross", "diamond", "square", "triangle-down", "triangle-up"], "name": "symbol", "type": "select", "value": "circle", "required": true}}]}]};</script></lux-form>
+      <lux-form data-options='luxforms.linetypeform_wOjP1'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.linetypeform_wOjP1 = {"children": [{"children": [{"field": {"type": "select", "required": true, "name": "type", "options": ["svg", "canvas"], "value": "svg"}}, {"field": {"type": "select", "required": true, "name": "interpolate", "options": ["linear", "linear-closed", "step", "step-before", "step-after", "basis", "basis-open", "basis-closed", "bundle", "cardinal", "cardinal-open", "cardinal-closed", "monotone"], "value": "linear"}}, {"field": {"type": "select", "required": true, "name": "symbol", "options": ["circle", "cross", "diamond", "square", "triangle-down", "triangle-up"], "value": "circle"}}], "field": {"type": "fieldset"}}], "field": {"showLabels": false, "model": "LineTypeForm", "type": "form", "id": "linetypeform_wOjP1"}};</script></lux-form>
     </div>
   </div>
 </div>
@@ -88,7 +88,10 @@ It shows how to use <a href="http://d3js.org/" title="d3">d3</a> <code>line</cod
 
     line: {
         show: true,
-        lineWidth: 3
+        lineWidth: 3,
+        transition: {
+            delay: 250
+        }
     },
 
     grid: {
@@ -165,7 +168,10 @@ function randomPath (µ, σ) {
 
         line: {
             show: true,
-            lineWidth: 3
+            lineWidth: 3,
+            transition: {
+                delay: 250
+            }
         },
 
         grid: {

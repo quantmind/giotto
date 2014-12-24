@@ -1,29 +1,29 @@
 <!DOCTYPE html>
 <html data-debug='false' lang='en' prefix='og: http://ogp.me/ns#'>
 <head>
-<title>Simple Bar Chart</title>
+<title>Transitions</title>
 <meta charset='utf-8'>
 <meta content='IE=edge' http-equiv='X-UA-Compatible'>
 <meta content='width=device-width, initial-scale=1' name='viewport'>
-<meta content='A simple bar chart on canvas or svg' name='description'>
+<meta content='Transitions on a bar chart' name='description'>
 <meta content='Luca Sbardella' name='author'>
 <meta content='website' property='og:type'>
-<meta content='http://giottojs.org/examples/barchart' property='og:url'>
-<meta content='Simple Bar Chart' property='og:title'>
-<meta content='A simple bar chart on canvas or svg' property='og:description'>
-<meta content='http://giottojs.org/examples/barchart.png' property='og:image'>
+<meta content='http://giottojs.org/examples/transitions' property='og:url'>
+<meta content='Transitions' property='og:title'>
+<meta content='Transitions on a bar chart' property='og:description'>
+<meta content='http://giottojs.org/examples/transitions.png' property='og:image'>
 <meta content='summary_large_image' name='twitter:card'>
 <meta content='@quantmind' name='twitter:site'>
-<meta content='Simple Bar Chart' name='twitter:title'>
-<meta content='A simple bar chart on canvas or svg' name='twitter:description'>
-<meta content='http://giottojs.org/examples/barchart.png' name='twitter:image'>
+<meta content='Transitions' name='twitter:title'>
+<meta content='Transitions on a bar chart' name='twitter:description'>
+<meta content='http://giottojs.org/examples/transitions.png' name='twitter:image'>
 <link href='http://giottojs.org/media/giottoweb/favicon.ico' rel='icon' type='image/x-icon'>
 <link href='//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css' rel='stylesheet' type='text/css'>
 <link href='//netdna.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css' rel='stylesheet' type='text/css'>
 <link href='http://giottojs.org/media/giotto/giotto.css' rel='stylesheet' type='text/css'>
 <link href='http://giottojs.org/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var lux = {context: {"url": "http://giottojs.org", "oauths": null, "apiUrls": {}, "name": "Lux", "dateFormat": "d MMM y", "google": {"analytics": {"id": "UA-54439804-4", "ga": "ga"}}, "ngModules": ["lux.google", "lux.blog", "highlight"], "datetimeFormat": "d MMM y, h:mm:ss a", "page": {"author": ["Luca Sbardella"], "image": "http://giottojs.org/examples/barchart.png", "name": "barchart", "description": "A simple bar chart on canvas or svg", "api_url": "http://giottojs.org/ng/examples/barchart.json", "title": "Simple Bar Chart", "slug": "barchart", "modified": "2014-12-18T14:28:29", "html_url": "http://giottojs.org/examples/barchart", "content_type": "text/html", "date": "2014-12-18T00:00:00"}, "navbar": {"collapseWidth": 768}, "date": "2014-12-24T10-39-55", "year": 2014, "html5mode": true, "media": "/media", "python_version": "3.4.2", "lux_version": "0.1.2-alpha.1", "brand": "Lux"}};
+var lux = {context: {"url": "http://giottojs.org", "oauths": null, "apiUrls": {}, "name": "Lux", "dateFormat": "d MMM y", "google": {"analytics": {"id": "UA-54439804-4", "ga": "ga"}}, "ngModules": ["lux.google", "lux.blog", "highlight"], "datetimeFormat": "d MMM y, h:mm:ss a", "page": {"author": ["Luca Sbardella"], "image": "http://giottojs.org/examples/transitions.png", "name": "transitions", "description": "Transitions on a bar chart", "api_url": "http://giottojs.org/ng/examples/transitions.json", "title": "Transitions", "slug": "transitions", "modified": "2014-12-24T09:24:18", "html_url": "http://giottojs.org/examples/transitions", "content_type": "text/html", "date": "2014-12-24T00:00:00"}, "navbar": {"collapseWidth": 768}, "date": "2014-12-24T10-39-55", "year": 2014, "html5mode": true, "media": "/media", "python_version": "3.4.2", "lux_version": "0.1.2-alpha.1", "brand": "Lux"}};
 </script>
 <script type='text/javascript'>
 lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
@@ -52,29 +52,58 @@ var require = {"waitSeconds": 200, "minify": true, "paths": {}, "baseUrl": "http
 <div class="row">
 <div class="col-sm-12" data-highlight>
 <div class="page-header">
-<h2>Simple Bar Chart</h2>
+<h2>Transitions</h2>
 </div>
 <div style="width: 100px" class="center-block"><lux-form data-options='luxforms.typeform_KIdBm'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.typeform_KIdBm = {"children": [{"children": [{"field": {"type": "select", "required": true, "name": "type", "options": ["svg", "canvas"], "value": "svg"}}], "field": {"type": "fieldset"}}], "field": {"showLabels": false, "model": "TypeForm", "type": "form", "id": "typeform_KIdBm"}};</script></lux-form></div>
 
-<div data-options='gexamples.barchart' style='max-width: 500px' class="center-block" giotto-chart></div>
+<div data-options='gexamples.transition1' style='max-width: 500px' class="center-block" giotto-chart></div>
+
+<p>Transitions are easily implemented using the <code>d3.transition</code> api. To enable transition on
+a GiottoJS chart, set a positive <code>transition.duration</code> on a chart type.
+Currently, transitions only work on <code>svg</code> elements.</p>
+<p>Html:</p>
+<pre><code>&lt;div data-options='gexamples.transition1' giotto-chart&gt;&lt;/div&gt;
+</code></pre>
 <h3>Javascript code</h3>
-<pre><code>gexamples.barchart = {
+<pre><code>gexamples.transition1 = {
     height: '80%',
 
     tooltip: {
         show: true,
     },
 
-    line: {show: true},
+    yaxis: {
+        min: 0,
+        max: 2,
+        show: false
+    },
 
-    bar: {show: true},
+    bar: {
+        show: true,
+        fill: '#D79404',
+        lineWidth: 1,
+        transition: {
+            duration: 1000,
+            ease: 'linear'
+        }
+    },
 
     data: function (chart) {
-        var X = d3.range(-5, 5, 0.5);
+        return [randomData(10, 1, 0.3)];
+    },
 
-        return [chart.xyfunction(X, function (x) {
-                    return 1/(1+Math.exp(-x)) - 0.5;
-                })];
+    onInit: function (chart, opts) {
+
+        function animate () {
+            chart.each(function (serie) {
+                serie.data(randomData(10, 1, 0.3));
+            });
+            chart.resume();
+            d3.timer(animate, 2*opts.bar.transition.duration);
+            return true;
+        }
+
+        animate();
     },
 
     // Callback for angular directive
@@ -95,6 +124,16 @@ var require = {"waitSeconds": 200, "minify": true, "paths": {}, "baseUrl": "http
         });
     }
 };
+
+function randomData (N, µ, σ) {
+    // Create a random path
+    var data = [],
+        norm = d3.random.normal(µ, σ);
+    d3.range(0, N, 1).forEach(function (x) {
+        data.push([x, norm()]);
+    });
+    return data;
+}
 </code></pre>
 </div>
 </div>
@@ -102,23 +141,45 @@ var require = {"waitSeconds": 200, "minify": true, "paths": {}, "baseUrl": "http
 </div>
 <script>
 
-    gexamples.barchart = {
+    gexamples.transition1 = {
         height: '80%',
 
         tooltip: {
             show: true,
         },
 
-        line: {show: true},
+        yaxis: {
+            min: 0,
+            max: 2,
+            show: false
+        },
 
-        bar: {show: true},
+        bar: {
+            show: true,
+            fill: '#D79404',
+            lineWidth: 1,
+            transition: {
+                duration: 1000,
+                ease: 'linear'
+            }
+        },
 
         data: function (chart) {
-            var X = d3.range(-5, 5, 0.5);
+            return [randomData(10, 1, 0.3)];
+        },
 
-            return [chart.xyfunction(X, function (x) {
-                        return 1/(1+Math.exp(-x)) - 0.5;
-                    })];
+        onInit: function (chart, opts) {
+
+            function animate () {
+                chart.each(function (serie) {
+                    serie.data(randomData(10, 1, 0.3));
+                });
+                chart.resume();
+                d3.timer(animate, 2*opts.bar.transition.duration);
+                return true;
+            }
+
+            animate();
         },
 
         // Callback for angular directive
@@ -139,6 +200,16 @@ var require = {"waitSeconds": 200, "minify": true, "paths": {}, "baseUrl": "http
             });
         }
     };
+
+    function randomData (N, µ, σ) {
+        // Create a random path
+        var data = [],
+            norm = d3.random.normal(µ, σ);
+        d3.range(0, N, 1).forEach(function (x) {
+            data.push([x, norm()]);
+        });
+        return data;
+    }
 </script>
 <div id="footer">
 <div class="container">
