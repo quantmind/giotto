@@ -2,7 +2,7 @@
 /*
 ------------------------------------------------------------------
 Created by lux in 0.0 seconds
-Date: 2014-12-25 11:26:53
+Date: 2014-12-25 11:31:12
 
 http://quantmind.github.io/lux/
 ------------------------------------------------------------------ */
@@ -12,13 +12,13 @@ http://quantmind.github.io/lux/
 }
 
 .sunburst path {
-    fill-rule: evenodd;
     stroke: #fff;
+    fill-rule: evenodd;
 }
 
 .axis {
-    fill: none;
     shape-rendering: crispEdges;
+    fill: none;
 }
 
 .line {
@@ -26,11 +26,11 @@ http://quantmind.github.io/lux/
 }
 
 .d3-tip:after {
-    font-size: 16px;
-    width: 100%;
     position: absolute;
-    line-height: 1;
+    width: 100%;
+    font-size: 16px;
     display: inline;
+    line-height: 1;
     -webkit-box-sizing: border-box;
        -moz-box-sizing: border-box;
             box-sizing: border-box;
@@ -38,30 +38,30 @@ http://quantmind.github.io/lux/
 
 .d3-tip.n:after {
     margin: -2px 0 0 0;
-    left: 0;
+    content: "\25BC";
     text-align: center;
     top: 100%;
-    content: "\25BC";
+    left: 0;
 }
 
 .d3-tip.e:after {
     margin: -4px 0 0 0;
-    left: -8px;
-    top: 50%;
     content: "\25C0";
+    top: 50%;
+    left: -8px;
 }
 
 .d3-tip.s:after {
     margin: 0 0 2px 0;
-    left: 0;
+    content: "\25B2";
     text-align: center;
     top: -8px;
-    content: "\25B2";
+    left: 0;
 }
 
 .d3-tip.w:after {
     margin: -4px 0 0 -1px;
-    left: 100%;
-    top: 50%;
     content: "\25B6";
+    top: 50%;
+    left: 100%;
 }
