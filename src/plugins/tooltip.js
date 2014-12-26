@@ -10,6 +10,7 @@
             color: '#fff',
             padding: '5px',
             radius: '3px',
+            offset: [20, 20],
             template: function (d) {
                 return "<strong>" + d.x + ": </strong><span>" + d.y + "</span>";
             },
@@ -57,7 +58,7 @@
                         if (!active) return;
                         //
                         active.highLight().render(el);
-                        paper.tip.bbox(getScreenBBox(this)).show();
+                        paper.tip.bbox(getScreenBBox(this)).offset(opts.tooltip.offset).show();
                     }
                 });
             });
@@ -132,8 +133,9 @@
     //
     // Returns a tip handle
     g.tip = function () {
+
         var direction = d3_tip_direction,
-            offset = d3_tip_offset,
+            offset = [0, 0],
             html = d3_tip_html,
             node = initNode(),
             tip = {},
@@ -146,7 +148,6 @@
         // Returns a tip
         tip.show = function () {
             var content = html.call(tip),
-                poffset = offset.call(tip),
                 dir = direction.call(tip),
                 nodel = d3.select(node),
                 i = directions.length,
@@ -165,8 +166,8 @@
 
             coords = direction_callbacks.get(dir).apply(this);
             nodel.classed(dir, true).style({
-                top: (coords.top + poffset[0]) + scrollTop + 'px',
-                left: (coords.left + poffset[1]) + scrollLeft + 'px'
+                top: coords.top + scrollTop + 'px',
+                left: coords.left + scrollLeft + 'px'
             });
             return tip;
         };
@@ -236,10 +237,9 @@
         //
         // v - Array of [x, y] offset
         //
-        // Returns offset or
         tip.offset = function (v) {
             if (!arguments.length) return offset;
-            offset = v === null ? v : d3.functor(v);
+            offset = v;
             return tip;
         };
 
@@ -254,12 +254,8 @@
             return tip;
         };
 
-        function d3_tip_direction() {
+        function d3_tip_direction () {
             return 'n';
-        }
-
-        function d3_tip_offset() {
-            return [0, 0];
         }
 
         function d3_tip_html() {
@@ -279,59 +275,59 @@
 
         directions = direction_callbacks.keys();
 
-        function direction_n() {
+        function direction_n () {
             return {
-                top: bbox.n.y - node.offsetHeight,
+                top: bbox.n.y - node.offsetHeight - offset[1],
                 left: bbox.n.x - node.offsetWidth / 2
             };
         }
 
-        function direction_s() {
+        function direction_s () {
             return {
-                top: bbox.s.y,
+                top: bbox.s.y + offset[1],
                 left: bbox.s.x - node.offsetWidth / 2
             };
         }
 
-        function direction_e() {
+        function direction_e () {
             return {
                 top: bbox.e.y - node.offsetHeight / 2,
-                left: bbox.e.x
+                left: bbox.e.x + offset[0]
             };
         }
 
-        function direction_w() {
+        function direction_w () {
             return {
                 top: bbox.w.y - node.offsetHeight / 2,
-                left: bbox.w.x - node.offsetWidth
+                left: bbox.w.x - node.offsetWidth - offset[0]
             };
         }
 
-        function direction_nw() {
+        function direction_nw () {
             return {
-                top: bbox.nw.y - node.offsetHeight,
-                left: bbox.nw.x - node.offsetWidth
+                top: bbox.nw.y - node.offsetHeight - offset[1],
+                left: bbox.nw.x - node.offsetWidth - offset[0]
             };
         }
 
-        function direction_ne() {
+        function direction_ne () {
             return {
-                top: bbox.ne.y - node.offsetHeight,
-                left: bbox.ne.x
+                top: bbox.ne.y - node.offsetHeight - offset[1],
+                left: bbox.ne.x + offset[0]
             };
         }
 
-        function direction_sw() {
+        function direction_sw () {
             return {
-                top: bbox.sw.y,
-                left: bbox.sw.x - node.offsetWidth
+                top: bbox.sw.y + offset[1],
+                left: bbox.sw.x - node.offsetWidth - offset[0]
             };
         }
 
-        function direction_se() {
+        function direction_se () {
             return {
-                top: bbox.se.y,
-                left: bbox.e.x
+                top: bbox.se.y + offset[1],
+                left: bbox.e.x + offset[0]
             };
         }
 

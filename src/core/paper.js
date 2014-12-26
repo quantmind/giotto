@@ -115,6 +115,8 @@
                 h = d3.round(w*p.height_percentage, 0);
             else
                 h = p.elheight ? getHeight(p.elheight) : p.size[1];
+            if (p.min_height)
+                h = Math.max(h, p.min_height);
             return [w, h];
         };
 

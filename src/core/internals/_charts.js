@@ -18,6 +18,13 @@
         return opts.color;
     }
 
+    function chartFormats (group, opts) {
+        var xaxis = group.xaxis(),
+            yaxis = group.yaxis();
+        if (!opts.formatX) opts.formatX = xaxis.tickFormat() || xaxis.scale().tickFormat();
+        if (!opts.formatY) opts.formatY = yaxis.tickFormat() || yaxis.scale().tickFormat();
+    }
+
     function activeColors(opts) {
         var a = opts.active;
         if (!a)

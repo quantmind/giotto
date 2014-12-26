@@ -11,6 +11,7 @@
             lineWidth: 3,
             fill: '#fff',
             size: '12px',
+            formatY: ',.4g',
             active: {
                 fill: '#fff',
                 size: '150%'
@@ -61,14 +62,14 @@
     function randomPath (µ, σ) {
         // Create a random path
         var t = d3.range(0, 5, 0.5),
-            data = [{x: t[0], y: 1}],
+            data = [[t[0], 1]],
             norm = d3.random.normal(0, 1),
             dt, dy;
 
         for(var i=1; i<t.length; i++) {
             dt = t[i] - t[i-1];
             dy = dt*µ + σ*norm()*Math.sqrt(dt);
-            data[i] = {x: t[i], y: data[i-1].y + dy};
+            data[i] = [t[i], data[i-1][1]+ dy];
         }
         return data;
     }

@@ -10,6 +10,7 @@
             name,
             data,
             opts,
+            formatX,
             formatY,
             dataConstructor;
 
@@ -65,6 +66,8 @@
             opts = _;
             if (isFunction(opts.x)) draw.x(opts.x);
             if (isFunction(opts.y)) draw.y(opts.y);
+            if (opts.formatX) formatX = _format(opts.formatX);
+            if (opts.formatY) formatY = _format(opts.formatY);
             draw.init(draw, opts);
             return draw;
         };
@@ -94,8 +97,13 @@
             return draw;
         };
 
+        draw.formatX = function (x) {
+            if (!formatX) formatX = d3.format('n');
+            return formatX(x);
+        };
+
         draw.formatY = function (y) {
-            if (!formatY) formatY = d3.format(opts.formatY || 'n');
+            if (!formatY) formatY = d3.format('n');
             return formatY(y);
         };
 
@@ -159,6 +167,10 @@
                 draw[name](value);
             else
                 draw[name] = value;
+        }
+
+        function _format (format) {
+            return isFunction(format) ? format : d3.format(format);
         }
     }
 
@@ -296,5 +308,11 @@
 
         point_size = function (d) {
             return d.size*d.size*(SymbolSize[d.symbol] || 1);
+        },
+
+        bar_size = function (d) {
+            var w = d.size;
+            if (typeof w === 'function') w = w();
+            return w;
         };
 

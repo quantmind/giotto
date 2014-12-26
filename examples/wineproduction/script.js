@@ -22,6 +22,7 @@
 
         pie: {
             show: true,
+            formatY: ',',
             active: {
                 outerRadius: '105%'
             }

@@ -1,7 +1,11 @@
 
     g.createviz('chart', {
         margin: {top: 30, right: 30, bottom: 30, left: 30},
-        chartTypes: ['pie', 'bar', 'line', 'point']
+        chartTypes: ['pie', 'bar', 'line', 'point'],
+        serie: {
+            x: function (d) {return d[0];},
+            y: function (d) {return d[1];}
+        }
     },
 
     function (chart, opts) {
@@ -102,14 +106,14 @@
 
         function chartSerie (data) {
             var paper = chart.paper(),
-                serie = {},
+                serie = extend({}, opts.serie),
                 color, show;
 
             if (data && !isArray(data)) {
                 extend(serie, data);
                 data = serie.data;
                 delete serie.data;
-            } else serie = {};
+            }
 
             if (!data) return;
 
@@ -176,7 +180,7 @@
 
                     var ranges = allranges[serie.axisgroup],
                         p = ranges[serie.xaxis.position],
-                        xy = xyData(_),
+                        xy = xyData(_, serie.x, serie.y),
                         stype;
 
                     _ = xy.data;
@@ -339,7 +343,7 @@
     g.Chart = g.viz.Chart;
 
 
-    var xyData = function (data) {
+    var xyData = function (data, x, y) {
         if (!data) return;
         if (!data.data) data = {data: data};
 
@@ -348,28 +352,20 @@
             ymin = Infinity,
             xmax =-Infinity,
             ymax =-Infinity,
-            x = function (x) {
+            xm = function (x) {
                 xmin = x < xmin ? x : xmin;
                 xmax = x > xmax ? x : xmax;
                 return x;
             },
-            y = function (y) {
+            ym = function (y) {
                 ymin = y < ymin ? y : ymin;
                 ymax = y > ymax ? y : ymax;
                 return y;
             };
         var xydata = [];
-        if (isArray(xy[0]) && xy[0].length === 2) {
-            xy.forEach(function (xy) {
-                xydata.push({x: x(xy[0]), y: y(xy[1])});
-            });
-        } else {
-            var xl = data.xlabel || 'x',
-                yl = data.ylabel || 'y';
-            xy.forEach(function (xy) {
-                xydata.push({x: x(xy[xl]), y: y(xy[yl])});
-            });
-        }
+        xy.forEach(function (d) {
+            xydata.push({x: xm(x(d)), y: ym(y(d))});
+        });
         data.data = xydata;
         data.xrange = [xmin, xmax];
         data.yrange = [ymin, ymax];

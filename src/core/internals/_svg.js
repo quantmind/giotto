@@ -101,25 +101,61 @@
 
                 var draw = this,
                     opts = draw.options(),
-                    p = group.element().select("#" + draw.uid()),
-                    line = opts.area ? d3.svg.area() : d3.svg.line();
+                    el = group.element(),
+                    p = el.select("#" + draw.uid()),
+                    trans = opts.transition,
+                    scaley = group.yaxis().scale(),
+                    line = d3.svg.line()
+                                .interpolate(opts.interpolate)
+                                .x(draw.scalex())
+                                .y(draw.scaley()),
+                    a;
 
-                if (!p.node())
-                    p = _events(draw.group().element().append('path').attr('id', draw.uid())).datum(data);
+                if (!p.node()) {
+                    p = _events(el.append('path').attr('id', draw.uid())).datum(data);
+                    if (opts.area)
+                        a = el.append('path').attr('id', draw.uid()+'area').datum(data);
+                }
                 else {
-                    p = p.datum(data);
-                    if (opts.transition.delay)
-                        p = p.transition().delay(opts.transition.delay).ease(opts.transition.ease);
+                    p.datum(data);
+                    a = el.select("#" + draw.uid()+'area');
+                    if (opts.area) {
+                        if(!a.size())
+                            a = el.append('path').attr('id', draw.uid()+'area');
+                        a.datum(data);
+                    } else {
+                        a.remove();
+                        a = null;
+                    }
+                    if (!group.resizing() && trans && trans.duration) {
+                        p = p.transition().duration(trans.duration).ease(trans.ease);
+                        if (a)
+                            a = a.transition().duration(trans.duration).ease(trans.ease);
+                    }
                 }
 
-                line.interpolate(opts.interpolate).x(draw.scalex()).y(draw.scaley());
-
-                return p
-                    .attr('d', line)
+                p.attr('d', line)
                     .attr('stroke', draw.color)
                     .attr('stroke-opacity', draw.colorOpacity)
                     .attr('stroke-width', draw.lineWidth)
                     .attr('fill', 'none');
+
+                if (a) {
+                    line = d3.svg.area()
+                                .interpolate(opts.interpolate)
+                                .x(draw.scalex())
+                                .y0(scaley(scaley.domain()[0]))
+                                .y1(draw.scaley());
+                    if (!draw.fill)
+                        draw.fill = draw.color;
+
+                    a.attr('d', line)
+                        .attr('fill', draw.fill)
+                        .attr('stroke', 'none')
+                        .attr('fill-opacity', draw.fillOpacity);
+
+                }
+                return p;
             });
         };
 

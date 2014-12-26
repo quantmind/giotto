@@ -66,8 +66,8 @@
             width = tbbox.width,
             height = tbbox.height;
 
-        point.x = tbbox.x - 0.5*width;
-        point.y = tbbox.y - 0.5*height;
+        point.x = tbbox.x;
+        point.y = tbbox.y;
         bbox.nw = point.matrixTransform(matrix);
         point.x += width;
         bbox.ne = point.matrixTransform(matrix);

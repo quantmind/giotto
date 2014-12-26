@@ -8,7 +8,10 @@
 
         line: {show: true},
 
-        bar: {show: true},
+        bar: {
+            show: true,
+            formatY: ',.3g'
+        },
 
         data: function (chart) {
             var X = d3.range(-5, 5, 0.5);

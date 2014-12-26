@@ -150,6 +150,7 @@
         // Draw a path or an area
         group.path = function (data, opts) {
             opts || (opts = {});
+            chartFormats(group, opts);
             chartColors(paper, copyMissing(p.line, opts));
 
             return group.add(_.path(group, data)).options(opts);
@@ -158,6 +159,7 @@
         // Draw scatter points
         group.points = function (data, opts) {
             opts || (opts = {});
+            chartFormats(group, opts);
             chartColors(paper, copyMissing(p.point, opts));
 
             return group.add(_.points)
@@ -170,9 +172,11 @@
         // Draw a pie chart
         group.barchart = function (data, opts) {
             opts || (opts = {});
+            chartFormats(group, opts);
             chartColors(paper, copyMissing(p.bar, opts));
 
             return group.add(_.barchart)
+            .size(bar_size)
             .options(opts)
             .dataConstructor(bar_costructor)
             .data(data);
@@ -181,6 +185,7 @@
         // Draw pie chart
         group.pie = function (data, opts) {
             opts || (opts = {});
+            chartFormats(group, opts);
             copyMissing(p.pie, opts);
 
             return group.add(drawing(group, function () {
@@ -316,10 +321,14 @@
 
         bar_costructor = function (rawdata) {
             var group = this.group(),
+                draw = this,
                 opts = this.options(),
                 data = [],
-                width = opts.width === 'auto' ?
-                    d3.round(0.8*(group.innerWidth() / rawdata.length)) : opts.width;
+                width = opts.width;
+            if (width === 'auto')
+                width = function () {
+                    return d3.round(0.8*(group.innerWidth() / draw.data().length));
+                };
 
             for (var i=0; i<rawdata.length; i++)
                 data.push(_.bar(this, rawdata[i], width));

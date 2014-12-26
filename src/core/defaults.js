@@ -32,11 +32,9 @@
         activeEvents: ["mousemove", "touchstart", "touchmove", "mouseout"],
         line: {
             interpolate: 'cardinal',
-            fill: 'none',
-            fillOpacity: 1,
             colorOpacity: 1,
+            fillOpacity: 0.4,
             lineWidth: 2,
-            formatY: ',g3',
             transition: extend({}, g.defaults.transition)
         },
         point: {
@@ -46,7 +44,6 @@
             fillOpacity: 1,
             colorOpacity: 1,
             lineWidth: 2,
-            formatY: ',g3',
             active: {
                 fill: 'darker',
                 color: 'brighter',
@@ -61,8 +58,7 @@
             fill: true,
             fillOpacity: 1,
             colorOpacity: 1,
-            lineWidth: 2,
-            formatY: ',g3',
+            lineWidth: 1,
             // Radius in pixels of rounded corners. Set to 0 for no rounded corners
             radius: 4,
             active: {
@@ -80,7 +76,6 @@
             colorOpacity: 1,
             innerRadius: 0,
             startAngle: 0,
-            formatY: ',g3',
             active: {
                 fill: 'darker',
                 color: 'brighter',

@@ -3,4 +3,4 @@
 
 GiottoJS is released under the
 very liberal [BSD license](http://opensource.org/licenses/BSD-3-Clause).
-You can fork the code add feature you need and send us your patch.
+You can fork the code add the feature you need and send us your patch.

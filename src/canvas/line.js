@@ -26,7 +26,9 @@
                 fy = d3_functor(y);
 
             function segment () {
-                interpolate(ctx, projection(points), tension);
+                var p = projection(points);
+                d3_canvas_move(ctx, p[0], true);
+                interpolate(ctx, p, tension);
             }
 
             while (++i < n) {
@@ -100,12 +102,17 @@
         "monotone": d3_canvas_lineMonotone
     });
 
-    function d3_canvas_lineLinear(ctx, points, _, started) {
-        var p = points[0];
-        if (!started) {
+    function d3_canvas_move(ctx, point, move) {
+        if (move) {
             ctx.beginPath();
-            ctx.moveTo(p[0], p[1]);
+            ctx.moveTo(point[0], point[1]);
+        } else {
+            ctx.lineTo(point[0], point[1]);
         }
+    }
+
+    function d3_canvas_lineLinear(ctx, points) {
+        var p = points[0];
         for (var i=1; i<points.length; ++i) {
             p = points[i];
             ctx.lineTo(p[0], p[1]);
@@ -120,8 +127,6 @@
     function d3_canvas_lineStep(ctx, points) {
         var pn = points[1], p = points[0],
             x = 0.5*(pn[0] + p[0]);
-        ctx.beginPath();
-        ctx.moveTo(p[0], p[1]);
         ctx.lineTo(x, p[1]);
         ctx.lineTo(x, pn[1]);
         for (var i=2; i<points.length; ++i) {
@@ -136,8 +141,6 @@
 
     function d3_canvas_lineStepBefore(ctx, points) {
         var pn = points[0], p;
-        ctx.beginPath();
-        ctx.moveTo(pn[0], pn[1]);
         for (var i=1; i<points.length; ++i) {
             p = pn;
             pn = points[i];
@@ -148,8 +151,6 @@
 
     function d3_canvas_lineStepAfter(ctx, points) {
         var pn = points[0], p;
-        ctx.beginPath();
-        ctx.moveTo(pn[0], pn[1]);
         for (var i=1; i<points.length; ++i) {
             p = pn;
             pn = points[i];
@@ -168,8 +169,6 @@
             px = [x0, x0, x0, (pi = points[1])[0]],
             py = [y0, y0, y0, pi[1]];
 
-        ctx.beginPath();
-        ctx.moveTo(x0, y0);
         ctx.lineTo(d3_svg_lineDot4(d3_svg_lineBasisBezier3, px),
                    d3_svg_lineDot4(d3_svg_lineBasisBezier3, py));
 
@@ -200,7 +199,6 @@
             px.push(pi[0]);
             py.push(pi[1]);
         }
-        ctx.beginPath();
         ctx.moveTo(d3_svg_lineDot4(d3_svg_lineBasisBezier3, px),
                    d3_svg_lineDot4(d3_svg_lineBasisBezier3, py));
         --i; while (++i < n) {
@@ -225,7 +223,6 @@
             px.push(pi[0]);
             py.push(pi[1]);
         }
-        ctx.beginPath();
         ctx.moveTo(d3_svg_lineDot4(d3_svg_lineBasisBezier3, px),
                    d3_svg_lineDot4(d3_svg_lineBasisBezier3, py));
         --i; while (++i < m) {
@@ -260,8 +257,6 @@
         if (points.length < 3)
             d3_canvas_lineLinear(ctx, points);
         else {
-            ctx.beginPath();
-            ctx.moveTo(points[0][0], points[0][1]);
             d3_canvas_lineHermite(ctx, points, d3_svg_lineCardinalTangents(points, tension));
         }
     }
@@ -271,8 +266,6 @@
         if (points.length < 4)
             d3_canvas_lineLinear(ctx, points);
         else {
-            ctx.beginPath();
-            ctx.moveTo(points[1][0], points[1][1]);
             d3_canvas_lineHermite(ctx, points.slice(1, -1), d3_svg_lineCardinalTangents(points, tension));
         }
     }
@@ -282,8 +275,6 @@
         if (points.length < 3)
             d3_canvas_lineLinear(ctx, points);
         else {
-            ctx.beginPath();
-            ctx.moveTo(points[0][0], points[0][1]);
             d3_canvas_lineHermite(ctx, (points.push(points[0]), points),
                 d3_svg_lineCardinalTangents([points[points.length - 2]].concat(points, [points[1]]), tension));
         }
@@ -293,8 +284,6 @@
         if (points.length < 3)
             d3_canvas_lineLinear(ctx, points);
         else {
-            ctx.beginPath();
-            ctx.moveTo(points[0][0], points[0][1]);
             d3_canvas_lineHermite(ctx, points, d3_svg_lineMonotoneTangents(points));
         }
     }
@@ -313,7 +302,7 @@
     function d3_canvas_lineHermite(ctx, points, tangents) {
         if (tangents.length < 1 ||
             (points.length != tangents.length && points.length != tangents.length + 2))
-            return d3_canvas_lineLinear(ctx, points, null, true);
+            return d3_canvas_lineLinear(ctx, points);
 
         var quad = points.length != tangents.length,
             p0 = points[0],
@@ -352,3 +341,6 @@
             ctx.quadraticCurveTo((p[0] + t[0] * 2 / 3), (p[1] + t[1] * 2 / 3), lp[0], lp[1]);
         }
     }
+
+    d3_canvas_lineStepBefore.reverse = d3_canvas_lineStepAfter;
+    d3_canvas_lineStepAfter.reverse = d3_canvas_lineStepBefore;

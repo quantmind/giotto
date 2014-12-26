@@ -3,6 +3,7 @@ from lux.extensions.ui import *
 
 def add_css(all):
     css = all.css
+    media = all.media
     vars = all.variables
     vars.sidebar.width = px(200)
 
@@ -43,6 +44,12 @@ def add_css(all):
         color=vars.colors.gray_light,
         min_height=px(300),
         padding=spacing(30, 0, 40))
+
+    css('#lux-logo',
+        width=px(400))
+
+    media(max_width=px(600)).css('#lux-logo',
+        width=px(300))
 
     css('.trianglify-background',
         padding_top=px(30))

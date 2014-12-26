@@ -1,19 +1,41 @@
     //Check this example http://dc-js.github.io/dc.js/docs/stock.html
 
-    gexamples.randomwalkMain = {
-        height: '55%',
-        points: {show: true},
+    gexamples.randomwalk = {
+        //type: 'canvas',
+        height: '60%',
+        min_height: 250,
 
-    };
+        serie: {
+            x: function (d) {return d.time;},
+            y: function (d) {return d.value;}
+        },
 
-    gexamples.randomwalkBrush = {
-        height: '15%',
-
+        //margin: {bottom: '70%'},
         brush: {
             axis: 'x'
         },
 
-        data: function (chart) {
+        grid: {
+            show: true
+        },
+
+        line: {
+            show: true,
+            area: true
+        },
+
+        data: function () {
+            return [randomPath(3000), randomPath(3000)];
+        },
+
+        onInitx: function (chart, opts) {
+            var paper = chart.paper(),
+                brush = paper.group({margin: {top: '75%'}});
+            brush.element().classed('brush', true);
+
+        },
+
+        datax: function (chart) {
 
             // Setup a crossfilter with some random data
             d3.giotto.crossfilter({
@@ -34,8 +56,18 @@
                         xlabel: 'time',
                         ylabel: 'value'
                     });
-                    chart.paper().extent(extent);
+                    chart.resume();
+                    //chart.paper().extent(extent);
                 }
+            });
+        },
+
+        // Callback for angular directive
+        angular: function (chart, opts) {
+
+            opts.scope.$on('formFieldChange', function (e, form) {
+                opts.type = form.type;
+                chart.resume();
             });
         }
     };

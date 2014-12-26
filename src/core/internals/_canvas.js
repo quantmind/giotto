@@ -104,10 +104,28 @@
             ctx = group.context();
 
         d.render = function (context) {
+            var opts = d.options();
             context = context || ctx;
+
+            if (opts.area) {
+                var scaley = group.yaxis().scale();
+                if (!d.fill) d.fill = d.color;
+                context.fillStyle = d3.canvas.rgba(d.fill, d.fillOpacity);
+                d3.canvas.area()
+                        .interpolate(opts.interpolate)
+                        .x(d.scalex())
+                        .y0(scaley(scaley.domain()[0]))
+                        .y1(d.scaley())
+                        .context(context)(data);
+                context.fill();
+            }
             ctx.strokeStyle = d.color;
             ctx.lineWidth = group.factor()*d.lineWidth;
-            _draw(context);
+            d3.canvas.line()
+                .interpolate(opts.interpolate)
+                .x(d.scalex())
+                .y(d.scaley())
+                .context(context)(data);
             context.stroke();
             return d;
         };
@@ -123,16 +141,6 @@
         //};
 
         return d;
-
-        function _draw (context) {
-            var opts = d.options(),
-                line = opts.area ? d3.canvas.area() : d3.canvas.line();
-
-            line.interpolate(opts.interpolate)
-                .x(d.scalex())
-                .y(d.scaley())
-                .context(context)(data);
-        }
     }
 
     function canvasPoint (draw, data, size) {
