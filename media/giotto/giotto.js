@@ -1,6 +1,6 @@
 //      Giotto - v0.1.0
 
-//      Compiled 2014-12-25.
+//      Compiled 2014-12-26.
 //      Copyright (c) 2014 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -1590,6 +1590,132 @@
 
 
 
+    // same as d3.svg.area... but for canvas
+    d3.canvas.area = function() {
+        return d3_canvas_area(d3_identity);
+    };
+
+    function d3_canvas_area(projection) {
+        var x0 = d3_geom_pointX,
+            x1 = d3_geom_pointX,
+            y0 = 0,
+            y1 = d3_geom_pointY,
+            defined = d3_true,
+            interpolate = d3_canvas_lineLinear,
+            interpolateKey = interpolate.key,
+            interpolateReverse = interpolate,
+            tension = 0.7,
+            ctx;
+
+      function area(data) {
+            if (!ctx) return;
+
+            var segments = [],
+                points0 = [],
+                points1 = [],
+                i = -1,
+                n = data.length,
+                d,
+                fx0 = d3_functor(x0),
+                fy0 = d3_functor(y0),
+                fx1 = x0 === x1 ? function() { return x; } : d3_functor(x1),
+                fy1 = y0 === y1 ? function() { return y; } : d3_functor(y1),
+                x,
+                y;
+
+            function segment () {
+                var p1 = projection(points1),
+                    p0 = projection(points0.reverse());
+
+                d3_canvas_move(ctx, p1[0], true);
+                interpolate(ctx, p1, tension);
+                d3_canvas_move(ctx, p0[0], interpolate.closed);
+                interpolateReverse(ctx, p0, tension);
+                ctx.closePath();
+            }
+
+            while (++i < n) {
+                if (defined.call(area, d = data[i], i)) {
+                    points0.push([x = +fx0.call(area, d, i), y = +fy0.call(area, d, i)]);
+                    points1.push([+fx1.call(area, d, i), +fy1.call(area, d, i)]);
+                } else if (points0.length) {
+                    segment();
+                    points0 = [];
+                    points1 = [];
+                }
+            }
+
+            if (points0.length) segment();
+
+            return segments.length ? segments.join("") : null;
+        }
+
+        area.context = function (_) {
+            if (!arguments.length) return ctx;
+            ctx = _;
+            return area;
+        };
+
+        area.x = function(_) {
+            if (!arguments.length) return x1;
+            x0 = x1 = _;
+            return area;
+        };
+
+        area.x0 = function(_) {
+            if (!arguments.length) return x0;
+            x0 = _;
+            return area;
+        };
+
+        area.x1 = function(_) {
+            if (!arguments.length) return x1;
+            x1 = _;
+            return area;
+        };
+
+        area.y = function(_) {
+            if (!arguments.length) return y1;
+            y0 = y1 = _;
+            return area;
+        };
+
+        area.y0 = function(_) {
+            if (!arguments.length) return y0;
+            y0 = _;
+            return area;
+        };
+
+        area.y1 = function(_) {
+            if (!arguments.length) return y1;
+            y1 = _;
+            return area;
+        };
+
+        area.defined  = function(_) {
+            if (!arguments.length) return defined;
+            defined = _;
+            return area;
+        };
+
+        area.interpolate = function(_) {
+            if (!arguments.length) return interpolateKey;
+            if (typeof _ === "function") interpolateKey = interpolate = _;
+            else interpolateKey = (interpolate = d3_canvas_lineInterpolators.get(_) || d3_canvas_lineLinear).key;
+            interpolateReverse = interpolate.reverse || interpolate;
+            return area;
+        };
+
+        area.tension = function(_) {
+            if (!arguments.length) return tension;
+            tension = _;
+            return area;
+        };
+
+        return area;
+    }
+
+
     // same as d3.svg.axis... but for canvas
     d3.canvas.axis = function() {
         var scale = d3.scale.linear(),
@@ -2230,7 +2356,9 @@
                 fy = d3_functor(y);
 
             function segment () {
-                interpolate(ctx, projection(points), tension);
+                var p = projection(points);
+                d3_canvas_move(ctx, p[0], true);
+                interpolate(ctx, p, tension);
             }
 
             while (++i < n) {
@@ -2304,12 +2432,17 @@
         "monotone": d3_canvas_lineMonotone
     });
 
-    function d3_canvas_lineLinear(ctx, points, _, started) {
-        var p = points[0];
-        if (!started) {
+    function d3_canvas_move(ctx, point, move) {
+        if (move) {
             ctx.beginPath();
-            ctx.moveTo(p[0], p[1]);
+            ctx.moveTo(point[0], point[1]);
+        } else {
+            ctx.lineTo(point[0], point[1]);
         }
+    }
+
+    function d3_canvas_lineLinear(ctx, points) {
+        var p = points[0];
         for (var i=1; i<points.length; ++i) {
             p = points[i];
             ctx.lineTo(p[0], p[1]);
@@ -2324,8 +2457,6 @@
     function d3_canvas_lineStep(ctx, points) {
         var pn = points[1], p = points[0],
             x = 0.5*(pn[0] + p[0]);
-        ctx.beginPath();
-        ctx.moveTo(p[0], p[1]);
         ctx.lineTo(x, p[1]);
         ctx.lineTo(x, pn[1]);
         for (var i=2; i<points.length; ++i) {
@@ -2340,8 +2471,6 @@
 
     function d3_canvas_lineStepBefore(ctx, points) {
         var pn = points[0], p;
-        ctx.beginPath();
-        ctx.moveTo(pn[0], pn[1]);
         for (var i=1; i<points.length; ++i) {
             p = pn;
             pn = points[i];
@@ -2352,8 +2481,6 @@
 
     function d3_canvas_lineStepAfter(ctx, points) {
         var pn = points[0], p;
-        ctx.beginPath();
-        ctx.moveTo(pn[0], pn[1]);
         for (var i=1; i<points.length; ++i) {
             p = pn;
             pn = points[i];
@@ -2372,8 +2499,6 @@
             px = [x0, x0, x0, (pi = points[1])[0]],
             py = [y0, y0, y0, pi[1]];
 
-        ctx.beginPath();
-        ctx.moveTo(x0, y0);
         ctx.lineTo(d3_svg_lineDot4(d3_svg_lineBasisBezier3, px),
                    d3_svg_lineDot4(d3_svg_lineBasisBezier3, py));
 
@@ -2404,7 +2529,6 @@
             px.push(pi[0]);
             py.push(pi[1]);
         }
-        ctx.beginPath();
         ctx.moveTo(d3_svg_lineDot4(d3_svg_lineBasisBezier3, px),
                    d3_svg_lineDot4(d3_svg_lineBasisBezier3, py));
         --i; while (++i < n) {
@@ -2429,7 +2553,6 @@
             px.push(pi[0]);
             py.push(pi[1]);
         }
-        ctx.beginPath();
         ctx.moveTo(d3_svg_lineDot4(d3_svg_lineBasisBezier3, px),
                    d3_svg_lineDot4(d3_svg_lineBasisBezier3, py));
         --i; while (++i < m) {
@@ -2464,8 +2587,6 @@
         if (points.length < 3)
             d3_canvas_lineLinear(ctx, points);
         else {
-            ctx.beginPath();
-            ctx.moveTo(points[0][0], points[0][1]);
             d3_canvas_lineHermite(ctx, points, d3_svg_lineCardinalTangents(points, tension));
         }
     }
@@ -2475,8 +2596,6 @@
         if (points.length < 4)
             d3_canvas_lineLinear(ctx, points);
         else {
-            ctx.beginPath();
-            ctx.moveTo(points[1][0], points[1][1]);
             d3_canvas_lineHermite(ctx, points.slice(1, -1), d3_svg_lineCardinalTangents(points, tension));
         }
     }
@@ -2486,8 +2605,6 @@
         if (points.length < 3)
             d3_canvas_lineLinear(ctx, points);
         else {
-            ctx.beginPath();
-            ctx.moveTo(points[0][0], points[0][1]);
             d3_canvas_lineHermite(ctx, (points.push(points[0]), points),
                 d3_svg_lineCardinalTangents([points[points.length - 2]].concat(points, [points[1]]), tension));
         }
@@ -2497,8 +2614,6 @@
         if (points.length < 3)
             d3_canvas_lineLinear(ctx, points);
         else {
-            ctx.beginPath();
-            ctx.moveTo(points[0][0], points[0][1]);
             d3_canvas_lineHermite(ctx, points, d3_svg_lineMonotoneTangents(points));
         }
     }
@@ -2517,7 +2632,7 @@
     function d3_canvas_lineHermite(ctx, points, tangents) {
         if (tangents.length < 1 ||
             (points.length != tangents.length && points.length != tangents.length + 2))
-            return d3_canvas_lineLinear(ctx, points, null, true);
+            return d3_canvas_lineLinear(ctx, points);
 
         var quad = points.length != tangents.length,
             p0 = points[0],
@@ -2556,6 +2671,9 @@
             ctx.quadraticCurveTo((p[0] + t[0] * 2 / 3), (p[1] + t[1] * 2 / 3), lp[0], lp[1]);
         }
     }
+
+    d3_canvas_lineStepBefore.reverse = d3_canvas_lineStepAfter;
+    d3_canvas_lineStepAfter.reverse = d3_canvas_lineStepBefore;
 
 
     // same as d3.svg.symbol... but for canvas
@@ -2701,9 +2819,8 @@
         activeEvents: ["mousemove", "touchstart", "touchmove", "mouseout"],
         line: {
             interpolate: 'cardinal',
-            fill: 'none',
-            fillOpacity: 1,
             colorOpacity: 1,
+            fillOpacity: 0.4,
             lineWidth: 2,
             transition: extend({}, g.defaults.transition)
         },
@@ -2908,6 +3025,8 @@
                 h = d3.round(w*p.height_percentage, 0);
             else
                 h = p.elheight ? getHeight(p.elheight) : p.size[1];
+            if (p.min_height)
+                h = Math.max(h, p.min_height);
             return [w, h];
         };
 
@@ -4039,7 +4158,11 @@
 
     g.createviz('chart', {
         margin: {top: 30, right: 30, bottom: 30, left: 30},
-        chartTypes: ['pie', 'bar', 'line', 'point']
+        chartTypes: ['pie', 'bar', 'line', 'point'],
+        serie: {
+            x: function (d) {return d[0];},
+            y: function (d) {return d[1];}
+        }
     },
 
     function (chart, opts) {
@@ -4140,14 +4263,14 @@
 
         function chartSerie (data) {
             var paper = chart.paper(),
-                serie = {},
+                serie = extend({}, opts.serie),
                 color, show;
 
             if (data && !isArray(data)) {
                 extend(serie, data);
                 data = serie.data;
                 delete serie.data;
-            } else serie = {};
+            }
 
             if (!data) return;
 
@@ -4214,7 +4337,7 @@
 
                     var ranges = allranges[serie.axisgroup],
                         p = ranges[serie.xaxis.position],
-                        xy = xyData(_),
+                        xy = xyData(_, serie.x, serie.y),
                         stype;
 
                     _ = xy.data;
@@ -4377,7 +4500,7 @@
     g.Chart = g.viz.Chart;
 
 
-    var xyData = function (data) {
+    var xyData = function (data, x, y) {
         if (!data) return;
         if (!data.data) data = {data: data};
 
@@ -4386,28 +4509,20 @@
             ymin = Infinity,
             xmax =-Infinity,
             ymax =-Infinity,
-            x = function (x) {
+            xm = function (x) {
                 xmin = x < xmin ? x : xmin;
                 xmax = x > xmax ? x : xmax;
                 return x;
             },
-            y = function (y) {
+            ym = function (y) {
                 ymin = y < ymin ? y : ymin;
                 ymax = y > ymax ? y : ymax;
                 return y;
             };
         var xydata = [];
-        if (isArray(xy[0]) && xy[0].length === 2) {
-            xy.forEach(function (xy) {
-                xydata.push({x: x(xy[0]), y: y(xy[1])});
-            });
-        } else {
-            var xl = data.xlabel || 'x',
-                yl = data.ylabel || 'y';
-            xy.forEach(function (xy) {
-                xydata.push({x: x(xy[xl]), y: y(xy[yl])});
-            });
-        }
+        xy.forEach(function (d) {
+            xydata.push({x: xm(x(d)), y: ym(y(d))});
+        });
         data.data = xydata;
         data.xrange = [xmin, xmax];
         data.yrange = [ymin, ymax];
@@ -6610,10 +6725,28 @@
             ctx = group.context();
 
         d.render = function (context) {
+            var opts = d.options();
             context = context || ctx;
+
+            if (opts.area) {
+                var scaley = group.yaxis().scale();
+                if (!d.fill) d.fill = d.color;
+                context.fillStyle = d3.canvas.rgba(d.fill, d.fillOpacity);
+                d3.canvas.area()
+                        .interpolate(opts.interpolate)
+                        .x(d.scalex())
+                        .y0(scaley(scaley.domain()[0]))
+                        .y1(d.scaley())
+                        .context(context)(data);
+                context.fill();
+            }
             ctx.strokeStyle = d.color;
             ctx.lineWidth = group.factor()*d.lineWidth;
-            _draw(context);
+            d3.canvas.line()
+                .interpolate(opts.interpolate)
+                .x(d.scalex())
+                .y(d.scaley())
+                .context(context)(data);
             context.stroke();
             return d;
         };
@@ -6629,16 +6762,6 @@
         //};
 
         return d;
-
-        function _draw (context) {
-            var opts = d.options(),
-                line = opts.area ? d3.canvas.area() : d3.canvas.line();
-
-            line.interpolate(opts.interpolate)
-                .x(d.scalex())
-                .y(d.scaley())
-                .context(context)(data);
-        }
     }
 
     function canvasPoint (draw, data, size) {
@@ -6967,25 +7090,61 @@
 
                 var draw = this,
                     opts = draw.options(),
-                    p = group.element().select("#" + draw.uid()),
-                    line = opts.area ? d3.svg.area() : d3.svg.line();
+                    el = group.element(),
+                    p = el.select("#" + draw.uid()),
+                    trans = opts.transition,
+                    scaley = group.yaxis().scale(),
+                    line = d3.svg.line()
+                                .interpolate(opts.interpolate)
+                                .x(draw.scalex())
+                                .y(draw.scaley()),
+                    a;
 
-                if (!p.node())
-                    p = _events(draw.group().element().append('path').attr('id', draw.uid())).datum(data);
+                if (!p.node()) {
+                    p = _events(el.append('path').attr('id', draw.uid())).datum(data);
+                    if (opts.area)
+                        a = el.append('path').attr('id', draw.uid()+'area').datum(data);
+                }
                 else {
-                    p = p.datum(data);
-                    if (opts.transition.delay)
-                        p = p.transition().delay(opts.transition.delay).ease(opts.transition.ease);
+                    p.datum(data);
+                    a = el.select("#" + draw.uid()+'area');
+                    if (opts.area) {
+                        if(!a.size())
+                            a = el.append('path').attr('id', draw.uid()+'area');
+                        a.datum(data);
+                    } else {
+                        a.remove();
+                        a = null;
+                    }
+                    if (!group.resizing() && trans && trans.duration) {
+                        p = p.transition().duration(trans.duration).ease(trans.ease);
+                        if (a)
+                            a = a.transition().duration(trans.duration).ease(trans.ease);
+                    }
                 }
 
-                line.interpolate(opts.interpolate).x(draw.scalex()).y(draw.scaley());
-
-                return p
-                    .attr('d', line)
+                p.attr('d', line)
                     .attr('stroke', draw.color)
                     .attr('stroke-opacity', draw.colorOpacity)
                     .attr('stroke-width', draw.lineWidth)
                     .attr('fill', 'none');
+
+                if (a) {
+                    line = d3.svg.area()
+                                .interpolate(opts.interpolate)
+                                .x(draw.scalex())
+                                .y0(scaley(scaley.domain()[0]))
+                                .y1(draw.scaley());
+                    if (!draw.fill)
+                        draw.fill = draw.color;
+
+                    a.attr('d', line)
+                        .attr('fill', draw.fill)
+                        .attr('stroke', 'none')
+                        .attr('fill-opacity', draw.fillOpacity);
+
+                }
+                return p;
             });
         };
 

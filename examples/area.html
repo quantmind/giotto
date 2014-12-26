@@ -1,27 +1,29 @@
 <!DOCTYPE html>
 <html data-debug='false' lang='en' prefix='og: http://ogp.me/ns#'>
 <head>
-<title>Random walk</title>
+<title>Area Chart</title>
 <meta charset='utf-8'>
 <meta content='IE=edge' http-equiv='X-UA-Compatible'>
 <meta content='width=device-width, initial-scale=1' name='viewport'>
-<meta content='A list of GiottoJS examples' name='description'>
+<meta content='GiottoJS support area charts for both svg and canvas elements by extending d3js area to canvas.' name='description'>
 <meta content='Luca Sbardella' name='author'>
 <meta content='website' property='og:type'>
-<meta content='http://giottojs.org/examples/randomwalk' property='og:url'>
-<meta content='Random walk' property='og:title'>
-<meta content='A list of GiottoJS examples' property='og:description'>
+<meta content='http://giottojs.org/examples/area' property='og:url'>
+<meta content='Area Chart' property='og:title'>
+<meta content='GiottoJS support area charts for both svg and canvas elements by extending d3js area to canvas.' property='og:description'>
+<meta content='http://giottojs.org/examples/area.png' property='og:image'>
 <meta content='summary_large_image' name='twitter:card'>
 <meta content='@quantmind' name='twitter:site'>
-<meta content='Random walk' name='twitter:title'>
-<meta content='A list of GiottoJS examples' name='twitter:description'>
+<meta content='Area Chart' name='twitter:title'>
+<meta content='GiottoJS support area charts for both svg and canvas elements by extending d3js area to canvas.' name='twitter:description'>
+<meta content='http://giottojs.org/examples/area.png' name='twitter:image'>
 <link href='http://giottojs.org/media/giottoweb/favicon.ico' rel='icon' type='image/x-icon'>
 <link href='//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css' rel='stylesheet' type='text/css'>
 <link href='//netdna.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css' rel='stylesheet' type='text/css'>
 <link href='http://giottojs.org/media/giotto/giotto.css' rel='stylesheet' type='text/css'>
 <link href='http://giottojs.org/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var lux = {context: {"media": "/media", "apiUrls": {}, "google": {"analytics": {"ga": "ga", "id": "UA-54439804-4"}}, "lux_version": "0.1.2-alpha.1", "year": 2014, "python_version": "3.4.2", "navbar": {"collapseWidth": 768}, "ngModules": ["highlight", "lux.google", "lux.blog"], "html5mode": true, "page": {"modified": "2014-12-26T12:45:27", "robots": ["noindex", "nofollow"], "description": "A list of GiottoJS examples", "title": "Random walk", "priority": "0", "api_url": "http://giottojs.org/ng/examples/randomwalk.json", "date": "2014-12-02T00:00:00", "name": "randomwalk", "slug": "randomwalk", "html_url": "http://giottojs.org/examples/randomwalk", "content_type": "text/html", "author": ["Luca Sbardella"]}, "date": "2014-12-26T22-18-28", "name": "Lux", "oauths": null, "dateFormat": "d MMM y", "url": "http://giottojs.org", "datetimeFormat": "d MMM y, h:mm:ss a", "brand": "Lux"}};
+var lux = {context: {"media": "/media", "apiUrls": {}, "google": {"analytics": {"ga": "ga", "id": "UA-54439804-4"}}, "lux_version": "0.1.2-alpha.1", "year": 2014, "python_version": "3.4.2", "navbar": {"collapseWidth": 768}, "ngModules": ["highlight", "lux.google", "lux.blog"], "html5mode": true, "page": {"image": "http://giottojs.org/examples/area.png", "api_url": "http://giottojs.org/ng/examples/area.json", "date": "2014-12-26T00:00:00", "name": "area", "slug": "area", "html_url": "http://giottojs.org/examples/area", "content_type": "text/html", "description": "GiottoJS support area charts for both svg and canvas elements by extending d3js area to canvas.", "title": "Area Chart", "modified": "2014-12-26T22:15:28", "author": ["Luca Sbardella"]}, "date": "2014-12-26T22-18-28", "name": "Lux", "oauths": null, "dateFormat": "d MMM y", "url": "http://giottojs.org", "datetimeFormat": "d MMM y, h:mm:ss a", "brand": "Lux"}};
 </script>
 <script type='text/javascript'>
 lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
@@ -50,81 +52,51 @@ var require = {"paths": {}, "waitSeconds": 200, "deps": ["http://giottojs.org/me
 <div class="row">
 <div class="col-sm-12" data-highlight>
 <div class="page-header">
-<h2>Random walk</h2>
+<h2>Area Chart</h2>
 </div>
 <div class="container-fluid">
   <div class="row">
     <div class="col-sm-10">
-      <div data-options='gexamples.randomwalk' style='width: 100%' giotto-chart></div>
+      <div data-options='gexamples.area1' style='width: 100%' giotto-chart></div>
     </div>
     <div class="col-sm-2 small">
       <lux-form data-options='luxforms.typeform_jZCiS'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.typeform_jZCiS = {"field": {"showLabels": false, "model": "TypeForm", "type": "form", "id": "typeform_jZCiS"}, "children": [{"field": {"type": "fieldset"}, "children": [{"field": {"value": "svg", "options": ["svg", "canvas"], "type": "select", "name": "type", "required": true}}]}]};</script></lux-form>
     </div>
   </div>
 </div>
-<h3>Javascript code</h3>
-<pre><code>//Check this example http://dc-js.github.io/dc.js/docs/stock.html
 
-gexamples.randomwalk = {
-    //type: 'canvas',
+<p>Area charts are enabled by setting the <code>area</code> parameter in the <code>line</code> entry
+to to <code>true</code>.</p>
+<p>Html:</p>
+<pre><code>&lt;div data-options='gexamples.area1' style='width: 100%' giotto-chart&gt;&lt;/div&gt;
+</code></pre>
+<h3>Javascript code</h3>
+<pre><code>gexamples.area1 = {
     height: '60%',
+
     min_height: 250,
 
+    // Override default x,y accessor for series
     serie: {
         x: function (d) {return d.time;},
         y: function (d) {return d.value;}
     },
 
-    //margin: {bottom: '70%'},
-    brush: {
-        axis: 'x'
-    },
-
     grid: {
-        show: true
+        show: true,
+        fill: '#fff'
     },
 
     line: {
         show: true,
-        area: true
+        area: true,
+        lineWidth: 1,
+        color: '#2ca25f',
+        fillOpacity: 0.3
     },
 
     data: function () {
-        return [randomPath(3000), randomPath(3000)];
-    },
-
-    onInitx: function (chart, opts) {
-        var paper = chart.paper(),
-            brush = paper.group({margin: {top: '75%'}});
-        brush.element().classed('brush', true);
-
-    },
-
-    datax: function (chart) {
-
-        // Setup a crossfilter with some random data
-        d3.giotto.crossfilter({
-
-            data: randomPath(3000),
-
-            dimensions: ['time'],
-
-            // Callback when crossfilter is ready
-            callback: function (cf) {
-                var f = cf.dims.time.filter(),
-                    end = f.top(1)[0].time,
-                    start = f.bottom(1)[0].time,
-                    extent = [end-0.3*(end-start), end];
-                var data = cf.reduceDensity('time', 300);
-                chart.addSerie({
-                    data: data,
-                    xlabel: 'time',
-                    ylabel: 'value'
-                });
-                chart.resume();
-                //chart.paper().extent(extent);
-            }
-        });
+        return [randomPath(300)];
     },
 
     // Callback for angular directive
@@ -163,68 +135,32 @@ function randomPath (N) {
 </div>
 </div>
 <script>
-    //Check this example http://dc-js.github.io/dc.js/docs/stock.html
-
-    gexamples.randomwalk = {
-        //type: 'canvas',
+    gexamples.area1 = {
         height: '60%',
+
         min_height: 250,
 
+        // Override default x,y accessor for series
         serie: {
             x: function (d) {return d.time;},
             y: function (d) {return d.value;}
         },
 
-        //margin: {bottom: '70%'},
-        brush: {
-            axis: 'x'
-        },
-
         grid: {
-            show: true
+            show: true,
+            fill: '#fff'
         },
 
         line: {
             show: true,
-            area: true
+            area: true,
+            lineWidth: 1,
+            color: '#2ca25f',
+            fillOpacity: 0.3
         },
 
         data: function () {
-            return [randomPath(3000), randomPath(3000)];
-        },
-
-        onInitx: function (chart, opts) {
-            var paper = chart.paper(),
-                brush = paper.group({margin: {top: '75%'}});
-            brush.element().classed('brush', true);
-
-        },
-
-        datax: function (chart) {
-
-            // Setup a crossfilter with some random data
-            d3.giotto.crossfilter({
-
-                data: randomPath(3000),
-
-                dimensions: ['time'],
-
-                // Callback when crossfilter is ready
-                callback: function (cf) {
-                    var f = cf.dims.time.filter(),
-                        end = f.top(1)[0].time,
-                        start = f.bottom(1)[0].time,
-                        extent = [end-0.3*(end-start), end];
-                    var data = cf.reduceDensity('time', 300);
-                    chart.addSerie({
-                        data: data,
-                        xlabel: 'time',
-                        ylabel: 'value'
-                    });
-                    chart.resume();
-                    //chart.paper().extent(extent);
-                }
-            });
+            return [randomPath(300)];
         },
 
         // Callback for angular directive

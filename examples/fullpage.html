@@ -1,28 +1,26 @@
 <!DOCTYPE html>
 <html data-debug='false' lang='en' prefix='og: http://ogp.me/ns#'>
 <head>
-<title>GiottoJs - Charting</title>
+<title>Full page</title>
 <meta charset='utf-8'>
 <meta content='IE=edge' http-equiv='X-UA-Compatible'>
 <meta content='width=device-width, initial-scale=1' name='viewport'>
-<meta content='GiottoJS is a javascript visualization library built on top of d3js. It is designed to visualize both SVG and Canvas elements with a simple API. AngularJS integration' name='description'>
+<meta content='A list of GiottoJS examples' name='description'>
 <meta content='website' property='og:type'>
-<meta content='http://giottojs.org/chart' property='og:url'>
-<meta content='GiottoJs - Charting' property='og:title'>
-<meta content='GiottoJS is a javascript visualization library built on top of d3js. It is designed to visualize both SVG and Canvas elements with a simple API. AngularJS integration' property='og:description'>
-<meta content='http://giottojs.org/media/giottoweb/giotto.png' property='og:image'>
+<meta content='http://giottojs.org/examples/fullpage' property='og:url'>
+<meta content='Full page' property='og:title'>
+<meta content='A list of GiottoJS examples' property='og:description'>
 <meta content='summary_large_image' name='twitter:card'>
 <meta content='@quantmind' name='twitter:site'>
-<meta content='GiottoJs - Charting' name='twitter:title'>
-<meta content='GiottoJS is a javascript visualization library built on top of d3js. It is designed to visualize both SVG and Canvas elements with a simple API. AngularJS integration' name='twitter:description'>
-<meta content='http://giottojs.org/media/giottoweb/giotto.png' name='twitter:image'>
+<meta content='Full page' name='twitter:title'>
+<meta content='A list of GiottoJS examples' name='twitter:description'>
 <link href='http://giottojs.org/media/giottoweb/favicon.ico' rel='icon' type='image/x-icon'>
 <link href='//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css' rel='stylesheet' type='text/css'>
 <link href='//netdna.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css' rel='stylesheet' type='text/css'>
 <link href='http://giottojs.org/media/giotto/giotto.css' rel='stylesheet' type='text/css'>
 <link href='http://giottojs.org/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var lux = {context: {"media": "/media", "apiUrls": {}, "google": {"analytics": {"ga": "ga", "id": "UA-54439804-4"}}, "lux_version": "0.1.2-alpha.1", "year": 2014, "python_version": "3.4.2", "navbar": {"collapseWidth": 768}, "ngModules": ["highlight", "lux.google"], "html5mode": true, "page": {"api_url": "http://giottojs.org/ng/site/chart.json", "image": "http://giottojs.org/media/giottoweb/giotto.png", "slug": "chart", "title": "GiottoJs - Charting", "html_url": "http://giottojs.org/chart", "content_type": "text/html", "modified": "2014-12-17T15:47:14", "name": "chart"}, "date": "2014-12-26T22-18-28", "name": "Lux", "oauths": null, "dateFormat": "d MMM y", "url": "http://giottojs.org", "datetimeFormat": "d MMM y, h:mm:ss a", "brand": "Lux"}};
+var lux = {context: {"media": "/media", "apiUrls": {}, "google": {"analytics": {"ga": "ga", "id": "UA-54439804-4"}}, "lux_version": "0.1.2-alpha.1", "year": 2014, "python_version": "3.4.2", "navbar": {"collapseWidth": 768}, "ngModules": ["highlight", "lux.google", "lux.blog"], "html5mode": true, "page": {"priority": "0", "html_url": "http://giottojs.org/examples/fullpage", "name": "fullpage", "slug": "fullpage", "content_type": "text/html", "api_url": "http://giottojs.org/ng/examples/fullpage.json", "robots": ["noindex", "nofollow"], "description": "A list of GiottoJS examples", "title": "Full page", "modified": "2014-12-25T11:56:51"}, "date": "2014-12-26T22-18-28", "name": "Lux", "oauths": null, "dateFormat": "d MMM y", "url": "http://giottojs.org", "datetimeFormat": "d MMM y, h:mm:ss a", "brand": "Lux"}};
 </script>
 <script type='text/javascript'>
 lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
@@ -49,20 +47,23 @@ var require = {"paths": {}, "waitSeconds": 200, "deps": ["http://giottojs.org/me
 <div id="page-main">
 <div class="container">
 <div class="row">
-<div class="col-sm-12">
+<div class="col-sm-12" data-highlight>
 <div class="page-header">
-<h2>GiottoJs - Charting</h2>
+<h2>Full page</h2>
 </div>
-<div data-highlight>
-<p>Charting is the main component of GiottoJs. It is a visualization class which
-is used to draw lines, scatter plots, bar and pie charts.</p>
-<pre><code>var linechart = giotto.Chart();
+<div data-options='gexamples.fullpage' class="fullpage" giotto-chart></div>
+<h3>Javascript code</h3>
+<pre><code>gexamples.fullpage = {
+};
 </code></pre>
 </div>
 </div>
 </div>
 </div>
-</div>
+<script>
+    gexamples.fullpage = {
+    };
+</script>
 <div id="footer">
 <div class="container">
 <div class="row">
@@ -72,5 +73,6 @@ is used to draw lines, scatter plots, bar and pie charts.</p>
 </div>
 </div>
 </div>
-</div></body>
+</div>
+</body>
 </html>
