@@ -8,6 +8,7 @@
                 "src/math/*.js",
                 "src/canvas/*.js",
                 "src/core/defaults.js",
+                "src/core/gradient.js",
                 "src/core/paper.js",
                 "src/core/group.js",
                 "src/core/drawing.js",

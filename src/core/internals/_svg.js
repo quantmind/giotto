@@ -15,27 +15,6 @@
             group.element().selectAll('*').remove();
         };
 
-        // Create a gradient element to use by scg elements
-        _.gradient = function (id, color1, color2) {
-            var svg = d3.select("body").append("svg"),
-                gradient = svg.append('linearGradient')
-                            .attr("x1", "0%")
-                            .attr("x2", "100%")
-                            .attr("y1", "0%")
-                            .attr("y2", "100%")
-                            .attr("id", id)
-                            .attr("gradientUnits", "userSpaceOnUse");
-            gradient
-                .append("stop")
-                .attr("offset", "0")
-                .attr("stop-color", color1);
-
-            gradient
-                .append("stop")
-                .attr("offset", "0.5")
-                .attr("stop-color", color2);
-        };
-
         _.point = function (draw, data, size) {
             var p = point(draw, data, size);
             p.render = function (element) {
@@ -140,6 +119,7 @@
                     .attr('stroke-width', draw.lineWidth)
                     .attr('fill', 'none');
 
+                // Area
                 if (a) {
                     line = d3.svg.area()
                                 .interpolate(opts.interpolate)
@@ -150,10 +130,22 @@
                         draw.fill = draw.color;
 
                     a.attr('d', line)
-                        .attr('fill', draw.fill)
-                        .attr('stroke', 'none')
-                        .attr('fill-opacity', draw.fillOpacity);
+                     .attr('stroke', 'none');
 
+                    if (opts.gradient) {
+                        g.gradient().colors([
+                            {
+                                color: draw.fill,
+                                opacity: draw.fillOpacity,
+                                offset: 0
+                            },
+                            {
+                                color: opts.gradient,
+                                opacity: draw.fillOpacity,
+                                offset: 100
+                            }]).direction('y')(a);
+                    } else
+                        group.setBackground(draw, a);
                 }
                 return p;
             });

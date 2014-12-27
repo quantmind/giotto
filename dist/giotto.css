@@ -2,7 +2,7 @@
 /*
 ------------------------------------------------------------------
 Created by lux in 0.0 seconds
-Date: 2014-12-26 22:18:27
+Date: 2014-12-27 22:09:19
 
 http://quantmind.github.io/lux/
 ------------------------------------------------------------------ */
@@ -17,8 +17,8 @@ http://quantmind.github.io/lux/
 }
 
 .axis {
-    shape-rendering: crispEdges;
     fill: none;
+    shape-rendering: crispEdges;
 }
 
 .line {
@@ -26,42 +26,42 @@ http://quantmind.github.io/lux/
 }
 
 .d3-tip:after {
-    font-size: 16px;
-    display: inline;
     line-height: 1;
     position: absolute;
     width: 100%;
+    font-size: 16px;
+    display: inline;
     -webkit-box-sizing: border-box;
        -moz-box-sizing: border-box;
             box-sizing: border-box;
 }
 
 .d3-tip.n:after {
-    left: 0;
     content: "\25BC";
-    top: 100%;
+    left: 0;
     text-align: center;
     margin: -2px 0 0 0;
+    top: 100%;
 }
 
 .d3-tip.e:after {
-    left: -8px;
     content: "\25C0";
-    top: 50%;
+    left: -8px;
     margin: -4px 0 0 0;
+    top: 50%;
 }
 
 .d3-tip.s:after {
-    left: 0;
     content: "\25B2";
-    top: -8px;
+    left: 0;
     text-align: center;
     margin: 0 0 2px 0;
+    top: -8px;
 }
 
 .d3-tip.w:after {
-    left: 100%;
     content: "\25B6";
-    top: 50%;
+    left: 100%;
     margin: -4px 0 0 -1px;
+    top: 50%;
 }

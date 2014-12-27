@@ -1,4 +1,21 @@
 
+    function giotto_id (element) {
+        var id = element.attr('id');
+        if (!id) {
+            id = 'giotto-element-' + (++_idCounter);
+            element.attr('id', id);
+        }
+        return id;
+    }
+
+    function svg_defs (element) {
+        var svg = d3.select(getSVGNode(element.node())),
+            defs = svg.select('defs');
+        if (!defs.size())
+            defs = svg.append('defs');
+        return defs;
+    }
+
     function getWidth (element) {
         return getParentRectValue(element, 'width');
     }

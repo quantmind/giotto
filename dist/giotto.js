@@ -1,6 +1,6 @@
 //      Giotto - v0.1.0
 
-//      Compiled 2014-12-26.
+//      Compiled 2014-12-27.
 //      Copyright (c) 2014 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -633,6 +633,23 @@
         return bits.join(' ');
     };
 
+
+    function giotto_id (element) {
+        var id = element.attr('id');
+        if (!id) {
+            id = 'giotto-element-' + (++_idCounter);
+            element.attr('id', id);
+        }
+        return id;
+    }
+
+    function svg_defs (element) {
+        var svg = d3.select(getSVGNode(element.node())),
+            defs = svg.select('defs');
+        if (!defs.size())
+            defs = svg.append('defs');
+        return defs;
+    }
 
     function getWidth (element) {
         return getParentRectValue(element, 'width');
@@ -2908,6 +2925,107 @@
         leaflet: 'http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css'
     };
 
+
+    g.gradient = function () {
+        var colors = [{
+                color: '#000',
+                opacity: 1,
+                offset: 0
+            },
+            {
+                color: '#fff',
+                opacity: 1,
+                offset: 100
+            }],
+            x1 = 0,
+            x2 = 200,
+            y1 = 0,
+            y2 = 200,
+            direction = 'y',
+            type = 'linear';
+
+        function gradient (g) {
+            g.each(function () {
+                if (this.tagName.toLowerCase() === 'canvas') {
+                    var ctx = this.getContext('2d');
+                    type === 'linear' ? linear_canvas(ctx) : radial_canvas(ctx);
+                } else {
+                    var el = d3.select(this),
+                        id = giotto_id(el),
+                        gid = 'grad-' + id,
+                        defs = svg_defs(el);
+
+                    defs.select('#' + gid).remove();
+                    var grad = type === 'linear' ? linearsvg(defs) : radialsvg(defs);
+                    grad.attr('id', gid);
+                    el.attr('fill', 'url(#' + gid + ')');
+                }
+            });
+        }
+
+        function linearsvg (svg) {
+            var grad = svg.append('linearGradient')
+                            .attr('x1', '0%')
+                            .attr('y1', '0%');
+
+            if (direction === 'x')
+                grad.attr('x2', '100%')
+                    .attr('y2', '0%');
+            else
+                grad.attr('y2', '100%')
+                    .attr('x2', '0%');
+
+            colors.forEach(function (c) {
+                grad.append("stop")
+                    .attr("offset", c.offset+"%")
+                    .attr("stop-color", c.color)
+                    .attr("stop-opacity", c.opacity === undefined ? 1 : c.opacity);
+            });
+
+            return grad;
+        }
+
+        function linear_canvas (ctx) {
+            var grad;
+            if (direction === 'x')
+                grad = ctx.createLinearGradient(x1, y1, x2, y1);
+            else
+                grad = ctx.createLinearGradient(x1, y1, x1, y2);
+            colors.forEach(function (c) {
+                grad.addColorStop(0.01*c.offset, c.color);
+            });
+            ctx.fillStyle = grad;
+            ctx.fill();
+        }
+
+        gradient.direction = function (_) {
+            if (!arguments.length) return direction;
+            direction = _;
+            return gradient;
+        };
+
+        gradient.colors = function (_) {
+            if (!arguments.length) return colors;
+            colors = _;
+            return gradient;
+        };
+
+        gradient.y1 = function (_) {
+            if (!arguments.length) return y1;
+            y1 = _;
+            return gradient;
+        };
+
+        gradient.y2 = function (_) {
+            if (!arguments.length) return y2;
+            y2 = _;
+            return gradient;
+        };
+
+
+
+        return gradient;
+    };
     var _idCounter = 0;
     //
     // Create a new paper for drawing stuff
@@ -6731,14 +6849,33 @@
             if (opts.area) {
                 var scaley = group.yaxis().scale();
                 if (!d.fill) d.fill = d.color;
-                context.fillStyle = d3.canvas.rgba(d.fill, d.fillOpacity);
                 d3.canvas.area()
                         .interpolate(opts.interpolate)
                         .x(d.scalex())
                         .y0(scaley(scaley.domain()[0]))
                         .y1(d.scaley())
                         .context(context)(data);
-                context.fill();
+
+                if (opts.gradient) {
+                    var scale = group.yaxis().scale(),
+                        domain = scale.domain();
+                    g.gradient()
+                            .y1(scale(domain[domain.length-1]))
+                            .y2(scale(domain[0]))
+                            .direction('y')
+                            .colors([
+                            {
+                                color: d3.canvas.rgba(d.fill, d.fillOpacity),
+                                offset: 0
+                            },
+                            {
+                                color: d3.canvas.rgba(opts.gradient, d.fillOpacity),
+                                offset: 100
+                            }])(d3.select(context.canvas));
+                } else {
+                    context.fillStyle = d3.canvas.rgba(d.fill, d.fillOpacity);
+                    context.fill();
+                }
             }
             ctx.strokeStyle = d.color;
             ctx.lineWidth = group.factor()*d.lineWidth;
@@ -7004,27 +7141,6 @@
             group.element().selectAll('*').remove();
         };
 
-        // Create a gradient element to use by scg elements
-        _.gradient = function (id, color1, color2) {
-            var svg = d3.select("body").append("svg"),
-                gradient = svg.append('linearGradient')
-                            .attr("x1", "0%")
-                            .attr("x2", "100%")
-                            .attr("y1", "0%")
-                            .attr("y2", "100%")
-                            .attr("id", id)
-                            .attr("gradientUnits", "userSpaceOnUse");
-            gradient
-                .append("stop")
-                .attr("offset", "0")
-                .attr("stop-color", color1);
-
-            gradient
-                .append("stop")
-                .attr("offset", "0.5")
-                .attr("stop-color", color2);
-        };
-
         _.point = function (draw, data, size) {
             var p = point(draw, data, size);
             p.render = function (element) {
@@ -7129,6 +7245,7 @@
                     .attr('stroke-width', draw.lineWidth)
                     .attr('fill', 'none');
 
+                // Area
                 if (a) {
                     line = d3.svg.area()
                                 .interpolate(opts.interpolate)
@@ -7139,10 +7256,22 @@
                         draw.fill = draw.color;
 
                     a.attr('d', line)
-                        .attr('fill', draw.fill)
-                        .attr('stroke', 'none')
-                        .attr('fill-opacity', draw.fillOpacity);
+                     .attr('stroke', 'none');
 
+                    if (opts.gradient) {
+                        g.gradient().colors([
+                            {
+                                color: draw.fill,
+                                opacity: draw.fillOpacity,
+                                offset: 0
+                            },
+                            {
+                                color: opts.gradient,
+                                opacity: draw.fillOpacity,
+                                offset: 100
+                            }]).direction('y')(a);
+                    } else
+                        group.setBackground(draw, a);
                 }
                 return p;
             });

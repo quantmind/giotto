@@ -45,6 +45,10 @@ it invokes the ``callback`` only on the mathing groups.
         this.yaxis.tickSize(5);
     });
 
+### # paper.pickColor()
+
+Pick a color from the paper color range.
+
 ## Options
 
 The internal paper options can be accessed via the ``options`` method:

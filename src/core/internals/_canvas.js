@@ -110,14 +110,33 @@
             if (opts.area) {
                 var scaley = group.yaxis().scale();
                 if (!d.fill) d.fill = d.color;
-                context.fillStyle = d3.canvas.rgba(d.fill, d.fillOpacity);
                 d3.canvas.area()
                         .interpolate(opts.interpolate)
                         .x(d.scalex())
                         .y0(scaley(scaley.domain()[0]))
                         .y1(d.scaley())
                         .context(context)(data);
-                context.fill();
+
+                if (opts.gradient) {
+                    var scale = group.yaxis().scale(),
+                        domain = scale.domain();
+                    g.gradient()
+                            .y1(scale(domain[domain.length-1]))
+                            .y2(scale(domain[0]))
+                            .direction('y')
+                            .colors([
+                            {
+                                color: d3.canvas.rgba(d.fill, d.fillOpacity),
+                                offset: 0
+                            },
+                            {
+                                color: d3.canvas.rgba(opts.gradient, d.fillOpacity),
+                                offset: 100
+                            }])(d3.select(context.canvas));
+                } else {
+                    context.fillStyle = d3.canvas.rgba(d.fill, d.fillOpacity);
+                    context.fill();
+                }
             }
             ctx.strokeStyle = d.color;
             ctx.lineWidth = group.factor()*d.lineWidth;
