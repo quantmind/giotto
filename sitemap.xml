@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-<url><loc>http://giottojs.org/examples/</loc><lastmod>2014-12-26</lastmod><priority>1</priority></url>
+<url><loc>http://giottojs.org/examples/</loc><lastmod>2014-12-27</lastmod><priority>1</priority></url>
 <url><loc>http://giottojs.org/examples/area</loc><lastmod>2014-12-26</lastmod></url>
+<url><loc>http://giottojs.org/examples/areagradient</loc><lastmod>2014-12-27</lastmod></url>
 <url><loc>http://giottojs.org/examples/barchart</loc><lastmod>2014-12-18</lastmod></url>
 <url><loc>http://giottojs.org/examples/giottologo</loc><lastmod>2014-12-18</lastmod></url>
 <url><loc>http://giottojs.org/examples/horizontalbrush</loc><lastmod>2014-12-22</lastmod></url>
@@ -21,6 +22,6 @@
 <url><loc>http://giottojs.org/api/drawing</loc><lastmod>2014-12-18</lastmod></url>
 <url><loc>http://giottojs.org/api/group</loc><lastmod>2014-12-22</lastmod></url>
 <url><loc>http://giottojs.org/api/</loc><lastmod>2014-12-18</lastmod></url>
-<url><loc>http://giottojs.org/api/paper</loc><lastmod>2014-12-18</lastmod></url>
+<url><loc>http://giottojs.org/api/paper</loc><lastmod>2014-12-27</lastmod></url>
 <url><loc>http://giottojs.org/api/visualization</loc><lastmod>2014-12-17</lastmod></url>
 </urlset>
