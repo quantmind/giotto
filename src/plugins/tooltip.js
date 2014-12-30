@@ -34,6 +34,7 @@
         if (paper.tooltip || !opts.tooltip.interact) return;
 
         if (!tooltip && opts.tooltip.show) tooltip = gitto_tip(opts).offset(opts.tooltip.offset);
+        if (!tooltip) tooltip = gitto_tip(opts);
 
         paper.tooltip = tooltip;
 
@@ -47,17 +48,17 @@
                     data = el.size() ? el.datum() : null;
 
                     if (!data || d3.event.type === 'mouseout') {
-                        if (tooltip) tooltip.hide(true);
+                        tooltip.hide(true);
                     } else if (data && data.reset) {
-                        if (d3.event.active === undefined && tooltip) {
+                        if (d3.event.active === undefined) {
                             tooltip.hide(true);
                             d3.event.active = tooltip.active;
                         }
-                        if (tooltip) tooltip.active.push(el);
+                        tooltip.active.push(el);
                         data.highLight().render(el);
                     }
                 }).on(event + '.tooltip-show', function () {
-                    if (tooltip && tooltip.active.length) {
+                    if (tooltip.active.length) {
                         var bbox = getScreenBBox(tooltip.active[0].node()),
                             direction = 'n';
                         if (tooltip.active.length > 1) {
@@ -84,7 +85,7 @@
 
                     d3.canvas.clear(ctx);
 
-                    if (tooltip) tooltip.hide();
+                    tooltip.hide();
 
                     if (d3.event.type === 'mouseout')
                         return;
@@ -122,6 +123,11 @@
             font = extend({}, options.font, opts.font),
             tip = g.tip(),
             hide = tip.hide;
+
+        if (!opts.show) {
+            tip.show = noop;
+            hide = noop;
+        }
 
         tip.active = [];
 
