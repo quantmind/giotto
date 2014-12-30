@@ -1,6 +1,6 @@
 //      Lux Library - v0.1.1
 
-//      Compiled 2014-12-11.
+//      Compiled 2014-12-28.
 //      Copyright (c) 2014 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -1672,6 +1672,9 @@ angular.module("page/breadcrumbs.tpl.html", []).run(["$templateCache", function(
                     //
                     // scope function
                     scope[clickname] = function (e) {
+                        if (scope.$broadcast(clickname, e).defaultPrevented) return;
+                        if (scope.$emit(clickname, e).defaultPrevented) return;
+
                         var callback = formDefaults.processForm;
                         //
                         if (field.click) {

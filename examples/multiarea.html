@@ -1,29 +1,29 @@
 <!DOCTYPE html>
 <html data-debug='false' lang='en' prefix='og: http://ogp.me/ns#'>
 <head>
-<title>Area Chart with Gradient</title>
+<title>Multiple Area Charts with Gradient</title>
 <meta charset='utf-8'>
 <meta content='IE=edge' http-equiv='X-UA-Compatible'>
 <meta content='width=device-width, initial-scale=1' name='viewport'>
-<meta content='GiottoJS supports area charts for both svg and canvas elements by extending d3js area to canvas.' name='description'>
+<meta content='Multiple area charts for both svg and canvas elements are supported by rendering areas in a background element.' name='description'>
 <meta content='Luca Sbardella' name='author'>
 <meta content='website' property='og:type'>
-<meta content='http://giottojs.org/examples/areagradient' property='og:url'>
-<meta content='Area Chart with Gradient' property='og:title'>
-<meta content='GiottoJS supports area charts for both svg and canvas elements by extending d3js area to canvas.' property='og:description'>
-<meta content='http://giottojs.org/examples/areagradient.png' property='og:image'>
+<meta content='http://giottojs.org/examples/multiarea' property='og:url'>
+<meta content='Multiple Area Charts with Gradient' property='og:title'>
+<meta content='Multiple area charts for both svg and canvas elements are supported by rendering areas in a background element.' property='og:description'>
+<meta content='http://giottojs.org/examples/multiarea.png' property='og:image'>
 <meta content='summary_large_image' name='twitter:card'>
 <meta content='@quantmind' name='twitter:site'>
-<meta content='Area Chart with Gradient' name='twitter:title'>
-<meta content='GiottoJS supports area charts for both svg and canvas elements by extending d3js area to canvas.' name='twitter:description'>
-<meta content='http://giottojs.org/examples/areagradient.png' name='twitter:image'>
+<meta content='Multiple Area Charts with Gradient' name='twitter:title'>
+<meta content='Multiple area charts for both svg and canvas elements are supported by rendering areas in a background element.' name='twitter:description'>
+<meta content='http://giottojs.org/examples/multiarea.png' name='twitter:image'>
 <link href='http://giottojs.org/media/giottoweb/favicon.ico' rel='icon' type='image/x-icon'>
 <link href='//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css' rel='stylesheet' type='text/css'>
 <link href='//netdna.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css' rel='stylesheet' type='text/css'>
 <link href='http://giottojs.org/media/giotto/giotto.css' rel='stylesheet' type='text/css'>
 <link href='http://giottojs.org/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var lux = {context: {"date": "2014-12-30T19-43-20", "media": "/media", "ngModules": ["highlight", "lux.google", "lux.blog"], "python_version": "3.4.2", "datetimeFormat": "d MMM y, h:mm:ss a", "name": "Lux", "year": 2014, "brand": "Lux", "page": {"name": "areagradient", "date": "2014-12-27T00:00:00", "title": "Area Chart with Gradient", "description": "GiottoJS supports area charts for both svg and canvas elements by extending d3js area to canvas.", "image": "http://giottojs.org/examples/areagradient.png", "api_url": "http://giottojs.org/ng/examples/areagradient.json", "html_url": "http://giottojs.org/examples/areagradient", "author": ["Luca Sbardella"], "slug": "areagradient", "content_type": "text/html", "modified": "2014-12-27T19:13:05"}, "navbar": {"collapseWidth": 768}, "lux_version": "0.1.2-alpha.1", "url": "http://giottojs.org", "apiUrls": {}, "oauths": null, "dateFormat": "d MMM y", "google": {"analytics": {"id": "UA-54439804-4", "ga": "ga"}}, "html5mode": true}};
+var lux = {context: {"date": "2014-12-30T19-43-20", "media": "/media", "ngModules": ["highlight", "lux.google", "lux.blog"], "python_version": "3.4.2", "datetimeFormat": "d MMM y, h:mm:ss a", "name": "Lux", "year": 2014, "brand": "Lux", "page": {"name": "multiarea", "html_url": "http://giottojs.org/examples/multiarea", "title": "Multiple Area Charts with Gradient", "author": ["Luca Sbardella"], "image": "http://giottojs.org/examples/multiarea.png", "api_url": "http://giottojs.org/ng/examples/multiarea.json", "description": "Multiple area charts for both svg and canvas elements are supported by rendering areas in a background element.", "slug": "multiarea", "content_type": "text/html", "modified": "2014-12-30T18:50:58"}, "navbar": {"collapseWidth": 768}, "lux_version": "0.1.2-alpha.1", "url": "http://giottojs.org", "apiUrls": {}, "oauths": null, "dateFormat": "d MMM y", "google": {"analytics": {"id": "UA-54439804-4", "ga": "ga"}}, "html5mode": true}};
 </script>
 <script type='text/javascript'>
 lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
@@ -52,15 +52,15 @@ var require = {"deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"], "pa
 <div class="row">
 <div class="col-sm-12" data-highlight>
 <div class="page-header">
-<h2>Area Chart with Gradient</h2>
+<h2>Multiple Area Charts with Gradient</h2>
 </div>
 <div class="container-fluid">
   <div class="row">
     <div class="col-sm-10">
-      <div data-options='gexamples.area2' style='width: 100%' giotto-chart></div>
+      <div data-options='gexamples.area3' style='width: 100%' giotto-chart></div>
     </div>
     <div class="col-sm-2 small">
-      <lux-form data-options='luxforms.typeform_J2kKl'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.typeform_J2kKl = {"field": {"showLabels": false, "id": "typeform_J2kKl", "model": "TypeForm", "type": "form"}, "children": [{"field": {"type": "fieldset"}, "children": [{"field": {"options": ["svg", "canvas"], "name": "type", "value": "svg", "type": "select", "required": true}}]}]};</script></lux-form>
+      <lux-form data-options='luxforms.typeform_aXTFN'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.typeform_aXTFN = {"field": {"showLabels": false, "id": "typeform_aXTFN", "model": "TypeForm", "type": "form"}, "children": [{"field": {"type": "fieldset"}, "children": [{"field": {"options": ["svg", "canvas"], "name": "type", "value": "svg", "type": "select", "required": true}}]}, {"field": {"name": "randomise", "label": "randomise", "type": "button"}}]};</script></lux-form>
     </div>
   </div>
 </div>
@@ -73,7 +73,7 @@ it is picked by the <a href="/api/paper#paperpickcolor">paper.pickColour</a> met
 <pre><code>&lt;div data-options='gexamples.area2' style='width: 100%' giotto-chart&gt;&lt;/div&gt;
 </code></pre>
 <h3>Javascript code</h3>
-<pre><code>gexamples.area2 = {
+<pre><code>gexamples.area3 = {
     height: '60%',
     min_height: 250,
 
@@ -86,9 +86,12 @@ it is picked by the <a href="/api/paper#paperpickcolor">paper.pickColour</a> met
     line: {
         show: true,
         area: true,
-        lineWidth: 1,
-        fillOpacity: 0.8,
+        lineWidth: 2,
+        fillOpacity: 0.5,
         gradient: '#fff',
+        transition: {
+            duration: 500
+        },
         active: {
             fillOpacity: 1,
             symbol: 'circle',
@@ -96,8 +99,12 @@ it is picked by the <a href="/api/paper#paperpickcolor">paper.pickColour</a> met
         }
     },
 
+    tooltip: {
+        show: true
+    },
+
     data: function () {
-        return [randomPath(300)];
+        return [randomPath(300), randomPath(300), randomPath(300)];
     },
 
     // Callback for angular directive
@@ -105,6 +112,14 @@ it is picked by the <a href="/api/paper#paperpickcolor">paper.pickColour</a> met
 
         opts.scope.$on('formFieldChange', function (e, form) {
             opts.type = form.type;
+            chart.resume();
+        });
+
+        opts.scope.$on('randomiseClick', function (e) {
+            e.preventDefault();
+            chart.each(function (serie) {
+                serie.data(randomPath(300));
+            });
             chart.resume();
         });
     }
@@ -134,7 +149,7 @@ function randomPath (N) {
 </div>
 <script>
 
-    gexamples.area2 = {
+    gexamples.area3 = {
         height: '60%',
         min_height: 250,
 
@@ -147,9 +162,12 @@ function randomPath (N) {
         line: {
             show: true,
             area: true,
-            lineWidth: 1,
-            fillOpacity: 0.8,
+            lineWidth: 2,
+            fillOpacity: 0.5,
             gradient: '#fff',
+            transition: {
+                duration: 500
+            },
             active: {
                 fillOpacity: 1,
                 symbol: 'circle',
@@ -157,8 +175,12 @@ function randomPath (N) {
             }
         },
 
+        tooltip: {
+            show: true
+        },
+
         data: function () {
-            return [randomPath(300)];
+            return [randomPath(300), randomPath(300), randomPath(300)];
         },
 
         // Callback for angular directive
@@ -166,6 +188,14 @@ function randomPath (N) {
 
             opts.scope.$on('formFieldChange', function (e, form) {
                 opts.type = form.type;
+                chart.resume();
+            });
+
+            opts.scope.$on('randomiseClick', function (e) {
+                e.preventDefault();
+                chart.each(function (serie) {
+                    serie.data(randomPath(300));
+                });
                 chart.resume();
             });
         }
