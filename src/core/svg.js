@@ -11,6 +11,11 @@
         elem.attr("transform", "translate(" + p.margin.left + "," + p.margin.top + ")");
         var group = g.group(paper, elem.node(), p, _);
 
+        group.clear = function () {
+            group.element().selectAll('*').remove();
+            return group;
+        };
+
         group.setBackground = function (b, o) {
             if (!o) return;
 

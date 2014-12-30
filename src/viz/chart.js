@@ -59,17 +59,19 @@
             if (data || opts.type !== paper.type()) {
 
                 if (data)
-                    data = addSeries(data);
+                    addSeries(data);
 
                 if (opts.type !== paper.type()) {
                     paper = chart.paper(true);
-                    data = series;
+                    chart.each(function (serie) {
+                        serie.clear();
+                    });
                 }
-
-                data.forEach(function (serie) {
-                    drawSerie(serie);
-                });
             }
+
+            chart.each(function (serie) {
+                serie.draw();
+            });
 
             // Render the chart
             return chart.render();
@@ -105,9 +107,8 @@
         // INTERNALS
 
         function chartSerie (data) {
-            var paper = chart.paper(),
-                serie = extend({}, opts.serie),
-                color, show;
+            var serie = extend({}, opts.serie),
+                group, color, show;
 
             if (data && !isArray(data)) {
                 extend(serie, data);
@@ -146,7 +147,7 @@
                 if (o && type !== 'pie') {
                     // pick a default color if one is not given
                     if (!color)
-                        color = chartColor(paper, o);
+                        color = chartColor(chart.paper(), o);
                     if (!o.color)
                         o.color = color;
                 }
@@ -171,6 +172,11 @@
                 if (!isObject(serie.yaxis)) serie.yaxis = opts.yaxis;
             }
 
+            serie.clear = function () {
+                if (group) group.remove();
+                group = null;
+                return serie;
+            };
 
             serie.data = function (_) {
                 if (!arguments.length) return data;
@@ -219,6 +225,78 @@
                 return serie;
             };
 
+            serie.draw = function () {
+                var stype;
+
+                if (!group) {
+
+                    // Remove previous serie drawing if any
+                    opts.chartTypes.forEach(function (type) {
+                        stype = serie[type];
+                        if (stype) {
+                            if(isFunction(stype.options))
+                                stype = stype.options();
+                            serie[type] = stype;
+                        }
+                    });
+
+                    group = chart.paper().classGroup(slugify(serie.label), extend({}, serie));
+
+                    // Is this the reference serie for its axisgroup?
+                    group.element().classed('chart' + chart.uid(), true);
+
+                    if (serie.reference)
+                        group.element().classed('reference' + chart.uid(), true)
+                                       .classed(axisGroupId(serie.axisgroup), true);
+
+                    // Draw X axis or set the scale of the reference X-axis
+                    if (serie.drawXaxis)
+                        domain(group.xaxis()).drawXaxis();
+                    else if (serie.axisgroup)
+                        scale(group.xaxis());
+
+                    // Draw Y axis or set the scale of the reference Y-axis
+                    if (serie.drawYaxis)
+                        domain(group.yaxis()).drawYaxis();
+                    else if (serie.axisgroup)
+                        scale(group.yaxis());
+
+                    opts.chartTypes.forEach(function (type) {
+                        stype = serie[type];
+                        if (stype)
+                            serie[type] = chartTypes[type](group, serie.data(), stype).label(serie.label);
+                    });
+                } else {
+                    serie.drawXaxis ? domain(group.xaxis()) : scale(group.xaxis());
+                    serie.drawYaxis ? domain(group.yaxis()) : scale(group.yaxis());
+                }
+
+                return serie;
+
+                function domain(axis) {
+                    var p = allranges[serie.axisgroup][axis.orient()],
+                        o = axis.options(),
+                        scale = axis.scale();
+
+                    p.scale = scale;
+                    if (o.auto) {
+                        scale.domain([p.range[0], p.range[1]]).nice();
+                        if (!isNull(o.min))
+                            scale.domain([o.min, scale.domain()[1]]);
+                        else if (!isNull(o.max))
+                            scale.domain([scale.domain()[0], o.max]);
+                    } else {
+                        scale.domain([o.min, o.max]);
+                    }
+                    return group;
+                }
+
+                function scale (axis) {
+                    var p = allranges[serie.axisgroup][axis.orient()];
+                    axis.scale(p.scale);
+                }
+            };
+
             return serie.data(data);
         }
 
@@ -239,74 +317,6 @@
             });
 
             return data;
-        }
-
-        function drawSerie (serie) {
-            // Draw a serie
-
-            // Remove previous serie drawing if any
-            opts.chartTypes.forEach(function (type) {
-                stype = serie[type];
-                if (stype) {
-                    if(isFunction(stype.options))
-                        stype = stype.options();
-                    serie[type] = stype;
-                }
-            });
-
-            // Create the group for the serie
-            var paper = chart.paper(),
-                group = paper.classGroup(slugify(serie.label), extend({}, serie)),
-                stype;
-
-            // Is this the reference serie for its axisgroup?
-            group.element().classed('chart' + chart.uid(), true);
-
-            if (serie.reference)
-                group.element().classed('reference' + chart.uid(), true)
-                               .classed(axisGroupId(serie.axisgroup), true);
-
-            // Draw X axis or set the scale of the reference X-axis
-            if (serie.drawXaxis)
-                domain(group.xaxis()).drawXaxis();
-            else if (serie.axisgroup)
-                scale(group.xaxis());
-
-            // Draw Y axis or set the scale of the reference Y-axis
-            if (serie.drawYaxis)
-                domain(group.yaxis()).drawYaxis();
-            else if (serie.axisgroup)
-                scale(group.yaxis());
-
-            opts.chartTypes.forEach(function (type) {
-                stype = serie[type];
-                if (stype)
-                    serie[type] = chartTypes[type](group, serie.data(), stype);
-            });
-
-            function domain(axis) {
-                var p = allranges[serie.axisgroup][axis.orient()],
-                    o = axis.options(),
-                    scale = axis.scale();
-
-                p.scale = scale;
-                if (o.auto) {
-                    scale.domain([p.range[0], p.range[1]]).nice();
-                    if (!isNull(o.min))
-                        scale.domain([o.min, scale.domain()[1]]);
-                    else if (!isNull(o.max))
-                        scale.domain([scale.domain()[0], o.max]);
-                } else {
-                    scale.domain([o.min, o.max]);
-                }
-                return group;
-            }
-
-            function scale (axis) {
-                var p = allranges[serie.axisgroup][axis.orient()];
-                axis.scale(p.scale);
-            }
-
         }
 
         function axisGroupId (axisgroup) {

@@ -1,5 +1,9 @@
 
+    d3.canvas.pixelRatio = window.devicePixelRatio || 1;
+
     d3.canvas.clear = function (ctx) {
+        ctx.beginPath();
+        ctx.closePath();
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.clearRect(0 , 0, ctx.canvas.width, ctx.canvas.height);
     };
@@ -18,7 +22,7 @@
         }
 
         d3.canvas.clear(ctx);
-        return window.devicePixelRatio || 1;
+        return d3.canvas.pixelRatio;
     };
 
 

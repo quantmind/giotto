@@ -69,7 +69,13 @@
         };
 
         paper.render = function () {
-            var c, i;
+            var back = paper.canvasBackground().node(),
+                over = paper.canvasOverlay().node(),
+                c, i;
+            if (back)
+                d3.canvas.clear(back.getContext('2d'));
+            if (over)
+                d3.canvas.clear(over.getContext('2d'));
             paper.each(function () {
                 this.render();
             });
@@ -96,12 +102,12 @@
                 size = paper.boundingBox();
             }
             if (p.size[0] !== size[0] || p.size[1] !== size[1]) {
-                var oldsize = [p.size[0], p.size[1]];
                 p.size[0] = size[0];
                 p.size[1] = size[1];
                 paper.canvasOverlay();
+                paper.canvasBackground(false, true);
                 paper.each(function () {
-                    this.resize(oldsize);
+                    this.resize();
                 });
                 paper.change();
             }
@@ -156,6 +162,17 @@
             return svg;
         };
 
+        // Background svg group
+        paper.svgBackground = function (build) {
+            var svg = paper.svg();
+            if (svg.size()) {
+                var gr = svg.select('.giotto-background');
+                if (!gr.size() && build)
+                    gr = svg.insert('g', '*').classed('giotto-background', true);
+                return gr;
+            }
+        };
+
         // Access the canvas container
         paper.canvas = function (build) {
             var canvas = paper.element().select('div.canvas-container');
@@ -163,6 +180,24 @@
                 canvas = paper.element().append('div')
                                 .attr('class', 'canvas-container')
                                 .style('position', 'relative');
+            }
+            return canvas;
+        };
+
+        // Access the canvas background
+        paper.canvasBackground = function (build, clear) {
+            var canvas = paper.canvas();
+            if (canvas.size()) {
+                var gr = canvas.select('.giotto-background'),
+                    node = gr.node();
+                if (!node && build) {
+                    canvas.selectAll('*').style({"position": "absolute", "top": "0", "left": "0"});
+                    gr = canvas.insert('canvas', '*').classed('giotto-background', true);
+                    d3.canvas.retinaScale(gr.node().getContext('2d'), p.size[0], p.size[1]);
+                }
+                if (node && clear)
+                    d3.canvas.resize(node.getContext('2d'), p.size[0], p.size[1]);
+                return gr;
             }
             return canvas;
         };
@@ -218,10 +253,9 @@
                 img, group;
 
             canvas.selectAll('*').each(function () {
-                group = this.__group__;
-                if (group && group !== target) {
+                if (this.__group__ !== target) {
                     img = new Image();
-                    img.src = group.context().canvas.toDataURL();
+                    img.src = this.getContext('2d').canvas.toDataURL();
                     ctx.drawImage(img, 0, 0, ctx.canvas.width, ctx.canvas.height);
                 }
             });

@@ -14,7 +14,12 @@
             area: true,
             lineWidth: 1,
             fillOpacity: 0.8,
-            gradient: '#fff'
+            gradient: '#fff',
+            active: {
+                fillOpacity: 1,
+                symbol: 'circle',
+                size: '10px'
+            }
         },
 
         data: function () {

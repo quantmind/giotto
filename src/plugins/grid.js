@@ -57,26 +57,26 @@
             if (!grid) {
                 // First time here, setup grid options for y and x coordinates
                 if (!gopts) {
-                    gopts = extend({
+                    gopts = extend({}, opts);
+                    gopts.xaxis = extend({
                         position: 'top',
                         size: 0,
                         show: opts.xaxis.grid === undefined || opts.xaxis.grid
                     }, opts.grid);
-                    opts.xaxis = gopts;
-                    opts.yaxis = extend({
+                    gopts.yaxis = extend({
                         position: 'left',
                         size: 0,
                         show: opts.yaxis.grid === undefined || opts.yaxis.grid
                     }, opts.grid);
                 }
-                opts.before = '*';
-                grid = group.paper().group(opts);
+                gopts.before = '*';
+                grid = group.paper().group(gopts);
                 grid.element().classed('grid', true);
                 grid.xaxis().tickFormat(notick).scale(group.xaxis().scale());
                 grid.yaxis().tickFormat(notick).scale(group.yaxis().scale());
                 grid.add(rectangle).options(opts.grid);
-                if (opts.xaxis.show) grid.drawXaxis();
-                if (opts.yaxis.show) grid.drawYaxis();
+                if (gopts.xaxis.show) grid.drawXaxis();
+                if (gopts.yaxis.show) grid.drawYaxis();
                 grid.render();
             } else
                 grid.clear().render();

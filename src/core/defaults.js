@@ -35,7 +35,8 @@
             colorOpacity: 1,
             fillOpacity: 0.4,
             lineWidth: 2,
-            transition: extend({}, g.defaults.transition)
+            transition: extend({}, g.defaults.transition),
+            fill: 'color'
         },
         point: {
             symbol: 'circle',

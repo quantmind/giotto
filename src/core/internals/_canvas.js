@@ -4,28 +4,19 @@
     function canvas_implementation (paper, p) {
         var _ = {};
 
-        _.clear = function (group, size) {
-            var factor = group.factor(),
-                ctx = group.context();
-            if (!size) size = p.size;
-            ctx.setTransform(1, 0, 0, 1, 0, 0);
-            ctx.clearRect (0 , 0, factor*size[0], factor*size[1]);
-            return factor;
-        };
-
         _.scale = function (group) {
             return d3.canvas.retinaScale(group.context(), p.size[0], p.size[1]);
         };
 
-        _.resize = function (group, oldsize) {
-            _.clear(group, oldsize);
+        _.resize = function (group) {
+            d3.canvas.clear(group.context());
             _.scale(group);
             group.resetAxis().render();
         };
 
         _.point = canvasPoint;
-        _.axis = canvasAxis;
         _.path = canvasPath;
+        _.axis = canvasAxis;
         _.pieslice = canvasSlice;
         _.bar = canvasBar;
 
@@ -47,8 +38,14 @@
         return _;
     }
 
+    function canvasMixin(d) {
+        d.inRange = function () {};
+        d.bbox = function () {};
+        return d;
+    }
+
     function canvasAxis (group, axis, xy) {
-        var d = drawing(group),
+        var d = canvasMixin(drawing(group)),
             ctx = group.context(),
             opts, size;
 
@@ -75,10 +72,6 @@
             return d;
         };
 
-        d.inRange = function (ex, ey) {
-            return false;
-        };
-
         return d;
 
         function _draw (context) {
@@ -97,25 +90,24 @@
         }
     }
 
-    function canvasPath (group, data) {
-        var d = drawing(group),
+    function canvasPath (group) {
+        var d = canvasMixin(pathdraw(group)),
             scalex = d.scalex,
             scaley = d.scaley,
-            ctx = group.context();
+            ctx = group.context(),
+            opts, data, active;
 
         d.render = function (context) {
-            var opts = d.options();
+            opts = d.options();
+            data = d.path_data();
             context = context || ctx;
 
             if (opts.area) {
-                var scaley = group.yaxis().scale();
+                var background = group.paper().canvasBackground(true).node().getContext('2d');
+                background.save();
+                group.transform(background);
                 if (!d.fill) d.fill = d.color;
-                d3.canvas.area()
-                        .interpolate(opts.interpolate)
-                        .x(d.scalex())
-                        .y0(scaley(scaley.domain()[0]))
-                        .y1(d.scaley())
-                        .context(context)(data);
+                d.path_area().context(background)(data);
 
                 if (opts.gradient) {
                     var scale = group.yaxis().scale(),
@@ -132,19 +124,16 @@
                             {
                                 color: d3.canvas.rgba(opts.gradient, d.fillOpacity),
                                 offset: 100
-                            }])(d3.select(context.canvas));
+                            }])(d3.select(background.canvas));
                 } else {
-                    context.fillStyle = d3.canvas.rgba(d.fill, d.fillOpacity);
-                    context.fill();
+                    background.fillStyle = d3.canvas.rgba(d.fill, d.fillOpacity);
+                    background.fill();
                 }
+                background.restore();
             }
             ctx.strokeStyle = d.color;
             ctx.lineWidth = group.factor()*d.lineWidth;
-            d3.canvas.line()
-                .interpolate(opts.interpolate)
-                .x(d.scalex())
-                .y(d.scaley())
-                .context(context)(data);
+            d.path_line().context(context)(data);
             context.stroke();
             return d;
         };
@@ -154,20 +143,37 @@
             return d;
         };
 
-        //d.inRange = function (ex, ey) {
-        //    _draw(ctx);
-        //    return ctx.isPointInPath(ex, ey);
-        //};
+        d.inRange = function (ex, ey) {
+            var opts = d.options();
+            if (!d.active) return false;
+            if(!d.active.symbol) return false;
+            if (!active)
+                active = canvasPoint(d, [], 0);
+            var dd = d.bisect(ex - group.marginLeft());
+            if (dd) {
+                active.data = dd.data;
+                return active;
+            }
+            return false;
+        };
 
         return d;
     }
 
     function canvasPoint (draw, data, size) {
-        var d = point(draw, data, size),
+        var d = canvasMixin(point(draw, data, size)),
             scalex = draw.scalex(),
             scaley = draw.scaley(),
             factor = draw.factor(),
+            group = draw.group(),
             ctx = draw.group().context();
+
+        function symbol () {
+            if (!draw.symbol)
+                draw.symbol = d3.canvas.symbol().type(function (d) {return d.symbol;})
+                                                .size(draw.size());
+            return draw.symbol;
+        }
 
         d.render = function (context) {
             context = context || ctx;
@@ -199,19 +205,23 @@
             return res;
         };
 
+        d.bbox = function () {
+            var x = scalex(d.data) + group.marginLeft(),
+                y = scaley(d.data) + group.marginTop(),
+                size = Math.sqrt(symbol().size()(d));
+            return canvasBBox(d, [x-size, y-size], [x+size, y-size], [x+size, y+size], [x-size, y+size]);
+        };
+
         return d;
 
         function _draw (context) {
-            if (!draw.symbol)
-                draw.symbol = d3.canvas.symbol().type(function (d) {return d.symbol;})
-                                                .size(draw.size());
             context.translate(scalex(d.data), scaley(d.data));
-            draw.symbol.context(context)(d);
+            symbol().context(context)(d);
         }
     }
 
     function canvasBar (draw, data, siz) {
-        var d = point(draw, data, siz),
+        var d = canvasMixin(point(draw, data, siz)),
             scalex = draw.scalex(),
             scaley = draw.scaley(),
             size = draw.size(),
@@ -251,7 +261,7 @@
     }
 
     function canvasSlice (draw, data) {
-        var d = pieSlice(draw, data),
+        var d = canvasMixin(pieSlice(draw, data)),
             group = draw.group(),
             factor = draw.factor(),
             ctx = group.context();
@@ -285,4 +295,23 @@
         };
 
         return d;
+    }
+
+    function canvasBBox (d, nw, ne, se, sw) {
+        var target = d.paper().element().node(),
+            bbox = target.getBoundingClientRect(),
+            p = [bbox.left, bbox.top],
+            f = 1/d3.canvas.pixelRatio;
+        return {
+            nw: {x: f*nw[0] + p[0], y: f*nw[1] + p[1]},
+            ne: {x: f*ne[0] + p[0], y: f*ne[1] + p[1]},
+            se: {x: f*se[0] + p[0], y: f*se[1] + p[1]},
+            sw: {x: f*sw[0] + p[0], y: f*sw[1] + p[1]},
+            n: {x: av(nw, ne, 0), y: av(nw, ne, 1)},
+            s: {x: av(sw, se, 0), y: av(sw, se, 1)},
+            e: {x: av(se, ne, 0), y: av(se, ne, 1)},
+            w: {x: av(sw, nw, 0), y: av(sw, nw, 1)}
+        };
+
+        function av(a, b, i) {return p[i] + 0.5*f*(a[i] + b[i]);}
     }

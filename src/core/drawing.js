@@ -12,6 +12,7 @@
             opts,
             formatX,
             formatY,
+            label,
             dataConstructor;
 
         draw = highlightMixin(drawingOptions, draw);
@@ -35,14 +36,6 @@
 
         draw.draw = function () {
             return draw;
-        };
-
-        draw.factor = function () {
-            return group.factor();
-        };
-
-        draw.paper = function () {
-            return group.paper();
         };
 
         draw.each = function (callback) {
@@ -160,6 +153,12 @@
             return draw;
         };
 
+        draw.label = function (_) {
+            if (arguments.length === 0) return label;
+            label = _;
+            return draw;
+        };
+
         return draw;
 
         function _set(name, value) {
@@ -183,6 +182,14 @@
             highlight = false;
 
         d || (d = {});
+
+        d.factor = function () {
+            return d.group().factor();
+        };
+
+        d.paper = function () {
+            return d.group().paper();
+        };
 
         d.highLight = function () {
             if (highlight) return d;
@@ -241,6 +248,76 @@
         d.inRange = noop;
 
         return d;
+    }
+
+    function pathdraw(group, render, draw) {
+        var type = group.type(),
+            bisector = d3.bisector(function (d) {return d.sx;}).left,
+            data, ordered;
+
+        draw = drawing(group, render, draw);
+
+        draw.bisector = d3.bisector(function (d) {return d.sx;}).left;
+
+        draw.each = function (callback) {
+            callback.call(draw);
+            return draw;
+        };
+
+        draw.path_line = function () {
+            var opts = draw.options();
+
+            return d3[type].line()
+                            .interpolate(opts.interpolate)
+                            .x(function (d) {return d.sx;})
+                            .y(function (d) {return d.sy;});
+        };
+
+        draw.path_area = function () {
+            var opts = draw.options(),
+                scaley = group.yaxis().scale();
+
+            return d3[type].area()
+                                .interpolate(opts.interpolate)
+                                .x(function (d) {return d.sx;})
+                                .y0(scaley(scaley.domain()[0]))
+                                .y1(function (d) {return d.sy;});
+        };
+
+        draw.path_data = function () {
+            var sx = draw.x(),
+                sy = draw.y(),
+                scalex = group.xaxis().scale(),
+                scaley = group.yaxis().scale();
+
+            ordered = null;
+            draw.symbol = d3[type].symbol().type(function (d) {return d.symbol || 'circle';})
+                                           .size(draw.size());
+            data = draw.data().map(function (d, i) {
+                var xy = {
+                    x: sx(d),
+                    y: sy(d),
+                    index: i,
+                    data: d
+                };
+                xy.sx = scalex(xy.x);
+                xy.sy = scaley(xy.y);
+                return xy;
+            });
+            return data;
+        };
+
+        draw.bisect = function (x) {
+            if (!ordered && data)
+                ordered = data.slice().sort(function (a, b) {return d3.ascending(a.sx, b.sx);});
+            if (ordered) {
+                var index = bisector(ordered, x);
+                if (index < ordered.length)
+                    return ordered[index];
+            }
+        };
+
+        return draw;
     }
     //
     // Manage attributes for data to be drawn on papers
@@ -307,7 +384,12 @@
         },
 
         point_size = function (d) {
-            return d.size*d.size*(SymbolSize[d.symbol] || 1);
+            var s = +d.size;
+            if (isNaN(s)) {
+                var g = d.group();
+                s = g.scale(g.xfromPX(d.size.substring(0, d.size.length-2)));
+            }
+            return s*s*(SymbolSize[d.symbol] || 1);
         },
 
         bar_size = function (d) {

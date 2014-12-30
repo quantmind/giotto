@@ -141,19 +141,13 @@
             return resizing;
         };
 
-        // clear the group without removing drawing from memory
-        group.clear = function () {
-            _.clear(group);
-            return group;
-        };
-
         // Draw a path or an area
         group.path = function (data, opts) {
             opts || (opts = {});
             chartFormats(group, opts);
             chartColors(paper, copyMissing(p.line, opts));
 
-            return group.add(_.path(group, data)).options(opts);
+            return group.add(_.path(group)).size(point_size).data(data).options(opts);
         };
 
         // Draw scatter points

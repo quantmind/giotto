@@ -8,7 +8,8 @@
             return [chart.xyfunction(X, function (x) {
                         return 1/(1+Math.exp(-x));
                     }),
-                    {point: chart.xyfunction(X, function (x) {
+                    {point: {size: '12px'},
+                     data: chart.xyfunction(X, function (x) {
                         var d = 1/(1+Math.exp(-x));
                         return d*(1 - d);
                     })}

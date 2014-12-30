@@ -5,30 +5,33 @@
         activeColors(opts);
     }
 
+    var fillSpecials = [true, 'none', 'color'];
+
     function chartColor(paper, opts) {
         if (!opts.color)
-            if (opts.fill && opts.fill !== true && opts.fill !== 'none')
+            if (opts.fill && fillSpecials.indexOf(opts.fill) === -1)
                 opts.color = d3.rgb(opts.fill).darker().toString();
             else
                 opts.color = paper.pickColor();
 
         if (opts.fill === true)
             opts.fill = d3.rgb(opts.color).brighter().toString();
+        else if (opts.fill === 'color')
+            opts.fill = opts.color;
 
         return opts.color;
     }
 
-    function chartFormats (group, opts) {
+    function chartFormats (group, opts, m) {
         var xaxis = group.xaxis(),
             yaxis = group.yaxis();
-        if (!opts.formatX) opts.formatX = xaxis.tickFormat() || xaxis.scale().tickFormat();
-        if (!opts.formatY) opts.formatY = yaxis.tickFormat() || yaxis.scale().tickFormat();
+        m = m || 1000;
+        if (!opts.formatX) opts.formatX = xaxis.tickFormat() || xaxis.scale().tickFormat(m);
+        if (!opts.formatY) opts.formatY = yaxis.tickFormat() || yaxis.scale().tickFormat(m);
     }
 
     function activeColors(opts) {
-        var a = opts.active;
-        if (!a)
-            a = opts.active = {};
+        var a = opts.active = extend({}, opts.active);
 
         if (a.fill === 'darker')
             a.fill = d3.rgb(opts.fill).darker().toString();

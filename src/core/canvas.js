@@ -16,9 +16,16 @@
             render = group.render;
 
         group.render = function () {
-            var factor = _.clear(group, p.size);
+            d3.canvas.clear(ctx);
+            var factor = group.factor();
             ctx.translate(factor*p.margin.left, factor*p.margin.top);
             return render();
+        };
+
+        // clear the group without removing drawing from memory
+        group.clear = function () {
+            d3.canvas.clear(ctx);
+            return group;
         };
 
         group.context = function () {
@@ -28,10 +35,13 @@
         group.dataAtPoint = function (point, elements) {
             var x = point[0],
                 y = point[1],
+                active,
                 data;
             group.each(function () {
                 this.each(function () {
-                    if (this.inRange(x, y)) elements.push(this);
+                    active = this.inRange(x, y);
+                    if (active === true) elements.push(this);
+                    else if (active) elements.push(active);
                 });
             });
         };

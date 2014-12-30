@@ -2,17 +2,13 @@
     function svg_implementation (paper, p) {
         var _ = {};
 
-        _.resize = function (group, oldsize) {
+        _.resize = function (group) {
             if (p.resize) {
                 paper.svg()
                     .attr('width', p.size[0])
                     .attr('height', p.size[1]);
                 group.resetAxis().render();
             }
-        };
-
-        _.clear = function (group) {
-            group.element().selectAll('*').remove();
         };
 
         _.point = function (draw, data, size) {
@@ -74,34 +70,45 @@
             return pp;
         };
 
-        _.path = function (group, data) {
+        _.path = function (group) {
 
-            return drawing(group, function () {
+            function area_container (aid, create) {
+                var b = group.paper().svgBackground(create),
+                    a = b.select('#' + aid);
+                if (!a.size() && create)
+                    a = b.append('g')
+                            .attr('id', aid)
+                            .attr("transform", "translate(" + group.marginLeft() + "," + group.marginTop() + ")");
+                return a;
+            }
 
+            return pathdraw(group, function () {
                 var draw = this,
                     opts = draw.options(),
                     el = group.element(),
-                    p = el.select("#" + draw.uid()),
+                    uid = draw.uid(),
+                    aid = 'area-' + uid,
+                    p = el.select("#" + uid),
                     trans = opts.transition,
-                    scaley = group.yaxis().scale(),
-                    line = d3.svg.line()
-                                .interpolate(opts.interpolate)
-                                .x(draw.scalex())
-                                .y(draw.scaley()),
-                    a;
+                    line = this.path_line(),
+                    data = this.path_data(),
+                    active, a;
 
                 if (!p.node()) {
-                    p = _events(el.append('path').attr('id', draw.uid())).datum(data);
+                    p = el.append('path').attr('id', uid).datum(data);
                     if (opts.area)
-                        a = el.append('path').attr('id', draw.uid()+'area').datum(data);
+                        a = area_container(aid, true).append('path').datum(data);
                 }
                 else {
                     p.datum(data);
-                    a = el.select("#" + draw.uid()+'area');
+                    a = area_container(aid);
                     if (opts.area) {
                         if(!a.size())
-                            a = el.append('path').attr('id', draw.uid()+'area');
-                        a.datum(data);
+                            a = area_container(aid, true);
+                        var ar = a.select('path');
+                        if (!ar.size())
+                            ar = a.append('path');
+                        a = ar.datum(data);
                     } else {
                         a.remove();
                         a = null;
@@ -121,11 +128,7 @@
 
                 // Area
                 if (a) {
-                    line = d3.svg.area()
-                                .interpolate(opts.interpolate)
-                                .x(draw.scalex())
-                                .y0(scaley(scaley.domain()[0]))
-                                .y1(draw.scaley());
+                    line = draw.path_area();
                     if (!draw.fill)
                         draw.fill = draw.color;
 
@@ -147,6 +150,26 @@
                     } else
                         group.setBackground(draw, a);
                 }
+
+                //
+                // Activate mouse over events on control points
+                if (draw.active && draw.active.symbol)
+                    _events(group.paper().element(), uid, function () {
+                        if (!active)
+                            active = el.append('path')
+                                        .attr('id', 'point-' + uid)
+                                        .datum(_.point(draw, [], 0))
+                                        .attr('d', draw.symbol);
+                        var mouse = d3.mouse(this),
+                            x = mouse[0] - group.marginLeft(),
+                            d = draw.bisect(x);
+                        if (d) {
+                            active.attr("transform", "translate(" + d.sx + "," + d.sy + ")");
+                            active.datum().data = d.data;
+                            return active.node();
+                        }
+                    });
+
                 return p;
             });
         };
@@ -278,10 +301,18 @@
                     .attr('fill-opacity', function (d) {return d.fillOpacity;});
         }
 
-        function _events (selection) {
+        function _events (selection, uid, callback) {
+            var name = uid || p.giotto,
+                target;
+
             p.activeEvents.forEach(function (event) {
-                selection.on(event + '.' + p.giotto, function () {
-                    paper[d3.event.type].call(this);
+                selection.on(event + '.' + name, function () {
+                    if (uid && !paper.element().select('#' + uid).size())
+                        selection.on(event + '.' + uid, null);
+                    else {
+                        target = callback ? callback.call(this) : this;
+                        paper[d3.event.type].call(target);
+                    }
                 });
             });
             return selection;

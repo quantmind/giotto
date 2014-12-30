@@ -16,10 +16,6 @@
         width: 500,
         height: 500,
 
-        tooltip: {
-          show: true
-        },
-
         // Some defaults for all pies
         pie: {
             padAngle: 2,

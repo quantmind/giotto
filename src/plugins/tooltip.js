@@ -2,9 +2,11 @@
     //
     //  Tooltip functionality for SVG paper
     g.paper.plugin('tooltip', {
+
         defaults: {
             className: 'd3-tip',
             show: false,
+            interact: true,
             fill: '#333',
             fillOpacity: 0.8,
             color: '#fff',
@@ -12,66 +14,65 @@
             radius: '3px',
             offset: [20, 20],
             template: function (d) {
-                return "<strong>" + d.x + ": </strong><span>" + d.y + "</span>";
+                return "<p><span style='color:"+d.c+"'>" + d.l + "</span>  <strong>" + d.x + ": </strong><span>" + d.y + "</span></p>";
             },
             font: {
                 size: '14px'
             }
         },
 
-        svg: function (group, opts) {
-            var paper = group.paper();
+        svg: tooltip_plugin,
+        canvas: tooltip_plugin,
+    });
 
-            if (paper.tip || !opts.tooltip.show) return;
 
-            paper.tip = tooltip || createTip(opts);
+    function tooltip_plugin (group, opts) {
+        var paper = group.paper();
 
-            var active, draw;
+        if (opts.tooltip.show) opts.tooltip.interact = true;
 
-            function hide (el) {
-                if (active)
-                    active.reset().render(el);
-                active = null;
-                paper.tip.hide();
-                return el;
-            }
+        if (paper.tooltip || !opts.tooltip.interact) return;
 
-            paper.tip.html(function () {
-                draw = active.draw();
-                return opts.tooltip.template({
-                    x: draw.x()(active.data),
-                    y: draw.formatY(draw.y()(active.data))
-                });
-            });
+        if (!tooltip && opts.tooltip.show) tooltip = gitto_tip(opts).offset(opts.tooltip.offset);
+
+        paper.tooltip = tooltip;
+
+        var data, draw;
+
+        if (paper.type() === 'svg') {
 
             opts.activeEvents.forEach(function (event) {
                 paper.on(event + '.tooltip', function () {
-                    var el = d3.select(this),
-                        a = this.__data__;
-                    if (_.isArray(a)) a = a.paper;
+                    var el = d3.select(this);
+                    data = el.size() ? el.datum() : null;
 
-                    if (d3.event.type === 'mouseout')
-                        hide(el);
-                    else if (a !== active) {
-                        hide(el);
-                        active = a;
-                        if (!active) return;
-                        //
-                        active.highLight().render(el);
-                        paper.tip.bbox(getScreenBBox(this)).offset(opts.tooltip.offset).show();
+                    if (!data || d3.event.type === 'mouseout') {
+                        if (tooltip) tooltip.hide(true);
+                    } else if (data && data.reset) {
+                        if (d3.event.active === undefined && tooltip) {
+                            tooltip.hide(true);
+                            d3.event.active = tooltip.active;
+                        }
+                        if (tooltip) tooltip.active.push(el);
+                        data.highLight().render(el);
+                    }
+                }).on(event + '.tooltip-show', function () {
+                    if (tooltip && tooltip.active.length) {
+                        var bbox = getScreenBBox(tooltip.active[0].node()),
+                            direction = 'n';
+                        if (tooltip.active.length > 1) {
+                            direction = 'e';
+                            for (var i=1; i<tooltip.active.length; ++i) {
+                                var bbox2 = getScreenBBox(tooltip.active[i].node());
+                                bbox[direction].y += bbox2[direction].y;
+                            }
+                            bbox[direction].y /= tooltip.active.length;
+                        }
+                        tooltip.bbox(bbox).direction(direction).show();
                     }
                 });
             });
-        },
-
-        canvas: function (group, opts) {
-            var paper = group.paper();
-
-            if (paper.tip || !opts.tooltip.show) return;
-
-            paper.tip = tooltip || createTip(opts);
-
-            var active = [];
+        } else {
 
             var overlay = paper.canvasOverlay();
 
@@ -83,37 +84,48 @@
 
                     d3.canvas.clear(ctx);
 
-                    for (var i=0; i<active.length; ++i)
-                        active[i].reset();
-                    active = [];
+                    if (tooltip) tooltip.hide();
 
                     if (d3.event.type === 'mouseout')
                         return;
+
                     point = d3.canvas.mouse(this);
-                    active = paper.canvasDataAtPoint(point);
+                    tooltip.active = paper.canvasDataAtPoint(point);
 
-                    //if (tip)
-                    //    tip.show();
+                    if (tooltip.active.length) {
+                        var direction = 'n', bbox, bbox2;
 
-                    if (active.length) {
-
-                        for (i=0; i<active.length; ++i) {
-                            a = active[i];
+                        for (var i=0; i<tooltip.active.length; ++i) {
+                            a = tooltip.active[i];
                             a.group().transform(ctx);
                             a.highLight().render(ctx);
+                            if (i && bbox) {
+                                bbox2 = a.bbox();
+                                direction = 'e';
+                                bbox[direction].y += bbox2[direction].y;
+                            } else if (!i)
+                                bbox = a.bbox();
+                        }
+                        if (bbox) {
+                            bbox[direction].y /= tooltip.active.length;
+                            tooltip.bbox(bbox).direction(direction).show();
                         }
                     }
                 });
             });
         }
-    });
+    }
 
 
-    function createTip (options) {
+    function gitto_tip (options) {
         var opts = options.tooltip,
-            font = extend({}, options.font, opts.font);
-        tooltip = g.tip();
-        tooltip.attr('class', opts.className)
+            font = extend({}, options.font, opts.font),
+            tip = g.tip(),
+            hide = tip.hide;
+
+        tip.active = [];
+
+        tip.attr('class', opts.className)
            .style({
                 background: opts.fill,
                 opacity: opts.fillOpacity,
@@ -128,8 +140,39 @@
             addCss('', tooltipCss);
             tooltipCss = null;
         }
-        return tooltip;
+
+        tip.html(function () {
+            var html = '',
+                data, draw;
+            for (var i=0; i<tip.active.length; ++i) {
+                data = tip.active[i];
+                if (data.datum) data = data.datum();
+                draw = data.draw();
+
+                html += opts.template({
+                    c: data.color,
+                    l: draw.label() || 'serie',
+                    x: draw.formatX(draw.x()(data.data)),
+                    y: draw.formatY(draw.y()(data.data))
+                });
+            }
+            return html;
+        });
+
+        tip.hide = function (render) {
+            for (var i=0; i<tip.active.length; ++i) {
+                var data = tip.active[i];
+                if (data.datum) data = data.datum();
+                data.reset();
+                if (render) data.render(tip.active[i]);
+            }
+            tip.active = [];
+            hide();
+        };
+
+        return tip;
     }
+
     //
     // Returns a tip handle
     g.tip = function () {
