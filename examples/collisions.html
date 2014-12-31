@@ -22,7 +22,7 @@
 <link href='http://giottojs.org/media/giotto/giotto.css' rel='stylesheet' type='text/css'>
 <link href='http://giottojs.org/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var lux = {context: {"date": "2014-12-30T19-43-20", "media": "/media", "ngModules": ["highlight", "lux.google", "lux.blog"], "python_version": "3.4.2", "datetimeFormat": "d MMM y, h:mm:ss a", "name": "Lux", "year": 2014, "brand": "Lux", "page": {"name": "collisions", "html_url": "http://giottojs.org/examples/collisions", "title": "Collision Detection", "image": "http://giottojs.org/examples/collisions.png", "robots": ["noindex", "nofollow"], "api_url": "http://giottojs.org/ng/examples/collisions.json", "description": "A list of GiottoJS examples", "priority": "0", "slug": "collisions", "content_type": "text/html", "modified": "2014-12-22T08:51:06"}, "navbar": {"collapseWidth": 768}, "lux_version": "0.1.2-alpha.1", "url": "http://giottojs.org", "apiUrls": {}, "oauths": null, "dateFormat": "d MMM y", "google": {"analytics": {"id": "UA-54439804-4", "ga": "ga"}}, "html5mode": true}};
+var lux = {context: {"date": "2014-12-31T08-54-04", "media": "/media", "navbar": {"collapseWidth": 768}, "url": "http://giottojs.org", "name": "Lux", "oauths": null, "lux_version": "0.1.2-alpha.1", "datetimeFormat": "d MMM y, h:mm:ss a", "apiUrls": {}, "google": {"analytics": {"id": "UA-54439804-4", "ga": "ga"}}, "html5mode": true, "brand": "Lux", "year": 2014, "page": {"title": "Collision Detection", "modified": "2014-12-22T08:51:06", "image": "http://giottojs.org/examples/collisions.png", "priority": "0", "html_url": "http://giottojs.org/examples/collisions", "robots": ["noindex", "nofollow"], "name": "collisions", "description": "A list of GiottoJS examples", "content_type": "text/html", "api_url": "http://giottojs.org/ng/examples/collisions.json", "slug": "collisions"}, "ngModules": ["highlight", "lux.google", "lux.blog"], "dateFormat": "d MMM y", "python_version": "3.4.2"}};
 </script>
 <script type='text/javascript'>
 lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
@@ -30,7 +30,7 @@ lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback
 var gexamples = {};
 </script>
 <script type="text/javascript">
-var require = {"deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"], "paths": {}, "minify": true, "baseUrl": "http://giottojs.org/media/", "waitSeconds": 200};
+var require = {"deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"], "paths": {}, "waitSeconds": 200, "minify": true, "baseUrl": "http://giottojs.org/media/"};
 </script>
 <script src='http://quantmind.github.io/require-config-js/require.config.min.js' type='application/javascript'></script>
 <script src='//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js' type='application/javascript'></script>
@@ -60,7 +60,7 @@ var require = {"deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"], "pa
     </div>
     <div class="col-sm-2 small">
      <div data-jstats></div>
-      <lux-form data-options='luxforms.collision_qUXhe'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.collision_qUXhe = {"field": {"id": "collision_qUXhe", "model": "Collision", "type": "form"}, "children": [{"field": {"type": "fieldset"}, "children": [{"field": {"options": ["svg", "canvas"], "name": "type", "value": "svg", "type": "select", "required": true}}, {"field": {"name": "gravity", "min": 0, "type": "number", "required": true, "max": 1, "value": 0.05}}, {"field": {"name": "charge", "value": -0.02, "type": "number", "required": true}}, {"field": {"name": "friction", "min": 0, "type": "number", "required": true, "max": 1, "value": 0.9}}]}]};</script></lux-form>
+      <lux-form data-options='luxforms.collision_2qs5f'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.collision_2qs5f = {"children": [{"children": [{"field": {"required": true, "options": ["svg", "canvas"], "type": "select", "name": "type", "value": "svg"}}, {"field": {"min": 0, "name": "gravity", "value": 0.05, "required": true, "type": "number", "max": 1}}, {"field": {"required": true, "type": "number", "name": "charge", "value": -0.02}}, {"field": {"min": 0, "name": "friction", "value": 0.9, "required": true, "type": "number", "max": 1}}], "field": {"type": "fieldset"}}], "field": {"model": "Collision", "id": "collision_2qs5f", "type": "form"}};</script></lux-form>
     </div>
   </div>
 </div>
