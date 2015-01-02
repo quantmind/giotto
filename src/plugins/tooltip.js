@@ -2,15 +2,13 @@
     //
     //  Tooltip functionality for SVG paper
     g.paper.plugin('tooltip', {
-
-        defaults: {
             className: 'd3-tip',
             show: false,
             interact: true,
-            fill: '#333',
+            fill: '#deebf7',
             fillOpacity: 0.8,
-            color: '#fff',
-            padding: '5px',
+            color: '#222',
+            padding: '8px',
             radius: '3px',
             offset: [20, 20],
             template: function (d) {
@@ -21,101 +19,96 @@
             }
         },
 
-        svg: tooltip_plugin,
-        canvas: tooltip_plugin,
-    });
+        function (group, opts) {
+            var paper = group.paper();
 
+            if (opts.tooltip.show) opts.tooltip.interact = true;
 
-    function tooltip_plugin (group, opts) {
-        var paper = group.paper();
+            if (paper.tooltip || !opts.tooltip.interact) return;
 
-        if (opts.tooltip.show) opts.tooltip.interact = true;
+            if (!tooltip && opts.tooltip.show) tooltip = gitto_tip(opts).offset(opts.tooltip.offset);
+            if (!tooltip) tooltip = gitto_tip(opts);
 
-        if (paper.tooltip || !opts.tooltip.interact) return;
+            paper.tooltip = tooltip;
 
-        if (!tooltip && opts.tooltip.show) tooltip = gitto_tip(opts).offset(opts.tooltip.offset);
-        if (!tooltip) tooltip = gitto_tip(opts);
+            var data, draw;
 
-        paper.tooltip = tooltip;
+            if (paper.type() === 'svg') {
 
-        var data, draw;
+                opts.activeEvents.forEach(function (event) {
+                    paper.on(event + '.tooltip', function () {
+                        var el = d3.select(this);
+                        data = el.size() ? el.datum() : null;
 
-        if (paper.type() === 'svg') {
-
-            opts.activeEvents.forEach(function (event) {
-                paper.on(event + '.tooltip', function () {
-                    var el = d3.select(this);
-                    data = el.size() ? el.datum() : null;
-
-                    if (!data || d3.event.type === 'mouseout') {
-                        tooltip.hide(true);
-                    } else if (data && data.reset) {
-                        if (d3.event.active === undefined) {
+                        if (!data || d3.event.type === 'mouseout') {
                             tooltip.hide(true);
-                            d3.event.active = tooltip.active;
-                        }
-                        tooltip.active.push(el);
-                        data.highLight().render(el);
-                    }
-                }).on(event + '.tooltip-show', function () {
-                    if (tooltip.active.length) {
-                        var bbox = getScreenBBox(tooltip.active[0].node()),
-                            direction = 'n';
-                        if (tooltip.active.length > 1) {
-                            direction = 'e';
-                            for (var i=1; i<tooltip.active.length; ++i) {
-                                var bbox2 = getScreenBBox(tooltip.active[i].node());
-                                bbox[direction].y += bbox2[direction].y;
+                        } else if (data && data.reset) {
+                            if (d3.event.active === undefined) {
+                                tooltip.hide(true);
+                                d3.event.active = tooltip.active;
                             }
-                            bbox[direction].y /= tooltip.active.length;
+                            tooltip.active.push(el);
+                            data.highLight().render(el);
                         }
-                        tooltip.bbox(bbox).direction(direction).show();
-                    }
-                });
-            });
-        } else {
-
-            var overlay = paper.canvasOverlay();
-
-            opts.activeEvents.forEach(function (event) {
-
-                overlay.on(event + '.tooltip', function () {
-                    var ctx = this.getContext('2d'),
-                        point, a;
-
-                    d3.canvas.clear(ctx);
-
-                    tooltip.hide();
-
-                    if (d3.event.type === 'mouseout')
-                        return;
-
-                    point = d3.canvas.mouse(this);
-                    tooltip.active = paper.canvasDataAtPoint(point);
-
-                    if (tooltip.active.length) {
-                        var direction = 'n', bbox, bbox2;
-
-                        for (var i=0; i<tooltip.active.length; ++i) {
-                            a = tooltip.active[i];
-                            a.group().transform(ctx);
-                            a.highLight().render(ctx);
-                            if (i && bbox) {
-                                bbox2 = a.bbox();
+                    }).on(event + '.tooltip-show', function () {
+                        if (tooltip.active.length) {
+                            var bbox = getScreenBBox(tooltip.active[0].node()),
+                                direction = 'n';
+                            if (tooltip.active.length > 1) {
                                 direction = 'e';
-                                bbox[direction].y += bbox2[direction].y;
-                            } else if (!i)
-                                bbox = a.bbox();
-                        }
-                        if (bbox) {
-                            bbox[direction].y /= tooltip.active.length;
+                                for (var i=1; i<tooltip.active.length; ++i) {
+                                    var bbox2 = getScreenBBox(tooltip.active[i].node());
+                                    bbox[direction].y += bbox2[direction].y;
+                                }
+                                bbox[direction].y /= tooltip.active.length;
+                            }
                             tooltip.bbox(bbox).direction(direction).show();
                         }
-                    }
+                    });
                 });
-            });
-        }
-    }
+            } else {
+
+                var overlay = paper.canvasOverlay();
+
+                opts.activeEvents.forEach(function (event) {
+
+                    overlay.on(event + '.tooltip', function () {
+                        var ctx = this.getContext('2d'),
+                            point, a;
+
+                        d3.canvas.clear(ctx);
+
+                        tooltip.hide();
+
+                        if (d3.event.type === 'mouseout')
+                            return;
+
+                        point = d3.canvas.mouse(this);
+                        tooltip.active = paper.canvasDataAtPoint(point);
+
+                        if (tooltip.active.length) {
+                            var direction = 'n', bbox, bbox2;
+
+                            for (var i=0; i<tooltip.active.length; ++i) {
+                                a = tooltip.active[i];
+                                a.group().transform(ctx);
+                                a.highLight().render(ctx);
+                                if (i && bbox) {
+                                    bbox2 = a.bbox();
+                                    direction = 'e';
+                                    bbox[direction].y += bbox2[direction].y;
+                                } else if (!i)
+                                    bbox = a.bbox();
+                            }
+                            if (bbox) {
+                                bbox[direction].y /= tooltip.active.length;
+                                tooltip.bbox(bbox).direction(direction).show();
+                            }
+                        }
+                    });
+                });
+            }
+        });
 
 
     function gitto_tip (options) {

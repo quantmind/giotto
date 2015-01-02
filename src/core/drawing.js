@@ -201,8 +201,14 @@
                 parameters.forEach(function (name) {
                     v = a[name];
                     if (v) {
-                        if (typeof v === 'string' && v.substring(v.length-1) === '%')
-                            v = 0.01 * v.substring(0,v.length-1) * values[name];
+                        if (typeof v === 'string') {
+                            if (v === 'darker')
+                                v = d3.rgb(values[name]).darker();
+                            else if (v === 'brighter')
+                                v = d3.rgb(values[name]).brighter();
+                            else if (v.substring(v.length-1) === '%')
+                                v = 0.01 * v.substring(0,v.length-1) * values[name];
+                        }
                         d[name] = v;
                     }
                 });
@@ -227,15 +233,17 @@
             return d;
         };
 
-        d.init = function (data, opts) {
+        d.init = function (data, opts, dd) {
+            var value;
             parameters.forEach(function (name) {
-                values[name] = data[name] || opts[name];
+                value = data[name] || opts[name];
+                if (isFunction(value) && dd) value = value(dd);
+                values[name] = value;
             });
             if (opts.active) {
                 if (!data.active)
                     data.active = {};
                 copyMissing(opts.active, data.active);
-                activeColors(data);
             }
             return d.reset();
         };
@@ -324,14 +332,14 @@
     function paperData (draw, data, parameters, d) {
         var opts = draw.options();
         d = highlightMixin(parameters, d);
+        d.data = data;
+
         if (isArray(data))
             d.init(d, opts);
         else {
-            d.init(data, opts);
+            d.init(data, opts, data);
             d.active = data.active;
         }
-
-        d.data = data;
 
         d.options = function () {
             return opts;

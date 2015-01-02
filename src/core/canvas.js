@@ -62,3 +62,22 @@
 
         return group.factor(_.scale(group));
     };
+
+    function canvasBBox (d, nw, ne, se, sw) {
+        var target = d.paper().element().node(),
+            bbox = target.getBoundingClientRect(),
+            p = [bbox.left, bbox.top],
+            f = 1/d3.canvas.pixelRatio;
+        return {
+            nw: {x: f*nw[0] + p[0], y: f*nw[1] + p[1]},
+            ne: {x: f*ne[0] + p[0], y: f*ne[1] + p[1]},
+            se: {x: f*se[0] + p[0], y: f*se[1] + p[1]},
+            sw: {x: f*sw[0] + p[0], y: f*sw[1] + p[1]},
+            n: {x: av(nw, ne, 0), y: av(nw, ne, 1)},
+            s: {x: av(sw, se, 0), y: av(sw, se, 1)},
+            e: {x: av(se, ne, 0), y: av(se, ne, 1)},
+            w: {x: av(sw, nw, 0), y: av(sw, nw, 1)}
+        };
+
+        function av(a, b, i) {return p[i] + 0.5*f*(a[i] + b[i]);}
+    }

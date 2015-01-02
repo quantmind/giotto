@@ -10,13 +10,6 @@
         else
             p = {};
 
-        if (p.margin !== undefined && !isObject(p.margin)) {
-            var m = p.margin;
-            p.margin = {left: m, right: m, top: m, bottom: m};
-        }
-
-        copyMissing(g.defaults.paper, p, true);
-
         if (isFunction (p.colors))
             p.colors = p.colors(d3);
 
@@ -40,10 +33,9 @@
             height = d3.round(p.height_percentage*width);
         }
 
-        // Inherit axis properties
-        copyMissing(p.font, p.xaxis);
-        copyMissing(p.xaxis, p.yaxis);
-        copyMissing(p.yaxis, p.yaxis2);
+        groupMargins(p);
+        copyMissing(g.defaults.paper, p, true);
+        paperAxis(p);
 
         p.size = [width, height];
         p.giotto = 'giotto-group';
@@ -51,4 +43,11 @@
         p.__paper__ = d3.select(element).style('position', 'relative').node();
 
         return p;
+    }
+
+    function groupMargins (opts) {
+        if (opts.margin !== undefined && !isObject(opts.margin)) {
+            var m = opts.margin;
+            opts.margin = {left: m, right: m, top: m, bottom: m};
+        }
     }

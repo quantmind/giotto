@@ -121,7 +121,7 @@
                 .append('li')
                 .append('a')
                 .attr('role', 'menuitem')
-                .text(function (d) {return d.label;})
+                .text(function (d) {return isFunction(d.label) ? d.label() : d.label;})
                 .attr('href', '#')
                 .on('click', function (d) {
                     if (d.callback) d.callback(viz);

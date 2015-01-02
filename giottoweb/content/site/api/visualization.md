@@ -30,13 +30,21 @@ dealing with the [Paper API]
 ### # viz.paper([createNew]) {#viz-paper}
 
 Returns the [paper][] of the visualization. If ``createView`` is positive a new paper
-is created.
+is created and the old one removed from the DOM.
 
 ### # viz.render() {#vizrender}
 
 Render the visualization by calling the [paper.render]($site_url/api/paper#paper-render)
 method.
 
+### # viz.resume()
+
+Equivalent to:
+
+    viz.alpha(.1);
+
+This method sets the internal ``alpha`` parameter to 0.1, and then restarts
+the timer.
 
 
 [paper]: $site_url/api/paper

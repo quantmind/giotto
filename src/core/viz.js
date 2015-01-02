@@ -122,8 +122,14 @@
             viz.loadData = function (callback) {
                 if (opts.src && !loading_data) {
                     loading_data = true;
+                    var src = opts.src,
+                        loader = opts.loader;
+                    if (!loader) {
+                        loader = d3.json;
+                        if (src.substring(src.length-4) === '.csv') loader = d3.csv;
+                    }
                     g.log.info('Giotto loading data from ' + opts.src);
-                    return d3.json(opts.src, function(error, json) {
+                    return loader(opts.src, function(error, json) {
                         loading_data = false;
                         if (!error) {
                             viz.setData(json, callback);
@@ -137,7 +143,7 @@
             viz.setData = function (data, callback) {
                 if (opts.processData)
                     data = opts.processData(data);
-                if (Object(data) === data && data.data)
+                if (isObject(data) && data.data)
                     extend(opts, data);
                 else
                     opts.data = data;

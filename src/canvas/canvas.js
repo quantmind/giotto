@@ -32,6 +32,17 @@
         return d3.canvas.retinaScale(ctx, width, height);
     };
 
+    d3.canvas.style = function (ctx, d) {
+        if (d.fill) {
+            ctx.fillStyle = d3.canvas.rgba(d.fill, d.fillOpacity);
+            ctx.fill();
+        }
+        if (d.color && d.lineWidth) {
+            ctx.strokeStyle = d3.canvas.rgba(d.color, d.colorOpacity);
+            ctx.lineWidth = d3.canvas.pixelRatio*d.lineWidth;
+            ctx.stroke();
+        }
+    };
 
     d3.canvas.drawPolygon = function (ctx, pts, radius) {
         if (radius > 0)

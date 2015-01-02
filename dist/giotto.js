@@ -1,7 +1,7 @@
 //      Giotto - v0.1.0
 
-//      Compiled 2014-12-30.
-//      Copyright (c) 2014 - Luca Sbardella
+//      Compiled 2015-01-02.
+//      Copyright (c) 2015 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
 //      http://quantmind.github.io/giotto/
@@ -30,7 +30,9 @@
     var giotto = {
             version: "0.1.0",
             d3: d3,
-            math: {}
+            math: {},
+            svg: {},
+            canvas: {}
         },
         g = giotto;
 
@@ -1742,7 +1744,9 @@
             tickPadding = 3,
             tickArguments_ = [10],
             tickValues = null,
-            tickFormat_ = null;
+            tickFormat_ = null,
+            textRotate = 0,
+            textAlign = null;
 
         function axis (canvas) {
             canvas.each(function() {
@@ -1761,10 +1765,17 @@
                 // Domain.
                 var range = d3_scaleRange(scale1);
 
+                if (scale1.rangeBand) {
+                    var x = scale1, dx = x.rangeBand()/2;
+                    scale0 = scale1 = function (d) { return x(d) + dx; };
+                } else if (scale0.rangeBand) {
+                    scale0 = scale1;
+                }
+
                 // Apply axis labels on major ticks
                 if (orient === "bottom" || orient === "top") {
                     ctx.textBaseline = sign < 0 ? 'bottom' : 'top';
-                    ctx.textAlign = 'center';
+                    ctx.textAlign = textAlign || 'center';
                     ctx.moveTo(range[0], 0);
                     ctx.lineTo(range[1], 0);
                     ctx.moveTo(range[0], 0);
@@ -1775,11 +1786,18 @@
                         trange = scale1(tick);
                         ctx.moveTo(trange, 0);
                         ctx.lineTo(trange, sign*innerTickSize);
-                        ctx.fillText(tickFormat(tick), trange, sign*tickSpacing);
+                        if (textRotate) {
+                            ctx.save();
+                            ctx.translate(trange, sign*tickSpacing);
+                            ctx.rotate(textRotate);
+                            ctx.fillText(tickFormat(tick), 0, 0);
+                            ctx.restore();
+                        } else
+                            ctx.fillText(tickFormat(tick), trange, sign*tickSpacing);
                     });
                 } else {
                     ctx.textBaseline = 'middle';
-                    ctx.textAlign = sign < 0 ? "end" : "start";
+                    ctx.textAlign = textAlign || (sign < 0 ? "end" : "start");
                     ctx.moveTo(0, range[0]);
                     ctx.lineTo(0, range[1]);
                     ctx.moveTo(0, range[0]);
@@ -1790,7 +1808,13 @@
                         trange = scale1(tick);
                         ctx.moveTo(0, trange);
                         ctx.lineTo(sign*innerTickSize, trange);
-                        ctx.fillText(tickFormat(tick), sign*tickSpacing, trange);
+                        if (textRotate) {
+                            ctx.save();
+                            ctx.rotate(textRotate);
+                            ctx.fillText(tickFormat(tick), sign*tickSpacing, trange);
+                            ctx.restore();
+                        } else
+                            ctx.fillText(tickFormat(tick), sign*tickSpacing, trange);
                     });
                 }
             });
@@ -1854,6 +1878,18 @@
 
         axis.tickSubdivide = function() {
             return arguments.length && axis;
+        };
+
+        axis.textRotate = function (x) {
+            if (!arguments.length) return textRotate;
+            textRotate = +x;
+            return axis;
+        };
+
+        axis.textAlign = function (x) {
+            if (!arguments.length) return textAlign;
+            textAlign = x;
+            return axis;
         };
 
         return axis;
@@ -2288,6 +2324,17 @@
         return d3.canvas.retinaScale(ctx, width, height);
     };
 
+    d3.canvas.style = function (ctx, d) {
+        if (d.fill) {
+            ctx.fillStyle = d3.canvas.rgba(d.fill, d.fillOpacity);
+            ctx.fill();
+        }
+        if (d.color && d.lineWidth) {
+            ctx.strokeStyle = d3.canvas.rgba(d.color, d.colorOpacity);
+            ctx.lineWidth = d3.canvas.pixelRatio*d.lineWidth;
+            ctx.stroke();
+        }
+    };
 
     d3.canvas.drawPolygon = function (ctx, pts, radius) {
         if (radius > 0)
@@ -2811,16 +2858,6 @@
 
     g.defaults = {};
 
-    g.defaults.axis = {
-        tickSize: '6px',
-        outerTickSize: '6px',
-        tickPadding: '3px',
-        lineWidth: 1,
-        //minTickSize: undefined,
-        min: null,
-        max: null
-    };
-
     g.defaults.transition = {
         duration: 0,
         ease: 'easeInOutCubic'
@@ -2831,9 +2868,6 @@
         resizeDelay: 200,
         resize: true,
         margin: {top: 20, right: 20, bottom: 20, left: 20},
-        xaxis: extend({position: 'bottom'}, g.defaults.axis),
-        yaxis: {position: 'left', min: null, max: null},
-        yaxis2: {position: 'right', min: null, max: null},
         colors: d3.scale.category10().range(),
         colorIndex: 0,
         css: null,
@@ -2858,21 +2892,6 @@
                 color: 'brighter',
                 // Multiplier for size, set to 100% for no change
                 size: '150%'
-            },
-            transition: extend({}, g.defaults.transition)
-        },
-        bar: {
-            width: 'auto',
-            color: null,
-            fill: true,
-            fillOpacity: 1,
-            colorOpacity: 1,
-            lineWidth: 1,
-            // Radius in pixels of rounded corners. Set to 0 for no rounded corners
-            radius: 4,
-            active: {
-                fill: 'darker',
-                color: 'brighter'
             },
             transition: extend({}, g.defaults.transition)
         },
@@ -3045,13 +3064,11 @@
             // Inject plugins
             opts = groupOptions(opts);
             var group = g.group[opts.type](paper, opts),
-                plugin;
+                plugins = g.paper.plugins;
 
             group.element().classed(p.giotto, true);
-            for (var i=0; i < g.paper.plugins.length; ++i) {
-                plugin = g.paper.plugins[i][opts.type];
-                if (plugin) plugin(group, opts);
-            }
+            for (var i=0; i < plugins.length; ++i)
+                plugins[i](group, opts);
             return group;
         };
 
@@ -3131,9 +3148,7 @@
         // Resize the paper and fire the resize event if resizing was performed
         paper.resize = function (size) {
             resizing = true;
-            if (!size) {
-                size = paper.boundingBox();
-            }
+            if (!size) size = paper.boundingBox();
             if (p.size[0] !== size[0] || p.size[1] !== size[1]) {
                 p.size[0] = size[0];
                 p.size[1] = size[1];
@@ -3344,6 +3359,7 @@
 
         function groupOptions (opts) {
             opts || (opts = {});
+            groupMargins(opts);
             if (!opts.yaxis || opts.yaxis === 1)
                 opts.yaxis = p.yaxis;
             else if (opts.yaxis === 2)
@@ -3354,8 +3370,8 @@
 
     g.paper.plugins = [];
 
-    g.paper.plugin = function (name, plugin) {
-        g.defaults.paper[name] = plugin.defaults;
+    g.paper.plugin = function (name, defaults, plugin) {
+        g.defaults.paper[name] = defaults;
         g.paper.plugins.push(plugin);
     };
 
@@ -3367,12 +3383,8 @@
             resizing = false,
             type = p.type,
             d3v = d3[type],
-            xaxis = d3v.axis(),
-            yaxis = d3v.axis(),
+            scale = d3.scale.linear(),
             group = {};
-
-        xaxis.options = function () {return p.xaxis;};
-        yaxis.options = function () {return p.yaxis;};
 
         element.__group__ = group;
 
@@ -3386,14 +3398,6 @@
 
         group.options = function () {
             return p;
-        };
-
-        group.xaxis = function () {
-            return xaxis;
-        };
-
-        group.yaxis = function () {
-            return yaxis;
         };
 
         group.paper = function () {
@@ -3412,7 +3416,7 @@
         group.factor = function (x) {
             if (!arguments.length) return factor;
             factor = +x;
-            return group.resetAxis();
+            return group;
         };
 
         group.size = function () {
@@ -3474,6 +3478,9 @@
 
         // remove all drawings or a drawing by name
         group.remove = function (name) {
+            if (!arguments.lenght) {
+                return group.element().remove();
+            }
             var draw;
             for (var i=0; i<drawings.length; ++i) {
                 draw = drawings[i];
@@ -3483,10 +3490,6 @@
                     draw.remove();
                     return drawings.splice(i, 1);
                 }
-            }
-            if (!name) {
-                drawings = [];
-                group.clear();
             }
             return group;
         };
@@ -3506,7 +3509,7 @@
         group.path = function (data, opts) {
             opts || (opts = {});
             chartFormats(group, opts);
-            chartColors(paper, copyMissing(p.line, opts));
+            chartColor(paper, copyMissing(p.line, opts));
 
             return group.add(_.path(group)).size(point_size).data(data).options(opts);
         };
@@ -3515,25 +3518,12 @@
         group.points = function (data, opts) {
             opts || (opts = {});
             chartFormats(group, opts);
-            chartColors(paper, copyMissing(p.point, opts));
+            chartColor(paper, copyMissing(p.point, opts));
 
             return group.add(_.points)
             .size(point_size)
             .options(opts)
             .dataConstructor(point_costructor)
-            .data(data);
-        };
-
-        // Draw a pie chart
-        group.barchart = function (data, opts) {
-            opts || (opts = {});
-            chartFormats(group, opts);
-            chartColors(paper, copyMissing(p.bar, opts));
-
-            return group.add(_.barchart)
-            .size(bar_size)
-            .options(opts)
-            .dataConstructor(bar_costructor)
             .data(data);
         };
 
@@ -3580,37 +3570,17 @@
             .data(data);
         };
 
-        // Draw X axis
-        group.drawXaxis = function () {
-            return group.add(_.axis(group, xaxis, 'x-axis')).options(p.xaxis);
-        };
-
-        group.drawYaxis = function () {
-            return group.add(_.axis(group, yaxis, 'y-axis')).options(p.yaxis);
-        };
-
-        group.scalex = function (x) {
-            return xaxis.scale()(x);
-        };
-
-        group.scaley = function (y) {
-            return yaxis.scale()(y);
-        };
-
         group.scale = function (r) {
-            var s = xaxis.scale();
-            return Math.max(0, s(r) - s(0));
+            if (!arguments.length) return scale;
+            return scale(r);
         };
 
-        group.xfromPX = function (px) {
-            var s = xaxis.scale().invert;
-            return s(factor*px) - s(0);
+        group.fromPX = function (px) {
+            return scale.invert(factor*px);
         };
 
-        group.yfromPX = function (px) {
-            var s = yaxis.scale().invert;
-            return s(factor*px) - s(0);
-        };
+        group.xfromPX = group.fromPX;
+        group.yfromPX = group.fromPX;
 
         // dimension in the input domain from a 0 <= x <= 1
         // assume a continuous domain
@@ -3621,45 +3591,11 @@
             var v = +x;
             // assume input is in pixels
             if (isNaN(v))
-                return group.xfromPX(x.substring(0, x.length-2));
+                return group.fromPX(x.substring(0, x.length-2));
             // otherwise assume it is a value between 0 and 1 defined as percentage of the x axis length
-            else {
-                var d = group.xaxis().scale().domain();
-                return v*(d[d.length-1] - d[0]);
-            }
+            else
+                return v;
         };
-
-        // x coordinate in the input domain
-        group.x = function (u) {
-            var d = xaxis.scale().domain();
-            return u*(d[d.length-1] - d[0]) + d[0];
-        };
-
-        // y coordinate in the input domain
-        group.y = function (u) {
-            var d = yaxis.scale().domain();
-            return u*(d[d.length-1] - d[0]) + d[0];
-        };
-
-        group.resetAxis = function () {
-            xaxis.scale().range([0, group.innerWidth()]);
-            yaxis.scale().range([group.innerHeight(), 0]);
-
-            [xaxis, yaxis].forEach(function (axis) {
-                var o = axis.options(),
-                    innerTickSize = group.scale(group.dim(o.tickSize)),
-                    outerTickSize = group.scale(group.dim(o.outerTickSize)),
-                    tickPadding = group.scale(group.dim(o.tickPadding));
-                axis.tickSize(innerTickSize, outerTickSize)
-                      .tickPadding(tickPadding)
-                      .orient(o.position);
-
-                if (isNull(o.min) || isNull(o.max))
-                    o.auto = true;
-            });
-            return group;
-        };
-
 
         var
 
@@ -3674,23 +3610,6 @@
             return data;
         },
 
-        bar_costructor = function (rawdata) {
-            var group = this.group(),
-                draw = this,
-                opts = this.options(),
-                data = [],
-                width = opts.width;
-            if (width === 'auto')
-                width = function () {
-                    return d3.round(0.8*(group.innerWidth() / draw.data().length));
-                };
-
-            for (var i=0; i<rawdata.length; i++)
-                data.push(_.bar(this, rawdata[i], width));
-
-            return data;
-        },
-
         pie_costructor = function (rawdata) {
             var data = [];
 
@@ -3700,7 +3619,7 @@
             return data;
         };
 
-        return group.resetAxis();
+        return group;
     };
 
 
@@ -3906,8 +3825,14 @@
                 parameters.forEach(function (name) {
                     v = a[name];
                     if (v) {
-                        if (typeof v === 'string' && v.substring(v.length-1) === '%')
-                            v = 0.01 * v.substring(0,v.length-1) * values[name];
+                        if (typeof v === 'string') {
+                            if (v === 'darker')
+                                v = d3.rgb(values[name]).darker();
+                            else if (v === 'brighter')
+                                v = d3.rgb(values[name]).brighter();
+                            else if (v.substring(v.length-1) === '%')
+                                v = 0.01 * v.substring(0,v.length-1) * values[name];
+                        }
                         d[name] = v;
                     }
                 });
@@ -3932,15 +3857,17 @@
             return d;
         };
 
-        d.init = function (data, opts) {
+        d.init = function (data, opts, dd) {
+            var value;
             parameters.forEach(function (name) {
-                values[name] = data[name] || opts[name];
+                value = data[name] || opts[name];
+                if (isFunction(value) && dd) value = value(dd);
+                values[name] = value;
             });
             if (opts.active) {
                 if (!data.active)
                     data.active = {};
                 copyMissing(opts.active, data.active);
-                activeColors(data);
             }
             return d.reset();
         };
@@ -4029,14 +3956,14 @@
     function paperData (draw, data, parameters, d) {
         var opts = draw.options();
         d = highlightMixin(parameters, d);
+        d.data = data;
+
         if (isArray(data))
             d.init(d, opts);
         else {
-            d.init(data, opts);
+            d.init(data, opts, data);
             d.active = data.active;
         }
-
-        d.data = data;
 
         d.options = function () {
             return opts;
@@ -4135,8 +4062,45 @@
             return group;
         };
 
+        group.draw = function (selection) {
+            return selection
+                .attr('stroke', function (d) {return d.color;})
+                .attr('stroke-opacity', function (d) {return d.colorOpacity;})
+                .attr('stroke-width', function (d) {return d.lineWidth;})
+                .attr('fill', function (d) {return d.fill;})
+                .attr('fill-opacity', function (d) {return d.fillOpacity;});
+        };
+
+        group.events = function (selection, uid, callback) {
+            var name = uid || p.giotto,
+                target;
+
+            p.activeEvents.forEach(function (event) {
+                selection.on(event + '.' + name, function () {
+                    if (uid && !paper.element().select('#' + uid).size())
+                        selection.on(event + '.' + uid, null);
+                    else {
+                        target = callback ? callback.call(this) : this;
+                        paper[d3.event.type].call(target);
+                    }
+                });
+            });
+            return selection;
+        };
+
         return group;
     };
+
+    function svg_font (selection, opts) {
+        return selection.style({
+            'fill': opts.color,
+            'font-size': opts.size ,
+            'font-weight': opts.weight,
+            'font-style': opts.style,
+            'font-family': opts.family,
+            'font-variant': opts.variant
+        });
+    }
 
     //
     //  Canvas
@@ -4202,6 +4166,26 @@
 
         return group.factor(_.scale(group));
     };
+
+    function canvasBBox (d, nw, ne, se, sw) {
+        var target = d.paper().element().node(),
+            bbox = target.getBoundingClientRect(),
+            p = [bbox.left, bbox.top],
+            f = 1/d3.canvas.pixelRatio;
+        return {
+            nw: {x: f*nw[0] + p[0], y: f*nw[1] + p[1]},
+            ne: {x: f*ne[0] + p[0], y: f*ne[1] + p[1]},
+            se: {x: f*se[0] + p[0], y: f*se[1] + p[1]},
+            sw: {x: f*sw[0] + p[0], y: f*sw[1] + p[1]},
+            n: {x: av(nw, ne, 0), y: av(nw, ne, 1)},
+            s: {x: av(sw, se, 0), y: av(sw, se, 1)},
+            e: {x: av(se, ne, 0), y: av(se, ne, 1)},
+            w: {x: av(sw, nw, 0), y: av(sw, nw, 1)}
+        };
+
+        function av(a, b, i) {return p[i] + 0.5*f*(a[i] + b[i]);}
+    }
+
     //
     g.viz = {};
     // Plugins for all visualization classes
@@ -4326,8 +4310,14 @@
             viz.loadData = function (callback) {
                 if (opts.src && !loading_data) {
                     loading_data = true;
+                    var src = opts.src,
+                        loader = opts.loader;
+                    if (!loader) {
+                        loader = d3.json;
+                        if (src.substring(src.length-4) === '.csv') loader = d3.csv;
+                    }
                     g.log.info('Giotto loading data from ' + opts.src);
-                    return d3.json(opts.src, function(error, json) {
+                    return loader(opts.src, function(error, json) {
                         loading_data = false;
                         if (!error) {
                             viz.setData(json, callback);
@@ -4341,7 +4331,7 @@
             viz.setData = function (data, callback) {
                 if (opts.processData)
                     data = opts.processData(data);
-                if (Object(data) === data && data.data)
+                if (isObject(data) && data.data)
                     extend(opts, data);
                 else
                     opts.data = data;
@@ -4416,7 +4406,8 @@
     function (chart, opts) {
 
         var series = [],
-            allranges = {};
+            allranges = {},
+            drawing;
 
         chart.numSeries = function () {
             return series.length;
@@ -4446,20 +4437,23 @@
             return chart;
         };
 
-        chart.draw = function (data) {
-            var paper = chart.paper();
-            data = data || opts.data;
+        chart.drawing  = function () {
+            return drawing;
+        };
+
+        chart.render = function () {
+            var paper = chart.paper(),
+                data = opts.data;
+            drawing = true;
+            opts.data = null;
 
             // load data if in options
             if (data === undefined && opts.src) {
-                opts.data = null;
-                return chart.loadData(chart.draw);
+                return chart.loadData(chart.resume);
             }
 
             if (isFunction(data))
                 data = data(chart);
-
-            opts.data = null;
 
             if (data || opts.type !== paper.type()) {
 
@@ -4478,8 +4472,11 @@
                 serie.draw();
             });
 
+            drawing = false;
+
             // Render the chart
-            return chart.render();
+            paper.render();
+            return chart;
         };
 
         chart.setSerieOption = function (type, field, value) {
@@ -4506,7 +4503,7 @@
         chart.on('tick.main', function () {
             // Chart don't need ticking unless explicitly required (real time updates for example)
             chart.stop();
-            chart.draw();
+            chart.render();
         });
 
         // INTERNALS
@@ -4599,6 +4596,7 @@
                     if (!p) {
                         ranges[serie.xaxis.position] = p = {
                             range: xy.xrange,
+                            ordinal: xy.xordinal,
                             serie: serie
                         };
                         serie.drawXaxis = true;
@@ -4611,6 +4609,7 @@
                     if (!p) {
                         ranges[serie.yaxis.position] = p = {
                             range: xy.yrange,
+                            ordinal: xy.yordinal,
                             serie: serie
                         };
                         serie.drawYaxis = true;
@@ -4656,13 +4655,13 @@
 
                     // Draw X axis or set the scale of the reference X-axis
                     if (serie.drawXaxis)
-                        domain(group.xaxis()).drawXaxis();
+                        domain(group.xaxis(), 'x').drawXaxis();
                     else if (serie.axisgroup)
                         scale(group.xaxis());
 
                     // Draw Y axis or set the scale of the reference Y-axis
                     if (serie.drawYaxis)
-                        domain(group.yaxis()).drawYaxis();
+                        domain(group.yaxis(), 'y').drawYaxis();
                     else if (serie.axisgroup)
                         scale(group.yaxis());
 
@@ -4678,13 +4677,18 @@
 
                 return serie;
 
-                function domain(axis) {
+                function domain(axis, xy) {
                     var p = allranges[serie.axisgroup][axis.orient()],
                         o = axis.options(),
-                        scale = axis.scale();
+                        scale = axis.scale(),
+                        opadding = 0.1;
+
+                    if (p.ordinal) scale = group.ordinalScale(axis);
 
                     p.scale = scale;
-                    if (o.auto) {
+                    if (scale.rangeBand) {
+                        scale.domain(data.map(function (d) {return d[xy];}));
+                    } else if (o.auto) {
                         scale.domain([p.range[0], p.range[1]]).nice();
                         if (!isNull(o.min))
                             scale.domain([o.min, scale.domain()[1]]);
@@ -4767,15 +4771,32 @@
             ymin = Infinity,
             xmax =-Infinity,
             ymax =-Infinity,
+            xordinal = false,
+            yordinal = false,
+            v,
             xm = function (x) {
-                xmin = x < xmin ? x : xmin;
-                xmax = x > xmax ? x : xmax;
-                return x;
+                v = +x;
+                if (isNaN(v)) {
+                    xordinal = true;
+                    return x;
+                }
+                else {
+                    xmin = v < xmin ? v : xmin;
+                    xmax = v > xmax ? v : xmax;
+                    return v;
+                }
             },
             ym = function (y) {
-                ymin = y < ymin ? y : ymin;
-                ymax = y > ymax ? y : ymax;
-                return y;
+                v = +y;
+                if (isNaN(v)) {
+                    yordinal = true;
+                    return y;
+                }
+                else {
+                    ymin = v < ymin ? v : ymin;
+                    ymax = v > ymax ? v : ymax;
+                    return v;
+                }
             };
         var xydata = [];
         xy.forEach(function (d) {
@@ -4784,6 +4805,8 @@
         data.data = xydata;
         data.xrange = [xmin, xmax];
         data.yrange = [ymin, ymax];
+        data.xordinal = xordinal;
+        data.yordinal = yordinal;
         return data;
     };
 
@@ -5659,17 +5682,525 @@
         }
     });
 
+    // Axis functionalities for groups
+    g.paper.plugin('axis', {
+        tickSize: '6px',
+        outerTickSize: '6px',
+        tickPadding: '3px',
+        lineWidth: 1,
+        textRotate: 0,
+        textAnchor: null,
+        //minTickSize: undefined,
+        min: null,
+        max: null
+    },
+
+    function (group, opts) {
+        var type = group.type(),
+            d3v = d3[type],
+            xaxis = d3v.axis(),
+            yaxis = d3v.axis();
+
+        xaxis.options = function () {return opts.xaxis;};
+        yaxis.options = function () {return opts.yaxis;};
+
+        group.xaxis = function () {
+            return xaxis;
+        };
+
+        group.yaxis = function () {
+            return yaxis;
+        };
+
+        // Draw X axis
+        group.drawXaxis = function () {
+            return group.add(g[type].axis(group, xaxis, 'x-axis')).options(opts.xaxis);
+        };
+
+        group.drawYaxis = function () {
+            return group.add(g[type].axis(group, yaxis, 'y-axis')).options(opts.yaxis);
+        };
+
+        group.scalex = function (x) {
+            return xaxis.scale()(x);
+        };
+
+        group.scaley = function (y) {
+            return yaxis.scale()(y);
+        };
+
+                // x coordinate in the input domain
+        group.x = function (u) {
+            var d = xaxis.scale().domain();
+            return u*(d[d.length-1] - d[0]) + d[0];
+        };
+
+        // y coordinate in the input domain
+        group.y = function (u) {
+            var d = yaxis.scale().domain();
+            return u*(d[d.length-1] - d[0]) + d[0];
+        };
+
+        group.ordinalScale = function (axis, range) {
+            var scale = axis.scale(),
+                o = axis.options();
+            o.auto = false,
+            o.scale = 'ordinal';
+            if (!scale.rangeBand) {
+                range = range || scale.range();
+                scale = axis.scale(d3.scale.ordinal()).scale();
+            } else
+                range = range || scale.rangeExtent();
+            return scale.rangeRoundBands(range, 0.2);
+        };
+
+        group.resetAxis = function () {
+            var ranges = [[0, group.innerWidth()], [group.innerHeight(), 0]];
+            group.scale().range(ranges[0]);
+
+            [xaxis, yaxis].forEach(function (axis, i) {
+                var o = axis.options(),
+                    scale = axis.scale();
+
+                if (o.scale === 'ordinal') {
+                    scale = group.ordinalScale(axis, ranges[i]);
+                } else {
+                    o.auto = isNull(o.min) || isNull(o.max);
+                    scale.range(ranges[i]);
+                }
+
+                var innerTickSize = group.scale(group.dim(o.tickSize)),
+                    outerTickSize = group.scale(group.dim(o.outerTickSize)),
+                    tickPadding = group.scale(group.dim(o.tickPadding));
+                axis.tickSize(innerTickSize, outerTickSize)
+                      .tickPadding(tickPadding)
+                      .orient(o.position);
+
+                if (o.tickFormat) {
+                    var f = o.tickFormat;
+                    if (isString(f)) f = d3.format(f);
+                    axis.tickFormat(f);
+                }
+            });
+            return group;
+        };
+
+        group.resetAxis();
+    });
+
+
+    function paperAxis (p) {
+        // Inherit axis properties
+        p.xaxis = extend({position: 'bottom'}, p.axis, p.xaxis);
+        p.yaxis = extend({position: 'left'}, p.axis,  p.yaxis);
+        p.yaxis2 = extend({position: 'right'}, p.axis,  p.yaxis2);
+        //
+        copyMissing(p.font, p.xaxis);
+        copyMissing(p.font, p.yaxis);
+        copyMissing(p.font, p.yaxis2);
+    }
+
+    g.svg.axis = function (group, axis, xy) {
+        return drawing(group, function () {
+            var x =0,
+                y = 0,
+                ax = group.element().select('.' + xy),
+                opts = this.options();
+            if (opts.show === false) {
+                ax.remove();
+                return;
+            }
+            if (!ax.node())
+                ax = this.group().element().append('g').attr('class', xy);
+            if (xy[0] === 'x')
+                y = opts.position === 'top' ? 0 : this.group().innerHeight();
+            else
+                x = opts.position === 'left' ? 0 : this.group().innerWidth();
+            //ax.selectAll('*').remove();
+            ax.attr("transform", "translate(" + x + "," + y + ")").call(axis);
+            ax.selectAll('line, path')
+                 .attr('stroke', this.color)
+                 .attr('stroke-opacity', this.colorOpacity)
+                 .attr('stroke-width', this.lineWidth)
+                 .attr('fill', 'none');
+            if (opts.size === 0)
+                ax.selectAll('text').remove();
+            else {
+                var text = ax.selectAll('text');
+                if (opts.textRotate)
+                    text.attr('transform', 'rotate(' + opts.textRotate + ')');
+                if (opts.textAnchor)
+                    text.style('text-anchor', opts.textAnchor);
+                if (opts.dx)
+                    text.attr('dx', opts.dx);
+                if (opts.dy)
+                    text.attr('dy', opts.dy);
+                svg_font(text, opts);
+            }
+            return ax;
+        });
+    };
+
+
+    g.canvas.axis = function (group, axis, xy) {
+        var d = canvasMixin(drawing(group)),
+            ctx = group.context(),
+            opts;
+
+        d.render = function (context) {
+            context = context || ctx;
+            opts = d.options();
+            if (opts.show === false) return d;
+
+            var x = 0,
+                y = 0,
+                size = opts.size;
+
+            context.save();
+
+            // size of font
+            opts.size = group.scale(group.dim(size)) + 'px';
+            context.font = fontString(opts);
+            opts.size = size;
+
+            ctx.strokeStyle = d3.canvas.rgba(d.color, d.colorOpacity);
+            context.fillStyle = d.color;
+            ctx.lineWidth = group.factor()*d.lineWidth;
+
+            if (xy[0] === 'x')
+                y = opts.position === 'top' ? 0 : group.innerHeight();
+            else
+                x = opts.position === 'left' ? 0 : group.innerWidth();
+            context.translate(x, y);
+            axis.textRotate(d3_radians*(opts.textRotate || 0)).textAlign(opts.textAnchor);
+            axis(d3.select(context.canvas));
+            context.stroke();
+            context.restore();
+            return d;
+        };
+
+        d.context = function (context) {
+            ctx = context;
+            return d;
+        };
+
+        return d;
+    };
+
+    // Bar charts
+    g.paper.plugin('bar', {
+        width: 'auto',
+        color: null,
+        fill: true,
+        fillOpacity: 1,
+        colorOpacity: 1,
+        lineWidth: 1,
+        // Radius in pixels of rounded corners. Set to 0 for no rounded corners
+        radius: 4,
+        active: {
+            fill: 'darker',
+            color: 'brighter'
+        },
+        transition: extend({}, g.defaults.transition)
+    },
+
+    function (group, p) {
+        var type = group.type();
+
+        group.barchart = function (data, opts) {
+            opts || (opts = {});
+            chartFormats(group, opts);
+            chartColor(group.paper(), copyMissing(p.bar, opts));
+
+            return group.add(g[type].barchart)
+                .size(bar_size)
+                .options(opts)
+                .dataConstructor(bar_costructor)
+                .data(data);
+        };
+    });
+
+
+    var bar_costructor = function (rawdata) {
+        var group = this.group(),
+            draw = this,
+            opts = this.options(),
+            data = [],
+            width = opts.width,
+            bar = g[group.type()].bar;
+        if (width === 'auto')
+            width = function () {
+                return d3.round(0.8*(group.innerWidth() / draw.data().length));
+            };
+
+        for (var i=0; i<rawdata.length; i++)
+            data.push(bar(this, rawdata[i], width));
+
+        return data;
+    };
+
+
+    g.svg.bar = function (draw, data, size) {
+        var p = point(draw, data, size),
+            group = draw.group();
+
+        p.render = function (element) {
+            group.draw(element);
+        };
+        return p;
+    };
+
+    g.svg.barchart = function () {
+        var group = this.group(),
+            chart = group.element().select("#" + this.uid()),
+            opts = this.options(),
+            xscale = group.xaxis().scale(),
+            scalex = this.scalex(),
+            scaley = this.scaley(),
+            size = this.size(),
+            zero = group.scaley(0),
+            data = this.data(),
+            trans = opts.transition,
+            bar, y;
+
+        if (!chart.node())
+            chart = group.element().append("g")
+                        .attr('id', this.uid());
+
+        bar = chart.selectAll(".bar").data(data);
+
+        bar.enter()
+            .append("rect")
+            .attr('class', 'bar');
+
+        bar.exit().remove();
+
+        group.events(group.draw(bar));
+
+        if (!group.resizing() && trans && trans.duration)
+            bar = bar.transition().duration(trans.duration).ease(trans.ease);
+
+        bar.attr("y", function(d) {
+            return Math.min(zero, scaley(d.data));
+        })
+        .attr("height", function(d) {
+            return abs(scaley(d.data) - zero);
+        });
+
+        // Ordinal scale
+        if (xscale.rangeBand) {
+            bar.attr("x", function(d) {
+                return scalex(d.data);
+            })
+            .attr("width", xscale.rangeBand());
+
+        } else {
+            bar.attr("x", function(d) {
+                return scalex(d.data) - 0.5*size(d);
+            })
+            .attr("width", size);
+        }
+
+        if (opts.radius > 0)
+            bar.attr('rx', opts.radius).attr('ry', opts.radius);
+
+        return chart;
+    };
+
+    g.canvas.barchart = function () {
+        this.each(function () {
+            this.reset().render();
+        });
+    };
+
+    g.canvas.bar = function (draw, data, siz) {
+        var d = canvasMixin(point(draw, data, siz)),
+            group = d.group(),
+            xscale = group.xaxis().scale(),
+            scalex = draw.scalex(),
+            scaley = draw.scaley(),
+            size = draw.size(),
+            factor = draw.factor(),
+            ctx = group.context(),
+            x, y, y0, y1, w, w0, yb, radius;
+
+        d.render = function (context) {
+            context = context || ctx;
+            context.fillStyle = d3.canvas.rgba(d.fill, d.fillOpacity);
+            context.strokeStyle = d3.canvas.rgba(d.color, d.colorOpacity);
+            context.lineWidth = factor*d.lineWidth;
+            _draw(context);
+            context.fill();
+            context.stroke();
+            return d;
+        };
+
+        d.inRange = function (ex, ey) {
+            _draw(ctx);
+            return ctx.isPointInPath(ex, ey);
+        };
+
+        d.bbox = function () {
+            var x = scalex(d.data) + group.marginLeft(),
+                y1 = scaley(d.data) + group.marginTop(),
+                y0 = group.scaley(0)  + group.marginTop(),
+                yn = Math.min(y1, y0),
+                ys = y1 + y0 - yn,
+                w0 = 0,
+                w;
+            if (xscale.rangeBand)
+                w = xscale.rangeBand();
+            else
+                w0 = w = 0.5*size(d);
+
+            return canvasBBox(d, [x-w0, yn], [x+w, yn], [x+w, ys], [x-w0, ys]);
+        };
+
+        return d;
+
+        function _draw (context) {
+            radius = factor*draw.options().radius;
+            context.beginPath();
+            x = scalex(d.data);
+            w0 = 0;
+            if (xscale.invert)
+                w0 = w = 0.5*size(d);
+            else
+                w = xscale.rangeBand();
+            y = scaley(d.data);
+            y0 = group.scaley(0);
+            d3.canvas.drawPolygon(context, [[x-w0, y0], [x+w, y0], [x+w, y], [x-w0, y]], radius);
+            context.closePath();
+        }
+    };
     //
     //  Add brush functionality to svg paper
     g.paper.plugin('brush', {
-        defaults: {
             axis: null, // set one of 'x', 'y' or 'xy'
             fill: '#000',
             fillOpacity: 0.125
         },
-        svg: brushplugin,
-        canvas: brushplugin
-    });
+        function (group, opts) {
+            var brush, brushDrawing;
+
+            group.brush = function () {
+                return brush;
+            };
+
+            // Add a brush to the paper if not already available
+            group.addBrush = function (options) {
+                if (brushDrawing) return brushDrawing;
+                extend(opts.brush, options);
+
+                brushDrawing = group.add(function () {
+
+                    var draw = this,
+                        type = group.type(),
+                        resizing = group.resizing();
+
+                    if (!brush) {
+                        resizing = true;
+                        brush = d3[type].brush()
+                                .on("brushstart", brushstart)
+                                .on("brush", brushmove)
+                                .on("brushend", brushend);
+
+                        if (opts.brush.axis === 'x' || opts.brush.axis === 'xy')
+                            brush.x(group.xaxis().scale());
+
+                        if (opts.brush.axis === 'y' || opts.brush.axis === 'xy')
+                            brush.y(group.yaxis().scale());
+
+                        if (opts.brush.extent) brush.extent(opts.brush.extent);
+
+                        if (type === 'svg') {
+                            brush.selectDraw = selectDraw;
+
+                        } else {
+
+                            brush.selectDraw = function (draw) {
+                                selectDraw(draw, group.paper().canvasOverlay().node().getContext('2d'));
+                            };
+                        }
+                    }
+
+                    if (resizing) {
+                        brush.extent(brush.extent());
+
+                        if (type === 'svg') {
+                            var gb = group.element().select('.brush');
+
+                            if (!gb.node())
+                                gb = group.element().append('g').classed('brush', true);
+
+                            var rect = gb.call(brush).selectAll("rect");
+
+                            this.setBackground(rect);
+
+                            if (opts.brush.axis === 'x')
+                                rect.attr("y", -6).attr("height", group.innerHeight() + 7);
+
+                            brushstart();
+                            brushmove();
+                            brushend();
+                        } else {
+                            brush.fillStyle(d3.canvas.rgba(this.fill, this.fillOpacity))
+                                 .rect([group.marginLeft(), group.marginTop(),
+                                        group.innerWidth(), group.innerHeight()]);
+                            group.paper().canvasOverlay().call(brush);
+                        }
+                    }
+
+                });
+
+                return brushDrawing.options(opts.brush);
+            };
+
+            function brushstart () {
+                group.element().classed('selecting', true);
+                if (opts.brush.start) opts.brush.start();
+            }
+
+            function brushmove () {
+                if (opts.brush.move) opts.brush.move();
+            }
+
+            function brushend () {
+                group.element().classed('selecting', false);
+                if (opts.brush.end) opts.brush.end();
+            }
+
+            function selectDraw (draw, ctx) {
+                var x = draw.x(),
+                    selected = [],
+                    xval,
+                    s = brush.extent();
+
+                if (ctx) {
+                    var group = draw.group();
+                    ctx.save();
+                    ctx.translate(group.marginLeft(), group.marginTop());
+                }
+
+                draw.each(function () {
+                    if (this.data) {
+                        xval = x(this.data);
+                        if (s[0] <= xval && xval <= s[1]) {
+                            this.highLight();
+                            if (ctx) this.render(ctx);
+                            selected.push(this);
+                        }
+                        else
+                            this.reset();
+                    }
+                });
+
+                if (ctx) ctx.restore();
+                else draw.render();
+
+                return selected;
+            }
+        });
 
     //  Add brush functionality to charts
     g.viz.chart.plugin(function (chart, opts) {
@@ -5721,129 +6252,6 @@
         });
 
     });
-
-
-    function brushplugin (group, opts) {
-        var brush, brushDrawing;
-
-        group.brush = function () {
-            return brush;
-        };
-
-        // Add a brush to the paper if not already available
-        group.addBrush = function (options) {
-            if (brushDrawing) return brushDrawing;
-            extend(opts.brush, options);
-
-            brushDrawing = group.add(function () {
-
-                var draw = this,
-                    type = group.type(),
-                    resizing = group.resizing();
-
-                if (!brush) {
-                    resizing = true;
-                    brush = d3[type].brush()
-                            .on("brushstart", brushstart)
-                            .on("brush", brushmove)
-                            .on("brushend", brushend);
-
-                    if (opts.brush.axis === 'x' || opts.brush.axis === 'xy')
-                        brush.x(group.xaxis().scale());
-
-                    if (opts.brush.axis === 'y' || opts.brush.axis === 'xy')
-                        brush.y(group.yaxis().scale());
-
-                    if (opts.brush.extent) brush.extent(opts.brush.extent);
-
-                    if (type === 'svg') {
-                        brush.selectDraw = selectDraw;
-
-                    } else {
-
-                        brush.selectDraw = function (draw) {
-                            selectDraw(draw, group.paper().canvasOverlay().node().getContext('2d'));
-                        };
-                    }
-                }
-
-                if (resizing) {
-                    brush.extent(brush.extent());
-
-                    if (type === 'svg') {
-                        var gb = group.element().select('.brush');
-
-                        if (!gb.node())
-                            gb = group.element().append('g').classed('brush', true);
-
-                        var rect = gb.call(brush).selectAll("rect");
-
-                        this.setBackground(rect);
-
-                        if (opts.brush.axis === 'x')
-                            rect.attr("y", -6).attr("height", group.innerHeight() + 7);
-
-                        brushstart();
-                        brushmove();
-                        brushend();
-                    } else {
-                        brush.fillStyle(d3.canvas.rgba(this.fill, this.fillOpacity))
-                             .rect([group.marginLeft(), group.marginTop(),
-                                    group.innerWidth(), group.innerHeight()]);
-                        group.paper().canvasOverlay().call(brush);
-                    }
-                }
-
-            });
-
-            return brushDrawing.options(opts.brush);
-        };
-
-        function brushstart () {
-            group.element().classed('selecting', true);
-            if (opts.brush.start) opts.brush.start();
-        }
-
-        function brushmove () {
-            if (opts.brush.move) opts.brush.move();
-        }
-
-        function brushend () {
-            group.element().classed('selecting', false);
-            if (opts.brush.end) opts.brush.end();
-        }
-
-        function selectDraw (draw, ctx) {
-            var x = draw.x(),
-                selected = [],
-                xval,
-                s = brush.extent();
-
-            if (ctx) {
-                var group = draw.group();
-                ctx.save();
-                ctx.translate(group.marginLeft(), group.marginTop());
-            }
-
-            draw.each(function () {
-                if (this.data) {
-                    xval = x(this.data);
-                    if (s[0] <= xval && xval <= s[1]) {
-                        this.highLight();
-                        if (ctx) this.render(ctx);
-                        selected.push(this);
-                    }
-                    else
-                        this.reset();
-                }
-            });
-
-            if (ctx) ctx.restore();
-            else draw.render();
-
-            return selected;
-        }
-    }
 
 
 
@@ -5908,7 +6316,6 @@
     //
     //  Add grid functionality
     g.paper.plugin('grid', {
-        defaults: {
             color: '#333',
             colorOpacity: 0.3,
             fill: '#c6dbef',
@@ -5918,9 +6325,140 @@
             zoomy: false,
             scaleExtent: [1, 10]
         },
-        svg: gridplugin,
-        canvas: gridplugin
-    });
+        function (group, opts) {
+            var paper = group.paper(),
+                grid, gopts, zooming;
+
+            if (!paper.zoom)
+                paper.zoom = paperzoom(paper);
+
+            group.showGrid = function () {
+                if (!grid) {
+                    // First time here, setup grid options for y and x coordinates
+                    if (!gopts) {
+                        gopts = extend({}, opts);
+                        gopts.xaxis = extend({
+                            position: 'top',
+                            size: 0,
+                            show: opts.xaxis.grid === undefined || opts.xaxis.grid
+                        }, opts.grid);
+                        gopts.yaxis = extend({
+                            position: 'left',
+                            size: 0,
+                            show: opts.yaxis.grid === undefined || opts.yaxis.grid
+                        }, opts.grid);
+                    }
+                    gopts.before = '*';
+                    grid = group.paper().group(gopts);
+                    grid.element().classed('grid', true);
+                    grid.xaxis().tickFormat(notick).scale(group.xaxis().scale());
+                    grid.yaxis().tickFormat(notick).scale(group.yaxis().scale());
+                    grid.add(rectangle).options(opts.grid);
+                    if (gopts.xaxis.show) grid.drawXaxis();
+                    if (gopts.yaxis.show) grid.drawYaxis();
+                    grid.render();
+                } else
+                    grid.clear().render();
+                return group;
+            };
+
+            group.hideGrid = function () {
+                if (grid)
+                    grid.remove();
+                return group;
+            };
+
+
+            // The redering function for the grid
+            var rectangle = function () {
+                var width = grid.innerWidth(),
+                    height = grid.innerHeight(),
+                    type = grid.type(),
+                    scalex, scaley, zoom;
+
+                if (type === 'svg') {
+                    if (zooming) return;
+
+                    var rect = grid.element().select('.grid-rectangle');
+
+                    if (!rect.node())
+                        rect = grid.element()
+                                    .append("rect")
+                                    .attr("class", "grid-rectangle");
+
+                    rect.attr("width", width).attr("height", height);
+                    this.setBackground(rect);
+                } else {
+                    // canvas
+                    var ctx = grid.context();
+                    ctx.beginPath();
+                    ctx.rect(0, 0, width, height);
+                    this.setBackground(ctx);
+                    ctx.fill();
+                }
+
+                // Add zoom functionality - when not zooming!
+                if (!zooming) {
+
+                    grid.xaxis().tickSize(-height, 0);
+                    grid.yaxis().tickSize(-width, 0);
+
+                    if (!zoom && (opts.grid.zoomx || opts.grid.zoomy)) {
+
+                        zoom = d3.behavior.zoom().on('zoom', function () {
+                            zooming = true;
+                            if (scalex) {
+                                var x1 = scalex.invert(opts.margin.left),
+                                    x2 = scalex.invert(opts.size[0] - opts.margin.right);
+                                grid.xaxis().scale().domain([x1, x2]);
+                            }
+                            if (scaley) {
+                                var y1 = scalex.invert(opts.margin.top),
+                                    y2 = scalex.invert(opts.size[1] - opts.margin.bottom);
+                                grid.yaxis().scale().domain([y1, y2]);
+                            }
+                            paper.render();
+                            zooming = false;
+                        });
+
+                        if (type === 'svg')
+                            zoom(grid.element());
+                        else
+                            zoom(grid.paper().canvas());
+
+                        var factor = grid.factor();
+
+                        if (factor === 1) {
+                            if (opts.grid.zoomx)
+                                zoom.x(grid.xaxis().scale());
+
+                            if (opts.grid.zoomy)
+                                zoom.y(grid.yaxis().scale());
+                        } else {
+
+                            if (opts.grid.zoomx) {
+                                scalex = grid.xaxis().scale().copy();
+                                var x1 = scalex.invert(-factor*opts.margin.left),
+                                    x2 = scalex.invert(factor*(opts.size[0] - opts.margin.left));
+                                scalex.domain([x1, x2]).range([0, opts.size[0]]);
+                                zoom.x(scalex);
+                            }
+
+                            if (opts.grid.zoomy) {
+                                scaley = grid.yaxis().scale().copy();
+                                var y1 = scaley.invert(-factor*opts.margin.left),
+                                    y2 = scaley.invert(factor*(opts.size[1] - opts.margin.bottom));
+                                scaley.domain([y1, y2]).range([opts.size[1], 0]);
+                                zoom.y(scaley);
+                            }
+                        }
+
+                        if (opts.grid.scaleExtent)
+                            zoom.scaleExtent(opts.grid.scaleExtent);
+                    }
+                }
+            };
+        });
 
     //
     //  Add grid functionality to charts
@@ -5952,142 +6490,6 @@
         });
     });
 
-
-    function gridplugin (group, opts) {
-        var paper = group.paper(),
-            grid, gopts, zooming;
-
-        if (!paper.zoom)
-            paper.zoom = paperzoom(paper);
-
-        group.showGrid = function () {
-            if (!grid) {
-                // First time here, setup grid options for y and x coordinates
-                if (!gopts) {
-                    gopts = extend({}, opts);
-                    gopts.xaxis = extend({
-                        position: 'top',
-                        size: 0,
-                        show: opts.xaxis.grid === undefined || opts.xaxis.grid
-                    }, opts.grid);
-                    gopts.yaxis = extend({
-                        position: 'left',
-                        size: 0,
-                        show: opts.yaxis.grid === undefined || opts.yaxis.grid
-                    }, opts.grid);
-                }
-                gopts.before = '*';
-                grid = group.paper().group(gopts);
-                grid.element().classed('grid', true);
-                grid.xaxis().tickFormat(notick).scale(group.xaxis().scale());
-                grid.yaxis().tickFormat(notick).scale(group.yaxis().scale());
-                grid.add(rectangle).options(opts.grid);
-                if (gopts.xaxis.show) grid.drawXaxis();
-                if (gopts.yaxis.show) grid.drawYaxis();
-                grid.render();
-            } else
-                grid.clear().render();
-            return group;
-        };
-
-        group.hideGrid = function () {
-            if (grid)
-                grid.remove();
-            return group;
-        };
-
-
-        // The redering function for the grid
-        var rectangle = function () {
-            var width = grid.innerWidth(),
-                height = grid.innerHeight(),
-                type = grid.type(),
-                scalex, scaley, zoom;
-
-            if (type === 'svg') {
-                if (zooming) return;
-
-                var rect = grid.element().select('.grid-rectangle');
-
-                if (!rect.node())
-                    rect = grid.element()
-                                .append("rect")
-                                .attr("class", "grid-rectangle");
-
-                rect.attr("width", width).attr("height", height);
-                this.setBackground(rect);
-            } else {
-                // canvas
-                var ctx = grid.context();
-                ctx.beginPath();
-                ctx.rect(0, 0, width, height);
-                this.setBackground(ctx);
-                ctx.fill();
-            }
-
-            // Add zoom functionality - when not zooming!
-            if (!zooming) {
-
-                grid.xaxis().tickSize(-height, 0);
-                grid.yaxis().tickSize(-width, 0);
-
-                if (!zoom && (opts.grid.zoomx || opts.grid.zoomy)) {
-
-                    zoom = d3.behavior.zoom().on('zoom', function () {
-                        zooming = true;
-                        if (scalex) {
-                            var x1 = scalex.invert(opts.margin.left),
-                                x2 = scalex.invert(opts.size[0] - opts.margin.right);
-                            grid.xaxis().scale().domain([x1, x2]);
-                        }
-                        if (scaley) {
-                            var y1 = scalex.invert(opts.margin.top),
-                                y2 = scalex.invert(opts.size[1] - opts.margin.bottom);
-                            grid.yaxis().scale().domain([y1, y2]);
-                        }
-                        paper.render();
-                        zooming = false;
-                    });
-
-                    if (type === 'svg')
-                        zoom(grid.element());
-                    else
-                        zoom(grid.paper().canvas());
-
-                    var factor = grid.factor();
-
-                    if (factor === 1) {
-                        if (opts.grid.zoomx)
-                            zoom.x(grid.xaxis().scale());
-
-                        if (opts.grid.zoomy)
-                            zoom.y(grid.yaxis().scale());
-                    } else {
-
-                        if (opts.grid.zoomx) {
-                            scalex = grid.xaxis().scale().copy();
-                            var x1 = scalex.invert(-factor*opts.margin.left),
-                                x2 = scalex.invert(factor*(opts.size[0] - opts.margin.left));
-                            scalex.domain([x1, x2]).range([0, opts.size[0]]);
-                            zoom.x(scalex);
-                        }
-
-                        if (opts.grid.zoomy) {
-                            scaley = grid.yaxis().scale().copy();
-                            var y1 = scaley.invert(-factor*opts.margin.left),
-                                y2 = scaley.invert(factor*(opts.size[1] - opts.margin.bottom));
-                            scaley.domain([y1, y2]).range([opts.size[1], 0]);
-                            zoom.y(scaley);
-                        }
-                    }
-
-                    if (opts.grid.scaleExtent)
-                        zoom.scaleExtent(opts.grid.scaleExtent);
-                }
-            }
-        };
-    }
-
     function notick () {return '';}
 
     function paperzoom (paper) {
@@ -6099,6 +6501,305 @@
             return paper;
         };
     }
+
+
+    var legendDefaults = {
+        show: false,
+        margin: 50,
+        position: 'top-right',
+        padding: 5,
+        textPadding: 5,
+        fill: '#fff',
+        fillOpacity: 1,
+        color: '#000',
+        colorOpacity: 1,
+        lineWidth: 1,
+        radius: 0,
+        symbolLength: 30,
+        symbolPadding: 10,
+        font: {
+            size: '14px'
+        }
+    },
+
+    inlinePositions = ['bottom', 'top'];
+
+    //
+    //  Add legend functionality to Charts
+    g.viz.chart.plugin(function (chart, opts) {
+
+        opts.legend = extend({}, legendDefaults, opts.legend);
+        opts.legend.font = extend({}, opts.font, opts.legend.font);
+
+        opts.contextmenu.push({
+            label: function () {
+                if (chart.paper().select('.chart-legend'))
+                    return 'Hide legend';
+                else
+                    return 'Show legend';
+            },
+            callback: function () {
+                var group = chart.paper().select('.chart-legend');
+                if (group) group.remove();
+                else chart.Legend(true).render();
+            }
+        });
+
+        chart.Legend = function (build) {
+            var labels = [],
+                group = chart.paper().select('.chart-legend');
+
+            if (!group && build) {
+                group = chart.paper().classGroup('chart-legend', {margin: opts.legend.margin});
+                group.add(group.type() === 'svg' ? SvgLegend : CanvasLegend);
+            }
+
+            return group;
+        };
+
+        chart.on('tick.legend', function () {
+            if (chart.drawing()) return;
+            if (opts.legend.show)
+                chart.Legend(true).render();
+            else {
+                var legend = chart.Legend();
+                if (legend) legend.remove();
+            }
+        });
+
+        function getLabels () {
+            var labels = [];
+
+            chart.each(function (serie) {
+                if (isArray(serie.legend))
+                    serie.legend.forEach(function (label) {
+                        addlabel(serie, label);
+                    });
+                else
+                    addlabel(serie, serie.legend);
+            });
+
+            return labels;
+
+            function addlabel (serie, legend) {
+                legend || (legend = {});
+                if (!legend.label) legend.label = serie.label;
+                legend.line = serie.line;
+                legend.point = serie.point;
+                legend.bar = serie.bar;
+                legend.pie = serie.pie;
+                legend.index = labels.length;
+                labels.push(legend);
+            }
+        }
+
+        function getPosition (group, width, height) {
+            var position = opts.legend.position,
+                x, y;
+
+            if (position.substring(0, 6) === 'bottom') {
+                position = position.substring(7);
+                y = group.innerHeight() - height;
+            } else if (position.substring(0, 3) === 'top') {
+                position = position.substring(4);
+                y = 0;
+            } else
+                y = 0;
+
+            if (position == 'left')
+                x = 0;
+            else if (position === 'right')
+                x = 0.5*(group.innerWidth() - width);
+            else
+                x = 0.5*(group.innerWidth() - width);
+
+            return [x, y];
+        }
+
+        function SvgLegend () {
+            var labels = getLabels(),
+                group = this.group(),
+                element = group.element()
+                                .selectAll('g.legend').data([true]),
+                box = group.element().selectAll('.legend-box').data([true]),
+                d = opts.legend,
+                padding = d.padding,
+                position = d.position,
+                inline = inlinePositions.indexOf(position) > -1,
+                fsize = group.scale(group.dim(d.font.size)),
+                lp = Math.round(fsize/3),
+                dy = fsize + d.textPadding,
+                dx = d.symbolLength + d.symbolPadding,
+                lineData = [[[0, 0], [d.symbolLength, 0]]],
+                line = d3.svg.line(),
+                symbol = d3.svg.symbol(),
+                x = 0,
+                y = 0,
+                t;
+
+            box.enter().append('rect').classed('legend-box', true);
+            element.enter().append('g').classed('legend', true);
+
+            var items = element.selectAll('.legend-item').data(labels),
+                node = element.node();
+
+            items.enter().append('g').classed('legend-item', true);
+            items.exit().remove();
+
+            items.each(function() {
+                var target = d3.select(this),
+                    d = target.datum();
+                if (!inline) y = d.index*dy;
+
+                if (d.line && !d.bar) {
+                    t = target.selectAll('path.line').data([true]);
+                    t.enter().append('path').classed('line', true);
+                    t.data(lineData)
+                        .attr('transform', "translate(" + x + "," + (y-lp) + ")")
+                        .attr('d', line)
+                        .attr('stroke-width', d.lineWidth || d.line.lineWidth)
+                        .attr('stroke', d.color || d.line.color)
+                        .attr('stroke-opacity', d.colorOpacity || d.line.colorOpacity);
+                } else {
+                    target.selectAll('path.line').data([]).exit().remove();
+                }
+
+                if (d.point || d.bar) {
+                    var p = d.point || d.bar;
+                    t = target.selectAll('path.symbol').data([true]);
+                    t.enter().append('path').classed('symbol', true);
+                    t.attr('transform', "translate(" + (x + opts.legend.symbolLength/2) + "," + (y-lp) + ")")
+                        .attr('stroke-width', d.lineWidth || p.lineWidth)
+                        .attr('stroke', d.color || p.color)
+                        .attr('fill', d.fill || p.fill)
+                        .attr('stroke-opacity', d.colorOpacity || p.colorOpacity)
+                        .attr('d', symbol);
+                } else {
+                    target.selectAll('path.symbol').data([]).exit().remove();
+                }
+
+                t = target.selectAll('text').data([true]);
+                t.enter().append('text');
+                svg_font(t.attr('x', x + dx).attr('y', y).html(d.label), opts.legend.font);
+
+                if (inline) x += this.getBBox().width + dx;
+            });
+
+            var bbox = node.getBBox(),
+                height = Math.ceil(bbox.height + 2*padding),
+                width = Math.ceil(bbox.width + 2*padding);
+
+            var xy = getPosition(group, width, height);
+
+
+            element.attr("transform", "translate(" + xy[0] + "," + xy[1] + ")");
+
+            box.attr("transform", "translate(" + xy[0] + "," + xy[1] + ")")
+                .attr('x', bbox.x-padding)
+                .attr('y', bbox.y-padding)
+                .attr('height', height)
+                .attr('width', width)
+                .attr('fill', opts.legend.fill)
+                .attr('stroke', opts.legend.color)
+                .attr('lineWidth', opts.legend.lineWidth);
+        }
+
+        function CanvasLegend () {
+            var labels = getLabels(),
+                group = this.group(),
+                ctx = group.context(),
+                d = opts.legend,
+                font_size = d.font.size,
+                fsize = group.scale(group.dim(font_size)),
+                lp = Math.round(fsize/3),
+                factor = group.factor(),
+                padding = factor*d.padding,
+                textPadding = factor*d.textPadding,
+                spacing = factor*d.symbolPadding,
+                symbolLength = factor*d.symbolLength,
+                symbolSize = Math.ceil(0.333*symbolLength),
+                dx = symbolLength + spacing,
+                dy = fsize + textPadding,
+                inline = inlinePositions.indexOf(d.position) > -1,
+                line = d3.canvas.line(),
+                symbol = d3.canvas.symbol().size(symbolSize*symbolSize),
+                mtxt,
+                width = 0,
+                height = 0;
+
+            d.font.size = fsize + 'px';
+            ctx.font = fontString(d.font);
+            d.font.size = font_size;
+
+            ctx.textBaseline = 'middle';
+
+            if (inline) {
+                height = dy;
+                labels.forEach(function (label) {
+                    if (width) width += spacing;
+                    mtxt = ctx.measureText(label.label);
+                    width += dx + mtxt.width;
+                });
+            } else {
+                labels.forEach(function (label) {
+                    mtxt = ctx.measureText(label.label);
+                    width = Math.max(width, dx + mtxt.width);
+                    height += dy;
+                });
+            }
+
+            var p = 2*(padding + factor*d.lineWidth);
+            height = Math.ceil(height + p);
+            width = Math.ceil(width + p);
+
+            var xy = getPosition(group, width, height);
+            width -= 2*factor*d.lineWidth;
+            height -= 2*factor*d.lineWidth;
+
+            // Draw the rectangle containing the legend
+            ctx.save();
+            ctx.translate(xy[0], xy[1]);
+            ctx.beginPath();
+            d3.canvas.drawPolygon(ctx, [[-padding, -padding], [width, -padding], [width, height], [-padding, height]], d.radius);
+            ctx.fillStyle = d3.canvas.rgba(d.fill, d.fillOpacity);
+            ctx.strokeStyle = d3.canvas.rgba(d.color, d.colorOpacity);
+            ctx.lineWidth = factor*d.lineWidth;
+            ctx.fill();
+            ctx.stroke();
+
+            var x = 0, y = dy/2;
+
+            labels.forEach(function (l) {
+                if (l.line && !l.bar) {
+                    line.context(ctx)([[x, y], [x + symbolLength, y]]);
+                    ctx.strokeStyle = l.color || l.line.color;
+                    ctx.lineWidth = factor*l.line.lineWidth;
+                    ctx.stroke();
+                }
+
+                if (l.point || l.bar) {
+                    var p = l.point || l.bar;
+                    ctx.save();
+                    ctx.translate(x + 0.5*factor*d.symbolLength, y);
+                    symbol.context(ctx)();
+                    d3.canvas.style(ctx, extend({}, p, l));
+                    ctx.restore();
+                }
+
+                x += dx;
+                ctx.fillStyle = d.color;
+                ctx.fillText(l.label, x, y);
+
+                if (inline) x += ctx.measureText(l.label).width + spacing;
+                else {
+                    x = 0;
+                    y += dy;
+                }
+            });
+
+            ctx.restore();
+        }
+    });
 
 
     g.contextMenu = function () {
@@ -6223,7 +6924,7 @@
                 .append('li')
                 .append('a')
                 .attr('role', 'menuitem')
-                .text(function (d) {return d.label;})
+                .text(function (d) {return isFunction(d.label) ? d.label() : d.label;})
                 .attr('href', '#')
                 .on('click', function (d) {
                     if (d.callback) d.callback(viz);
@@ -6240,15 +6941,13 @@
     //
     //  Tooltip functionality for SVG paper
     g.paper.plugin('tooltip', {
-
-        defaults: {
             className: 'd3-tip',
             show: false,
             interact: true,
-            fill: '#333',
+            fill: '#deebf7',
             fillOpacity: 0.8,
-            color: '#fff',
-            padding: '5px',
+            color: '#222',
+            padding: '8px',
             radius: '3px',
             offset: [20, 20],
             template: function (d) {
@@ -6259,101 +6958,96 @@
             }
         },
 
-        svg: tooltip_plugin,
-        canvas: tooltip_plugin,
-    });
+        function (group, opts) {
+            var paper = group.paper();
 
+            if (opts.tooltip.show) opts.tooltip.interact = true;
 
-    function tooltip_plugin (group, opts) {
-        var paper = group.paper();
+            if (paper.tooltip || !opts.tooltip.interact) return;
 
-        if (opts.tooltip.show) opts.tooltip.interact = true;
+            if (!tooltip && opts.tooltip.show) tooltip = gitto_tip(opts).offset(opts.tooltip.offset);
+            if (!tooltip) tooltip = gitto_tip(opts);
 
-        if (paper.tooltip || !opts.tooltip.interact) return;
+            paper.tooltip = tooltip;
 
-        if (!tooltip && opts.tooltip.show) tooltip = gitto_tip(opts).offset(opts.tooltip.offset);
-        if (!tooltip) tooltip = gitto_tip(opts);
+            var data, draw;
 
-        paper.tooltip = tooltip;
+            if (paper.type() === 'svg') {
 
-        var data, draw;
+                opts.activeEvents.forEach(function (event) {
+                    paper.on(event + '.tooltip', function () {
+                        var el = d3.select(this);
+                        data = el.size() ? el.datum() : null;
 
-        if (paper.type() === 'svg') {
-
-            opts.activeEvents.forEach(function (event) {
-                paper.on(event + '.tooltip', function () {
-                    var el = d3.select(this);
-                    data = el.size() ? el.datum() : null;
-
-                    if (!data || d3.event.type === 'mouseout') {
-                        tooltip.hide(true);
-                    } else if (data && data.reset) {
-                        if (d3.event.active === undefined) {
+                        if (!data || d3.event.type === 'mouseout') {
                             tooltip.hide(true);
-                            d3.event.active = tooltip.active;
-                        }
-                        tooltip.active.push(el);
-                        data.highLight().render(el);
-                    }
-                }).on(event + '.tooltip-show', function () {
-                    if (tooltip.active.length) {
-                        var bbox = getScreenBBox(tooltip.active[0].node()),
-                            direction = 'n';
-                        if (tooltip.active.length > 1) {
-                            direction = 'e';
-                            for (var i=1; i<tooltip.active.length; ++i) {
-                                var bbox2 = getScreenBBox(tooltip.active[i].node());
-                                bbox[direction].y += bbox2[direction].y;
+                        } else if (data && data.reset) {
+                            if (d3.event.active === undefined) {
+                                tooltip.hide(true);
+                                d3.event.active = tooltip.active;
                             }
-                            bbox[direction].y /= tooltip.active.length;
+                            tooltip.active.push(el);
+                            data.highLight().render(el);
                         }
-                        tooltip.bbox(bbox).direction(direction).show();
-                    }
-                });
-            });
-        } else {
-
-            var overlay = paper.canvasOverlay();
-
-            opts.activeEvents.forEach(function (event) {
-
-                overlay.on(event + '.tooltip', function () {
-                    var ctx = this.getContext('2d'),
-                        point, a;
-
-                    d3.canvas.clear(ctx);
-
-                    tooltip.hide();
-
-                    if (d3.event.type === 'mouseout')
-                        return;
-
-                    point = d3.canvas.mouse(this);
-                    tooltip.active = paper.canvasDataAtPoint(point);
-
-                    if (tooltip.active.length) {
-                        var direction = 'n', bbox, bbox2;
-
-                        for (var i=0; i<tooltip.active.length; ++i) {
-                            a = tooltip.active[i];
-                            a.group().transform(ctx);
-                            a.highLight().render(ctx);
-                            if (i && bbox) {
-                                bbox2 = a.bbox();
+                    }).on(event + '.tooltip-show', function () {
+                        if (tooltip.active.length) {
+                            var bbox = getScreenBBox(tooltip.active[0].node()),
+                                direction = 'n';
+                            if (tooltip.active.length > 1) {
                                 direction = 'e';
-                                bbox[direction].y += bbox2[direction].y;
-                            } else if (!i)
-                                bbox = a.bbox();
-                        }
-                        if (bbox) {
-                            bbox[direction].y /= tooltip.active.length;
+                                for (var i=1; i<tooltip.active.length; ++i) {
+                                    var bbox2 = getScreenBBox(tooltip.active[i].node());
+                                    bbox[direction].y += bbox2[direction].y;
+                                }
+                                bbox[direction].y /= tooltip.active.length;
+                            }
                             tooltip.bbox(bbox).direction(direction).show();
                         }
-                    }
+                    });
                 });
-            });
-        }
-    }
+            } else {
+
+                var overlay = paper.canvasOverlay();
+
+                opts.activeEvents.forEach(function (event) {
+
+                    overlay.on(event + '.tooltip', function () {
+                        var ctx = this.getContext('2d'),
+                            point, a;
+
+                        d3.canvas.clear(ctx);
+
+                        tooltip.hide();
+
+                        if (d3.event.type === 'mouseout')
+                            return;
+
+                        point = d3.canvas.mouse(this);
+                        tooltip.active = paper.canvasDataAtPoint(point);
+
+                        if (tooltip.active.length) {
+                            var direction = 'n', bbox, bbox2;
+
+                            for (var i=0; i<tooltip.active.length; ++i) {
+                                a = tooltip.active[i];
+                                a.group().transform(ctx);
+                                a.highLight().render(ctx);
+                                if (i && bbox) {
+                                    bbox2 = a.bbox();
+                                    direction = 'e';
+                                    bbox[direction].y += bbox2[direction].y;
+                                } else if (!i)
+                                    bbox = a.bbox();
+                            }
+                            if (bbox) {
+                                bbox[direction].y /= tooltip.active.length;
+                                tooltip.bbox(bbox).direction(direction).show();
+                            }
+                        }
+                    });
+                });
+            }
+        });
 
 
     function gitto_tip (options) {
@@ -6944,17 +7638,13 @@
 
         _.point = canvasPoint;
         _.path = canvasPath;
-        _.axis = canvasAxis;
         _.pieslice = canvasSlice;
-        _.bar = canvasBar;
 
         _.points = function () {
             this.each(function () {
                 this.reset().render();
             });
         };
-
-        _.barchart = _.points;
 
         // Pie chart drawing on an canvas group
         _.pie = function (draw) {
@@ -6970,52 +7660,6 @@
         d.inRange = function () {};
         d.bbox = function () {};
         return d;
-    }
-
-    function canvasAxis (group, axis, xy) {
-        var d = canvasMixin(drawing(group)),
-            ctx = group.context(),
-            opts, size;
-
-        d.render = function (context) {
-            context = context || ctx;
-            // size of font
-            opts = d.options();
-            if (opts.show === false) return d;
-            size = opts.size;
-            opts.size = group.scale(group.dim(size)) + 'px';
-            context.font = fontString(opts);
-            opts.size = size;
-            //
-            ctx.strokeStyle = d3.canvas.rgba(d.color, d.colorOpacity);
-            context.fillStyle = d.color;
-            ctx.lineWidth = group.factor()*d.lineWidth;
-            _draw(context);
-            context.stroke();
-            return d;
-        };
-
-        d.context = function (context) {
-            ctx = context;
-            return d;
-        };
-
-        return d;
-
-        function _draw (context) {
-            var x = 0, y = 0;
-
-            context.save();
-            opts = d.options();
-
-            if (xy[0] === 'x')
-                y = opts.position === 'top' ? 0 : group.innerHeight();
-            else
-                x = opts.position === 'left' ? 0 : group.innerWidth();
-            context.translate(x, y);
-            axis(d3.select(context.canvas));
-            context.restore();
-        }
     }
 
     function canvasPath (group) {
@@ -7107,15 +7751,7 @@
             context = context || ctx;
             context.save();
             _draw(context);
-            if (d.fill) {
-                context.fillStyle = rgba(d.fill, d.fillOpacity);
-                context.fill();
-            }
-            if (d.color && d.lineWidth) {
-                context.strokeStyle = rgba(d.color, d.colorOpacity);
-                context.lineWidth = factor*d.lineWidth;
-                context.stroke();
-            }
+            d3.canvas.style(context, d);
             context.restore();
             return d;
         };
@@ -7145,46 +7781,6 @@
         function _draw (context) {
             context.translate(scalex(d.data), scaley(d.data));
             symbol().context(context)(d);
-        }
-    }
-
-    function canvasBar (draw, data, siz) {
-        var d = canvasMixin(point(draw, data, siz)),
-            scalex = draw.scalex(),
-            scaley = draw.scaley(),
-            size = draw.size(),
-            factor = draw.factor(),
-            group = draw.group(),
-            ctx = draw.group().context(),
-            x, y, y0, y1, w, yb, radius;
-
-        d.render = function (context) {
-            context = context || ctx;
-            context.fillStyle = d3.canvas.rgba(d.fill, d.fillOpacity);
-            context.strokeStyle = d3.canvas.rgba(d.color, d.colorOpacity);
-            context.lineWidth = factor*d.lineWidth;
-            _draw(context);
-            context.fill();
-            context.stroke();
-            return d;
-        };
-
-        d.inRange = function (ex, ey) {
-            _draw(ctx);
-            return ctx.isPointInPath(ex, ey);
-        };
-
-        return d;
-
-        function _draw (context) {
-            radius = factor*draw.options().radius;
-            context.beginPath();
-            w = 0.5*size(d);
-            x = scalex(d.data);
-            y = scaley(d.data);
-            y0 = group.scaley(0);
-            d3.canvas.drawPolygon(context, [[x-w, y0], [x+w, y0], [x+w, y], [x-w, y]], radius);
-            context.closePath();
         }
     }
 
@@ -7225,31 +7821,6 @@
         return d;
     }
 
-    function canvasBBox (d, nw, ne, se, sw) {
-        var target = d.paper().element().node(),
-            bbox = target.getBoundingClientRect(),
-            p = [bbox.left, bbox.top],
-            f = 1/d3.canvas.pixelRatio;
-        return {
-            nw: {x: f*nw[0] + p[0], y: f*nw[1] + p[1]},
-            ne: {x: f*ne[0] + p[0], y: f*ne[1] + p[1]},
-            se: {x: f*se[0] + p[0], y: f*se[1] + p[1]},
-            sw: {x: f*sw[0] + p[0], y: f*sw[1] + p[1]},
-            n: {x: av(nw, ne, 0), y: av(nw, ne, 1)},
-            s: {x: av(sw, se, 0), y: av(sw, se, 1)},
-            e: {x: av(se, ne, 0), y: av(se, ne, 1)},
-            w: {x: av(sw, nw, 0), y: av(sw, nw, 1)}
-        };
-
-        function av(a, b, i) {return p[i] + 0.5*f*(a[i] + b[i]);}
-    }
-    //
-    // Add mission colors for graph
-    function chartColors (paper, opts) {
-        chartColor(paper, opts);
-        activeColors(opts);
-    }
-
     var fillSpecials = [true, 'none', 'color'];
 
     function chartColor(paper, opts) {
@@ -7267,26 +7838,23 @@
         return opts.color;
     }
 
-    function chartFormats (group, opts, m) {
-        var xaxis = group.xaxis(),
-            yaxis = group.yaxis();
-        m = m || 1000;
-        if (!opts.formatX) opts.formatX = xaxis.tickFormat() || xaxis.scale().tickFormat(m);
-        if (!opts.formatY) opts.formatY = yaxis.tickFormat() || yaxis.scale().tickFormat(m);
+    function pickColor (d) {
+        if (d.fill && fillSpecials.indexOf(opts.fill) === -1)
+            return d.fill;
+        else
+            return d.color;
     }
 
-    function activeColors(opts) {
-        var a = opts.active = extend({}, opts.active);
+    function chartFormats (group, opts, m) {
+        if (!opts.formatX) opts.formatX = formatter(group.xaxis());
+        if (!opts.formatY) opts.formatY = formatter(group.yaxis());
+    }
 
-        if (a.fill === 'darker')
-            a.fill = d3.rgb(opts.fill).darker().toString();
-        else if (a.fill === 'brighter')
-            a.fill = d3.rgb(opts.fill).brighter().toString();
-
-        if (a.color === 'darker')
-            a.color = d3.rgb(opts.color).darker().toString();
-        else if (a.color === 'brighter')
-            a.color = d3.rgb(opts.color).brighter().toString();
+    function formatter (axis) {
+        var format = axis.tickFormat();
+        if (!format)
+            format = axis.scale().tickFormat ? axis.scale().tickFormat(1000) : d3_identity;
+        return format;
     }
 
 
@@ -7300,13 +7868,6 @@
         }
         else
             p = {};
-
-        if (p.margin !== undefined && !isObject(p.margin)) {
-            var m = p.margin;
-            p.margin = {left: m, right: m, top: m, bottom: m};
-        }
-
-        copyMissing(g.defaults.paper, p, true);
 
         if (isFunction (p.colors))
             p.colors = p.colors(d3);
@@ -7331,10 +7892,9 @@
             height = d3.round(p.height_percentage*width);
         }
 
-        // Inherit axis properties
-        copyMissing(p.font, p.xaxis);
-        copyMissing(p.xaxis, p.yaxis);
-        copyMissing(p.yaxis, p.yaxis2);
+        groupMargins(p);
+        copyMissing(g.defaults.paper, p, true);
+        paperAxis(p);
 
         p.size = [width, height];
         p.giotto = 'giotto-group';
@@ -7343,6 +7903,14 @@
 
         return p;
     }
+
+    function groupMargins (opts) {
+        if (opts.margin !== undefined && !isObject(opts.margin)) {
+            var m = opts.margin;
+            opts.margin = {left: m, right: m, top: m, bottom: m};
+        }
+    }
+
 
 
     function svg_implementation (paper, p) {
@@ -7361,14 +7929,6 @@
             var p = point(draw, data, size);
             p.render = function (element) {
                 _draw(element).attr('d', draw.symbol);
-            };
-            return p;
-        };
-
-        _.bar = function (draw, data, size) {
-            var p = point(draw, data, size);
-            p.render = function (element) {
-                _draw(element);
             };
             return p;
         };
@@ -7520,55 +8080,6 @@
             });
         };
 
-        // Draw a barchart
-        _.barchart = function () {
-            var group = this.group(),
-                chart = group.element().select("#" + this.uid()),
-                opts = this.options(),
-                scalex = this.scalex(),
-                scaley = this.scaley(),
-                size = this.size(),
-                zero = group.scaley(0),
-                data = this.data(),
-                trans = opts.transition,
-                bar, y;
-
-            if (!chart.node())
-                chart = group.element().append("g")
-                            .attr('id', this.uid());
-
-            bar = chart.selectAll(".bar");
-
-            if (bar.size() !== data.length) {
-                bar.remove();
-                bar = _events(_draw(chart
-                        .selectAll(".bar")
-                        .data(data)
-                        .enter().append("rect")
-                        .attr('class', 'bar')));
-            } else
-                bar.data(data);
-
-            if (!group.resizing() && trans && trans.duration)
-                bar = bar.transition().duration(trans.duration).ease(trans.ease);
-
-            bar.attr("x", function(d) {
-                    return scalex(d.data) - 0.5*size(d);
-                })
-                .attr("y", function(d) {
-                    return Math.min(zero, scaley(d.data));
-                })
-                .attr("height", function(d) {
-                    return abs(scaley(d.data) - zero);
-                })
-                .attr("width", size);
-
-            if (opts.radius > 0)
-                bar.attr('rx', opts.radius).attr('ry', opts.radius);
-
-            return chart;
-        };
-
         // Pie chart drawing on an svg group
         _.pie = function (draw, width, height) {
 
@@ -7592,51 +8103,9 @@
                             .attr('d', draw.arc)));
         };
 
-        _.axis = function (group, axis, xy) {
-            return drawing(group, function () {
-                var x =0,
-                    y = 0,
-                    ax = group.element().select('.' + xy),
-                    opts = this.options();
-                if (opts.show === false) {
-                    ax.remove();
-                    return;
-                }
-                if (!ax.node())
-                    ax = this.group().element().append('g').attr('class', xy);
-                if (xy[0] === 'x')
-                    y = opts.position === 'top' ? 0 : this.group().innerHeight();
-                else
-                    x = opts.position === 'left' ? 0 : this.group().innerWidth();
-                //ax.selectAll('*').remove();
-                ax.attr("transform", "translate(" + x + "," + y + ")").call(axis);
-                ax.selectAll('line, path')
-                     .attr('stroke', this.color)
-                     .attr('stroke-opacity', this.colorOpacity)
-                     .attr('stroke-width', this.lineWidth)
-                     .attr('fill', 'none');
-                if (opts.size === 0)
-                    ax.selectAll('text').remove();
-                else
-                    _font(ax.selectAll('text'), opts);
-                return ax;
-            });
-        };
-
         return _;
 
         // PRIVATE FUNCTIONS
-
-        function _font (selection, opts) {
-            return selection.style({
-                'fill': opts.color,
-                'font-size': opts.size ,
-                'font-weight': opts.weight,
-                'font-style': opts.style,
-                'font-family': opts.family,
-                'font-variant': opts.variant
-            });
-        }
 
         function _draw (selection) {
             return selection

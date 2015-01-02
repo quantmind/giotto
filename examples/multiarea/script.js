@@ -25,6 +25,12 @@
             }
         },
 
+        legend: {
+            show: true,
+            position: 'top-left',
+            margin: 50
+        },
+
         tooltip: {
             show: true
         },

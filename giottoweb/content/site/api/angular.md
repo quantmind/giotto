@@ -13,3 +13,11 @@ module name as second parameter:
 
     ng.module(angular, 'mymodule');
 
+To add all giotto directives to the module:
+
+    ng.module(angular).addAll();
+
+and add the 'giotto' name to the list of module to bootstrap:
+
+    angular.bootstrap(document, [..., 'giotto', ...]);
+

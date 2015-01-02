@@ -3,16 +3,6 @@
 
     g.defaults = {};
 
-    g.defaults.axis = {
-        tickSize: '6px',
-        outerTickSize: '6px',
-        tickPadding: '3px',
-        lineWidth: 1,
-        //minTickSize: undefined,
-        min: null,
-        max: null
-    };
-
     g.defaults.transition = {
         duration: 0,
         ease: 'easeInOutCubic'
@@ -23,9 +13,6 @@
         resizeDelay: 200,
         resize: true,
         margin: {top: 20, right: 20, bottom: 20, left: 20},
-        xaxis: extend({position: 'bottom'}, g.defaults.axis),
-        yaxis: {position: 'left', min: null, max: null},
-        yaxis2: {position: 'right', min: null, max: null},
         colors: d3.scale.category10().range(),
         colorIndex: 0,
         css: null,
@@ -50,21 +37,6 @@
                 color: 'brighter',
                 // Multiplier for size, set to 100% for no change
                 size: '150%'
-            },
-            transition: extend({}, g.defaults.transition)
-        },
-        bar: {
-            width: 'auto',
-            color: null,
-            fill: true,
-            fillOpacity: 1,
-            colorOpacity: 1,
-            lineWidth: 1,
-            // Radius in pixels of rounded corners. Set to 0 for no rounded corners
-            radius: 4,
-            active: {
-                fill: 'darker',
-                color: 'brighter'
             },
             transition: extend({}, g.defaults.transition)
         },

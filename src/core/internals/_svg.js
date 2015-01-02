@@ -1,4 +1,5 @@
 
+
     function svg_implementation (paper, p) {
         var _ = {};
 
@@ -15,14 +16,6 @@
             var p = point(draw, data, size);
             p.render = function (element) {
                 _draw(element).attr('d', draw.symbol);
-            };
-            return p;
-        };
-
-        _.bar = function (draw, data, size) {
-            var p = point(draw, data, size);
-            p.render = function (element) {
-                _draw(element);
             };
             return p;
         };
@@ -174,55 +167,6 @@
             });
         };
 
-        // Draw a barchart
-        _.barchart = function () {
-            var group = this.group(),
-                chart = group.element().select("#" + this.uid()),
-                opts = this.options(),
-                scalex = this.scalex(),
-                scaley = this.scaley(),
-                size = this.size(),
-                zero = group.scaley(0),
-                data = this.data(),
-                trans = opts.transition,
-                bar, y;
-
-            if (!chart.node())
-                chart = group.element().append("g")
-                            .attr('id', this.uid());
-
-            bar = chart.selectAll(".bar");
-
-            if (bar.size() !== data.length) {
-                bar.remove();
-                bar = _events(_draw(chart
-                        .selectAll(".bar")
-                        .data(data)
-                        .enter().append("rect")
-                        .attr('class', 'bar')));
-            } else
-                bar.data(data);
-
-            if (!group.resizing() && trans && trans.duration)
-                bar = bar.transition().duration(trans.duration).ease(trans.ease);
-
-            bar.attr("x", function(d) {
-                    return scalex(d.data) - 0.5*size(d);
-                })
-                .attr("y", function(d) {
-                    return Math.min(zero, scaley(d.data));
-                })
-                .attr("height", function(d) {
-                    return abs(scaley(d.data) - zero);
-                })
-                .attr("width", size);
-
-            if (opts.radius > 0)
-                bar.attr('rx', opts.radius).attr('ry', opts.radius);
-
-            return chart;
-        };
-
         // Pie chart drawing on an svg group
         _.pie = function (draw, width, height) {
 
@@ -246,51 +190,9 @@
                             .attr('d', draw.arc)));
         };
 
-        _.axis = function (group, axis, xy) {
-            return drawing(group, function () {
-                var x =0,
-                    y = 0,
-                    ax = group.element().select('.' + xy),
-                    opts = this.options();
-                if (opts.show === false) {
-                    ax.remove();
-                    return;
-                }
-                if (!ax.node())
-                    ax = this.group().element().append('g').attr('class', xy);
-                if (xy[0] === 'x')
-                    y = opts.position === 'top' ? 0 : this.group().innerHeight();
-                else
-                    x = opts.position === 'left' ? 0 : this.group().innerWidth();
-                //ax.selectAll('*').remove();
-                ax.attr("transform", "translate(" + x + "," + y + ")").call(axis);
-                ax.selectAll('line, path')
-                     .attr('stroke', this.color)
-                     .attr('stroke-opacity', this.colorOpacity)
-                     .attr('stroke-width', this.lineWidth)
-                     .attr('fill', 'none');
-                if (opts.size === 0)
-                    ax.selectAll('text').remove();
-                else
-                    _font(ax.selectAll('text'), opts);
-                return ax;
-            });
-        };
-
         return _;
 
         // PRIVATE FUNCTIONS
-
-        function _font (selection, opts) {
-            return selection.style({
-                'fill': opts.color,
-                'font-size': opts.size ,
-                'font-weight': opts.weight,
-                'font-style': opts.style,
-                'font-family': opts.family,
-                'font-variant': opts.variant
-            });
-        }
 
         function _draw (selection) {
             return selection

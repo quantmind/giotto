@@ -8,7 +8,9 @@
             tickPadding = 3,
             tickArguments_ = [10],
             tickValues = null,
-            tickFormat_ = null;
+            tickFormat_ = null,
+            textRotate = 0,
+            textAlign = null;
 
         function axis (canvas) {
             canvas.each(function() {
@@ -27,10 +29,17 @@
                 // Domain.
                 var range = d3_scaleRange(scale1);
 
+                if (scale1.rangeBand) {
+                    var x = scale1, dx = x.rangeBand()/2;
+                    scale0 = scale1 = function (d) { return x(d) + dx; };
+                } else if (scale0.rangeBand) {
+                    scale0 = scale1;
+                }
+
                 // Apply axis labels on major ticks
                 if (orient === "bottom" || orient === "top") {
                     ctx.textBaseline = sign < 0 ? 'bottom' : 'top';
-                    ctx.textAlign = 'center';
+                    ctx.textAlign = textAlign || 'center';
                     ctx.moveTo(range[0], 0);
                     ctx.lineTo(range[1], 0);
                     ctx.moveTo(range[0], 0);
@@ -41,11 +50,18 @@
                         trange = scale1(tick);
                         ctx.moveTo(trange, 0);
                         ctx.lineTo(trange, sign*innerTickSize);
-                        ctx.fillText(tickFormat(tick), trange, sign*tickSpacing);
+                        if (textRotate) {
+                            ctx.save();
+                            ctx.translate(trange, sign*tickSpacing);
+                            ctx.rotate(textRotate);
+                            ctx.fillText(tickFormat(tick), 0, 0);
+                            ctx.restore();
+                        } else
+                            ctx.fillText(tickFormat(tick), trange, sign*tickSpacing);
                     });
                 } else {
                     ctx.textBaseline = 'middle';
-                    ctx.textAlign = sign < 0 ? "end" : "start";
+                    ctx.textAlign = textAlign || (sign < 0 ? "end" : "start");
                     ctx.moveTo(0, range[0]);
                     ctx.lineTo(0, range[1]);
                     ctx.moveTo(0, range[0]);
@@ -56,7 +72,13 @@
                         trange = scale1(tick);
                         ctx.moveTo(0, trange);
                         ctx.lineTo(sign*innerTickSize, trange);
-                        ctx.fillText(tickFormat(tick), sign*tickSpacing, trange);
+                        if (textRotate) {
+                            ctx.save();
+                            ctx.rotate(textRotate);
+                            ctx.fillText(tickFormat(tick), sign*tickSpacing, trange);
+                            ctx.restore();
+                        } else
+                            ctx.fillText(tickFormat(tick), sign*tickSpacing, trange);
                     });
                 }
             });
@@ -120,6 +142,18 @@
 
         axis.tickSubdivide = function() {
             return arguments.length && axis;
+        };
+
+        axis.textRotate = function (x) {
+            if (!arguments.length) return textRotate;
+            textRotate = +x;
+            return axis;
+        };
+
+        axis.textAlign = function (x) {
+            if (!arguments.length) return textAlign;
+            textAlign = x;
+            return axis;
         };
 
         return axis;

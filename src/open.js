@@ -22,7 +22,9 @@
     var giotto = {
             version: "0.1.0",
             d3: d3,
-            math: {}
+            math: {},
+            svg: {},
+            canvas: {}
         },
         g = giotto;
 

@@ -16,17 +16,13 @@
 
         _.point = canvasPoint;
         _.path = canvasPath;
-        _.axis = canvasAxis;
         _.pieslice = canvasSlice;
-        _.bar = canvasBar;
 
         _.points = function () {
             this.each(function () {
                 this.reset().render();
             });
         };
-
-        _.barchart = _.points;
 
         // Pie chart drawing on an canvas group
         _.pie = function (draw) {
@@ -42,52 +38,6 @@
         d.inRange = function () {};
         d.bbox = function () {};
         return d;
-    }
-
-    function canvasAxis (group, axis, xy) {
-        var d = canvasMixin(drawing(group)),
-            ctx = group.context(),
-            opts, size;
-
-        d.render = function (context) {
-            context = context || ctx;
-            // size of font
-            opts = d.options();
-            if (opts.show === false) return d;
-            size = opts.size;
-            opts.size = group.scale(group.dim(size)) + 'px';
-            context.font = fontString(opts);
-            opts.size = size;
-            //
-            ctx.strokeStyle = d3.canvas.rgba(d.color, d.colorOpacity);
-            context.fillStyle = d.color;
-            ctx.lineWidth = group.factor()*d.lineWidth;
-            _draw(context);
-            context.stroke();
-            return d;
-        };
-
-        d.context = function (context) {
-            ctx = context;
-            return d;
-        };
-
-        return d;
-
-        function _draw (context) {
-            var x = 0, y = 0;
-
-            context.save();
-            opts = d.options();
-
-            if (xy[0] === 'x')
-                y = opts.position === 'top' ? 0 : group.innerHeight();
-            else
-                x = opts.position === 'left' ? 0 : group.innerWidth();
-            context.translate(x, y);
-            axis(d3.select(context.canvas));
-            context.restore();
-        }
     }
 
     function canvasPath (group) {
@@ -179,15 +129,7 @@
             context = context || ctx;
             context.save();
             _draw(context);
-            if (d.fill) {
-                context.fillStyle = rgba(d.fill, d.fillOpacity);
-                context.fill();
-            }
-            if (d.color && d.lineWidth) {
-                context.strokeStyle = rgba(d.color, d.colorOpacity);
-                context.lineWidth = factor*d.lineWidth;
-                context.stroke();
-            }
+            d3.canvas.style(context, d);
             context.restore();
             return d;
         };
@@ -217,46 +159,6 @@
         function _draw (context) {
             context.translate(scalex(d.data), scaley(d.data));
             symbol().context(context)(d);
-        }
-    }
-
-    function canvasBar (draw, data, siz) {
-        var d = canvasMixin(point(draw, data, siz)),
-            scalex = draw.scalex(),
-            scaley = draw.scaley(),
-            size = draw.size(),
-            factor = draw.factor(),
-            group = draw.group(),
-            ctx = draw.group().context(),
-            x, y, y0, y1, w, yb, radius;
-
-        d.render = function (context) {
-            context = context || ctx;
-            context.fillStyle = d3.canvas.rgba(d.fill, d.fillOpacity);
-            context.strokeStyle = d3.canvas.rgba(d.color, d.colorOpacity);
-            context.lineWidth = factor*d.lineWidth;
-            _draw(context);
-            context.fill();
-            context.stroke();
-            return d;
-        };
-
-        d.inRange = function (ex, ey) {
-            _draw(ctx);
-            return ctx.isPointInPath(ex, ey);
-        };
-
-        return d;
-
-        function _draw (context) {
-            radius = factor*draw.options().radius;
-            context.beginPath();
-            w = 0.5*size(d);
-            x = scalex(d.data);
-            y = scaley(d.data);
-            y0 = group.scaley(0);
-            d3.canvas.drawPolygon(context, [[x-w, y0], [x+w, y0], [x+w, y], [x-w, y]], radius);
-            context.closePath();
         }
     }
 
@@ -295,23 +197,4 @@
         };
 
         return d;
-    }
-
-    function canvasBBox (d, nw, ne, se, sw) {
-        var target = d.paper().element().node(),
-            bbox = target.getBoundingClientRect(),
-            p = [bbox.left, bbox.top],
-            f = 1/d3.canvas.pixelRatio;
-        return {
-            nw: {x: f*nw[0] + p[0], y: f*nw[1] + p[1]},
-            ne: {x: f*ne[0] + p[0], y: f*ne[1] + p[1]},
-            se: {x: f*se[0] + p[0], y: f*se[1] + p[1]},
-            sw: {x: f*sw[0] + p[0], y: f*sw[1] + p[1]},
-            n: {x: av(nw, ne, 0), y: av(nw, ne, 1)},
-            s: {x: av(sw, se, 0), y: av(sw, se, 1)},
-            e: {x: av(se, ne, 0), y: av(se, ne, 1)},
-            w: {x: av(sw, nw, 0), y: av(sw, nw, 1)}
-        };
-
-        function av(a, b, i) {return p[i] + 0.5*f*(a[i] + b[i]);}
     }

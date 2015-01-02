@@ -11,7 +11,8 @@
     function (chart, opts) {
 
         var series = [],
-            allranges = {};
+            allranges = {},
+            drawing;
 
         chart.numSeries = function () {
             return series.length;
@@ -41,20 +42,23 @@
             return chart;
         };
 
-        chart.draw = function (data) {
-            var paper = chart.paper();
-            data = data || opts.data;
+        chart.drawing  = function () {
+            return drawing;
+        };
+
+        chart.render = function () {
+            var paper = chart.paper(),
+                data = opts.data;
+            drawing = true;
+            opts.data = null;
 
             // load data if in options
             if (data === undefined && opts.src) {
-                opts.data = null;
-                return chart.loadData(chart.draw);
+                return chart.loadData(chart.resume);
             }
 
             if (isFunction(data))
                 data = data(chart);
-
-            opts.data = null;
 
             if (data || opts.type !== paper.type()) {
 
@@ -73,8 +77,11 @@
                 serie.draw();
             });
 
+            drawing = false;
+
             // Render the chart
-            return chart.render();
+            paper.render();
+            return chart;
         };
 
         chart.setSerieOption = function (type, field, value) {
@@ -101,7 +108,7 @@
         chart.on('tick.main', function () {
             // Chart don't need ticking unless explicitly required (real time updates for example)
             chart.stop();
-            chart.draw();
+            chart.render();
         });
 
         // INTERNALS
@@ -194,6 +201,7 @@
                     if (!p) {
                         ranges[serie.xaxis.position] = p = {
                             range: xy.xrange,
+                            ordinal: xy.xordinal,
                             serie: serie
                         };
                         serie.drawXaxis = true;
@@ -206,6 +214,7 @@
                     if (!p) {
                         ranges[serie.yaxis.position] = p = {
                             range: xy.yrange,
+                            ordinal: xy.yordinal,
                             serie: serie
                         };
                         serie.drawYaxis = true;
@@ -251,13 +260,13 @@
 
                     // Draw X axis or set the scale of the reference X-axis
                     if (serie.drawXaxis)
-                        domain(group.xaxis()).drawXaxis();
+                        domain(group.xaxis(), 'x').drawXaxis();
                     else if (serie.axisgroup)
                         scale(group.xaxis());
 
                     // Draw Y axis or set the scale of the reference Y-axis
                     if (serie.drawYaxis)
-                        domain(group.yaxis()).drawYaxis();
+                        domain(group.yaxis(), 'y').drawYaxis();
                     else if (serie.axisgroup)
                         scale(group.yaxis());
 
@@ -273,13 +282,18 @@
 
                 return serie;
 
-                function domain(axis) {
+                function domain(axis, xy) {
                     var p = allranges[serie.axisgroup][axis.orient()],
                         o = axis.options(),
-                        scale = axis.scale();
+                        scale = axis.scale(),
+                        opadding = 0.1;
+
+                    if (p.ordinal) scale = group.ordinalScale(axis);
 
                     p.scale = scale;
-                    if (o.auto) {
+                    if (scale.rangeBand) {
+                        scale.domain(data.map(function (d) {return d[xy];}));
+                    } else if (o.auto) {
                         scale.domain([p.range[0], p.range[1]]).nice();
                         if (!isNull(o.min))
                             scale.domain([o.min, scale.domain()[1]]);
@@ -362,15 +376,32 @@
             ymin = Infinity,
             xmax =-Infinity,
             ymax =-Infinity,
+            xordinal = false,
+            yordinal = false,
+            v,
             xm = function (x) {
-                xmin = x < xmin ? x : xmin;
-                xmax = x > xmax ? x : xmax;
-                return x;
+                v = +x;
+                if (isNaN(v)) {
+                    xordinal = true;
+                    return x;
+                }
+                else {
+                    xmin = v < xmin ? v : xmin;
+                    xmax = v > xmax ? v : xmax;
+                    return v;
+                }
             },
             ym = function (y) {
-                ymin = y < ymin ? y : ymin;
-                ymax = y > ymax ? y : ymax;
-                return y;
+                v = +y;
+                if (isNaN(v)) {
+                    yordinal = true;
+                    return y;
+                }
+                else {
+                    ymin = v < ymin ? v : ymin;
+                    ymax = v > ymax ? v : ymax;
+                    return v;
+                }
             };
         var xydata = [];
         xy.forEach(function (d) {
@@ -379,5 +410,7 @@
         data.data = xydata;
         data.xrange = [xmin, xmax];
         data.yrange = [ymin, ymax];
+        data.xordinal = xordinal;
+        data.yordinal = yordinal;
         return data;
     };

@@ -80,7 +80,8 @@ class Extension(lux.Extension):
                                dir='giottoweb/content/site',
                                meta=meta_default)
         dist = MediaBuilder(media_url+'giotto', 'dist', lux=False)
-        return [dist, examples]
+        data = MediaBuilder('data', 'giottoweb/content/data', lux=False)
+        return [dist, data, examples]
 
     def on_html_document(self, app, request, doc):
         doc.head.embedded_js.append('var gexamples = {};\n')

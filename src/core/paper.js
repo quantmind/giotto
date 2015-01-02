@@ -12,13 +12,11 @@
             // Inject plugins
             opts = groupOptions(opts);
             var group = g.group[opts.type](paper, opts),
-                plugin;
+                plugins = g.paper.plugins;
 
             group.element().classed(p.giotto, true);
-            for (var i=0; i < g.paper.plugins.length; ++i) {
-                plugin = g.paper.plugins[i][opts.type];
-                if (plugin) plugin(group, opts);
-            }
+            for (var i=0; i < plugins.length; ++i)
+                plugins[i](group, opts);
             return group;
         };
 
@@ -98,9 +96,7 @@
         // Resize the paper and fire the resize event if resizing was performed
         paper.resize = function (size) {
             resizing = true;
-            if (!size) {
-                size = paper.boundingBox();
-            }
+            if (!size) size = paper.boundingBox();
             if (p.size[0] !== size[0] || p.size[1] !== size[1]) {
                 p.size[0] = size[0];
                 p.size[1] = size[1];
@@ -311,6 +307,7 @@
 
         function groupOptions (opts) {
             opts || (opts = {});
+            groupMargins(opts);
             if (!opts.yaxis || opts.yaxis === 1)
                 opts.yaxis = p.yaxis;
             else if (opts.yaxis === 2)
@@ -321,7 +318,7 @@
 
     g.paper.plugins = [];
 
-    g.paper.plugin = function (name, plugin) {
-        g.defaults.paper[name] = plugin.defaults;
+    g.paper.plugin = function (name, defaults, plugin) {
+        g.defaults.paper[name] = defaults;
         g.paper.plugins.push(plugin);
     };

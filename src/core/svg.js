@@ -29,5 +29,42 @@
             return group;
         };
 
+        group.draw = function (selection) {
+            return selection
+                .attr('stroke', function (d) {return d.color;})
+                .attr('stroke-opacity', function (d) {return d.colorOpacity;})
+                .attr('stroke-width', function (d) {return d.lineWidth;})
+                .attr('fill', function (d) {return d.fill;})
+                .attr('fill-opacity', function (d) {return d.fillOpacity;});
+        };
+
+        group.events = function (selection, uid, callback) {
+            var name = uid || p.giotto,
+                target;
+
+            p.activeEvents.forEach(function (event) {
+                selection.on(event + '.' + name, function () {
+                    if (uid && !paper.element().select('#' + uid).size())
+                        selection.on(event + '.' + uid, null);
+                    else {
+                        target = callback ? callback.call(this) : this;
+                        paper[d3.event.type].call(target);
+                    }
+                });
+            });
+            return selection;
+        };
+
         return group;
     };
+
+    function svg_font (selection, opts) {
+        return selection.style({
+            'fill': opts.color,
+            'font-size': opts.size ,
+            'font-weight': opts.weight,
+            'font-style': opts.style,
+            'font-family': opts.family,
+            'font-variant': opts.variant
+        });
+    }
