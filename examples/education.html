@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html data-debug='false' lang='en' prefix='og: http://ogp.me/ns#'>
+<head>
+<title>First and second stage of tertiary education in Europe</title>
+<meta charset='utf-8'>
+<meta content='IE=edge' http-equiv='X-UA-Compatible'>
+<meta content='width=device-width, initial-scale=1' name='viewport'>
+<meta content='Barchart displaying tooltip, legend and right-click interations on both canvas and svg elements.' name='description'>
+<meta content='Luca Sbardella' name='author'>
+<meta content='website' property='og:type'>
+<meta content='http://giottojs.org/examples/education' property='og:url'>
+<meta content='First and second stage of tertiary education in Europe' property='og:title'>
+<meta content='Barchart displaying tooltip, legend and right-click interations on both canvas and svg elements.' property='og:description'>
+<meta content='http://giottojs.org/examples/education.png' property='og:image'>
+<meta content='summary_large_image' name='twitter:card'>
+<meta content='@quantmind' name='twitter:site'>
+<meta content='First and second stage of tertiary education in Europe' name='twitter:title'>
+<meta content='Barchart displaying tooltip, legend and right-click interations on both canvas and svg elements.' name='twitter:description'>
+<meta content='http://giottojs.org/examples/education.png' name='twitter:image'>
+<link href='http://giottojs.org/media/giottoweb/favicon.ico' rel='icon' type='image/x-icon'>
+<link href='//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css' rel='stylesheet' type='text/css'>
+<link href='//netdna.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css' rel='stylesheet' type='text/css'>
+<link href='http://giottojs.org/media/giotto/giotto.css' rel='stylesheet' type='text/css'>
+<link href='http://giottojs.org/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
+<script type='text/javascript'>
+var lux = {context: {"dateFormat": "d MMM y", "oauths": null, "python_version": "3.4.2", "ngModules": ["highlight", "lux.blog", "lux.google"], "lux_version": "0.1.2-alpha.1", "page": {"content_type": "text/html", "name": "education", "modified": "2015-01-02T19:34:56", "author": ["Luca Sbardella"], "slug": "education", "api_url": "http://giottojs.org/ng/examples/education.json", "title": "First and second stage of tertiary education in Europe", "html_url": "http://giottojs.org/examples/education", "description": "Barchart displaying tooltip, legend and right-click interations on both canvas and svg elements.", "image": "http://giottojs.org/examples/education.png", "date": "2015-01-02T00:00:00"}, "google": {"analytics": {"id": "UA-54439804-4", "ga": "ga"}}, "year": 2015, "brand": "Lux", "navbar": {"collapseWidth": 768}, "apiUrls": {}, "datetimeFormat": "d MMM y, h:mm:ss a", "html5mode": true, "url": "http://giottojs.org", "name": "Lux", "date": "2015-01-02T19-35-46", "media": "/media"}};
+</script>
+<script type='text/javascript'>
+lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
+<script type='text/javascript'>
+var gexamples = {};
+</script>
+<script type="text/javascript">
+var require = {"paths": {}, "baseUrl": "http://giottojs.org/media/", "minify": true, "waitSeconds": 200, "deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"]};
+</script>
+<script src='http://quantmind.github.io/require-config-js/require.config.min.js' type='application/javascript'></script>
+<script src='//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js' type='application/javascript'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-54439804-4', 'auto');
+  ga('send', 'pageview');
+
+</script></head>
+<body data-ng-controller='Page' data-ng-model='page' data-page=''>
+<navbar data-options="lux.context.navbar"></navbar>
+<div id="page-main">
+<div class="container">
+<div class="row">
+<div class="col-sm-12" data-highlight>
+<div class="page-header">
+<h2>First and second stage of tertiary education in Europe</h2>
+</div>
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-sm-10">
+      <div data-options='gexamples.education' data-src="http://giottojs.org/data/edat_lfse_07_1_Data.csv" style='width: 100%' giotto-chart></div>
+      <p class="text-right small">2013 Data for both female and male population, source: <a href="http://ec.europa.eu/eurostat" target="self">Eurostat</a></p>
+    </div>
+    <div class="col-sm-2 small">
+      <lux-form data-options='luxforms.typeform_jelCK'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.typeform_jelCK = {"field": {"type": "form", "id": "typeform_jelCK", "showLabels": false, "model": "TypeForm"}, "children": [{"field": {"type": "fieldset"}, "children": [{"field": {"type": "select", "name": "type", "options": ["svg", "canvas"], "required": true, "value": "svg"}}]}]};</script></lux-form>
+      <p>Right click on the chart for additional options</p>
+    </div>
+  </div>
+</div>
+
+<p>Barcharts support both canvas and svg on standard and ordinal scales.
+This example shows how to add additional labels to the chart legend.</p>
+<p>Html:</p>
+<pre><code>&lt;div data-options='gexamples.education' data-src="http://giottojs.org/data/edat_lfse_07_1_Data.csv" style='width: 100%' giotto-chart&gt;&lt;/div&gt;
+</code></pre>
+<h3>Javascript code</h3>
+<pre><code>var eurozone = ['Austria', 'Belgium', 'Cyprus', 'Estonia', 'Finland',
+                'France', 'Germany', 'Greece', 'Ireland', 'Italy', 'Latvia',
+                'Lithuania', 'Luxembourg', 'Malta', 'Netherlands',
+                'Portugal', 'Slovakia', 'Slovenia', 'Spain'],
+    eucolor = '#225ea8',
+    noneucolor = '#993404',
+    barcolor = function (d) {
+        return eurozone.indexOf(d.x) === -1 ? noneucolor : eucolor;
+    };
+
+gexamples.education = {
+    height: '60%',
+    min_height: 250,
+    margin: {left: 40, right: 20, top: 20, bottom: 120},
+
+    bar: {
+        show: true,
+        formatY: '.1%',
+        fill: barcolor,
+        color: function (d) {return d3.rgb(barcolor(d)).darker();}
+    },
+
+    // Display x-axis labels at 65 degrees angle
+    xaxis: {
+        textAnchor: 'end',
+        textRotate: -65,
+        dx: '-0.8em',
+        dy: '-0.2em'
+    },
+
+    yaxis: {
+        min: 0,
+        tickFormat: '%'
+    },
+
+    tooltip: {
+        show: true
+    },
+
+    legend: {
+        show: true,
+        position: 'bottom',
+        margin: 0
+    },
+
+    serie: {
+        x: function (d) {return d.country;},
+        y: function (d) {return d[2013];}
+    },
+
+    // Data pre-processor
+    processData: function (data) {
+        var jd = {}, all = [], name, c, value;
+        data.forEach(function (d) {
+            name = d.GEO[0].toUpperCase() + d.GEO.slice(1).toLowerCase();
+            c = jd[name];
+            if (!c) jd[name] = c = {country: name};
+            value = +d.Value;
+            if (isNaN(value))
+                value = 0;
+            c[+d.TIME] = 0.01*value;
+        });
+        d3.giotto._.forEach(jd, function (value) {
+            all.push(value);
+        });
+        return [{
+            label: 'tertiary education',
+            legend: [{
+                label: 'Eurozone',
+                fill: eucolor,
+                color: d3.rgb(eucolor).darker()
+            },
+            {
+                label: 'Non Eurozone',
+                fill: noneucolor,
+                color: d3.rgb(noneucolor).darker()
+            }],
+            data: all.sort(function (a, b) {return d3.descending(a[2013], b[2013]);})
+        }];
+    },
+
+    onInit: function (chart, opts) {
+        opts.loader = d3.dsv(';', 'text/csv');
+    },
+
+    // Callback for angular directive
+    angular: function (chart, opts) {
+
+        opts.scope.$on('formFieldChange', function (e, form, field) {
+            if (field === 'type') {
+                opts.type = form[field];
+                chart.resume();
+            }
+        });
+    }
+};
+</code></pre>
+</div>
+</div>
+</div>
+</div>
+<script>
+    var eurozone = ['Austria', 'Belgium', 'Cyprus', 'Estonia', 'Finland',
+                    'France', 'Germany', 'Greece', 'Ireland', 'Italy', 'Latvia',
+                    'Lithuania', 'Luxembourg', 'Malta', 'Netherlands',
+                    'Portugal', 'Slovakia', 'Slovenia', 'Spain'],
+        eucolor = '#225ea8',
+        noneucolor = '#993404',
+        barcolor = function (d) {
+            return eurozone.indexOf(d.x) === -1 ? noneucolor : eucolor;
+        };
+
+    gexamples.education = {
+        height: '60%',
+        min_height: 250,
+        margin: {left: 40, right: 20, top: 20, bottom: 120},
+
+        bar: {
+            show: true,
+            formatY: '.1%',
+            fill: barcolor,
+            color: function (d) {return d3.rgb(barcolor(d)).darker();}
+        },
+
+        // Display x-axis labels at 65 degrees angle
+        xaxis: {
+            textAnchor: 'end',
+            textRotate: -65,
+            dx: '-0.8em',
+            dy: '-0.2em'
+        },
+
+        yaxis: {
+            min: 0,
+            tickFormat: '%'
+        },
+
+        tooltip: {
+            show: true
+        },
+
+        legend: {
+            show: true,
+            position: 'bottom',
+            margin: 0
+        },
+
+        serie: {
+            x: function (d) {return d.country;},
+            y: function (d) {return d[2013];}
+        },
+
+        // Data pre-processor
+        processData: function (data) {
+            var jd = {}, all = [], name, c, value;
+            data.forEach(function (d) {
+                name = d.GEO[0].toUpperCase() + d.GEO.slice(1).toLowerCase();
+                c = jd[name];
+                if (!c) jd[name] = c = {country: name};
+                value = +d.Value;
+                if (isNaN(value))
+                    value = 0;
+                c[+d.TIME] = 0.01*value;
+            });
+            d3.giotto._.forEach(jd, function (value) {
+                all.push(value);
+            });
+            return [{
+                label: 'tertiary education',
+                legend: [{
+                    label: 'Eurozone',
+                    fill: eucolor,
+                    color: d3.rgb(eucolor).darker()
+                },
+                {
+                    label: 'Non Eurozone',
+                    fill: noneucolor,
+                    color: d3.rgb(noneucolor).darker()
+                }],
+                data: all.sort(function (a, b) {return d3.descending(a[2013], b[2013]);})
+            }];
+        },
+
+        onInit: function (chart, opts) {
+            opts.loader = d3.dsv(';', 'text/csv');
+        },
+
+        // Callback for angular directive
+        angular: function (chart, opts) {
+
+            opts.scope.$on('formFieldChange', function (e, form, field) {
+                if (field === 'type') {
+                    opts.type = form[field];
+                    chart.resume();
+                }
+            });
+        }
+    };
+</script>
+<div id="footer">
+<div class="container">
+<div class="row">
+<div class="col-sm-12 small">
+<p>Library released under the <a href="http://opensource.org/licenses/BSD-3-Clause">BSD License</a>.</p>
+<p>Copyright 2015 <a href="http://lucasbardella.com">Luca Sbardella</a> and <a href="http://quantmind.com">Quantmind</a></p>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>
