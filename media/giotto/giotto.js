@@ -4092,14 +4092,15 @@
     };
 
     function svg_font (selection, opts) {
-        return selection.style({
-            'fill': opts.color,
-            'font-size': opts.size ,
-            'font-weight': opts.weight,
-            'font-style': opts.style,
-            'font-family': opts.family,
-            'font-variant': opts.variant
-        });
+        return selection
+            .attr('fill', opts.color)
+            .style({
+                'font-size': opts.size ,
+                'font-weight': opts.weight,
+                'font-style': opts.style,
+                'font-family': opts.family,
+                'font-variant': opts.variant
+            });
     }
 
     //
@@ -6680,7 +6681,7 @@
 
                 t = target.selectAll('text').data([true]);
                 t.enter().append('text');
-                svg_font(t.attr('x', x + dx).attr('y', y).html(d.label), opts.legend.font);
+                svg_font(t.attr('x', x + dx).attr('y', y).text(d.label), opts.legend.font);
 
                 if (inline) x += this.getBBox().width + dx;
             });
