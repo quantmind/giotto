@@ -150,49 +150,6 @@
             .data(data);
         };
 
-        // Draw pie chart
-        group.pie = function (data, opts) {
-            opts || (opts = {});
-            chartFormats(group, opts);
-            copyMissing(p.pie, opts);
-
-            return group.add(drawing(group, function () {
-
-                var width = group.innerWidth(),
-                    height = group.innerHeight(),
-                    opts = this.options(),
-                    outerRadius = 0.5*Math.min(width, height),
-                    innerRadius = opts.innerRadius*outerRadius,
-                    cornerRadius = group.scale(group.dim(opts.cornerRadius)),
-                    value = this.y(),
-                    data = this.data(),
-                    pie = d3.layout.pie().value(function (d) {return value(d.data);})
-                                         .padAngle(d3_radians*opts.padAngle)
-                                         .startAngle(d3_radians*opts.startAngle)(data),
-                    d, dd;
-
-                this.arc = d3v.arc()
-                                .cornerRadius(cornerRadius)
-                                .innerRadius(function (d) {return d.innerRadius;})
-                                .outerRadius(function (d) {return d.outerRadius;});
-
-                // recalculate pie angles
-                for (var i=0; i<pie.length; ++i) {
-                    d = pie[i];
-                    dd = d.data;
-                    dd.set('innerRadius', innerRadius);
-                    dd.set('outerRadius', outerRadius);
-                    delete d.data;
-                    data[i] = extend(dd, d);
-                }
-
-                return _.pie(this, width, height);
-            }))
-            .options(opts)
-            .dataConstructor(pie_costructor)
-            .data(data);
-        };
-
         group.scale = function (r) {
             if (!arguments.length) return scale;
             return scale(r);
@@ -220,9 +177,7 @@
                 return v;
         };
 
-        var
-
-        point_costructor = function (rawdata) {
+        var point_costructor = function (rawdata) {
             // Default point size
             var group = this.group(),
                 size = group.scale(group.dim(this.options().size)),
@@ -230,15 +185,6 @@
 
             for (var i=0; i<rawdata.length; i++)
                 data.push(_.point(this, rawdata[i], size));
-            return data;
-        },
-
-        pie_costructor = function (rawdata) {
-            var data = [];
-
-            for (var i=0; i<rawdata.length; i++)
-                data.push(_.pieslice(this, rawdata[i]));
-
             return data;
         };
 

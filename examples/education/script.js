@@ -48,6 +48,7 @@
             y: function (d) {return d[2013];}
         },
 
+        // Data pre-processor
         processData: function (data) {
             var jd = {}, all = [], name, c, value;
             data.forEach(function (d) {

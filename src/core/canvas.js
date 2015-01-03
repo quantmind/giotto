@@ -63,6 +63,13 @@
         return group.factor(_.scale(group));
     };
 
+
+    function canvasMixin(d) {
+        d.inRange = function () {};
+        d.bbox = function () {};
+        return d;
+    }
+
     function canvasBBox (d, nw, ne, se, sw) {
         var target = d.paper().element().node(),
             bbox = target.getBoundingClientRect(),

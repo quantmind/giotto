@@ -142,13 +142,15 @@
 
         tip.html(function () {
             var html = '',
-                data, draw;
+                data, draw, template;
+
             for (var i=0; i<tip.active.length; ++i) {
                 data = tip.active[i];
                 if (data.datum) data = data.datum();
                 draw = data.draw();
+                template = tooltip_template(draw);
 
-                html += opts.template({
+                html += template({
                     c: data.color,
                     l: draw.label() || 'serie',
                     x: draw.formatX(draw.x()(data.data)),
@@ -170,6 +172,11 @@
         };
 
         return tip;
+
+        function tooltip_template (draw) {
+            var o = draw.options();
+            return o.tooltip ? o.tooltip.template || opts.template : opts.template;
+        }
     }
 
     //

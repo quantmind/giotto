@@ -23,3 +23,10 @@ The default accessor assumes that each input element is a two-element array of n
     function y(d) {
         return d[1];
     }
+
+### # drawing.options([options])
+
+If options is specified, set the options for the drawing object and return the
+``drawing``. If is not specified, returns the current options which by default
+is an empty ``Object``. Drawing options are the way GiottoJS override default
+behaviour in a paper.

@@ -306,8 +306,10 @@
                 }
 
                 function scale (axis) {
-                    var p = allranges[serie.axisgroup][axis.orient()];
-                    axis.scale(p.scale);
+                    if (serie.axisgroup) {
+                        var p = allranges[serie.axisgroup][axis.orient()];
+                        axis.scale(p.scale);
+                    }
                 }
             };
 

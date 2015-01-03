@@ -59,12 +59,13 @@
     };
 
     function svg_font (selection, opts) {
-        return selection.style({
-            'fill': opts.color,
-            'font-size': opts.size ,
-            'font-weight': opts.weight,
-            'font-style': opts.style,
-            'font-family': opts.family,
-            'font-variant': opts.variant
-        });
+        return selection
+            .attr('fill', opts.color)
+            .style({
+                'font-size': opts.size ,
+                'font-weight': opts.weight,
+                'font-style': opts.style,
+                'font-family': opts.family,
+                'font-variant': opts.variant
+            });
     }

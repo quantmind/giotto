@@ -8,7 +8,7 @@ image: $site_url/examples/education.png
   <div class="row">
     <div class="col-sm-10">
       <div data-options='gexamples.education' data-src="$site_url/data/edat_lfse_07_1_Data.csv" style='width: 100%' giotto-chart></div>
-      <p class="text-right small">Source: <a href="http://ec.europa.eu/eurostat" target="self">Eurostat</a></p>
+      <p class="text-right small">2013 Data for both female and male population, source: <a href="http://ec.europa.eu/eurostat" target="self">Eurostat</a></p>
     </div>
     <div class="col-sm-2 small">
       $html_type_form
@@ -18,7 +18,8 @@ image: $site_url/examples/education.png
 </div>
 
 Barcharts support both canvas and svg on standard and ordinal scales.
-This example shows how to add additional labels to the chart legend.
+This example shows how to add additional labels to the chart legend and how to
+display them at an angle.
 
 
 Html:

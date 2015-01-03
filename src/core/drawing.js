@@ -362,16 +362,6 @@
         return d;
     }
 
-    function pieSlice (draw, data) {
-        // Default values
-        var d = {},
-            dd = isArray(data) ? d : data;
-        dd.fill = dd.fill || draw.paper().pickColor();
-        dd.color = dd.color || d3.rgb(dd.fill).darker().toString();
-
-        return paperData(draw, data, pieOptions, d);
-    }
-
     var SymbolSize = {
             circle: 0.7,
             cross: 0.7,

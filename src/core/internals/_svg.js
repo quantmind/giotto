@@ -20,14 +20,6 @@
             return p;
         };
 
-        _.pieslice = function (draw, data) {
-            var p = pieSlice(draw, data);
-            p.render = function (element) {
-                _draw(element).attr('d', draw.arc);
-            };
-            return p;
-        };
-
         _.points = function () {
 
             var group = this.group(),
@@ -165,29 +157,6 @@
 
                 return p;
             });
-        };
-
-        // Pie chart drawing on an svg group
-        _.pie = function (draw, width, height) {
-
-            var container = draw.group().element(),
-                pp = container.select('#' + draw.uid());
-
-            if (!pp.node())
-                pp = container.append("g")
-                            .attr('id', draw.uid())
-                            .classed('pie', true);
-
-            pp.attr("transform", "translate(" + width/2 + "," + height/2 + ")")
-                .selectAll(".slice").remove();
-
-            return _events(_draw(pp
-                            .selectAll(".slice")
-                            .data(draw.data())
-                            .enter()
-                            .append("path")
-                            .attr('class', 'slice')
-                            .attr('d', draw.arc)));
         };
 
         return _;

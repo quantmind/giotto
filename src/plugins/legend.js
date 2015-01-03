@@ -176,7 +176,7 @@
 
                 t = target.selectAll('text').data([true]);
                 t.enter().append('text');
-                svg_font(t.attr('x', x + dx).attr('y', y).html(d.label), opts.legend.font);
+                svg_font(t.attr('x', x + dx).attr('y', y).text(d.label), opts.legend.font);
 
                 if (inline) x += this.getBBox().width + dx;
             });

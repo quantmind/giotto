@@ -16,7 +16,6 @@
 
         _.point = canvasPoint;
         _.path = canvasPath;
-        _.pieslice = canvasSlice;
 
         _.points = function () {
             this.each(function () {
@@ -24,20 +23,7 @@
             });
         };
 
-        // Pie chart drawing on an canvas group
-        _.pie = function (draw) {
-            draw.each(function () {
-                this.reset().render();
-            });
-        };
-
         return _;
-    }
-
-    function canvasMixin(d) {
-        d.inRange = function () {};
-        d.bbox = function () {};
-        return d;
     }
 
     function canvasPath (group) {
@@ -160,41 +146,4 @@
             context.translate(scalex(d.data), scaley(d.data));
             symbol().context(context)(d);
         }
-    }
-
-    function canvasSlice (draw, data) {
-        var d = canvasMixin(pieSlice(draw, data)),
-            group = draw.group(),
-            factor = draw.factor(),
-            ctx = group.context();
-
-        d.render = function (context) {
-            context = context || ctx;
-            context.save();
-            context.translate(0.5*group.innerWidth(), 0.5*group.innerHeight());
-            context.fillStyle = rgba(d.fill, d.fillOpacity);
-            context.strokeStyle = rgba(d.color, d.colorOpacity);
-            context.lineWidth = factor*d.lineWidth;
-            draw.arc.context(context)(d);
-            context.fill();
-            context.stroke();
-            context.restore();
-            return d;
-        };
-
-        d.context = function (context) {
-            ctx = context;
-            return d;
-        };
-
-        d.inRange = function (ex, ey) {
-            ctx.save();
-            ctx.translate(0.5*group.innerWidth(), 0.5*group.innerHeight());
-            draw.arc.context(ctx)(d);
-            var res = ctx.isPointInPath(ex, ey);
-            ctx.restore();
-            return res;
-        };
-
-        return d;
     }
