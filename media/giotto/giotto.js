@@ -1,6 +1,6 @@
 //      Giotto - v0.1.0
 
-//      Compiled 2015-01-02.
+//      Compiled 2015-01-03.
 //      Copyright (c) 2015 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -3527,49 +3527,6 @@
             .data(data);
         };
 
-        // Draw pie chart
-        group.pie = function (data, opts) {
-            opts || (opts = {});
-            chartFormats(group, opts);
-            copyMissing(p.pie, opts);
-
-            return group.add(drawing(group, function () {
-
-                var width = group.innerWidth(),
-                    height = group.innerHeight(),
-                    opts = this.options(),
-                    outerRadius = 0.5*Math.min(width, height),
-                    innerRadius = opts.innerRadius*outerRadius,
-                    cornerRadius = group.scale(group.dim(opts.cornerRadius)),
-                    value = this.y(),
-                    data = this.data(),
-                    pie = d3.layout.pie().value(function (d) {return value(d.data);})
-                                         .padAngle(d3_radians*opts.padAngle)
-                                         .startAngle(d3_radians*opts.startAngle)(data),
-                    d, dd;
-
-                this.arc = d3v.arc()
-                                .cornerRadius(cornerRadius)
-                                .innerRadius(function (d) {return d.innerRadius;})
-                                .outerRadius(function (d) {return d.outerRadius;});
-
-                // recalculate pie angles
-                for (var i=0; i<pie.length; ++i) {
-                    d = pie[i];
-                    dd = d.data;
-                    dd.set('innerRadius', innerRadius);
-                    dd.set('outerRadius', outerRadius);
-                    delete d.data;
-                    data[i] = extend(dd, d);
-                }
-
-                return _.pie(this, width, height);
-            }))
-            .options(opts)
-            .dataConstructor(pie_costructor)
-            .data(data);
-        };
-
         group.scale = function (r) {
             if (!arguments.length) return scale;
             return scale(r);
@@ -3597,9 +3554,7 @@
                 return v;
         };
 
-        var
-
-        point_costructor = function (rawdata) {
+        var point_costructor = function (rawdata) {
             // Default point size
             var group = this.group(),
                 size = group.scale(group.dim(this.options().size)),
@@ -3607,15 +3562,6 @@
 
             for (var i=0; i<rawdata.length; i++)
                 data.push(_.point(this, rawdata[i], size));
-            return data;
-        },
-
-        pie_costructor = function (rawdata) {
-            var data = [];
-
-            for (var i=0; i<rawdata.length; i++)
-                data.push(_.pieslice(this, rawdata[i]));
-
             return data;
         };
 
@@ -3986,16 +3932,6 @@
         return d;
     }
 
-    function pieSlice (draw, data) {
-        // Default values
-        var d = {},
-            dd = isArray(data) ? d : data;
-        dd.fill = dd.fill || draw.paper().pickColor();
-        dd.color = dd.color || d3.rgb(dd.fill).darker().toString();
-
-        return paperData(draw, data, pieOptions, d);
-    }
-
     var SymbolSize = {
             circle: 0.7,
             cross: 0.7,
@@ -4167,6 +4103,13 @@
 
         return group.factor(_.scale(group));
     };
+
+
+    function canvasMixin(d) {
+        d.inRange = function () {};
+        d.bbox = function () {};
+        return d;
+    }
 
     function canvasBBox (d, nw, ne, se, sw) {
         var target = d.paper().element().node(),
@@ -4702,8 +4645,10 @@
                 }
 
                 function scale (axis) {
-                    var p = allranges[serie.axisgroup][axis.orient()];
-                    axis.scale(p.scale);
+                    if (serie.axisgroup) {
+                        var p = allranges[serie.axisgroup][axis.orient()];
+                        axis.scale(p.scale);
+                    }
                 }
             };
 
@@ -6938,6 +6883,168 @@
             });
     });
 
+
+    // Add pie charts to giotto groups
+
+    g.paper.plugin('pie', {
+        lineWidth: 1,
+        // pad angle in degrees
+        padAngle: 0,
+        cornerRadius: 0,
+        fillOpacity: 0.7,
+        colorOpacity: 1,
+        innerRadius: 0,
+        startAngle: 0,
+        formatX: d3_identity,
+        active: {
+            fill: 'darker',
+            color: 'brighter',
+            //innerRadius: 100%,
+            //outerRadius: 105%,
+            fillOpacity: 1
+        },
+        transition: extend({}, g.defaults.transition),
+        tooltip: {
+            template: function (d) {
+                return "<p><strong style='color:"+d.c+"'>" + d.x + "</strong> " + d.y + "</p>";
+            }
+        }
+    },
+
+    function (group, p) {
+        var type = group.type(),
+            pieslice = g[type].pieslice,
+            arc = d3[type].arc()
+                            .innerRadius(function (d) {return d.innerRadius;})
+                            .outerRadius(function (d) {return d.outerRadius;});
+
+        // add a pie chart drawing to the group
+        group.pie = function (data, opts) {
+            opts || (opts = {});
+            chartFormats(group, opts);
+            copyMissing(p.pie, opts);
+
+            var draw = group.add(function () {
+
+                var width = group.innerWidth(),
+                    height = group.innerHeight(),
+                    opts = this.options(),
+                    outerRadius = 0.5*Math.min(width, height),
+                    innerRadius = opts.innerRadius*outerRadius,
+                    cornerRadius = group.scale(group.dim(opts.cornerRadius)),
+                    value = this.y(),
+                    data = this.data(),
+                    pie = d3.layout.pie().value(function (d) {return value(d.data);})
+                                         .padAngle(d3_radians*opts.padAngle)
+                                         .startAngle(d3_radians*opts.startAngle)(data),
+                    d, dd;
+
+                this.arc = arc.cornerRadius(cornerRadius);
+
+                // recalculate pie angles
+                for (var i=0; i<pie.length; ++i) {
+                    d = pie[i];
+                    dd = d.data;
+                    dd.set('innerRadius', innerRadius);
+                    dd.set('outerRadius', outerRadius);
+                    delete d.data;
+                    data[i] = extend(dd, d);
+                }
+
+                return g[type].pie(this, width, height);
+            });
+
+            return draw.options(opts)
+                        .data(data.map(function (d) {return pieslice(draw, d);}));
+        };
+    });
+
+    function pieSlice (draw, data) {
+        // Default values
+        var d = {},
+            dd = isArray(data) ? d : data;
+        dd.fill = dd.fill || draw.paper().pickColor();
+        dd.color = dd.color || d3.rgb(dd.fill).darker().toString();
+        return paperData(draw, data, pieOptions, d);
+    }
+
+    g.svg.pie = function (draw, width, height) {
+
+        var group = draw.group(),
+            container = group.element(),
+            pp = container.select('#' + draw.uid());
+
+        if (!pp.size())
+            pp = container.append("g")
+                        .attr('id', draw.uid())
+                        .classed('pie', true);
+
+        pp.attr("transform", "translate(" + width/2 + "," + height/2 + ")")
+            .selectAll(".slice").remove();
+
+        return group.events(
+                group.draw(pp
+                            .selectAll(".slice")
+                            .data(draw.data())
+                            .enter()
+                            .append("path")
+                            .attr('class', 'slice')
+                            .attr('d', draw.arc)));
+    };
+
+    g.svg.pieslice = function (draw, data) {
+        var group = draw.group(),
+            p = pieSlice(draw, data);
+        p.render = function (element) {
+            group.draw(element).attr('d', draw.arc);
+        };
+        return p;
+    };
+
+    g.canvas.pie = function (draw) {
+        draw.each(function () {
+            this.reset().render();
+        });
+    };
+
+    g.canvas.pieslice = function (draw, data) {
+        var d = canvasMixin(pieSlice(draw, data)),
+            group = draw.group(),
+            factor = draw.factor(),
+            ctx = group.context();
+
+        d.render = function (context) {
+            context = context || ctx;
+            context.save();
+            context.translate(0.5*group.innerWidth(), 0.5*group.innerHeight());
+            context.fillStyle = rgba(d.fill, d.fillOpacity);
+            context.strokeStyle = rgba(d.color, d.colorOpacity);
+            context.lineWidth = factor*d.lineWidth;
+            draw.arc.context(context)(d);
+            context.fill();
+            context.stroke();
+            context.restore();
+            return d;
+        };
+
+        d.context = function (context) {
+            ctx = context;
+            return d;
+        };
+
+        d.inRange = function (ex, ey) {
+            ctx.save();
+            ctx.translate(0.5*group.innerWidth(), 0.5*group.innerHeight());
+            draw.arc.context(ctx)(d);
+            var res = ctx.isPointInPath(ex, ey);
+            ctx.restore();
+            return res;
+        };
+
+        return d;
+    };
+
+
     var tooltip;
     //
     //  Tooltip functionality for SVG paper
@@ -7082,13 +7189,15 @@
 
         tip.html(function () {
             var html = '',
-                data, draw;
+                data, draw, template;
+
             for (var i=0; i<tip.active.length; ++i) {
                 data = tip.active[i];
                 if (data.datum) data = data.datum();
                 draw = data.draw();
+                template = tooltip_template(draw);
 
-                html += opts.template({
+                html += template({
                     c: data.color,
                     l: draw.label() || 'serie',
                     x: draw.formatX(draw.x()(data.data)),
@@ -7110,6 +7219,11 @@
         };
 
         return tip;
+
+        function tooltip_template (draw) {
+            var o = draw.options();
+            return o.tooltip ? o.tooltip.template || opts.template : opts.template;
+        }
     }
 
     //
@@ -7639,7 +7753,6 @@
 
         _.point = canvasPoint;
         _.path = canvasPath;
-        _.pieslice = canvasSlice;
 
         _.points = function () {
             this.each(function () {
@@ -7647,20 +7760,7 @@
             });
         };
 
-        // Pie chart drawing on an canvas group
-        _.pie = function (draw) {
-            draw.each(function () {
-                this.reset().render();
-            });
-        };
-
         return _;
-    }
-
-    function canvasMixin(d) {
-        d.inRange = function () {};
-        d.bbox = function () {};
-        return d;
     }
 
     function canvasPath (group) {
@@ -7785,43 +7885,6 @@
         }
     }
 
-    function canvasSlice (draw, data) {
-        var d = canvasMixin(pieSlice(draw, data)),
-            group = draw.group(),
-            factor = draw.factor(),
-            ctx = group.context();
-
-        d.render = function (context) {
-            context = context || ctx;
-            context.save();
-            context.translate(0.5*group.innerWidth(), 0.5*group.innerHeight());
-            context.fillStyle = rgba(d.fill, d.fillOpacity);
-            context.strokeStyle = rgba(d.color, d.colorOpacity);
-            context.lineWidth = factor*d.lineWidth;
-            draw.arc.context(context)(d);
-            context.fill();
-            context.stroke();
-            context.restore();
-            return d;
-        };
-
-        d.context = function (context) {
-            ctx = context;
-            return d;
-        };
-
-        d.inRange = function (ex, ey) {
-            ctx.save();
-            ctx.translate(0.5*group.innerWidth(), 0.5*group.innerHeight());
-            draw.arc.context(ctx)(d);
-            var res = ctx.isPointInPath(ex, ey);
-            ctx.restore();
-            return res;
-        };
-
-        return d;
-    }
-
     var fillSpecials = [true, 'none', 'color'];
 
     function chartColor(paper, opts) {
@@ -7930,14 +7993,6 @@
             var p = point(draw, data, size);
             p.render = function (element) {
                 _draw(element).attr('d', draw.symbol);
-            };
-            return p;
-        };
-
-        _.pieslice = function (draw, data) {
-            var p = pieSlice(draw, data);
-            p.render = function (element) {
-                _draw(element).attr('d', draw.arc);
             };
             return p;
         };
@@ -8079,29 +8134,6 @@
 
                 return p;
             });
-        };
-
-        // Pie chart drawing on an svg group
-        _.pie = function (draw, width, height) {
-
-            var container = draw.group().element(),
-                pp = container.select('#' + draw.uid());
-
-            if (!pp.node())
-                pp = container.append("g")
-                            .attr('id', draw.uid())
-                            .classed('pie', true);
-
-            pp.attr("transform", "translate(" + width/2 + "," + height/2 + ")")
-                .selectAll(".slice").remove();
-
-            return _events(_draw(pp
-                            .selectAll(".slice")
-                            .data(draw.data())
-                            .enter()
-                            .append("path")
-                            .attr('class', 'slice')
-                            .attr('d', draw.arc)));
         };
 
         return _;
