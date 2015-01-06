@@ -16,8 +16,15 @@
                 group = p.group(),
                 grid = group.showGrid();
 
-            expect(p.type()).toBe('svg');
-            expect(_.isFunction(p.xaxis())).toBe(true);
-            expect(_.isFunction(p.xaxis())).toBe(true);
+            expect(grid.type()).toBe('svg');
+            expect(_.isFunction(grid.xaxis())).toBe(true);
+            expect(_.isFunction(grid.xaxis())).toBe(true);
+        });
+
+        it("Check zoom defaults", function() {
+            var defaults = g.defaults.paper.grid;
+            expect(defaults.zoomx).toBe(false);
+            expect(defaults.zoomx).toBe(false);
+            expect(defaults.scaleExtent.length).toBe(2);
         });
     });

@@ -50,8 +50,7 @@
         it('Points', function () {
             var norm = d3.random.normal(0.5, 0.1),
                 c = chart({
-                        point: {show: true},
-                        line: {show: false}
+                        point: {show: true}
                     }),
                 count = 0;
 
@@ -63,13 +62,9 @@
                 count++;
                 expect(serie.point).not.toBe(undefined);
                 expect(serie.point.symbol).toBe('circle');
-                expect(serie.point.chart).not.toBe(undefined);
 
-                expect(serie.line).not.toBe(undefined);
-                expect(serie.line.chart).toBe(undefined);
-
-                expect(serie.bar).not.toBe(undefined);
-                expect(serie.bar.chart).toBe(undefined);
+                expect(serie.line).toBe(undefined);
+                expect(serie.bar).toBe(undefined);
             });
 
             expect(count).toBe(1);
@@ -78,8 +73,7 @@
         it('bars', function () {
             var norm = d3.random.normal(0.5, 0.1),
                 c = chart({
-                        bar: {show: true},
-                        line: {show: false}
+                        bar: {show: true}
                     }),
                 count = 0;
 
@@ -89,15 +83,11 @@
 
             c.each(function (serie) {
                 count++;
-                expect(serie.point).not.toBe(undefined);
-                expect(serie.point.chart).toBe(undefined);
-
-                expect(serie.line).not.toBe(undefined);
-                expect(serie.line.chart).toBe(undefined);
+                expect(serie.point).toBe(undefined);
+                expect(serie.line).toBe(undefined);
 
                 expect(serie.bar).not.toBe(undefined);
                 expect(serie.bar.radius).toBe(4);
-                expect(serie.bar.chart).not.toBe(undefined);
             });
 
             expect(count).toBe(1);
@@ -107,4 +97,8 @@
 
     describe("SVG charts", function() {
         testCharts('svg');
+    });
+
+    describe("Canvas charts", function() {
+        testCharts('canvas');
     });

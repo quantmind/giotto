@@ -101,7 +101,8 @@
     }
 
     describe("Paper", function () {
-        var g = d3.giotto;
+        var g = d3.giotto,
+            _ = g._;
 
         it("Check basic properties", function() {
             var paper = g.paper();
@@ -118,8 +119,8 @@
         it("Check axis linear scale", function () {
             var paper = g.paper({width: 600, height: 500});
 
-            expect(p.size()[0]).toBe(600);
-            expect(p.size()[1]).toBe(500);
+            expect(paper.size()[0]).toBe(600);
+            expect(paper.size()[1]).toBe(500);
         });
     });
 
