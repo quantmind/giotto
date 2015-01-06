@@ -40,7 +40,11 @@
         p.size = [width, height];
         p.giotto = 'giotto-group';
 
-        p.__paper__ = d3.select(element).style('position', 'relative').node();
+        element = d3.select(element);
+        var position = element.style('position');
+        if (!position || position === 'static')
+            element.style('position', 'relative');
+        p.__paper__ = element.node();
 
         return p;
     }

@@ -9,10 +9,9 @@
 
         menu.bind = function (element, callback) {
             init();
-            element
-                .on('keyup.gmenu', handleKeyUpEvent)
-                .on('click.gmenu', handleClickEvent)
-                .on('contextmenu.gmenu', handleContextMenu(callback));
+            element.on('keyup.gmenu', handleKeyUpEvent);
+            element.on('click.gmenu', handleClickEvent);
+            element.on('contextmenu.gmenu', handleContextMenu(callback));
         };
 
         menu.disabled  = function (x) {

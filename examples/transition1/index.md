@@ -1,7 +1,6 @@
 title: Using transitions with groups
 description: A simple bar chart on canvas or svg
 author: Luca Sbardella
-priority: 0
 
 <div style="width: 100px" class="center-block">$html_type_form</div>
 <div data-options='gexamples.transition1' class="center-block" giotto-viz></div>

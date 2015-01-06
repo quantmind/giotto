@@ -4,11 +4,21 @@
     g.group.svg = function (paper, p) {
         var container = paper.svg(true),
             elem = p.before ? container.insert('g', p.before) : container.append('g'),
-            _ = svg_implementation(paper, p);
+            _ = {};
 
         delete p.before;
         // translate the group element by the required margins
         elem.attr("transform", "translate(" + p.margin.left + "," + p.margin.top + ")");
+
+        _.resize = function (group) {
+            if (p.resize) {
+                paper.svg()
+                    .attr('width', p.size[0])
+                    .attr('height', p.size[1]);
+                group.resetAxis().render();
+            }
+        };
+
         var group = g.group(paper, elem.node(), p, _);
 
         group.clear = function () {
@@ -48,10 +58,11 @@
                         selection.on(event + '.' + uid, null);
                     else {
                         target = callback ? callback.call(this) : this;
-                        paper[d3.event.type].call(target);
+                        paper.event(d3.event.type).call(target);
                     }
                 });
             });
+
             return selection;
         };
 

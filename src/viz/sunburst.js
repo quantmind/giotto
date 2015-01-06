@@ -41,8 +41,8 @@
             if (!current) return;
 
             if (isArray(node)) {
-                node = current;
                 var path = node;
+                node = current;
                 for (var n=0; n<path.length; ++n) {
                     var name = path[n];
                     if (node.children) {
@@ -60,6 +60,11 @@
             return select(node, transition);
         };
 
+        // Return the current selected node
+        self.current = function () {
+            return current;
+        };
+
         // Set the scale or returns it
         self.scale = function (scale) {
             if (!arguments.length) return opts.scale;
@@ -70,13 +75,11 @@
         // draw
         self.draw = function (data) {
             data = data || opts.data;
+            opts.data = null;
 
             // load data if in options
-            if (data === undefined && opts.src) {
-                opts.data = null;
-                return self.loadData(self.draw);
-            }
-            opts.data = null;
+            if (data === undefined && opts.src)
+                return self.loadData(self.resume);
 
             if (!paper || opts.type !== group.type()) {
                 paper = self.paper(true);
@@ -89,7 +92,7 @@
                     .value(function(d) { return d.size; })
                     .sort(function (d) { return d.order === undefined ? d.size : d.order;})
                     .nodes(data);
-                current = opts.initNode || data[0];
+                current = (isFunction(opts.initNode) ? opts.initNode() : opts.initNode) || data[0];
 
                 group.add(function () {
                     build(data, current);
@@ -105,7 +108,9 @@
 
             var width = 0.5*group.innerWidth(),
                 height = 0.5*group.innerHeight(),
-                sunburst = group.element().attr("transform", "translate(" + width + "," + height + ")");
+                xs = group.marginLeft() + width,
+                ys = group.marginTop() + height,
+                sunburst = group.element().attr("transform", "translate(" + xs + "," + ys + ")");
 
             current = data[0];
             radius = Math.min(width, height);
@@ -177,7 +182,7 @@
         }
 
         function select (node, transition) {
-            if (node === current) return;
+            if (!node || node === current) return;
             if (transition === undefined) transition = +opts.transition;
 
             if (text) text.transition().attr("opacity", 0);

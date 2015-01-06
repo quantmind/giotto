@@ -17,47 +17,6 @@
         colorIndex: 0,
         css: null,
         activeEvents: ["mousemove", "touchstart", "touchmove", "mouseout"],
-        line: {
-            interpolate: 'cardinal',
-            colorOpacity: 1,
-            fillOpacity: 0.4,
-            lineWidth: 2,
-            transition: extend({}, g.defaults.transition),
-            fill: 'color'
-        },
-        point: {
-            symbol: 'circle',
-            size: '8px',
-            fill: true,
-            fillOpacity: 1,
-            colorOpacity: 1,
-            lineWidth: 2,
-            active: {
-                fill: 'darker',
-                color: 'brighter',
-                // Multiplier for size, set to 100% for no change
-                size: '150%'
-            },
-            transition: extend({}, g.defaults.transition)
-        },
-        pie: {
-            lineWidth: 1,
-            // pad angle in degrees
-            padAngle: 0,
-            cornerRadius: 0,
-            fillOpacity: 0.7,
-            colorOpacity: 1,
-            innerRadius: 0,
-            startAngle: 0,
-            active: {
-                fill: 'darker',
-                color: 'brighter',
-                //innerRadius: 100%,
-                //outerRadius: 105%,
-                fillOpacity: 1
-            },
-            transition: extend({}, g.defaults.transition)
-        },
         font: {
             color: '#444',
             size: '11px',

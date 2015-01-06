@@ -3,9 +3,25 @@
     // Create a new paper for drawing stuff
     g.paper = function (element, p) {
 
-        var paper = d3.dispatch.apply({}, extendArray(['change'], p.activeEvents)),
+        // Setup
+
+        if (isObject(element)) {
+            p = element;
+            element = null;
+        }
+        if (!element)
+            element = document.createElement('div');
+
+        p = _newPaperAttr(element, p);
+
+        var events = d3.dispatch.apply(null, extendArray(['change'], p.activeEvents)),
+            paper = d3.rebind({}, events, 'on'),
             uid = ++_idCounter,
             resizing = false;
+
+        paper.event = function (name) {
+            return events[name];
+        };
 
         // Create a new group for this paper
         paper.group = function (opts) {
@@ -105,7 +121,7 @@
                 paper.each(function () {
                     this.resize();
                 });
-                paper.change();
+                events.change.call(paper);
             }
             resizing = false;
         };
@@ -205,7 +221,11 @@
             if (!node && paper.canvas().node()) {
                 canvas = paper.element().append('canvas')
                                 .attr('class', 'canvas-overlay')
-                                .style({'position': 'absolute', "top": "0", "left": "0"});
+                                .style({
+                                    'position': 'absolute',
+                                    'top': '0',
+                                    'left': '0'
+                                });
                 node = canvas.node();
                 d3.canvas.retinaScale(node.getContext('2d'), p.size[0], p.size[1]);
             } else if (node)
@@ -263,17 +283,6 @@
         paper.image = function () {
             return p.type === 'svg' ? paper.imageSVG() : paper.imagePNG();
         };
-
-        // Setup
-
-        if (isObject(element)) {
-            p = element;
-            element = null;
-        }
-        if (!element)
-            element = document.createElement('div');
-
-        p = _newPaperAttr(element, p);
 
         var type = p.type;
 

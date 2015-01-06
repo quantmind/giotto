@@ -14,14 +14,13 @@
             expect(v.paper().element().node()).toBe(v.element().node());
         });
 
-        it("Check axis properties", function() {
+        it("Check element", function() {
             var v = g.viz.dummy(),
                 paper = v.paper();
-                d = paper.xAxis().scale().domain();
+                element = paper.element();
 
-            expect(d.length).toBe(2);
-            expect(d[0]).toBe(0);
-            expect(d[1]).toBe(1);
+            expect(element.node().tagName).toBe('DIV');
+            //expect(element.style('position')).toBe('relative');
         });
 
 

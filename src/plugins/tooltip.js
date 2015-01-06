@@ -53,7 +53,7 @@
                     }).on(event + '.tooltip-show', function () {
                         if (tooltip.active.length) {
                             var bbox = getScreenBBox(tooltip.active[0].node()),
-                                direction = 'n';
+                                direction = bbox.tooltip || 'n';
                             if (tooltip.active.length > 1) {
                                 direction = 'e';
                                 for (var i=1; i<tooltip.active.length; ++i) {
@@ -74,20 +74,17 @@
 
                     overlay.on(event + '.tooltip', function () {
                         var ctx = this.getContext('2d'),
-                            point, a;
+                            point,
+                            a;
 
                         d3.canvas.clear(ctx);
-
+                        point = d3.canvas.mouse(this);
                         tooltip.hide();
 
-                        if (d3.event.type === 'mouseout')
-                            return;
-
-                        point = d3.canvas.mouse(this);
                         tooltip.active = paper.canvasDataAtPoint(point);
 
                         if (tooltip.active.length) {
-                            var direction = 'n', bbox, bbox2;
+                            var direction, bbox, bbox2;
 
                             for (var i=0; i<tooltip.active.length; ++i) {
                                 a = tooltip.active[i];
@@ -97,8 +94,10 @@
                                     bbox2 = a.bbox();
                                     direction = 'e';
                                     bbox[direction].y += bbox2[direction].y;
-                                } else if (!i)
+                                } else if (!i) {
                                     bbox = a.bbox();
+                                    direction = bbox.tooltip || 'n';
+                                }
                             }
                             if (bbox) {
                                 bbox[direction].y /= tooltip.active.length;
@@ -319,7 +318,8 @@
             nw: direction_nw,
             ne: direction_ne,
             sw: direction_sw,
-            se: direction_se
+            se: direction_se,
+            c: direction_c
         }),
 
         directions = direction_callbacks.keys();
@@ -377,6 +377,13 @@
             return {
                 top: bbox.se.y + offset[1],
                 left: bbox.e.x + offset[0]
+            };
+        }
+
+        function direction_c () {
+            return {
+                top: bbox.c.y + offset[1],
+                left: bbox.c.x + offset[0]
             };
         }
 

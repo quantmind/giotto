@@ -8,26 +8,43 @@
             return g.viz.chart(opts);
         }
 
-        it('Test auto axis', function () {
+        it('Test auto axis', function (done) {
             var c = chart(),
                 p = c.paper();
 
-            expect(p.type(), 'type');
+            expect(p.type()).toBe(type);
             c.addSerie([[1, 1], [2, 3], [3, 0], [4, -5]]);
-            expect(p.xAxis().scale().domain()[0]).toBe(1);
-            expect(p.xAxis().scale().domain()[1]).toBe(4);
-            expect(p.yAxis().scale().domain()[0]).toBe(-5);
-            expect(p.yAxis().scale().domain()[1]).toBe(3);
+            expect(c.numSeries()).toBe(1);
+
+            c.resume().on('tick.test', function () {
+                c.each(function (serie) {
+                    var group = serie.group();
+                    expect(group.paper()).toBe(p);
+                    expect(group.xaxis().scale().domain()[0]).toBe(1);
+                    expect(group.xaxis().scale().domain()[1]).toBe(4);
+                    expect(group.yaxis().scale().domain()[0]).toBe(-5);
+                    expect(group.yaxis().scale().domain()[1]).toBe(3);
+                });
+                done();
+            });
         });
 
-        it('Set axis min max', function () {
+        it('Set axis min max', function (done) {
             var c = chart({yaxis: {min: -2, max: 2}}),
                 p = c.paper();
 
-            expect(p.type(), 'type');
+            expect(p.type()).toBe(type);
             c.addSerie([[1, 1], [2, 3], [3, 0], [4, -5]]);
-            expect(p.yAxis().scale().domain()[0]).toBe(-2);
-            expect(p.yAxis().scale().domain()[1]).toBe(2);
+            expect(c.numSeries()).toBe(1);
+
+            c.resume().on('tick.test', function () {
+                c.each(function (serie) {
+                    var group = serie.group();
+                    expect(group.yaxis().scale().domain()[0]).toBe(-2);
+                    expect(group.yaxis().scale().domain()[1]).toBe(2);
+                });
+                done();
+            });
         });
 
         it('Points', function () {

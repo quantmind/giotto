@@ -4,14 +4,14 @@
             paper = g.paper(),
             _ = g._;
 
-        function group (opts) {
+        function pgroup (opts) {
             opts || (opts = {});
             opts.type = type;
             return paper.group(opts);
         }
 
         it("Axis", function () {
-            var group = group(),
+            var group = pgroup(),
                 xaxis = group.xaxis(),
                 yaxis = group.yaxis();
 
@@ -23,8 +23,8 @@
         });
 
         it("Check axis linear scale", function () {
-            var p = paper();
-            checkScale(p);
+            var group = pgroup();
+            checkScale(group);
             //
             // custom size
             p = paper({width: 600, height: 500});
@@ -83,7 +83,7 @@
         function checkScale(p) {
             var width = p.innerWidth(),
                 height = p.innerHeight(),
-                scale = p.xAxis().scale();
+                scale = p.xaxis().scale();
 
             expect(scale(1)).toBe(width);
             expect(scale(0.5)).toBe(0.5*width);
@@ -100,72 +100,35 @@
 
     }
 
-    //
-    describe("SVG group", function() {
-        var g = d3.giotto,
-            _ = g._;
+    describe("Paper", function () {
+        var g = d3.giotto;
 
         it("Check basic properties", function() {
             var paper = g.paper();
+
             expect(_.isObject(paper)).toBe(true);
             expect(paper.type()).toBe('svg');
-            var current = paper.current();
-            expect(current.node().tagName).toBe('g');
-            expect(paper.parent().current()).toBe(current);
+            expect(paper.element().node().tagName.toLowerCase()).toBe('div');
 
             // Default size
-            expect(paper.width()).toBe(g.constants.WIDTH);
-            expect(paper.height()).toBe(g.constants.HEIGHT);
-            //
-            expect(paper.destroy().current()).toBe(null);
+            expect(paper.size()[0]).toBe(g.constants.WIDTH);
+            expect(paper.size()[1]).toBe(g.constants.HEIGHT);
         });
 
-        it("Check group", function () {
-            var paper = g.paper(),
-                gr = paper.group();
-            expect(gr.node().tagName).toBe('g');
-            expect(paper.current()).toBe(gr);
-            //expect(paper.parent().current()).toBe(paper.root().current());
+        it("Check axis linear scale", function () {
+            var paper = g.paper({width: 600, height: 500});
+
+            expect(p.size()[0]).toBe(600);
+            expect(p.size()[1]).toBe(500);
         });
-
-        it("Check circle", function () {
-            var p = g.paper(),
-                c = p.circle(0.5, 0.5, 0.3);
-
-            expect(c.node().tagName).toBe('circle');
-            expect(+c.attr('cx')).toBe(0.5*p.innerWidth());
-            expect(+c.attr('cy')).toBe(0.5*p.innerHeight());
-            expect(+c.attr('r')).toBe(0.3*p.innerWidth());
-        });
-
-        it("Check rect", function () {
-            var p = g.paper({width: 600, height: 500});
-            p.xAxis().scale().domain([-1, 1]);
-            p.yAxis().scale().domain([-1, 1]);
-
-            var r = p.rect(-0.5, -0.5, 1, 1);
-
-            expect(+r.attr('x')).toBe(140);
-            expect(+r.attr('y')).toBe(345);
-        });
-
-        testPaper('svg');
     });
 
+    //
+    describe("SVG group", function() {
+        //testPaper('svg');
+    });
 
     //
     describe("CANVAS group", function() {
-        var g = d3.giotto,
-            _ = g._;
-
-        it("test retina", function () {
-            var paper = g.paper({type: 'canvas'}),
-                innerWidth = paper.innerWidth(),
-                innerHeight = paper.innerHeight(),
-                factor = paper.factor(),
-                size = paper.size();
-            expect(paper.factor(2*factor).factor()).toBe(2*factor);
-        });
-
-        testGroup('canvas');
+        //testGroup('canvas');
     });

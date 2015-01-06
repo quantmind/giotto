@@ -257,76 +257,6 @@
 
         return d;
     }
-
-    function pathdraw(group, render, draw) {
-        var type = group.type(),
-            bisector = d3.bisector(function (d) {return d.sx;}).left,
-            data, ordered;
-
-        draw = drawing(group, render, draw);
-
-        draw.bisector = d3.bisector(function (d) {return d.sx;}).left;
-
-        draw.each = function (callback) {
-            callback.call(draw);
-            return draw;
-        };
-
-        draw.path_line = function () {
-            var opts = draw.options();
-
-            return d3[type].line()
-                            .interpolate(opts.interpolate)
-                            .x(function (d) {return d.sx;})
-                            .y(function (d) {return d.sy;});
-        };
-
-        draw.path_area = function () {
-            var opts = draw.options(),
-                scaley = group.yaxis().scale();
-
-            return d3[type].area()
-                                .interpolate(opts.interpolate)
-                                .x(function (d) {return d.sx;})
-                                .y0(scaley(scaley.domain()[0]))
-                                .y1(function (d) {return d.sy;});
-        };
-
-        draw.path_data = function () {
-            var sx = draw.x(),
-                sy = draw.y(),
-                scalex = group.xaxis().scale(),
-                scaley = group.yaxis().scale();
-
-            ordered = null;
-            draw.symbol = d3[type].symbol().type(function (d) {return d.symbol || 'circle';})
-                                           .size(draw.size());
-            data = draw.data().map(function (d, i) {
-                var xy = {
-                    x: sx(d),
-                    y: sy(d),
-                    index: i,
-                    data: d
-                };
-                xy.sx = scalex(xy.x);
-                xy.sy = scaley(xy.y);
-                return xy;
-            });
-            return data;
-        };
-
-        draw.bisect = function (x) {
-            if (!ordered && data)
-                ordered = data.slice().sort(function (a, b) {return d3.ascending(a.sx, b.sx);});
-            if (ordered) {
-                var index = bisector(ordered, x);
-                if (index < ordered.length)
-                    return ordered[index];
-            }
-        };
-
-        return draw;
-    }
     //
     // Manage attributes for data to be drawn on papers
     function paperData (draw, data, parameters, d) {
@@ -374,8 +304,6 @@
                         'colorOpacity', 'lineWidth'],
 
         pointOptions = extendArray(['size', 'symbol'], drawingOptions),
-
-        pieOptions = extendArray(['innerRadius', 'outerRadius'], drawingOptions),
 
         default_size = function (d) {
             return d.size;

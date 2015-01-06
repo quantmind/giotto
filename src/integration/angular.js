@@ -10,7 +10,7 @@
     //
     //      d3.giotto.angular.addAll()
     //
-    //  To register the module and add all viausizations
+    //  To register the module and add all visualizations
     //
     //      d3.giotto.angular.module(angular).addAll();
     //
@@ -62,13 +62,16 @@
             }
 
             injects = injects ? injects.slice() : [];
+
             if (!name) {
                 name = vizType.vizName();
                 name = mod.name.toLowerCase() + name.substring(0,1).toUpperCase() + name.substring(1);
             }
 
-            function startViz(scope, element, options) {
+            function startViz(scope, element, options, injected) {
                 options.scope = scope;
+                for (var i=0; i<injected.length; ++i)
+                    options[injects[i]] = injected[i];
                 var viz = vizType(element[0], options);
                 options = viz.options();
                 element.data(name, viz);
@@ -81,7 +84,7 @@
             }
 
             injects.push(function () {
-                var injected = arguments;
+                var injected_arguments = arguments;
                 return {
                     //
                     // Create via element tag or attribute
@@ -96,10 +99,10 @@
                                 if (!g._.isArray(require)) require = [require];
                                 g.require(require, function (opts) {
                                     extend(options, opts);
-                                    startViz(scope, element, options);
+                                    startViz(scope, element, options, injected_arguments);
                                 });
                             } else
-                                startViz(scope, element, options);
+                                startViz(scope, element, options, injected_arguments);
                         }
                     }
                 };

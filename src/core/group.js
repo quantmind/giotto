@@ -128,28 +128,6 @@
             return resizing;
         };
 
-        // Draw a path or an area
-        group.path = function (data, opts) {
-            opts || (opts = {});
-            chartFormats(group, opts);
-            chartColor(paper, copyMissing(p.line, opts));
-
-            return group.add(_.path(group)).size(point_size).data(data).options(opts);
-        };
-
-        // Draw scatter points
-        group.points = function (data, opts) {
-            opts || (opts = {});
-            chartFormats(group, opts);
-            chartColor(paper, copyMissing(p.point, opts));
-
-            return group.add(_.points)
-            .size(point_size)
-            .options(opts)
-            .dataConstructor(point_costructor)
-            .data(data);
-        };
-
         group.scale = function (r) {
             if (!arguments.length) return scale;
             return scale(r);
@@ -175,17 +153,6 @@
             // otherwise assume it is a value between 0 and 1 defined as percentage of the x axis length
             else
                 return v;
-        };
-
-        var point_costructor = function (rawdata) {
-            // Default point size
-            var group = this.group(),
-                size = group.scale(group.dim(this.options().size)),
-                data = [];
-
-            for (var i=0; i<rawdata.length; i++)
-                data.push(_.point(this, rawdata[i], size));
-            return data;
         };
 
         return group;

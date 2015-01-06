@@ -179,6 +179,10 @@
                 if (!isObject(serie.yaxis)) serie.yaxis = opts.yaxis;
             }
 
+            serie.group = function () {
+                return group;
+            };
+
             serie.clear = function () {
                 if (group) group.remove();
                 group = null;

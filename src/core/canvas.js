@@ -6,11 +6,21 @@
         var container = paper.canvas(true),
             elem = p.before ? container.insert('canvas', p.before) : container.append('canvas'),
             ctx = elem.node().getContext('2d'),
-            _ = canvas_implementation(paper, p);
+            _ = {};
 
         delete p.before;
         container.selectAll('*').style({"position": "absolute", "top": "0", "left": "0"});
         container.select('*').style({"position": "relative"});
+
+        _.scale = function (group) {
+            return d3.canvas.retinaScale(group.context(), p.size[0], p.size[1]);
+        };
+
+        _.resize = function (group) {
+            d3.canvas.clear(group.context());
+            _.scale(group);
+            group.resetAxis().render();
+        };
 
         var group = g.group(paper, elem.node(), p, _),
             render = group.render;

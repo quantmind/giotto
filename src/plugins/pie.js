@@ -74,12 +74,49 @@
         };
     });
 
-    function pieSlice (draw, data) {
+    var pieOptions = extendArray(['innerRadius', 'outerRadius'], drawingOptions);
+
+    function pieSlice (draw, data, d) {
         // Default values
-        var d = {},
-            dd = isArray(data) ? d : data;
+        var dd = isArray(data) ? d : data,
+            group = draw.group(),
+            factor = group.factor(),
+            target = group.paper().element().node();
+
         dd.fill = dd.fill || draw.paper().pickColor();
         dd.color = dd.color || d3.rgb(dd.fill).darker().toString();
+
+        d.bbox = function () {
+            var bbox = target.getBoundingClientRect(),
+                c1 = Math.sin(d.startAngle),
+                s1 = Math.cos(d.startAngle),
+                c2 = Math.sin(d.endAngle),
+                s2 = Math.cos(d.endAngle),
+                cc = Math.sin(0.5*(d.startAngle + d.endAngle)),
+                sc = Math.cos(0.5*(d.startAngle + d.endAngle)),
+                r1 = d.innerRadius,
+                r2 = d.outerRadius,
+                rc = 0.5*(r1 + r2),
+                left = group.marginLeft() + 0.5*group.innerWidth(),
+                top = group.marginTop() + 0.5*group.innerHeight(),
+                f = 1/factor;
+            return {
+                nw: {x: xx(r2*c1), y: yy(r2*s1)},
+                ne: {x: xx(r2*c2), y: yy(r2*s2)},
+                se: {x: xx(r1*c2), y: yy(r1*s2)},
+                sw: {x: xx(r1*c1), y: yy(r1*s1)},
+                w: {x: xx(rc*c1), y: yy(rc*s1)},
+                n: {x: xx(r2*cc), y: yy(r2*sc)},
+                e: {x: xx(rc*c2), y: yy(rc*s2)},
+                s: {x: xx(r1*cc), y: yy(r1*sc)},
+                c: {x: xx(rc*cc), y: yy(rc*sc)},
+                tooltip: 's'
+            };
+
+            function xx(x) {return Math.round(f*(left + x) + bbox.left);}
+            function yy(y) {return Math.round(f*(top - y) + bbox.top);}
+        };
+
         return paperData(draw, data, pieOptions, d);
     }
 
@@ -109,10 +146,12 @@
 
     g.svg.pieslice = function (draw, data) {
         var group = draw.group(),
-            p = pieSlice(draw, data);
+            p = pieSlice(draw, data, {});
+
         p.render = function (element) {
             group.draw(element).attr('d', draw.arc);
         };
+
         return p;
     };
 
@@ -123,7 +162,7 @@
     };
 
     g.canvas.pieslice = function (draw, data) {
-        var d = canvasMixin(pieSlice(draw, data)),
+        var d = pieSlice(draw, data, canvasMixin({})),
             group = draw.group(),
             factor = draw.factor(),
             ctx = group.context();

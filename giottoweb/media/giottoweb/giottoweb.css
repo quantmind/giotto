@@ -1,8 +1,8 @@
 @charset "UTF-8";
 /*
 ------------------------------------------------------------------
-Created by lux in 0.85 seconds
-Date: 2015-01-03 19:20:38
+Created by lux in 0.22 seconds
+Date: 2015-01-06 18:59:51
 
 http://quantmind.github.io/lux/
 ------------------------------------------------------------------ */
@@ -12,11 +12,11 @@ http://quantmind.github.io/lux/
 }
 
 .lazyContainer > .content {
-    left: 0;
-    min-height: 100%;
-    top: 0;
     width: 100%;
+    min-height: 100%;
     position: absolute;
+    left: 0;
+    top: 0;
 }
 
 .push-bottom {
@@ -25,14 +25,14 @@ http://quantmind.github.io/lux/
 
 .hljs-comment,.hljs-title{color:#8e908c}.hljs-variable,.hljs-attribute,.hljs-tag,.hljs-regexp,.ruby .hljs-constant,.xml .hljs-tag .hljs-title,.xml .hljs-pi,.xml .hljs-doctype,.html .hljs-doctype,.css .hljs-id,.css .hljs-class,.css .hljs-pseudo{color:#c82829}.hljs-number,.hljs-preprocessor,.hljs-pragma,.hljs-built_in,.hljs-literal,.hljs-params,.hljs-constant{color:#f5871f}.ruby .hljs-class .hljs-title,.css .hljs-rules .hljs-attribute{color:#eab700}.hljs-string,.hljs-value,.hljs-inheritance,.hljs-header,.ruby .hljs-symbol,.xml .hljs-cdata{color:#718c00}.css .hljs-hexcolor{color:#3e999f}.hljs-function,.python .hljs-decorator,.python .hljs-title,.ruby .hljs-function .hljs-title,.ruby .hljs-title .hljs-keyword,.perl .hljs-sub,.javascript .hljs-title,.coffeescript .hljs-title{color:#4271ae}.hljs-keyword,.javascript .hljs-function{color:#8959a8}.hljs{display:block;overflow-x:auto;background:white;color:#4d4d4c;padding:0.5em;-webkit-text-size-adjust:none}.coffeescript .javascript,.javascript .xml,.tex .hljs-formula,.xml .javascript,.xml .vbscript,.xml .css,.xml .hljs-cdata{opacity:0.5}
 body {
-    font-size: 18px;
-    font-style: normal;
     background: #fff;
+    font-size: 18px;
     font-family: "freight-text-pro",Georgia,Cambria,"Times New Roman",Times,serif;
     color: rgba(0, 0, 0, 0.8);
+    font-style: normal;
     line-height: 1.5;
-    min-height: 101%;
     height: 101%;
+    min-height: 101%;
 }
 
 p.form-error {
@@ -57,14 +57,14 @@ p.form-error {
 }
 
 .katex-outer {
-    margin-bottom: 10px;
-    margin-left: auto;
     margin-right: auto;
+    margin-left: auto;
     display: block;
     margin-bottom: 10px;
-    margin-left: auto;
     margin-right: auto;
+    margin-left: auto;
     display: block;
+    margin-bottom: 10px;
 }
 
 code.hljs.inline {
@@ -92,20 +92,20 @@ dl.function > dt > tt.descname {
 
 dl.class dt tt.descname,
 dl.function dt tt.descname {
-    color: rgba(0, 0, 0, 0.8);
     font-weight: bold;
     color: rgba(0, 0, 0, 0.8);
     font-weight: bold;
+    color: rgba(0, 0, 0, 0.8);
 }
 
 dl.class dt,
 dl.function dt {
-    font-size: 18px;
-    color: #888;
     font-weight: normal;
-    font-size: 18px;
     color: #888;
+    font-size: 18px;
     font-weight: normal;
+    color: #888;
+    font-size: 18px;
 }
 
 [ng\:cloak],
@@ -130,8 +130,8 @@ dl.function dt {
 }
 
 .navbar2-wrapper {
-    min-height: 100%;
     width: 100%;
+    min-height: 100%;
 }
 
 .navbar2-page {
@@ -151,10 +151,10 @@ dl.function dt {
 }
 @media all and (min-width:768px) {
     .sidebar {
+        width: 200px;
         z-index: 1;
         margin-top: 51px;
         position: absolute;
-        width: 200px;
     }
 
 }
@@ -171,8 +171,8 @@ dl.function dt {
 }
 
 .media-list > .media > a {
-    text-decoration: none;
     color: #808080;
+    text-decoration: none;
 }
 
 .media-list > .media > a .post-body {
@@ -180,21 +180,21 @@ dl.function dt {
 }
 
 .media-list > .media > a h3 {
-    color: #333;
     font-weight: normal;
+    color: #333;
 }
 
 .post-image {
-    max-height: 140px;
-    height: auto;
     width: 140px;
+    height: auto;
     float: left;
+    max-height: 140px;
 }
 
 .post-image-xs {
-    max-height: 150px;
-    max-width: 90%;
     width: auto;
+    max-width: 90%;
+    max-height: 150px;
 }
 
 h1:hover > a.headerlink,
@@ -208,10 +208,10 @@ dt:hover > a.headerlink {
 }
 
 a.headerlink {
-    text-decoration: none;
-    color: #eee;
-    visibility: hidden;
     padding: 0 4px;
+    text-decoration: none;
+    visibility: hidden;
+    color: #eee;
 }
 
 a.headerlink:hover {
@@ -241,18 +241,18 @@ table.docutils.field-list th {
 }
 
 .page-header.index-header {
-    min-height: 100%;
-    background: #333;
-    margin: 0;
-    color: #fff;
     width: 101%;
+    background: #333;
+    min-height: 100%;
     height: 101%;
+    color: #fff;
+    margin: 0;
 }
 
 html,
 .fullpage {
-    min-height: 101%;
     height: 101%;
+    min-height: 101%;
 }
 
 form {
@@ -260,13 +260,13 @@ form {
 }
 
 #page-main {
-    padding-bottom: 50px;
     min-height: 400px;
+    padding-bottom: 50px;
 }
 
 #footer {
-    color: #b3b3b3;
     background: #333;
+    color: #b3b3b3;
     padding: 30px 0 40px;
     min-height: 300px;
 }
@@ -286,9 +286,9 @@ form {
 }
 
 .trianglify-box {
+    padding: 20px;
     max-width: 400px;
     background: rgba(255, 255, 255, 0.6);
-    padding: 20px;
     -webkit-border-radius: 5px;
        -moz-border-radius: 5px;
             border-radius: 5px;
@@ -298,9 +298,9 @@ form {
 }
 
 .features article {
+    width: 33.33%;
     padding: 30px;
     float: left;
-    width: 33.33%;
 }
 
 .features article:before {
@@ -340,14 +340,14 @@ form {
 
 #page-error a,
 #page-error a:hover {
-    text-decoration: underline;
     color: #fff;
+    text-decoration: underline;
 }
 
 .error-message-container {
-    background: rgba(0, 0, 0, 0.4);
     height: 100%;
     padding: 40px 120px;
+    background: rgba(0, 0, 0, 0.4);
     -webkit-box-sizing: border-box;
        -moz-box-sizing: border-box;
             box-sizing: border-box;
@@ -363,8 +363,8 @@ form {
     }
 
     .error-message-container {
-        text-align: center;
         padding: 40px 0;
+        text-align: center;
     }
 
 }
