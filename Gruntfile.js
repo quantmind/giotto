@@ -98,6 +98,12 @@ module.exports = function (grunt) {
                                 }
                             },
                             {
+                                type: 'html',
+                                options: {
+                                    dir: 'coverage'
+                                }
+                            },
+                            {
                                 type: 'text-summary'
                             }
                         ],

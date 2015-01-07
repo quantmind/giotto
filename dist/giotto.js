@@ -1,6 +1,6 @@
-//      Giotto - v0.1.0
+//      GiottoJS - v0.1.0
 
-//      Compiled 2015-01-06.
+//      Compiled 2015-01-07.
 //      Copyright (c) 2015 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -7354,8 +7354,8 @@
             context = context || ctx;
             context.save();
             context.translate(0.5*group.innerWidth(), 0.5*group.innerHeight());
-            context.fillStyle = rgba(d.fill, d.fillOpacity);
-            context.strokeStyle = rgba(d.color, d.colorOpacity);
+            context.fillStyle = d3.canvas.rgba(d.fill, d.fillOpacity);
+            context.strokeStyle = d3.canvas.rgba(d.color, d.colorOpacity);
             context.lineWidth = factor*d.lineWidth;
             draw.arc.context(context)(d);
             context.fill();

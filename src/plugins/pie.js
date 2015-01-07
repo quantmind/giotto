@@ -171,8 +171,8 @@
             context = context || ctx;
             context.save();
             context.translate(0.5*group.innerWidth(), 0.5*group.innerHeight());
-            context.fillStyle = rgba(d.fill, d.fillOpacity);
-            context.strokeStyle = rgba(d.color, d.colorOpacity);
+            context.fillStyle = d3.canvas.rgba(d.fill, d.fillOpacity);
+            context.strokeStyle = d3.canvas.rgba(d.color, d.colorOpacity);
             context.lineWidth = factor*d.lineWidth;
             draw.arc.context(context)(d);
             context.fill();

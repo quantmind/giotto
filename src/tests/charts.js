@@ -47,7 +47,7 @@
             });
         });
 
-        it('Points', function () {
+        it('Points', function (done) {
             var norm = d3.random.normal(0.5, 0.1),
                 c = chart({
                         point: {show: true}
@@ -60,6 +60,7 @@
 
             c.each(function (serie) {
                 count++;
+                expect(serie.group()).toBe(undefined);
                 expect(serie.point).not.toBe(undefined);
                 expect(serie.point.symbol).toBe('circle');
 
@@ -68,9 +69,46 @@
             });
 
             expect(count).toBe(1);
+
+            c.start().on('tick.test', function () {
+                c.each(function (serie) {
+                    var group = serie.group();
+                    expect(group).not.toBe(undefined);
+                });
+                done();
+            });
         });
 
-        it('bars', function () {
+        it('Path', function (done) {
+            var norm = d3.random.normal(0.5, 0.1),
+                c = chart(),
+                count = 0;
+
+            c.addSerie(d3.range(800).map(function () {
+                return [Math.random(), norm()];
+            }));
+
+            c.each(function (serie) {
+                count++;
+                expect(serie.group()).toBe(undefined);
+                expect(serie.point).toBe(undefined);
+                expect(serie.line).not.toBe(undefined);
+                expect(serie.bar).toBe(undefined);
+                expect(serie.pie).toBe(undefined);
+            });
+
+            expect(count).toBe(1);
+
+            c.start().on('tick.test', function () {
+                c.each(function (serie) {
+                    var group = serie.group();
+                    expect(group).not.toBe(undefined);
+                });
+                done();
+            });
+        });
+
+        it('bars', function (done) {
             var norm = d3.random.normal(0.5, 0.1),
                 c = chart({
                         bar: {show: true}
@@ -91,6 +129,40 @@
             });
 
             expect(count).toBe(1);
+
+            c.start().on('tick.test', function () {
+                c.each(function (serie) {
+                    var group = serie.group();
+                    expect(group).not.toBe(undefined);
+                });
+                done();
+            });
+        });
+
+        it('pie', function (done) {
+            var norm = d3.random.normal(0.5, 0.1),
+                c = chart({
+                        pie: {show: true},
+                        data: [
+                        [['a', 4], ['b', 5], ['c', 9.5], ['d', 2.2]]]
+                    }),
+                count = 0;
+
+            c.start().on('tick.test', function () {
+
+                c.each(function (serie) {
+                    count++;
+                    var group = serie.group();
+                    expect(serie.point).toBe(undefined);
+                    expect(serie.line).toBe(undefined);
+                    expect(serie.bar).toBe(undefined);
+                    expect(serie.pie).not.toBe(undefined);
+                    expect(group).not.toBe(undefined);
+                });
+
+                expect(count).toBe(1);
+                done();
+            });
         });
     }
 

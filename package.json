@@ -1,5 +1,7 @@
 {
-    "name": "d3ext",
+    "name": "GiottoJS",
+    "title": "GiottoJS",
+    "description": "GiottoJS - Visualization Library",
     "contributors": [],
     "author": {
         "name": "Luca Sbardella",
@@ -10,13 +12,12 @@
         "type": "git",
         "url": "https://github.com/quantmind/giotto"
     },
-    "description": "Giotto - d3 visualization extensions",
-    "title": "Giotto",
     "keywords": [
         "visualization",
         "svg",
         "canvas",
-        "animation"
+        "animation",
+        "data"
     ],
     "licenses": [
         {
