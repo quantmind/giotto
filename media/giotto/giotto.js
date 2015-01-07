@@ -1,6 +1,6 @@
-//      Giotto - v0.1.0
+//      GiottoJS - v0.1.0
 
-//      Compiled 2015-01-03.
+//      Compiled 2015-01-07.
 //      Copyright (c) 2015 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -2872,47 +2872,6 @@
         colorIndex: 0,
         css: null,
         activeEvents: ["mousemove", "touchstart", "touchmove", "mouseout"],
-        line: {
-            interpolate: 'cardinal',
-            colorOpacity: 1,
-            fillOpacity: 0.4,
-            lineWidth: 2,
-            transition: extend({}, g.defaults.transition),
-            fill: 'color'
-        },
-        point: {
-            symbol: 'circle',
-            size: '8px',
-            fill: true,
-            fillOpacity: 1,
-            colorOpacity: 1,
-            lineWidth: 2,
-            active: {
-                fill: 'darker',
-                color: 'brighter',
-                // Multiplier for size, set to 100% for no change
-                size: '150%'
-            },
-            transition: extend({}, g.defaults.transition)
-        },
-        pie: {
-            lineWidth: 1,
-            // pad angle in degrees
-            padAngle: 0,
-            cornerRadius: 0,
-            fillOpacity: 0.7,
-            colorOpacity: 1,
-            innerRadius: 0,
-            startAngle: 0,
-            active: {
-                fill: 'darker',
-                color: 'brighter',
-                //innerRadius: 100%,
-                //outerRadius: 105%,
-                fillOpacity: 1
-            },
-            transition: extend({}, g.defaults.transition)
-        },
         font: {
             color: '#444',
             size: '11px',
@@ -3055,9 +3014,25 @@
     // Create a new paper for drawing stuff
     g.paper = function (element, p) {
 
-        var paper = d3.dispatch.apply({}, extendArray(['change'], p.activeEvents)),
+        // Setup
+
+        if (isObject(element)) {
+            p = element;
+            element = null;
+        }
+        if (!element)
+            element = document.createElement('div');
+
+        p = _newPaperAttr(element, p);
+
+        var events = d3.dispatch.apply(null, extendArray(['change'], p.activeEvents)),
+            paper = d3.rebind({}, events, 'on'),
             uid = ++_idCounter,
             resizing = false;
+
+        paper.event = function (name) {
+            return events[name];
+        };
 
         // Create a new group for this paper
         paper.group = function (opts) {
@@ -3157,7 +3132,7 @@
                 paper.each(function () {
                     this.resize();
                 });
-                paper.change();
+                events.change.call(paper);
             }
             resizing = false;
         };
@@ -3257,7 +3232,11 @@
             if (!node && paper.canvas().node()) {
                 canvas = paper.element().append('canvas')
                                 .attr('class', 'canvas-overlay')
-                                .style({'position': 'absolute', "top": "0", "left": "0"});
+                                .style({
+                                    'position': 'absolute',
+                                    'top': '0',
+                                    'left': '0'
+                                });
                 node = canvas.node();
                 d3.canvas.retinaScale(node.getContext('2d'), p.size[0], p.size[1]);
             } else if (node)
@@ -3315,17 +3294,6 @@
         paper.image = function () {
             return p.type === 'svg' ? paper.imageSVG() : paper.imagePNG();
         };
-
-        // Setup
-
-        if (isObject(element)) {
-            p = element;
-            element = null;
-        }
-        if (!element)
-            element = document.createElement('div');
-
-        p = _newPaperAttr(element, p);
 
         var type = p.type;
 
@@ -3505,28 +3473,6 @@
             return resizing;
         };
 
-        // Draw a path or an area
-        group.path = function (data, opts) {
-            opts || (opts = {});
-            chartFormats(group, opts);
-            chartColor(paper, copyMissing(p.line, opts));
-
-            return group.add(_.path(group)).size(point_size).data(data).options(opts);
-        };
-
-        // Draw scatter points
-        group.points = function (data, opts) {
-            opts || (opts = {});
-            chartFormats(group, opts);
-            chartColor(paper, copyMissing(p.point, opts));
-
-            return group.add(_.points)
-            .size(point_size)
-            .options(opts)
-            .dataConstructor(point_costructor)
-            .data(data);
-        };
-
         group.scale = function (r) {
             if (!arguments.length) return scale;
             return scale(r);
@@ -3552,17 +3498,6 @@
             // otherwise assume it is a value between 0 and 1 defined as percentage of the x axis length
             else
                 return v;
-        };
-
-        var point_costructor = function (rawdata) {
-            // Default point size
-            var group = this.group(),
-                size = group.scale(group.dim(this.options().size)),
-                data = [];
-
-            for (var i=0; i<rawdata.length; i++)
-                data.push(_.point(this, rawdata[i], size));
-            return data;
         };
 
         return group;
@@ -3827,76 +3762,6 @@
 
         return d;
     }
-
-    function pathdraw(group, render, draw) {
-        var type = group.type(),
-            bisector = d3.bisector(function (d) {return d.sx;}).left,
-            data, ordered;
-
-        draw = drawing(group, render, draw);
-
-        draw.bisector = d3.bisector(function (d) {return d.sx;}).left;
-
-        draw.each = function (callback) {
-            callback.call(draw);
-            return draw;
-        };
-
-        draw.path_line = function () {
-            var opts = draw.options();
-
-            return d3[type].line()
-                            .interpolate(opts.interpolate)
-                            .x(function (d) {return d.sx;})
-                            .y(function (d) {return d.sy;});
-        };
-
-        draw.path_area = function () {
-            var opts = draw.options(),
-                scaley = group.yaxis().scale();
-
-            return d3[type].area()
-                                .interpolate(opts.interpolate)
-                                .x(function (d) {return d.sx;})
-                                .y0(scaley(scaley.domain()[0]))
-                                .y1(function (d) {return d.sy;});
-        };
-
-        draw.path_data = function () {
-            var sx = draw.x(),
-                sy = draw.y(),
-                scalex = group.xaxis().scale(),
-                scaley = group.yaxis().scale();
-
-            ordered = null;
-            draw.symbol = d3[type].symbol().type(function (d) {return d.symbol || 'circle';})
-                                           .size(draw.size());
-            data = draw.data().map(function (d, i) {
-                var xy = {
-                    x: sx(d),
-                    y: sy(d),
-                    index: i,
-                    data: d
-                };
-                xy.sx = scalex(xy.x);
-                xy.sy = scaley(xy.y);
-                return xy;
-            });
-            return data;
-        };
-
-        draw.bisect = function (x) {
-            if (!ordered && data)
-                ordered = data.slice().sort(function (a, b) {return d3.ascending(a.sx, b.sx);});
-            if (ordered) {
-                var index = bisector(ordered, x);
-                if (index < ordered.length)
-                    return ordered[index];
-            }
-        };
-
-        return draw;
-    }
     //
     // Manage attributes for data to be drawn on papers
     function paperData (draw, data, parameters, d) {
@@ -3945,8 +3810,6 @@
 
         pointOptions = extendArray(['size', 'symbol'], drawingOptions),
 
-        pieOptions = extendArray(['innerRadius', 'outerRadius'], drawingOptions),
-
         default_size = function (d) {
             return d.size;
         },
@@ -3973,11 +3836,21 @@
     g.group.svg = function (paper, p) {
         var container = paper.svg(true),
             elem = p.before ? container.insert('g', p.before) : container.append('g'),
-            _ = svg_implementation(paper, p);
+            _ = {};
 
         delete p.before;
         // translate the group element by the required margins
         elem.attr("transform", "translate(" + p.margin.left + "," + p.margin.top + ")");
+
+        _.resize = function (group) {
+            if (p.resize) {
+                paper.svg()
+                    .attr('width', p.size[0])
+                    .attr('height', p.size[1]);
+                group.resetAxis().render();
+            }
+        };
+
         var group = g.group(paper, elem.node(), p, _);
 
         group.clear = function () {
@@ -4017,10 +3890,11 @@
                         selection.on(event + '.' + uid, null);
                     else {
                         target = callback ? callback.call(this) : this;
-                        paper[d3.event.type].call(target);
+                        paper.event(d3.event.type).call(target);
                     }
                 });
             });
+
             return selection;
         };
 
@@ -4047,11 +3921,21 @@
         var container = paper.canvas(true),
             elem = p.before ? container.insert('canvas', p.before) : container.append('canvas'),
             ctx = elem.node().getContext('2d'),
-            _ = canvas_implementation(paper, p);
+            _ = {};
 
         delete p.before;
         container.selectAll('*').style({"position": "absolute", "top": "0", "left": "0"});
         container.select('*').style({"position": "relative"});
+
+        _.scale = function (group) {
+            return d3.canvas.retinaScale(group.context(), p.size[0], p.size[1]);
+        };
+
+        _.resize = function (group) {
+            d3.canvas.clear(group.context());
+            _.scale(group);
+            group.resetAxis().render();
+        };
 
         var group = g.group(paper, elem.node(), p, _),
             render = group.render;
@@ -4338,6 +4222,142 @@
     g.createviz('viz');
 
 
+    g.contextMenu = function () {
+        var menu = {},
+            element = null,
+            menuElement = null,
+            opened = false,
+            disabled = false,
+            events = d3.dispatch('open', 'close');
+
+        menu.bind = function (element, callback) {
+            init();
+            element.on('keyup.gmenu', handleKeyUpEvent);
+            element.on('click.gmenu', handleClickEvent);
+            element.on('contextmenu.gmenu', handleContextMenu(callback));
+        };
+
+        menu.disabled  = function (x) {
+            if (!arguments.length) return disabled;
+            disabled = x ? true : false;
+            return menu;
+        };
+
+        d3.rebind(menu, events, 'on');
+
+        return menu;
+
+        // INTERNALS
+
+        function handleKeyUpEvent () {
+            if (!disabled && opened && d3.event.keyCode === 27)
+                close();
+        }
+
+        function handleClickEvent () {
+            var event = d3.event;
+            if (!disabled && opened && event.button !== 2 || event.target !== element)
+                close();
+        }
+
+        function handleContextMenu (callback) {
+            return function () {
+                if (disabled) return;
+                var event = d3.event;
+                event.preventDefault();
+                event.stopPropagation();
+                close();
+                element = this;
+                open(event, callback);
+            };
+        }
+
+        function open (event, callback) {
+            if (callback) callback(menuElement);
+            menuElement.classed('open', true);
+
+            var docLeft = (window.pageXOffset || document.scrollLeft || 0) - (document.clientLeft || 0),
+                docTop = (window.pageYOffset || document.scrollTop || 0) - (document.clientTop || 0),
+                elementWidth = menuElement.node().scrollWidth,
+                elementHeight = menuElement.node().scrollHeight,
+                docWidth = document.clientWidth + docLeft,
+                docHeight = document.clientHeight + docTop,
+                totalWidth = elementWidth + event.pageX,
+                totalHeight = elementHeight + event.pageY,
+                left = Math.max(event.pageX - docLeft, 0),
+                top = Math.max(event.pageY - docTop, 0);
+
+            if (totalWidth > docWidth)
+                left = left - (totalWidth - docWidth);
+
+            if (totalHeight > docHeight)
+                top = top - (totalHeight - docHeight);
+
+            menuElement.style({
+                top: top + 'px',
+                left: left + 'px',
+                position: 'fixed'
+            });
+            opened = true;
+        }
+
+        function close () {
+            menuElement.classed('open', false);
+            if (opened)
+                events.close();
+            opened = false;
+        }
+
+        function init () {
+            if (!menuElement) {
+
+                menuElement = d3.select(document.createElement('div'))
+                                .attr('class', 'giotto-menu');
+                close();
+                document.body.appendChild(menuElement.node());
+
+                d3.select(document)
+                    .on('keyup.gmenu', handleKeyUpEvent)
+                    // Firefox treats a right-click as a click and a contextmenu event
+                    // while other browsers just treat it as a contextmenu event
+                    .on('click.gmenu', handleClickEvent)
+                    .on('contextmenu.gmenu', handleClickEvent);
+            }
+        }
+
+    };
+
+    //
+    // Context menu singletone
+    g.contextmenu = g.contextMenu();
+
+
+    g.vizplugin(function (viz, opts) {
+
+        viz.contextmenu = function (menu) {
+            menu.append('ul')
+                .attr('class', 'dropdown-menu')
+                .attr('role', 'menu')
+                .selectAll('li')
+                .data(opts.contextmenu)
+                .enter()
+                .append('li')
+                .append('a')
+                .attr('role', 'menuitem')
+                .text(function (d) {return isFunction(d.label) ? d.label() : d.label;})
+                .attr('href', '#')
+                .on('click', function (d) {
+                    if (d.callback) d.callback(viz);
+                });
+        };
+
+        if (opts.contextmenu)
+            g.contextmenu.bind(viz.element(), function (menu) {
+                return viz.contextmenu(menu);
+            });
+    });
+
+
     g.createviz('chart', {
         margin: {top: 30, right: 30, bottom: 30, left: 30},
         chartTypes: ['pie', 'bar', 'line', 'point'],
@@ -4517,6 +4537,10 @@
                 if (serie.yaxis === 2) serie.yaxis = opts.yaxis2;
                 if (!isObject(serie.yaxis)) serie.yaxis = opts.yaxis;
             }
+
+            serie.group = function () {
+                return group;
+            };
 
             serie.clear = function () {
                 if (group) group.remove();
@@ -5261,8 +5285,8 @@
             if (!current) return;
 
             if (isArray(node)) {
-                node = current;
                 var path = node;
+                node = current;
                 for (var n=0; n<path.length; ++n) {
                     var name = path[n];
                     if (node.children) {
@@ -5280,6 +5304,11 @@
             return select(node, transition);
         };
 
+        // Return the current selected node
+        self.current = function () {
+            return current;
+        };
+
         // Set the scale or returns it
         self.scale = function (scale) {
             if (!arguments.length) return opts.scale;
@@ -5290,13 +5319,11 @@
         // draw
         self.draw = function (data) {
             data = data || opts.data;
+            opts.data = null;
 
             // load data if in options
-            if (data === undefined && opts.src) {
-                opts.data = null;
-                return self.loadData(self.draw);
-            }
-            opts.data = null;
+            if (data === undefined && opts.src)
+                return self.loadData(self.resume);
 
             if (!paper || opts.type !== group.type()) {
                 paper = self.paper(true);
@@ -5309,7 +5336,7 @@
                     .value(function(d) { return d.size; })
                     .sort(function (d) { return d.order === undefined ? d.size : d.order;})
                     .nodes(data);
-                current = opts.initNode || data[0];
+                current = (isFunction(opts.initNode) ? opts.initNode() : opts.initNode) || data[0];
 
                 group.add(function () {
                     build(data, current);
@@ -5325,7 +5352,9 @@
 
             var width = 0.5*group.innerWidth(),
                 height = 0.5*group.innerHeight(),
-                sunburst = group.element().attr("transform", "translate(" + width + "," + height + ")");
+                xs = group.marginLeft() + width,
+                ys = group.marginTop() + height,
+                sunburst = group.element().attr("transform", "translate(" + xs + "," + ys + ")");
 
             current = data[0];
             radius = Math.min(width, height);
@@ -5397,7 +5426,7 @@
         }
 
         function select (node, transition) {
-            if (node === current) return;
+            if (!node || node === current) return;
             if (transition === undefined) transition = +opts.transition;
 
             if (text) text.transition().attr("opacity", 0);
@@ -6758,9 +6787,10 @@
 
         menu.bind = function (element, callback) {
             init();
-            element.on('keyup.gmenu', handleKeyUpEvent);
-            element.on('click.gmenu', handleClickEvent);
-            element.on('contextmenu.gmenu', handleContextMenu(callback));
+            element
+                .on('keyup.gmenu', handleKeyUpEvent)
+                .on('click.gmenu', handleClickEvent)
+                .on('contextmenu.gmenu', handleContextMenu(callback));
         };
 
         menu.disabled  = function (x) {
@@ -6883,6 +6913,274 @@
             });
     });
 
+    // Scapper point chart
+    g.paper.plugin('line', {
+        interpolate: 'cardinal',
+        colorOpacity: 1,
+        fillOpacity: 0.4,
+        lineWidth: 2,
+        transition: extend({}, g.defaults.transition),
+        fill: 'color'
+    },
+
+    function (group, p) {
+        var type = group.type();
+
+        // Draw a path or an area
+        group.path = function (data, opts) {
+            opts || (opts = {});
+            chartFormats(group, opts);
+            chartColor(group.paper(), copyMissing(p.line, opts));
+
+            return group.add(g[type].path(group)).size(point_size).data(data).options(opts);
+        };
+    });
+
+    g.svg.path = function (group) {
+
+        function area_container (aid, create) {
+            var b = group.paper().svgBackground(create),
+                a = b.select('#' + aid);
+            if (!a.size() && create)
+                a = b.append('g')
+                        .attr('id', aid)
+                        .attr("transform", "translate(" + group.marginLeft() + "," + group.marginTop() + ")");
+            return a;
+        }
+
+        return pathdraw(group, function () {
+            var draw = this,
+                opts = draw.options(),
+                el = group.element(),
+                uid = draw.uid(),
+                aid = 'area-' + uid,
+                p = el.select("#" + uid),
+                trans = opts.transition,
+                line = this.path_line(),
+                data = this.path_data(),
+                active, a;
+
+            if (!p.node()) {
+                p = el.append('path').attr('id', uid).datum(data);
+                if (opts.area)
+                    a = area_container(aid, true).append('path').datum(data);
+            }
+            else {
+                p.datum(data);
+                a = area_container(aid);
+                if (opts.area) {
+                    if(!a.size())
+                        a = area_container(aid, true);
+                    var ar = a.select('path');
+                    if (!ar.size())
+                        ar = a.append('path');
+                    a = ar.datum(data);
+                } else {
+                    a.remove();
+                    a = null;
+                }
+                if (!group.resizing() && trans && trans.duration) {
+                    p = p.transition().duration(trans.duration).ease(trans.ease);
+                    if (a)
+                        a = a.transition().duration(trans.duration).ease(trans.ease);
+                }
+            }
+
+            p.attr('d', line)
+                .attr('stroke', draw.color)
+                .attr('stroke-opacity', draw.colorOpacity)
+                .attr('stroke-width', draw.lineWidth)
+                .attr('fill', 'none');
+
+            // Area
+            if (a) {
+                line = draw.path_area();
+                if (!draw.fill)
+                    draw.fill = draw.color;
+
+                a.attr('d', line)
+                 .attr('stroke', 'none');
+
+                if (opts.gradient) {
+                    g.gradient().colors([
+                        {
+                            color: draw.fill,
+                            opacity: draw.fillOpacity,
+                            offset: 0
+                        },
+                        {
+                            color: opts.gradient,
+                            opacity: draw.fillOpacity,
+                            offset: 100
+                        }]).direction('y')(a);
+                } else
+                    group.setBackground(draw, a);
+            }
+
+            //
+            // Activate mouse over events on control points
+            if (draw.active && draw.active.symbol)
+                group.events(group.paper().element(), uid, function () {
+                    if (!active)
+                        active = el.append('path')
+                                    .attr('id', 'point-' + uid)
+                                    .datum(g.svg.point(draw, [], 0))
+                                    .attr('d', draw.symbol);
+                    var mouse = d3.mouse(this),
+                        x = mouse[0] - group.marginLeft(),
+                        d = draw.bisect(x);
+                    if (d) {
+                        active.attr("transform", "translate(" + d.sx + "," + d.sy + ")");
+                        active.datum().data = d.data;
+                        return active.node();
+                    }
+                });
+
+            return p;
+        });
+    };
+
+    g.canvas.path = function (group) {
+        var d = canvasMixin(pathdraw(group)),
+            scalex = d.scalex,
+            scaley = d.scaley,
+            ctx = group.context(),
+            opts, data, active;
+
+        d.render = function (context) {
+            opts = d.options();
+            data = d.path_data();
+            context = context || ctx;
+
+            if (opts.area) {
+                var background = group.paper().canvasBackground(true).node().getContext('2d');
+                background.save();
+                group.transform(background);
+                if (!d.fill) d.fill = d.color;
+                d.path_area().context(background)(data);
+
+                if (opts.gradient) {
+                    var scale = group.yaxis().scale(),
+                        domain = scale.domain();
+                    g.gradient()
+                            .y1(scale(domain[domain.length-1]))
+                            .y2(scale(domain[0]))
+                            .direction('y')
+                            .colors([
+                            {
+                                color: d3.canvas.rgba(d.fill, d.fillOpacity),
+                                offset: 0
+                            },
+                            {
+                                color: d3.canvas.rgba(opts.gradient, d.fillOpacity),
+                                offset: 100
+                            }])(d3.select(background.canvas));
+                } else {
+                    background.fillStyle = d3.canvas.rgba(d.fill, d.fillOpacity);
+                    background.fill();
+                }
+                background.restore();
+            }
+            ctx.strokeStyle = d.color;
+            ctx.lineWidth = group.factor()*d.lineWidth;
+            d.path_line().context(context)(data);
+            context.stroke();
+            return d;
+        };
+
+        d.context = function (context) {
+            ctx = context;
+            return d;
+        };
+
+        d.inRange = function (ex, ey) {
+            var opts = d.options();
+            if (!d.active) return false;
+            if(!d.active.symbol) return false;
+            if (!active)
+                active = g.canvas.point(d, [], 0);
+            var dd = d.bisect(ex - group.marginLeft());
+            if (dd) {
+                active.data = dd.data;
+                return active;
+            }
+            return false;
+        };
+
+        return d;
+    };
+
+
+    function pathdraw(group, render, draw) {
+        var type = group.type(),
+            bisector = d3.bisector(function (d) {return d.sx;}).left,
+            data, ordered;
+
+        draw = drawing(group, render, draw);
+
+        draw.bisector = d3.bisector(function (d) {return d.sx;}).left;
+
+        draw.each = function (callback) {
+            callback.call(draw);
+            return draw;
+        };
+
+        draw.path_line = function () {
+            var opts = draw.options();
+
+            return d3[type].line()
+                            .interpolate(opts.interpolate)
+                            .x(function (d) {return d.sx;})
+                            .y(function (d) {return d.sy;});
+        };
+
+        draw.path_area = function () {
+            var opts = draw.options(),
+                scaley = group.yaxis().scale();
+
+            return d3[type].area()
+                                .interpolate(opts.interpolate)
+                                .x(function (d) {return d.sx;})
+                                .y0(scaley(scaley.domain()[0]))
+                                .y1(function (d) {return d.sy;});
+        };
+
+        draw.path_data = function () {
+            var sx = draw.x(),
+                sy = draw.y(),
+                scalex = group.xaxis().scale(),
+                scaley = group.yaxis().scale();
+
+            ordered = null;
+            draw.symbol = d3[type].symbol().type(function (d) {return d.symbol || 'circle';})
+                                           .size(draw.size());
+            data = draw.data().map(function (d, i) {
+                var xy = {
+                    x: sx(d),
+                    y: sy(d),
+                    index: i,
+                    data: d
+                };
+                xy.sx = scalex(xy.x);
+                xy.sy = scaley(xy.y);
+                return xy;
+            });
+            return data;
+        };
+
+        draw.bisect = function (x) {
+            if (!ordered && data)
+                ordered = data.slice().sort(function (a, b) {return d3.ascending(a.sx, b.sx);});
+            if (ordered) {
+                var index = bisector(ordered, x);
+                if (index < ordered.length)
+                    return ordered[index];
+            }
+        };
+
+        return draw;
+    }
+
 
     // Add pie charts to giotto groups
 
@@ -6959,12 +7257,49 @@
         };
     });
 
-    function pieSlice (draw, data) {
+    var pieOptions = extendArray(['innerRadius', 'outerRadius'], drawingOptions);
+
+    function pieSlice (draw, data, d) {
         // Default values
-        var d = {},
-            dd = isArray(data) ? d : data;
+        var dd = isArray(data) ? d : data,
+            group = draw.group(),
+            factor = group.factor(),
+            target = group.paper().element().node();
+
         dd.fill = dd.fill || draw.paper().pickColor();
         dd.color = dd.color || d3.rgb(dd.fill).darker().toString();
+
+        d.bbox = function () {
+            var bbox = target.getBoundingClientRect(),
+                c1 = Math.sin(d.startAngle),
+                s1 = Math.cos(d.startAngle),
+                c2 = Math.sin(d.endAngle),
+                s2 = Math.cos(d.endAngle),
+                cc = Math.sin(0.5*(d.startAngle + d.endAngle)),
+                sc = Math.cos(0.5*(d.startAngle + d.endAngle)),
+                r1 = d.innerRadius,
+                r2 = d.outerRadius,
+                rc = 0.5*(r1 + r2),
+                left = group.marginLeft() + 0.5*group.innerWidth(),
+                top = group.marginTop() + 0.5*group.innerHeight(),
+                f = 1/factor;
+            return {
+                nw: {x: xx(r2*c1), y: yy(r2*s1)},
+                ne: {x: xx(r2*c2), y: yy(r2*s2)},
+                se: {x: xx(r1*c2), y: yy(r1*s2)},
+                sw: {x: xx(r1*c1), y: yy(r1*s1)},
+                w: {x: xx(rc*c1), y: yy(rc*s1)},
+                n: {x: xx(r2*cc), y: yy(r2*sc)},
+                e: {x: xx(rc*c2), y: yy(rc*s2)},
+                s: {x: xx(r1*cc), y: yy(r1*sc)},
+                c: {x: xx(rc*cc), y: yy(rc*sc)},
+                tooltip: 's'
+            };
+
+            function xx(x) {return Math.round(f*(left + x) + bbox.left);}
+            function yy(y) {return Math.round(f*(top - y) + bbox.top);}
+        };
+
         return paperData(draw, data, pieOptions, d);
     }
 
@@ -6994,10 +7329,12 @@
 
     g.svg.pieslice = function (draw, data) {
         var group = draw.group(),
-            p = pieSlice(draw, data);
+            p = pieSlice(draw, data, {});
+
         p.render = function (element) {
             group.draw(element).attr('d', draw.arc);
         };
+
         return p;
     };
 
@@ -7008,7 +7345,7 @@
     };
 
     g.canvas.pieslice = function (draw, data) {
-        var d = canvasMixin(pieSlice(draw, data)),
+        var d = pieSlice(draw, data, canvasMixin({})),
             group = draw.group(),
             factor = draw.factor(),
             ctx = group.context();
@@ -7017,8 +7354,8 @@
             context = context || ctx;
             context.save();
             context.translate(0.5*group.innerWidth(), 0.5*group.innerHeight());
-            context.fillStyle = rgba(d.fill, d.fillOpacity);
-            context.strokeStyle = rgba(d.color, d.colorOpacity);
+            context.fillStyle = d3.canvas.rgba(d.fill, d.fillOpacity);
+            context.strokeStyle = d3.canvas.rgba(d.color, d.colorOpacity);
             context.lineWidth = factor*d.lineWidth;
             draw.arc.context(context)(d);
             context.fill();
@@ -7044,6 +7381,155 @@
         return d;
     };
 
+
+    // Scapper point chart
+    g.paper.plugin('point', {
+        symbol: 'circle',
+        size: '8px',
+        fill: true,
+        fillOpacity: 1,
+        colorOpacity: 1,
+        lineWidth: 2,
+        active: {
+            fill: 'darker',
+            color: 'brighter',
+            // Multiplier for size, set to 100% for no change
+            size: '150%'
+        },
+        transition: extend({}, g.defaults.transition)
+    },
+
+    function (group, p) {
+        var type = group.type();
+
+        // Draw scatter points
+        group.points = function (data, opts) {
+            opts || (opts = {});
+            chartFormats(group, opts);
+            chartColor(group.paper(), copyMissing(p.point, opts));
+
+            return group.add(g[type].points)
+                .size(point_size)
+                .options(opts)
+                .dataConstructor(point_costructor)
+                .data(data);
+        };
+    });
+
+
+    var point_costructor = function (rawdata) {
+        // Default point size
+        var group = this.group(),
+            size = group.scale(group.dim(this.options().size)),
+            point = g[group.type()].point,
+            data = [];
+
+        for (var i=0; i<rawdata.length; i++)
+            data.push(point(this, rawdata[i], size));
+        return data;
+    };
+
+    g.svg.point = function (draw, data, size) {
+        var p = point(draw, data, size),
+            group = draw.group();
+
+        p.render = function (element) {
+            group.draw(element).attr('d', draw.symbol);
+        };
+        return p;
+    };
+
+    g.svg.points = function () {
+        var group = this.group(),
+            pp = group.element().select("#" + this.uid()),
+            scalex = this.scalex(),
+            scaley = this.scaley(),
+            data = this.data();
+
+        this.symbol = d3.svg.symbol().type(function (d) {return d.symbol;})
+                                     .size(this.size());
+
+        if (!pp.node()) {
+            pp = group.element().append('g').attr('id', this.uid());
+            this.remove = function () {
+                pp.remove();
+            };
+        }
+
+        var points = pp.selectAll('*');
+        if (data.length != points.length) {
+            points.remove();
+            points = pp.selectAll('*')
+                    .data(this.data())
+                    .enter()
+                    .append('path');
+        }
+        group.events(group.draw(points
+                 .attr("transform", function(d) {
+                     return "translate(" + scalex(d.data) + "," + scaley(d.data) + ")";
+                 })
+                 .attr('d', this.symbol)));
+
+        return pp;
+    };
+
+    g.canvas.points = function () {
+        this.each(function () {
+            this.reset().render();
+        });
+    };
+
+    g.canvas.point = function (draw, data, size) {
+        var d = canvasMixin(point(draw, data, size)),
+            scalex = draw.scalex(),
+            scaley = draw.scaley(),
+            factor = draw.factor(),
+            group = draw.group(),
+            ctx = draw.group().context();
+
+        function symbol () {
+            if (!draw.symbol)
+                draw.symbol = d3.canvas.symbol().type(function (d) {return d.symbol;})
+                                                .size(draw.size());
+            return draw.symbol;
+        }
+
+        d.render = function (context) {
+            context = context || ctx;
+            context.save();
+            _draw(context);
+            d3.canvas.style(context, d);
+            context.restore();
+            return d;
+        };
+
+        d.context = function (context) {
+            ctx = context;
+            return d;
+        };
+
+        d.inRange = function (ex, ey) {
+            ctx.save();
+            _draw(ctx);
+            var res = ctx.isPointInPath(ex, ey);
+            ctx.restore();
+            return res;
+        };
+
+        d.bbox = function () {
+            var x = scalex(d.data) + group.marginLeft(),
+                y = scaley(d.data) + group.marginTop(),
+                size = Math.sqrt(symbol().size()(d));
+            return canvasBBox(d, [x-size, y-size], [x+size, y-size], [x+size, y+size], [x-size, y+size]);
+        };
+
+        return d;
+
+        function _draw (context) {
+            context.translate(scalex(d.data), scaley(d.data));
+            symbol().context(context)(d);
+        }
+    };
 
     var tooltip;
     //
@@ -7100,7 +7586,7 @@
                     }).on(event + '.tooltip-show', function () {
                         if (tooltip.active.length) {
                             var bbox = getScreenBBox(tooltip.active[0].node()),
-                                direction = 'n';
+                                direction = bbox.tooltip || 'n';
                             if (tooltip.active.length > 1) {
                                 direction = 'e';
                                 for (var i=1; i<tooltip.active.length; ++i) {
@@ -7121,20 +7607,17 @@
 
                     overlay.on(event + '.tooltip', function () {
                         var ctx = this.getContext('2d'),
-                            point, a;
+                            point,
+                            a;
 
                         d3.canvas.clear(ctx);
-
+                        point = d3.canvas.mouse(this);
                         tooltip.hide();
 
-                        if (d3.event.type === 'mouseout')
-                            return;
-
-                        point = d3.canvas.mouse(this);
                         tooltip.active = paper.canvasDataAtPoint(point);
 
                         if (tooltip.active.length) {
-                            var direction = 'n', bbox, bbox2;
+                            var direction, bbox, bbox2;
 
                             for (var i=0; i<tooltip.active.length; ++i) {
                                 a = tooltip.active[i];
@@ -7144,8 +7627,10 @@
                                     bbox2 = a.bbox();
                                     direction = 'e';
                                     bbox[direction].y += bbox2[direction].y;
-                                } else if (!i)
+                                } else if (!i) {
                                     bbox = a.bbox();
+                                    direction = bbox.tooltip || 'n';
+                                }
                             }
                             if (bbox) {
                                 bbox[direction].y /= tooltip.active.length;
@@ -7366,7 +7851,8 @@
             nw: direction_nw,
             ne: direction_ne,
             sw: direction_sw,
-            se: direction_se
+            se: direction_se,
+            c: direction_c
         }),
 
         directions = direction_callbacks.keys();
@@ -7424,6 +7910,13 @@
             return {
                 top: bbox.se.y + offset[1],
                 left: bbox.e.x + offset[0]
+            };
+        }
+
+        function direction_c () {
+            return {
+                top: bbox.c.y + offset[1],
+                left: bbox.c.x + offset[0]
             };
         }
 
@@ -7506,7 +7999,7 @@
     //
     //      d3.giotto.angular.addAll()
     //
-    //  To register the module and add all viausizations
+    //  To register the module and add all visualizations
     //
     //      d3.giotto.angular.module(angular).addAll();
     //
@@ -7558,13 +8051,16 @@
             }
 
             injects = injects ? injects.slice() : [];
+
             if (!name) {
                 name = vizType.vizName();
                 name = mod.name.toLowerCase() + name.substring(0,1).toUpperCase() + name.substring(1);
             }
 
-            function startViz(scope, element, options) {
+            function startViz(scope, element, options, injected) {
                 options.scope = scope;
+                for (var i=0; i<injected.length; ++i)
+                    options[injects[i]] = injected[i];
                 var viz = vizType(element[0], options);
                 options = viz.options();
                 element.data(name, viz);
@@ -7577,7 +8073,7 @@
             }
 
             injects.push(function () {
-                var injected = arguments;
+                var injected_arguments = arguments;
                 return {
                     //
                     // Create via element tag or attribute
@@ -7592,10 +8088,10 @@
                                 if (!g._.isArray(require)) require = [require];
                                 g.require(require, function (opts) {
                                     extend(options, opts);
-                                    startViz(scope, element, options);
+                                    startViz(scope, element, options, injected_arguments);
                                 });
                             } else
-                                startViz(scope, element, options);
+                                startViz(scope, element, options, injected_arguments);
                         }
                     }
                 };
@@ -7735,156 +8231,6 @@
     g.crossfilter.tolerance = 1.1;
 
 
-    var rgba = d3.canvas.rgba;
-
-
-    function canvas_implementation (paper, p) {
-        var _ = {};
-
-        _.scale = function (group) {
-            return d3.canvas.retinaScale(group.context(), p.size[0], p.size[1]);
-        };
-
-        _.resize = function (group) {
-            d3.canvas.clear(group.context());
-            _.scale(group);
-            group.resetAxis().render();
-        };
-
-        _.point = canvasPoint;
-        _.path = canvasPath;
-
-        _.points = function () {
-            this.each(function () {
-                this.reset().render();
-            });
-        };
-
-        return _;
-    }
-
-    function canvasPath (group) {
-        var d = canvasMixin(pathdraw(group)),
-            scalex = d.scalex,
-            scaley = d.scaley,
-            ctx = group.context(),
-            opts, data, active;
-
-        d.render = function (context) {
-            opts = d.options();
-            data = d.path_data();
-            context = context || ctx;
-
-            if (opts.area) {
-                var background = group.paper().canvasBackground(true).node().getContext('2d');
-                background.save();
-                group.transform(background);
-                if (!d.fill) d.fill = d.color;
-                d.path_area().context(background)(data);
-
-                if (opts.gradient) {
-                    var scale = group.yaxis().scale(),
-                        domain = scale.domain();
-                    g.gradient()
-                            .y1(scale(domain[domain.length-1]))
-                            .y2(scale(domain[0]))
-                            .direction('y')
-                            .colors([
-                            {
-                                color: d3.canvas.rgba(d.fill, d.fillOpacity),
-                                offset: 0
-                            },
-                            {
-                                color: d3.canvas.rgba(opts.gradient, d.fillOpacity),
-                                offset: 100
-                            }])(d3.select(background.canvas));
-                } else {
-                    background.fillStyle = d3.canvas.rgba(d.fill, d.fillOpacity);
-                    background.fill();
-                }
-                background.restore();
-            }
-            ctx.strokeStyle = d.color;
-            ctx.lineWidth = group.factor()*d.lineWidth;
-            d.path_line().context(context)(data);
-            context.stroke();
-            return d;
-        };
-
-        d.context = function (context) {
-            ctx = context;
-            return d;
-        };
-
-        d.inRange = function (ex, ey) {
-            var opts = d.options();
-            if (!d.active) return false;
-            if(!d.active.symbol) return false;
-            if (!active)
-                active = canvasPoint(d, [], 0);
-            var dd = d.bisect(ex - group.marginLeft());
-            if (dd) {
-                active.data = dd.data;
-                return active;
-            }
-            return false;
-        };
-
-        return d;
-    }
-
-    function canvasPoint (draw, data, size) {
-        var d = canvasMixin(point(draw, data, size)),
-            scalex = draw.scalex(),
-            scaley = draw.scaley(),
-            factor = draw.factor(),
-            group = draw.group(),
-            ctx = draw.group().context();
-
-        function symbol () {
-            if (!draw.symbol)
-                draw.symbol = d3.canvas.symbol().type(function (d) {return d.symbol;})
-                                                .size(draw.size());
-            return draw.symbol;
-        }
-
-        d.render = function (context) {
-            context = context || ctx;
-            context.save();
-            _draw(context);
-            d3.canvas.style(context, d);
-            context.restore();
-            return d;
-        };
-
-        d.context = function (context) {
-            ctx = context;
-            return d;
-        };
-
-        d.inRange = function (ex, ey) {
-            ctx.save();
-            _draw(ctx);
-            var res = ctx.isPointInPath(ex, ey);
-            ctx.restore();
-            return res;
-        };
-
-        d.bbox = function () {
-            var x = scalex(d.data) + group.marginLeft(),
-                y = scaley(d.data) + group.marginTop(),
-                size = Math.sqrt(symbol().size()(d));
-            return canvasBBox(d, [x-size, y-size], [x+size, y-size], [x+size, y+size], [x-size, y+size]);
-        };
-
-        return d;
-
-        function _draw (context) {
-            context.translate(scalex(d.data), scaley(d.data));
-            symbol().context(context)(d);
-        }
-    }
-
     var fillSpecials = [true, 'none', 'color'];
 
     function chartColor(paper, opts) {
@@ -7963,7 +8309,11 @@
         p.size = [width, height];
         p.giotto = 'giotto-group';
 
-        p.__paper__ = d3.select(element).style('position', 'relative').node();
+        element = d3.select(element);
+        var position = element.style('position');
+        if (!position || position === 'static')
+            element.style('position', 'relative');
+        p.__paper__ = element.node();
 
         return p;
     }
@@ -7975,197 +8325,6 @@
         }
     }
 
-
-
-    function svg_implementation (paper, p) {
-        var _ = {};
-
-        _.resize = function (group) {
-            if (p.resize) {
-                paper.svg()
-                    .attr('width', p.size[0])
-                    .attr('height', p.size[1]);
-                group.resetAxis().render();
-            }
-        };
-
-        _.point = function (draw, data, size) {
-            var p = point(draw, data, size);
-            p.render = function (element) {
-                _draw(element).attr('d', draw.symbol);
-            };
-            return p;
-        };
-
-        _.points = function () {
-
-            var group = this.group(),
-                pp = group.element().select("#" + this.uid()),
-                scalex = this.scalex(),
-                scaley = this.scaley(),
-                data = this.data();
-
-            this.symbol = d3.svg.symbol().type(function (d) {return d.symbol;})
-                                         .size(this.size());
-
-            if (!pp.node()) {
-                pp = group.element().append('g').attr('id', this.uid());
-                this.remove = function () {
-                    pp.remove();
-                };
-            }
-
-            var points = pp.selectAll('*');
-            if (data.length != points.length) {
-                points.remove();
-                points = pp.selectAll('*')
-                        .data(this.data())
-                        .enter()
-                        .append('path');
-            }
-            _events(_draw(points
-                     .attr("transform", function(d) {
-                         return "translate(" + scalex(d.data) + "," + scaley(d.data) + ")";
-                     })
-                     .attr('d', this.symbol)));
-
-            return pp;
-        };
-
-        _.path = function (group) {
-
-            function area_container (aid, create) {
-                var b = group.paper().svgBackground(create),
-                    a = b.select('#' + aid);
-                if (!a.size() && create)
-                    a = b.append('g')
-                            .attr('id', aid)
-                            .attr("transform", "translate(" + group.marginLeft() + "," + group.marginTop() + ")");
-                return a;
-            }
-
-            return pathdraw(group, function () {
-                var draw = this,
-                    opts = draw.options(),
-                    el = group.element(),
-                    uid = draw.uid(),
-                    aid = 'area-' + uid,
-                    p = el.select("#" + uid),
-                    trans = opts.transition,
-                    line = this.path_line(),
-                    data = this.path_data(),
-                    active, a;
-
-                if (!p.node()) {
-                    p = el.append('path').attr('id', uid).datum(data);
-                    if (opts.area)
-                        a = area_container(aid, true).append('path').datum(data);
-                }
-                else {
-                    p.datum(data);
-                    a = area_container(aid);
-                    if (opts.area) {
-                        if(!a.size())
-                            a = area_container(aid, true);
-                        var ar = a.select('path');
-                        if (!ar.size())
-                            ar = a.append('path');
-                        a = ar.datum(data);
-                    } else {
-                        a.remove();
-                        a = null;
-                    }
-                    if (!group.resizing() && trans && trans.duration) {
-                        p = p.transition().duration(trans.duration).ease(trans.ease);
-                        if (a)
-                            a = a.transition().duration(trans.duration).ease(trans.ease);
-                    }
-                }
-
-                p.attr('d', line)
-                    .attr('stroke', draw.color)
-                    .attr('stroke-opacity', draw.colorOpacity)
-                    .attr('stroke-width', draw.lineWidth)
-                    .attr('fill', 'none');
-
-                // Area
-                if (a) {
-                    line = draw.path_area();
-                    if (!draw.fill)
-                        draw.fill = draw.color;
-
-                    a.attr('d', line)
-                     .attr('stroke', 'none');
-
-                    if (opts.gradient) {
-                        g.gradient().colors([
-                            {
-                                color: draw.fill,
-                                opacity: draw.fillOpacity,
-                                offset: 0
-                            },
-                            {
-                                color: opts.gradient,
-                                opacity: draw.fillOpacity,
-                                offset: 100
-                            }]).direction('y')(a);
-                    } else
-                        group.setBackground(draw, a);
-                }
-
-                //
-                // Activate mouse over events on control points
-                if (draw.active && draw.active.symbol)
-                    _events(group.paper().element(), uid, function () {
-                        if (!active)
-                            active = el.append('path')
-                                        .attr('id', 'point-' + uid)
-                                        .datum(_.point(draw, [], 0))
-                                        .attr('d', draw.symbol);
-                        var mouse = d3.mouse(this),
-                            x = mouse[0] - group.marginLeft(),
-                            d = draw.bisect(x);
-                        if (d) {
-                            active.attr("transform", "translate(" + d.sx + "," + d.sy + ")");
-                            active.datum().data = d.data;
-                            return active.node();
-                        }
-                    });
-
-                return p;
-            });
-        };
-
-        return _;
-
-        // PRIVATE FUNCTIONS
-
-        function _draw (selection) {
-            return selection
-                    .attr('stroke', function (d) {return d.color;})
-                    .attr('stroke-opacity', function (d) {return d.colorOpacity;})
-                    .attr('stroke-width', function (d) {return d.lineWidth;})
-                    .attr('fill', function (d) {return d.fill;})
-                    .attr('fill-opacity', function (d) {return d.fillOpacity;});
-        }
-
-        function _events (selection, uid, callback) {
-            var name = uid || p.giotto,
-                target;
-
-            p.activeEvents.forEach(function (event) {
-                selection.on(event + '.' + name, function () {
-                    if (uid && !paper.element().select('#' + uid).size())
-                        selection.on(event + '.' + uid, null);
-                    else {
-                        target = callback ? callback.call(this) : this;
-                        paper[d3.event.type].call(target);
-                    }
-                });
-            });
-            return selection;
-        }
-    }
 
     return d3;
 }));
