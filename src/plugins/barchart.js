@@ -24,6 +24,7 @@
             chartColor(group.paper(), copyMissing(p.bar, opts));
 
             return group.add(g[type].barchart)
+                .pointOptions(extendArray(['size'], drawingOptions))
                 .size(bar_size)
                 .options(opts)
                 .dataConstructor(bar_costructor)
@@ -33,32 +34,39 @@
 
 
     var bar_costructor = function (rawdata) {
-        var group = this.group(),
-            draw = this,
-            opts = this.options(),
-            data = [],
-            width = opts.width,
-            bar = g[group.type()].bar;
-        if (width === 'auto')
-            width = function () {
-                return d3.round(0.8*(group.innerWidth() / draw.data().length));
-            };
+            var group = this.group(),
+                draw = this,
+                opts = this.options(),
+                data = [],
+                width = opts.width,
+                bar = g[group.type()].bar;
+            if (width === 'auto')
+                width = function () {
+                    return d3.round(0.8*(group.innerWidth() / draw.data().length));
+                };
 
-        for (var i=0; i<rawdata.length; i++)
-            data.push(bar(this, rawdata[i], width));
+            for (var i=0; i<rawdata.length; i++)
+                data.push(bar(this, rawdata[i], width));
 
-        return data;
-    };
+            return data;
+        },
+
+        bar_size = function (d) {
+            var w = d.size;
+            if (typeof w === 'function') w = w();
+            return w;
+        };
 
 
     g.svg.bar = function (draw, data, size) {
-        var p = point(draw, data, size),
+        var d = drawingData(draw, data),
             group = draw.group();
 
-        p.render = function (element) {
+        d.set('size', data.size === undefined ? size : data.size);
+        d.render = function (element) {
             group.draw(element);
         };
-        return p;
+        return d;
     };
 
     g.svg.barchart = function () {
@@ -125,7 +133,7 @@
     };
 
     g.canvas.bar = function (draw, data, siz) {
-        var d = canvasMixin(point(draw, data, siz)),
+        var d = canvasMixin(drawingData(draw, data)),
             group = d.group(),
             xscale = group.xaxis().scale(),
             scalex = draw.scalex(),
@@ -134,6 +142,8 @@
             factor = draw.factor(),
             ctx = group.context(),
             x, y, y0, y1, w, w0, yb, radius;
+
+        d.set('size', data.size === undefined ? siz : data.size);
 
         d.render = function (context) {
             context = context || ctx;

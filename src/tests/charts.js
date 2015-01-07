@@ -1,6 +1,7 @@
 
     function testCharts (type) {
-        var g = d3.giotto;
+        var g = d3.giotto,
+            _ = g._;
 
         function chart(opts) {
             opts || (opts = {});
@@ -158,6 +159,15 @@
                     expect(serie.bar).toBe(undefined);
                     expect(serie.pie).not.toBe(undefined);
                     expect(group).not.toBe(undefined);
+
+                    var pie = serie.pie,
+                        opts = pie.options();
+                    expect(_.isObject(opts)).toBe(true);
+                    expect(opts.innerRadius).toBe(0);
+                    expect(pie.draw()).toBe(pie);
+
+                    expect(pie.set('innerRadius', '50%')).toBe(pie);
+                    expect(opts.innerRadius).toBe('50%');
                 });
 
                 expect(count).toBe(1);

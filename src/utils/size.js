@@ -1,9 +1,9 @@
 
     function giotto_id (element) {
-        var id = element.attr('id');
+        var id = element ? element.attr('id') : null;
         if (!id) {
-            id = 'giotto-element-' + (++_idCounter);
-            element.attr('id', id);
+            id = 'giotto' + (++_idCounter);
+            if (element) element.attr('id', id);
         }
         return id;
     }

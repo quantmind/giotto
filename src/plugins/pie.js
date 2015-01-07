@@ -69,12 +69,11 @@
                 return g[type].pie(this, width, height);
             });
 
-            return draw.options(opts)
+            return draw.pointOptions(extendArray(['innerRadius', 'outerRadius'], drawingOptions))
+                        .options(opts)
                         .data(data.map(function (d) {return pieslice(draw, d);}));
         };
     });
-
-    var pieOptions = extendArray(['innerRadius', 'outerRadius'], drawingOptions);
 
     function pieSlice (draw, data, d) {
         // Default values
@@ -117,7 +116,7 @@
             function yy(y) {return Math.round(f*(top - y) + bbox.top);}
         };
 
-        return paperData(draw, data, pieOptions, d);
+        return drawingData(draw, data, d);
     }
 
     g.svg.pie = function (draw, width, height) {

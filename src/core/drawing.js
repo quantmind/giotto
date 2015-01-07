@@ -1,26 +1,29 @@
 
+    var drawingOptions = ['fill', 'fillOpacity', 'color', 'colorOpacity',
+                          'lineWidth'];
     //
-    // A drawing is drawn on a group
+    // A drawing is drawn on a group by the renderer function
     function drawing (group, renderer, draw) {
-        var uid = ++_idCounter,
+        var uid = giotto_id(),
             x = d3_geom_pointX,
             y = d3_geom_pointY,
-            size = default_size,
+            opts = {},
+            pointOptions = drawingOptions,
+            size = function (d) {return d.size;},
             changed,
             name,
             data,
-            opts,
             formatX,
             formatY,
             label,
-            dataConstructor;
+            dataConstructor,
+            set;
 
-        draw = highlightMixin(drawingOptions, draw);
-
-        var set = draw.set;
+        draw = highlightMixin(draw);
+        set = draw.set;
 
         draw.uid = function () {
-            return 'giottodraw' + uid;
+            return uid;
         };
 
         draw.remove = noop;
@@ -65,16 +68,15 @@
             return draw;
         };
 
-        // set a value and its default
+        // set a value and its default (override highlight)
         draw.set = function (name, value) {
-            if (pointOptions.indexOf(name) === -1) {
-                opts[name] = value;
-            } else if (data) {
+            opts[name] = value;
+            set(name, value);
+            if (data && pointOptions.indexOf(name) > -1) {
                 data.forEach(function (d) {
                     d.set(name, value);
                 });
-            } else
-                set(name, value);
+            }
             return draw;
         };
 
@@ -126,17 +128,6 @@
             };
         };
 
-        // replace the data for this drawing
-        draw.data = function (_) {
-            if (arguments.length === 0) return data;
-            changed = true;
-            if (dataConstructor)
-                data = dataConstructor.call(draw, _);
-            else
-                data = _;
-            return draw;
-        };
-
         draw.add = function (d) {
             if (dataConstructor)
                 d = dataConstructor.call(draw, [d]);
@@ -147,15 +138,32 @@
             return draw;
         };
 
+        // replace the data for this drawing
+        draw.data = function (_) {
+            if (!arguments.length) return data;
+            changed = true;
+            if (dataConstructor)
+                data = dataConstructor.call(draw, _);
+            else
+                data = _;
+            return draw;
+        };
+
         draw.dataConstructor = function (_) {
-            if (arguments.length === 0) return dataConstructor;
+            if (!arguments.length) return dataConstructor;
             dataConstructor = d3_functor(_);
             return draw;
         };
 
         draw.label = function (_) {
-            if (arguments.length === 0) return label;
+            if (!arguments.length) return label;
             label = _;
+            return draw;
+        };
+
+        draw.pointOptions = function (_) {
+            if (!arguments.length) return pointOptions;
+            pointOptions = _;
             return draw;
         };
 
@@ -175,8 +183,8 @@
 
     // A mixin for highlighting elements
     //
-    // THis is used by the drawing and paperData constructors
-    function highlightMixin (parameters, d) {
+    // This is used by the drawing and drawingData constructors
+    function highlightMixin (d) {
         var values = {},
             opts,
             highlight = false;
@@ -198,7 +206,7 @@
             var a = d.active,
                 v;
             if (a) {
-                parameters.forEach(function (name) {
+                d.pointOptions().forEach(function (name) {
                     v = a[name];
                     if (v) {
                         if (typeof v === 'string') {
@@ -218,7 +226,7 @@
 
         // set a value and its default
         d.set = function (name, value) {
-            if (parameters.indexOf(name) > -1) {
+            if (d.pointOptions().indexOf(name) > -1) {
                 values[name] = value;
                 d[name] = value;
             }
@@ -227,7 +235,7 @@
 
         d.reset = function () {
             highlight = false;
-            parameters.forEach(function (name) {
+            d.pointOptions().forEach(function (name) {
                 d[name] = values[name];
             });
             return d;
@@ -235,7 +243,7 @@
 
         d.init = function (data, opts, dd) {
             var value;
-            parameters.forEach(function (name) {
+            d.pointOptions().forEach(function (name) {
                 value = data[name] || opts[name];
                 if (isFunction(value) && dd) value = value(dd);
                 values[name] = value;
@@ -258,18 +266,11 @@
         return d;
     }
     //
-    // Manage attributes for data to be drawn on papers
-    function paperData (draw, data, parameters, d) {
+    // Manage a data point to be drawn on a drawing
+    function drawingData (draw, data, d) {
         var opts = draw.options();
-        d = highlightMixin(parameters, d);
+        d = highlightMixin(d);
         d.data = data;
-
-        if (isArray(data))
-            d.init(d, opts);
-        else {
-            d.init(data, opts, data);
-            d.active = data.active;
-        }
 
         d.options = function () {
             return opts;
@@ -283,44 +284,16 @@
             return draw.group();
         };
 
-        return d;
-    }
-
-    function point (draw, data, size) {
-        var d = paperData(draw, data, pointOptions);
-        d.set('size', data.size === undefined ? size : data.size);
-        return d;
-    }
-
-    var SymbolSize = {
-            circle: 0.7,
-            cross: 0.7,
-            diamond: 0.7,
-            "triangle-up": 0.6,
-            "triangle-down": 0.6
-        },
-
-        drawingOptions = ['fill', 'color', 'fillOpacity',
-                        'colorOpacity', 'lineWidth'],
-
-        pointOptions = extendArray(['size', 'symbol'], drawingOptions),
-
-        default_size = function (d) {
-            return d.size;
-        },
-
-        point_size = function (d) {
-            var s = +d.size;
-            if (isNaN(s)) {
-                var g = d.group();
-                s = g.scale(g.xfromPX(d.size.substring(0, d.size.length-2)));
-            }
-            return s*s*(SymbolSize[d.symbol] || 1);
-        },
-
-        bar_size = function (d) {
-            var w = d.size;
-            if (typeof w === 'function') w = w();
-            return w;
+        d.pointOptions = function () {
+            return draw.pointOptions();
         };
 
+        if (isArray(data))
+            d.init(d, opts);
+        else {
+            d.init(data, opts, data);
+            d.active = data.active;
+        }
+
+        return d;
+    }

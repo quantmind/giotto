@@ -17,7 +17,11 @@
             chartFormats(group, opts);
             chartColor(group.paper(), copyMissing(p.line, opts));
 
-            return group.add(g[type].path(group)).size(point_size).data(data).options(opts);
+            return group.add(g[type].path(group))
+                        .pointOptions(pointOptions)
+                        .size(point_size)
+                        .data(data)
+                        .options(opts);
         };
     });
 

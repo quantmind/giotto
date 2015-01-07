@@ -25,6 +25,7 @@
             chartColor(group.paper(), copyMissing(p.point, opts));
 
             return group.add(g[type].points)
+                .pointOptions(pointOptions)
                 .size(point_size)
                 .options(opts)
                 .dataConstructor(point_costructor)
@@ -33,26 +34,46 @@
     });
 
 
-    var point_costructor = function (rawdata) {
-        // Default point size
-        var group = this.group(),
-            size = group.scale(group.dim(this.options().size)),
-            point = g[group.type()].point,
-            data = [];
+    var SymbolSize = {
+            circle: 0.7,
+            cross: 0.7,
+            diamond: 0.7,
+            "triangle-up": 0.6,
+            "triangle-down": 0.6
+        },
 
-        for (var i=0; i<rawdata.length; i++)
-            data.push(point(this, rawdata[i], size));
-        return data;
-    };
+        pointOptions = extendArray(['size', 'symbol'], drawingOptions),
+
+        point_size = function (d) {
+            var s = +d.size;
+            if (isNaN(s)) {
+                var g = d.group();
+                s = g.scale(g.xfromPX(d.size.substring(0, d.size.length-2)));
+            }
+            return s*s*(SymbolSize[d.symbol] || 1);
+        },
+
+        point_costructor = function (rawdata) {
+            // Default point size
+            var group = this.group(),
+                size = group.scale(group.dim(this.options().size)),
+                point = g[group.type()].point,
+                data = [];
+
+            for (var i=0; i<rawdata.length; i++)
+                data.push(point(this, rawdata[i], size));
+            return data;
+        };
 
     g.svg.point = function (draw, data, size) {
-        var p = point(draw, data, size),
+        var d = drawingData(draw, data),
             group = draw.group();
 
-        p.render = function (element) {
+        d.set('size', data.size === undefined ? size : data.size);
+        d.render = function (element) {
             group.draw(element).attr('d', draw.symbol);
         };
-        return p;
+        return d;
     };
 
     g.svg.points = function () {
@@ -96,7 +117,7 @@
     };
 
     g.canvas.point = function (draw, data, size) {
-        var d = canvasMixin(point(draw, data, size)),
+        var d = canvasMixin(drawingData(draw, data)),
             scalex = draw.scalex(),
             scaley = draw.scaley(),
             factor = draw.factor(),
@@ -104,11 +125,13 @@
             ctx = draw.group().context();
 
         function symbol () {
-            if (!draw.symbol)
-                draw.symbol = d3.canvas.symbol().type(function (d) {return d.symbol;})
+            if (!draw.Symbol)
+                draw.Symbol = d3.canvas.symbol().type(function (d) {return d.symbol;})
                                                 .size(draw.size());
-            return draw.symbol;
+            return draw.Symbol;
         }
+
+        d.set('size', data.size === undefined ? size : data.size);
 
         d.render = function (context) {
             context = context || ctx;
