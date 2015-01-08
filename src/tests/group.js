@@ -114,6 +114,9 @@
             // Default size
             expect(paper.size()[0]).toBe(g.constants.WIDTH);
             expect(paper.size()[1]).toBe(g.constants.HEIGHT);
+            var bbox = paper.boundingBox();
+            expect(bbox[0]).toBe(g.constants.WIDTH);
+            expect(bbox[1]).toBe(g.constants.HEIGHT);
         });
 
         it("Check axis linear scale", function () {

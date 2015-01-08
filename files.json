@@ -26,6 +26,7 @@
     "giottoweb": {
         "src": ["src/giottoweb/open.js",
                 "src/giottoweb/features.js",
+                "src/giottoweb/colorbrewer.js",
                 "src/giottoweb/close.js"],
         "dest": "giottoweb/media/giottoweb/giottoweb.js",
         "minify": false

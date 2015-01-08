@@ -16,7 +16,7 @@ class PieTypeForm(forms.Form):
         label='corner radius',
         required=False)
     innerRadius = forms.FloatField(
-        initial=0.5,
+        initial=0.6,
         min=0,
         max=0.99,
         label='inner radius',

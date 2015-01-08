@@ -139,20 +139,20 @@
         };
 
         // pick a color
-        paper.pickColor = function (index, darker) {
+        paper.pickColor = function (index) {
             if (arguments.length === 0)
                 index = p.colorIndex++;
-            var dk = 1,
-                k = 0;
+            var dk = 0, bk = 0;
             while (index >= p.colors.length) {
                 index -= p.colors.length;
-                k += dk;
+                dk += p.darkerColor;
+                bk += p.brighterColor;
             }
             var c = p.colors[index];
-            if (darker)
-                c = d3.rgb(c).darker(darker).toString();
-            if (k)
-                c = d3.rgb(c).brighter(k).toString();
+            if (dk)
+                c = d3.rgb(c).darker(dk).toString();
+            else if (bk)
+                c = d3.rgb(c).brighter(bk).toString();
             return c;
         };
 

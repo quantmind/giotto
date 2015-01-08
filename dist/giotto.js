@@ -1,6 +1,6 @@
 //      GiottoJS - v0.1.0
 
-//      Compiled 2015-01-07.
+//      Compiled 2015-01-08.
 //      Copyright (c) 2015 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -2869,6 +2869,8 @@
         resize: true,
         margin: {top: 20, right: 20, bottom: 20, left: 20},
         colors: d3.scale.category10().range(),
+        darkerColor: 0,
+        brighterColor: 0,
         colorIndex: 0,
         css: null,
         activeEvents: ["mousemove", "touchstart", "touchmove", "mouseout"],
@@ -3150,20 +3152,20 @@
         };
 
         // pick a color
-        paper.pickColor = function (index, darker) {
+        paper.pickColor = function (index) {
             if (arguments.length === 0)
                 index = p.colorIndex++;
-            var dk = 1,
-                k = 0;
+            var dk = 0, bk = 0;
             while (index >= p.colors.length) {
                 index -= p.colors.length;
-                k += dk;
+                dk += p.darkerColor;
+                bk += p.brighterColor;
             }
             var c = p.colors[index];
-            if (darker)
-                c = d3.rgb(c).darker(darker).toString();
-            if (k)
-                c = d3.rgb(c).brighter(k).toString();
+            if (dk)
+                c = d3.rgb(c).darker(dk).toString();
+            else if (bk)
+                c = d3.rgb(c).brighter(bk).toString();
             return c;
         };
 
@@ -7193,12 +7195,20 @@
             template: function (d) {
                 return "<p><strong style='color:"+d.c+"'>" + d.x + "</strong> " + d.y + "</p>";
             }
+        },
+        labels: {
+            show: true,
+            position: 'ouside',
+            outerRadius: 1.05,
+            color: '#333',
+            colorOpacity: 0.5,
+            lineWidth: 1
         }
+
     },
 
     function (group, p) {
         var type = group.type(),
-            pieslice = g[type].pieslice,
             arc = d3[type].arc()
                             .innerRadius(function (d) {return d.innerRadius;})
                             .outerRadius(function (d) {return d.outerRadius;});
@@ -7240,10 +7250,31 @@
             });
 
             return draw.pointOptions(extendArray(['innerRadius', 'outerRadius'], drawingOptions))
+                        .dataConstructor(pie_costructor)
                         .options(opts)
-                        .data(data.map(function (d) {return pieslice(draw, d);}));
+                        .data(data);
         };
     });
+
+    var pie_costructor = function (rawdata) {
+        var draw = this,
+            x = draw.x(),
+            pieslice = g[draw.group().type()].pieslice,
+            map = d3.map(this.data() || [], function (d) {return x(d.data);}),
+            data = [],
+            slice;
+        rawdata.forEach(function (d) {
+            slice = map.get(x(d));
+            if (!slice) slice = pieslice(draw, d);
+            else slice.data = d;
+            data.push(slice);
+        });
+        return data;
+    };
+
+    function midAngle(d) {
+        return d.startAngle + (d.endAngle - d.startAngle)/2;
+    }
 
     function pieSlice (draw, data, d) {
         // Default values
@@ -7293,24 +7324,38 @@
 
         var group = draw.group(),
             container = group.element(),
-            pp = container.select('#' + draw.uid());
+            opts = draw.options(),
+            trans = opts.transition,
+            pp = container.select('#' + draw.uid()),
+            resizing = group.resizing();
 
-        if (!pp.size())
+        if (!pp.size()) {
+            resizing = true;
             pp = container.append("g")
                         .attr('id', draw.uid())
                         .classed('pie', true);
+            pp.append('g').classed('slices', true);
+        }
 
-        pp.attr("transform", "translate(" + width/2 + "," + height/2 + ")")
-            .selectAll(".slice").remove();
+        var slices = pp.attr("transform", "translate(" + width/2 + "," + height/2 + ")")
+                        .select('.slices')
+                        .selectAll(".slice").data(draw.data());
 
-        return group.events(
-                group.draw(pp
-                            .selectAll(".slice")
-                            .data(draw.data())
-                            .enter()
-                            .append("path")
-                            .attr('class', 'slice')
-                            .attr('d', draw.arc)));
+        slices.enter()
+            .append("path")
+            .attr('class', 'slice');
+
+        slices.exit().remove();
+
+        group.events(slices);
+
+        if (opts.labels.show)
+            g.svg.pielabels(draw, pp, opts);
+
+        if (!resizing && trans && trans.duration)
+            slices = slices.transition().duration(trans.duration).ease(trans.ease);
+
+        return group.draw(slices.attr('d', draw.arc));
     };
 
     g.svg.pieslice = function (draw, data) {
@@ -7322,6 +7367,120 @@
         };
 
         return p;
+    };
+
+    g.svg.pielabels = function (draw, container, options) {
+        var group = draw.group(),
+            opts = extend({}, draw.group().options().font, options.labels),
+            labels = container.selectAll('.labels'),
+            trans = options.transition,
+            resizing = group.resizing();
+
+        if (!labels.size()) {
+            resizing = true;
+            labels = container.append('g').classed('labels', true);
+        }
+
+        if (opts.position === 'bar') {
+
+        } else {
+            var x = draw.x(),
+                text = labels.selectAll('text').data(draw.data()),
+                pos;
+            text.enter().append("text");
+            text.exit().remove();
+            svg_font(text, opts);
+
+            if (!resizing && trans && trans.duration)
+                text = text.transition().duration(trans.duration).ease(trans.ease);
+
+            if (opts.position === 'outside') {
+                var outerArc = d3.svg.arc(),
+                    lines = container.selectAll('.lines').data([true]),
+                    radius,
+                    xx;
+
+                lines.enter().append('g').classed('lines', true);
+                lines = lines.selectAll('polyline').data(draw.data());
+                lines.enter().append('polyline');
+                lines.exit().remove();
+
+                if (!resizing && trans && trans.duration)
+                    lines = lines.transition().duration(trans.duration).ease(trans.ease);
+
+                var right = [],
+                    left = [];
+                draw.data().forEach(function (d) {
+                    d.labelAngle = midAngle(d);
+                    d.labelRadius = d.outerRadius*opts.outerRadius;
+                    d.labelTurn = outerArc.innerRadius(d.labelRadius).outerRadius(d.labelRadius).centroid(d);
+                    d.labelY = d.labelTurn[1];
+                    d.labelAngle < π ? right.push(d) : left.push(d);
+                });
+                relax(right);
+                relax(left);
+                lines.attr('points', function (d) {
+                        pos = [1.05 * d.labelRadius * (d.labelAngle < π ? 1 : -1), d.labelY];
+                        return [draw.arc.centroid(d), d.labelTurn, pos];
+                    }).attr('fill', 'none')
+                    .attr('stroke', opts.color)
+                    .attr('stroke-opacity', opts.colorOpacity)
+                    .attr('stroke-width', opts.lineWidth);
+
+                text.text(function (d) {return x(d.data);})
+                    .attr('transform', function (d) {
+                        pos = [1.1 * d.labelRadius * (d.labelAngle < π ? 1 : -1), d.labelY];
+                        return 'translate(' + pos + ')';
+                    })
+                    .style('text-anchor', function (d) {
+                        return midAngle(d) < π ? "start":"end";
+                    });
+            }
+        }
+
+        function relax (nodes) {
+            var N = nodes.length,
+                tol = 10000,
+                maxiter = 100;
+            if (N < 3) return;
+            var ymin = group.innerHeight()/2 + group.marginTop(),
+                ymax = group.innerHeight()/2 + group.marginBottom(),
+                iter = 0,
+                dy, y0, y1;
+
+            nodes.sort(function (a, b) {return d3.ascending(a.labelY, b.labelY);});
+
+            ymin = Math.min(nodes[0].labelY, -ymin+10);
+            ymax = Math.max(nodes[N-1].labelY, ymax-10);
+
+            while (tol > 0.5 && iter<maxiter) {
+                y1 = nodes[0].labelY;
+                iter++;
+                tol = 0;
+                nodes[0].dy = 0;
+                for (var i=1; i<nodes.length; ++i) {
+                    y0 = y1;
+                    y1 = nodes[i].labelY;
+                    dy = force(y1-y0);
+                    nodes[i-1].dy -= dy;
+                    nodes[i].dy = dy;
+                }
+                for (i=1; i<nodes.length-1; ++i) {
+                    if (nodes[i].dy < 0)
+                        dy = Math.max(nodes[i].dy, 0.49*(nodes[i-1].labelY - nodes[i].labelY));
+                    else
+                        dy = Math.min(nodes[i].dy, 0.49*(nodes[i+1].labelY - nodes[i].labelY));
+                    tol = Math.max(tol, abs(dy));
+                    nodes[i].labelY += dy;
+                }
+                nodes[0].labelY = Math.max(nodes[0].labelY + nodes[0].dy, ymin);
+                nodes[N-1].labelY = Math.min(nodes[N-1].labelY + nodes[N-1].dy, ymax);
+            }
+
+            function force (dd) {
+                return dd < 20 ? 100/(dd*dd) : 0;
+            }
+        }
     };
 
     g.canvas.pie = function (draw) {

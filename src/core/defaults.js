@@ -14,6 +14,8 @@
         resize: true,
         margin: {top: 20, right: 20, bottom: 20, left: 20},
         colors: d3.scale.category10().range(),
+        darkerColor: 0,
+        brighterColor: 0,
         colorIndex: 0,
         css: null,
         activeEvents: ["mousemove", "touchstart", "touchmove", "mouseout"],

@@ -15,6 +15,7 @@
 
     gexamples.piecharts = {
         height: '80%',
+        margin: 50,
 
         tooltip: {
           show: true
@@ -22,9 +23,14 @@
 
         pie: {
             show: true,
-            formatY: ',',
+            formatY: function (d) {
+                return d3.format(',')(d) + 'M ectoliters';
+            },
             active: {
                 outerRadius: '105%'
+            },
+            labels: {
+                position: 'outside'
             }
         },
 
