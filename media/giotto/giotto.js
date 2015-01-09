@@ -3148,7 +3148,7 @@
                 h = p.elheight ? getHeight(p.elheight) : p.size[1];
             if (p.min_height)
                 h = Math.max(h, p.min_height);
-            return [w, h];
+            return [Math.round(w), Math.round(h)];
         };
 
         // pick a color
@@ -4797,8 +4797,6 @@
 
         var nodes = [],
             forces = [],
-            scalex = d3.scale.linear(),
-            scaley = d3.scale.linear(),
             neighbors, friction,
             q, i, j, o, l, s, t, x, y, k;
 
@@ -4808,20 +4806,6 @@
             nodes = x;
             for (i = 0; i < nodes.length; ++i)
                 initNode(nodes[i]).index = i;
-            return force;
-        };
-
-        // internal x-scale to and from [0, 1]
-        force.scalex = function (_) {
-            if (!arguments.length) return scalex;
-            scalex = _;
-            return force;
-        };
-
-        // internal y-scale to and from [0, 1]
-        force.scaley = function (_) {
-            if (!arguments.length) return scaley;
-            scaley = _;
             return force;
         };
 
