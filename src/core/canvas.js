@@ -73,6 +73,11 @@
         return group.factor(_.scale(group));
     };
 
+    g.canvas.font = function (ctx, opts) {
+        opts = extend({}, g.defaults.paper.font, opts);
+        ctx.fillStyle = opts.color;
+        ctx.font = fontString(opts);
+    };
 
     function canvasMixin(d) {
         d.inRange = function () {};

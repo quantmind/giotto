@@ -1,7 +1,7 @@
 
     g.createviz('chart', {
         margin: {top: 30, right: 30, bottom: 30, left: 30},
-        chartTypes: ['pie', 'bar', 'line', 'point'],
+        chartTypes: ['pie', 'bar', 'line', 'point', 'custom'],
         serie: {
             x: function (d) {return d[0];},
             y: function (d) {return d[1];}
@@ -138,7 +138,7 @@
                     serie.data = o;
                     o = {}; // an ampty object so that it is shown
                 }
-                if (o || opts[type].show) {
+                if (o || (opts[type] && opts[type].show)) {
                     serie[type] = extend({}, opts[type], o);
                     show = true;
                 }
@@ -280,6 +280,11 @@
                             serie[type] = chartTypes[type](group, serie.data(), stype).label(serie.label);
                     });
                 } else {
+                    opts.chartTypes.forEach(function (type) {
+                        stype = serie[type];
+                        if (stype)
+                            serie[type].label(serie.label);
+                    });
                     serie.drawXaxis ? domain(group.xaxis()) : scale(group.xaxis());
                     serie.drawYaxis ? domain(group.yaxis()) : scale(group.yaxis());
                 }
@@ -367,6 +372,22 @@
             return group.points(data, opts)
                         .x(function (d) {return d.x;})
                         .y(function (d) {return d.y;});
+        },
+
+        custom: function (group, data, opts) {
+            var draw = drawing(group, function () {
+                    return opts.show.call(this);
+                }).options(opts).data(data);
+
+            if (group.type() === 'canvas') {
+                draw = canvasMixin(draw);
+                draw.each = function (callback) {
+                    callback.call(draw);
+                    return draw;
+                };
+            }
+
+            return group.add(draw);
         }
     };
 

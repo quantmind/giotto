@@ -1,6 +1,6 @@
 //      GiottoJS - v0.1.0
 
-//      Compiled 2015-01-08.
+//      Compiled 2015-01-09.
 //      Copyright (c) 2015 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -3888,6 +3888,11 @@
             });
     }
 
+    g.svg.font = function (selection, opts) {
+        opts = extend({}, g.defaults.paper.font, opts);
+        return svg_font(selection, opts);
+    };
+
     //
     //  Canvas
     //  ======================
@@ -3963,6 +3968,11 @@
         return group.factor(_.scale(group));
     };
 
+    g.canvas.font = function (ctx, opts) {
+        opts = extend({}, g.defaults.paper.font, opts);
+        ctx.fillStyle = opts.color;
+        ctx.font = fontString(opts);
+    };
 
     function canvasMixin(d) {
         d.inRange = function () {};
@@ -4335,7 +4345,7 @@
 
     g.createviz('chart', {
         margin: {top: 30, right: 30, bottom: 30, left: 30},
-        chartTypes: ['pie', 'bar', 'line', 'point'],
+        chartTypes: ['pie', 'bar', 'line', 'point', 'custom'],
         serie: {
             x: function (d) {return d[0];},
             y: function (d) {return d[1];}
@@ -4472,7 +4482,7 @@
                     serie.data = o;
                     o = {}; // an ampty object so that it is shown
                 }
-                if (o || opts[type].show) {
+                if (o || (opts[type] && opts[type].show)) {
                     serie[type] = extend({}, opts[type], o);
                     show = true;
                 }
@@ -4614,6 +4624,11 @@
                             serie[type] = chartTypes[type](group, serie.data(), stype).label(serie.label);
                     });
                 } else {
+                    opts.chartTypes.forEach(function (type) {
+                        stype = serie[type];
+                        if (stype)
+                            serie[type].label(serie.label);
+                    });
                     serie.drawXaxis ? domain(group.xaxis()) : scale(group.xaxis());
                     serie.drawYaxis ? domain(group.yaxis()) : scale(group.yaxis());
                 }
@@ -4701,6 +4716,22 @@
             return group.points(data, opts)
                         .x(function (d) {return d.x;})
                         .y(function (d) {return d.y;});
+        },
+
+        custom: function (group, data, opts) {
+            var draw = drawing(group, function () {
+                    return opts.show.call(this);
+                }).options(opts).data(data);
+
+            if (group.type() === 'canvas') {
+                draw = canvasMixin(draw);
+                draw.each = function (callback) {
+                    callback.call(draw);
+                    return draw;
+                };
+            }
+
+            return group.add(draw);
         }
     };
 
@@ -7183,6 +7214,7 @@
         innerRadius: 0,
         startAngle: 0,
         formatX: d3_identity,
+        formatPercent: ',.2%',
         active: {
             fill: 'darker',
             color: 'brighter',
@@ -7193,7 +7225,7 @@
         transition: extend({}, g.defaults.transition),
         tooltip: {
             template: function (d) {
-                return "<p><strong style='color:"+d.c+"'>" + d.x + "</strong> " + d.y + "</p>";
+                return "<p><strong>" + d.x + "</strong> " + d.y + "</p>";
             }
         },
         labels: {
@@ -7204,7 +7236,6 @@
             colorOpacity: 0.5,
             lineWidth: 1
         }
-
     },
 
     function (group, p) {
@@ -7374,7 +7405,8 @@
             opts = extend({}, draw.group().options().font, options.labels),
             labels = container.selectAll('.labels'),
             trans = options.transition,
-            resizing = group.resizing();
+            resizing = group.resizing(),
+            pcf = d3.format(options.formatPercent);
 
         if (!labels.size()) {
             resizing = true;
@@ -7427,7 +7459,9 @@
                     .attr('stroke-opacity', opts.colorOpacity)
                     .attr('stroke-width', opts.lineWidth);
 
-                text.text(function (d) {return x(d.data);})
+                text.text(function (d) {
+                        return x(d.data) + ' ' + pcf(pc(d));
+                    })
                     .attr('transform', function (d) {
                         pos = [1.1 * d.labelRadius * (d.labelAngle < π ? 1 : -1), d.labelY];
                         return 'translate(' + pos + ')';
@@ -7436,6 +7470,10 @@
                         return midAngle(d) < π ? "start":"end";
                     });
             }
+        }
+
+        function pc (d) {
+            return (d.endAngle - d.startAngle)/τ;
         }
 
         function relax (nodes) {

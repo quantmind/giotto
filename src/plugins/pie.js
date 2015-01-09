@@ -11,6 +11,7 @@
         innerRadius: 0,
         startAngle: 0,
         formatX: d3_identity,
+        formatPercent: ',.2%',
         active: {
             fill: 'darker',
             color: 'brighter',
@@ -21,7 +22,7 @@
         transition: extend({}, g.defaults.transition),
         tooltip: {
             template: function (d) {
-                return "<p><strong style='color:"+d.c+"'>" + d.x + "</strong> " + d.y + "</p>";
+                return "<p><strong>" + d.x + "</strong> " + d.y + "</p>";
             }
         },
         labels: {
@@ -32,7 +33,6 @@
             colorOpacity: 0.5,
             lineWidth: 1
         }
-
     },
 
     function (group, p) {
@@ -202,7 +202,8 @@
             opts = extend({}, draw.group().options().font, options.labels),
             labels = container.selectAll('.labels'),
             trans = options.transition,
-            resizing = group.resizing();
+            resizing = group.resizing(),
+            pcf = d3.format(options.formatPercent);
 
         if (!labels.size()) {
             resizing = true;
@@ -255,7 +256,9 @@
                     .attr('stroke-opacity', opts.colorOpacity)
                     .attr('stroke-width', opts.lineWidth);
 
-                text.text(function (d) {return x(d.data);})
+                text.text(function (d) {
+                        return x(d.data) + ' ' + pcf(pc(d));
+                    })
                     .attr('transform', function (d) {
                         pos = [1.1 * d.labelRadius * (d.labelAngle < π ? 1 : -1), d.labelY];
                         return 'translate(' + pos + ')';
@@ -264,6 +267,10 @@
                         return midAngle(d) < π ? "start":"end";
                     });
             }
+        }
+
+        function pc (d) {
+            return (d.endAngle - d.startAngle)/τ;
         }
 
         function relax (nodes) {

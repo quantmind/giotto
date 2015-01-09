@@ -18,12 +18,9 @@
             innerRadius: 0.7,
             cornerRadius: 0.01,
             padAngle: 0.5,
-            fillOpacity: 0.5,
+            fillOpacity: 0.7,
             active: {
-                fillOpacity: 1,
-                transition: {
-                    duration: 200
-                }
+                fillOpacity: 1
             },
             transition: {
                 duration: 1000
@@ -33,6 +30,45 @@
             },
             x: function (d) {return d[1];},
             y: function (d) {return d[2];}
+        },
+
+        // Custom entry for diplaying the year and the total ammount of debt
+        custom: {
+            show: function () {
+                // display the year and total debt
+                var group = this.group(),
+                    width = group.innerWidth(),
+                    height = group.innerHeight(),
+                    data = this.data(),
+                    size = 30*group.factor(),
+                    dy = 10*group.factor(),
+                    total = 0;
+                data.forEach(function (d) {
+                    total += d[2];
+                });
+                total = gexamples.europedebt.pie.formatY(total);
+                if (group.type() === 'svg') {
+                    var uid = this.uid() + 'info',
+                        el = group.element().selectAll('#' + uid).data([true]);
+                    el.enter().append('g').attr('id', uid);
+                    el.attr('transform', 'translate(' + width/2 + ',' + (height - size)/2 + ')');
+                    var text = el.selectAll('text').data([this.label() + ' total', total]);
+                    text.enter().append('text');
+                    d3.giotto.svg.font(text, {size: size + 'px', weight: 'bold'});
+                    text.attr('text-anchor', 'middle')
+                        .text(function (d) {return d;})
+                        .attr('y', function (d, i) {return (size + dy)*i;});
+                } else {
+                    var ctx = group.context();
+                    ctx.save();
+                    ctx.translate(width/2, (height - size)/2);
+                    ctx.font = d3.giotto.canvas.font(ctx, {size: size + 'px', weight: 'bold'});
+                    ctx.textAlign = 'center';
+                    ctx.fillText(this.label() + ' total', 0, 0);
+                    ctx.fillText(total, 0, size + dy);
+                    ctx.restore();
+                }
+            }
         },
 
         onInit: function (chart, opts) {
@@ -56,11 +92,22 @@
                     chart.resume();
                 } else
                     opts.data = [data];
-                //d3.timer(animate, 2*opts.pie.transition.duration);
+                d3.timer(animate, 4*opts.pie.transition.duration);
                 return true;
             }
 
             animate();
+        },
+
+        // Callback for angular directive
+        angular: function (chart, opts) {
+
+            opts.scope.$on('formFieldChange', function (e, form, field) {
+                if (field === 'type') {
+                    opts.type = form[field];
+                    chart.resume();
+                }
+            });
         }
     };
 

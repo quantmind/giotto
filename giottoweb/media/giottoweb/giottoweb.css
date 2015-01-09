@@ -2,7 +2,7 @@
 /*
 ------------------------------------------------------------------
 Created by lux in 0.09 seconds
-Date: 2015-01-08 15:23:09
+Date: 2015-01-09 10:12:18
 
 http://quantmind.github.io/lux/
 ------------------------------------------------------------------ */
@@ -12,11 +12,11 @@ http://quantmind.github.io/lux/
 }
 
 .lazyContainer > .content {
-    width: 100%;
-    left: 0;
     position: absolute;
     min-height: 100%;
     top: 0;
+    left: 0;
+    width: 100%;
 }
 
 .push-bottom {
@@ -27,12 +27,12 @@ http://quantmind.github.io/lux/
 body {
     font-size: 18px;
     color: rgba(0, 0, 0, 0.8);
-    background: #fff;
     font-style: normal;
-    font-family: "freight-text-pro",Georgia,Cambria,"Times New Roman",Times,serif;
+    background: #fff;
     line-height: 1.5;
-    min-height: 101%;
+    font-family: "freight-text-pro",Georgia,Cambria,"Times New Roman",Times,serif;
     height: 101%;
+    min-height: 101%;
 }
 
 p.form-error {
@@ -59,12 +59,12 @@ p.form-error {
 .katex-outer {
     margin-right: auto;
     margin-left: auto;
-    margin-bottom: 10px;
     display: block;
+    margin-bottom: 10px;
     margin-right: auto;
     margin-left: auto;
-    margin-bottom: 10px;
     display: block;
+    margin-bottom: 10px;
 }
 
 code.hljs.inline {
@@ -92,20 +92,20 @@ dl.function > dt > tt.descname {
 
 dl.class dt tt.descname,
 dl.function dt tt.descname {
-    font-weight: bold;
     color: rgba(0, 0, 0, 0.8);
     font-weight: bold;
     color: rgba(0, 0, 0, 0.8);
+    font-weight: bold;
 }
 
 dl.class dt,
 dl.function dt {
-    font-weight: normal;
-    color: #888;
     font-size: 18px;
-    font-weight: normal;
     color: #888;
+    font-weight: normal;
     font-size: 18px;
+    color: #888;
+    font-weight: normal;
 }
 
 [ng\:cloak],
@@ -130,13 +130,13 @@ dl.function dt {
 }
 
 .navbar2-wrapper {
-    width: 100%;
     min-height: 100%;
+    width: 100%;
 }
 
 .navbar2-page {
-    padding: 70px 15px 0;
     background: #fff;
+    padding: 70px 15px 0;
 }
 
 @media all and (min-width:768px) {
@@ -151,10 +151,10 @@ dl.function dt {
 }
 @media all and (min-width:768px) {
     .sidebar {
-        margin-top: 51px;
-        width: 200px;
         position: absolute;
         z-index: 1;
+        width: 200px;
+        margin-top: 51px;
     }
 
 }
@@ -171,8 +171,8 @@ dl.function dt {
 }
 
 .media-list > .media > a {
-    text-decoration: none;
     color: #808080;
+    text-decoration: none;
 }
 
 .media-list > .media > a .post-body {
@@ -180,21 +180,21 @@ dl.function dt {
 }
 
 .media-list > .media > a h3 {
-    font-weight: normal;
     color: #333;
+    font-weight: normal;
 }
 
 .post-image {
-    width: 140px;
     max-height: 140px;
     float: left;
+    width: 140px;
     height: auto;
 }
 
 .post-image-xs {
-    width: auto;
     max-height: 150px;
     max-width: 90%;
+    width: auto;
 }
 
 h1:hover > a.headerlink,
@@ -208,10 +208,10 @@ dt:hover > a.headerlink {
 }
 
 a.headerlink {
-    text-decoration: none;
+    visibility: hidden;
     padding: 0 4px;
     color: #eee;
-    visibility: hidden;
+    text-decoration: none;
 }
 
 a.headerlink:hover {
@@ -223,8 +223,8 @@ a.headerlink:hover {
 }
 
 div.viewcode-block:target {
-    padding: 0 10px;
     margin: -1px -10px;
+    padding: 0 10px;
 }
 
 table.docutils.field-list th {
@@ -241,18 +241,18 @@ table.docutils.field-list th {
 }
 
 .page-header.index-header {
+    margin: 0;
     color: #fff;
+    width: 101%;
     background: #333;
     height: 101%;
     min-height: 100%;
-    margin: 0;
-    width: 101%;
 }
 
 html,
 .fullpage {
-    min-height: 101%;
     height: 101%;
+    min-height: 101%;
 }
 
 form {
@@ -265,10 +265,10 @@ form {
 }
 
 #footer {
-    padding: 30px 0 40px;
-    color: #b3b3b3;
     background: #333;
     min-height: 300px;
+    padding: 30px 0 40px;
+    color: #b3b3b3;
 }
 
 #lux-logo {
@@ -286,9 +286,9 @@ form {
 }
 
 .trianglify-box {
-    padding: 20px;
-    background: rgba(255, 255, 255, 0.6);
     max-width: 400px;
+    background: rgba(255, 255, 255, 0.6);
+    padding: 20px;
     -webkit-border-radius: 5px;
        -moz-border-radius: 5px;
             border-radius: 5px;
@@ -304,13 +304,13 @@ form {
 }
 
 .features article:before {
-    content: " ";
     display: table;
+    content: " ";
 }
 
 .features article:after {
-    content: " ";
     display: table;
+    content: " ";
     clear: both;
 }
 
@@ -322,8 +322,8 @@ form {
 }
 @media all and (max-width:600px) {
     .features article {
-        width: auto;
         float: none;
+        width: auto;
     }
 
 }
@@ -340,13 +340,13 @@ form {
 
 #page-error a,
 #page-error a:hover {
-    text-decoration: underline;
     color: #fff;
+    text-decoration: underline;
 }
 
 .error-message-container {
-    padding: 40px 120px;
     background: rgba(0, 0, 0, 0.4);
+    padding: 40px 120px;
     height: 100%;
     -webkit-box-sizing: border-box;
        -moz-box-sizing: border-box;
@@ -363,8 +363,8 @@ form {
     }
 
     .error-message-container {
-        text-align: center;
         padding: 40px 0;
+        text-align: center;
     }
 
 }

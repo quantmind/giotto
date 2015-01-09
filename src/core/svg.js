@@ -80,3 +80,8 @@
                 'font-variant': opts.variant
             });
     }
+
+    g.svg.font = function (selection, opts) {
+        opts = extend({}, g.defaults.paper.font, opts);
+        return svg_font(selection, opts);
+    };
