@@ -2,7 +2,7 @@
 /*
 ------------------------------------------------------------------
 Created by lux in 0.0 seconds
-Date: 2015-01-09 11:53:35
+Date: 2015-01-09 12:48:09
 
 http://quantmind.github.io/lux/
 ------------------------------------------------------------------ */
@@ -12,13 +12,13 @@ http://quantmind.github.io/lux/
 }
 
 .sunburst path {
-    stroke: #fff;
     fill-rule: evenodd;
+    stroke: #fff;
 }
 
 .axis {
-    shape-rendering: crispEdges;
     fill: none;
+    shape-rendering: crispEdges;
 }
 
 .line {
@@ -26,42 +26,42 @@ http://quantmind.github.io/lux/
 }
 
 .d3-tip:after {
-    font-size: 16px;
-    position: absolute;
-    width: 100%;
-    line-height: 1;
     display: inline;
+    line-height: 1;
+    width: 100%;
+    position: absolute;
+    font-size: 16px;
     -webkit-box-sizing: border-box;
        -moz-box-sizing: border-box;
             box-sizing: border-box;
 }
 
 .d3-tip.n:after {
-    margin: -2px 0 0 0;
-    left: 0;
-    top: 100%;
-    text-align: center;
     content: "\25BC";
+    left: 0;
+    margin: -2px 0 0 0;
+    text-align: center;
+    top: 100%;
 }
 
 .d3-tip.e:after {
-    margin: -4px 0 0 0;
-    left: -8px;
-    top: 50%;
     content: "\25C0";
+    left: -8px;
+    margin: -4px 0 0 0;
+    top: 50%;
 }
 
 .d3-tip.s:after {
-    margin: 0 0 2px 0;
-    left: 0;
-    top: -8px;
-    text-align: center;
     content: "\25B2";
+    left: 0;
+    margin: 0 0 2px 0;
+    text-align: center;
+    top: -8px;
 }
 
 .d3-tip.w:after {
-    margin: -4px 0 0 -1px;
-    left: 100%;
-    top: 50%;
     content: "\25B6";
+    left: 100%;
+    margin: -4px 0 0 -1px;
+    top: 50%;
 }

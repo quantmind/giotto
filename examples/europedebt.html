@@ -7,7 +7,7 @@
 <meta content='width=device-width, initial-scale=1' name='viewport'>
 <meta content='Central Government Debt in Europe in 2012 and 2013. This example shows how GiottoJS handles several labels without overlapping them.' name='description'>
 <meta content='Luca Sbardella' name='author'>
-<meta content='d3js, visualization, giottojs, javascript, svg, canvas, debt, europe' name='keywords'>
+<meta content='d3js, visualization, giottojs, javascript, svg, canvas, debt, europe, piechart' name='keywords'>
 <meta content='website' property='og:type'>
 <meta content='http://giottojs.org/examples/europedebt' property='og:url'>
 <meta content='Central Government Debt in Europe' property='og:title'>
@@ -24,7 +24,7 @@
 <link href='http://giottojs.org/media/giotto/giotto.css' rel='stylesheet' type='text/css'>
 <link href='http://giottojs.org/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var lux = {context: {"media": "/media", "datetimeFormat": "d MMM y, h:mm:ss a", "url": "http://giottojs.org", "google": {"analytics": {"ga": "ga", "id": "UA-54439804-4"}}, "apiUrls": {}, "dateFormat": "d MMM y", "page": {"description": "Central Government Debt in Europe in 2012 and 2013. This example shows how GiottoJS handles several labels without overlapping them.", "title": "Central Government Debt in Europe", "content_type": "text/html", "author": ["Luca Sbardella"], "keywords": ["d3js", "visualization", "giottojs", "javascript", "svg", "canvas", "debt", "europe"], "image": "http://giottojs.org/examples/europedebt.png", "slug": "europedebt", "api_url": "http://giottojs.org/ng/examples/europedebt.json", "name": "europedebt", "html_url": "http://giottojs.org/examples/europedebt", "modified": "2015-01-09T11:53:16", "date": "2015-01-09T00:00:00"}, "python_version": "3.4.2", "html5mode": true, "lux_version": "0.1.2-alpha.1", "ngModules": ["lux.google", "lux.blog", "highlight"], "brand": "Lux", "name": "Lux", "navbar": {"collapseWidth": 768}, "year": 2015, "date": "2015-01-09T11-53-36", "oauths": null}};
+var lux = {context: {"dateFormat": "d MMM y", "html5mode": true, "oauths": null, "ngModules": ["lux.blog", "lux.google", "highlight"], "google": {"analytics": {"id": "UA-54439804-4", "ga": "ga"}}, "navbar": {"collapseWidth": 768}, "brand": "Lux", "datetimeFormat": "d MMM y, h:mm:ss a", "page": {"keywords": ["d3js", "visualization", "giottojs", "javascript", "svg", "canvas", "debt", "europe", "piechart"], "date": "2015-01-09T00:00:00", "api_url": "http://giottojs.org/ng/examples/europedebt.json", "title": "Central Government Debt in Europe", "name": "europedebt", "author": ["Luca Sbardella"], "content_type": "text/html", "description": "Central Government Debt in Europe in 2012 and 2013. This example shows how GiottoJS handles several labels without overlapping them.", "slug": "europedebt", "modified": "2015-01-09T12:03:50", "image": "http://giottojs.org/examples/europedebt.png", "html_url": "http://giottojs.org/examples/europedebt"}, "date": "2015-01-09T12-48-09", "media": "/media", "lux_version": "0.1.2-alpha.1", "url": "http://giottojs.org", "apiUrls": {}, "python_version": "3.4.2", "name": "Lux", "year": 2015}};
 </script>
 <script type='text/javascript'>
 lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
@@ -32,7 +32,7 @@ lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback
 var gexamples = {};
 </script>
 <script type="text/javascript">
-var require = {"baseUrl": "http://giottojs.org/media/", "paths": {}, "deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"], "minify": true, "waitSeconds": 200};
+var require = {"paths": {}, "baseUrl": "http://giottojs.org/media/", "deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"], "waitSeconds": 200, "minify": true};
 </script>
 <script src='http://quantmind.github.io/require-config-js/require.config.min.js' type='application/javascript'></script>
 <script src='//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js' type='application/javascript'></script>
@@ -62,7 +62,7 @@ var require = {"baseUrl": "http://giottojs.org/media/", "paths": {}, "deps": ["h
     <p class="text-right small">Source: <a href="http://ec.europa.eu/eurostat" target="self">Eurostat</a></p>
     </div>
     <div class="col-sm-2 small">
-      <lux-form data-options='luxforms.typeform_59mCp'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.typeform_59mCp = {"children": [{"children": [{"field": {"name": "type", "type": "select", "options": ["svg", "canvas"], "required": true, "value": "svg"}}], "field": {"type": "fieldset"}}], "field": {"type": "form", "id": "typeform_59mCp", "showLabels": false, "model": "TypeForm"}};</script></lux-form>
+      <lux-form data-options='luxforms.typeform_gIVxc'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.typeform_gIVxc = {"field": {"model": "TypeForm", "type": "form", "id": "typeform_gIVxc", "showLabels": false}, "children": [{"field": {"type": "fieldset"}, "children": [{"field": {"value": "svg", "required": true, "type": "select", "name": "type", "options": ["svg", "canvas"]}}]}]};</script></lux-form>
       <p>Right click on the chart for additional options</p>
     </div>
   </div>
