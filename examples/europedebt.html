@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html data-debug='false' lang='en' prefix='og: http://ogp.me/ns#'>
+<head>
+<title>Central Government Debt in Europe</title>
+<meta charset='utf-8'>
+<meta content='IE=edge' http-equiv='X-UA-Compatible'>
+<meta content='width=device-width, initial-scale=1' name='viewport'>
+<meta content='Central Government Debt in Europe in 2012 and 2013. This example shows how GiottoJS handles several labels without overlapping them.' name='description'>
+<meta content='Luca Sbardella' name='author'>
+<meta content='d3js, visualization, giottojs, javascript, svg, canvas, debt, europe' name='keywords'>
+<meta content='website' property='og:type'>
+<meta content='http://giottojs.org/examples/europedebt' property='og:url'>
+<meta content='Central Government Debt in Europe' property='og:title'>
+<meta content='Central Government Debt in Europe in 2012 and 2013. This example shows how GiottoJS handles several labels without overlapping them.' property='og:description'>
+<meta content='http://giottojs.org/examples/europedebt.png' property='og:image'>
+<meta content='summary_large_image' name='twitter:card'>
+<meta content='@quantmind' name='twitter:site'>
+<meta content='Central Government Debt in Europe' name='twitter:title'>
+<meta content='Central Government Debt in Europe in 2012 and 2013. This example shows how GiottoJS handles several labels without overlapping them.' name='twitter:description'>
+<meta content='http://giottojs.org/examples/europedebt.png' name='twitter:image'>
+<link href='http://giottojs.org/media/giottoweb/favicon.ico' rel='icon' type='image/x-icon'>
+<link href='//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css' rel='stylesheet' type='text/css'>
+<link href='//netdna.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css' rel='stylesheet' type='text/css'>
+<link href='http://giottojs.org/media/giotto/giotto.css' rel='stylesheet' type='text/css'>
+<link href='http://giottojs.org/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
+<script type='text/javascript'>
+var lux = {context: {"date": "2015-01-09T10-15-05", "page": {"date": "2015-01-09T00:00:00", "author": ["Luca Sbardella"], "description": "Central Government Debt in Europe in 2012 and 2013. This example shows how GiottoJS handles several labels without overlapping them.", "slug": "europedebt", "keywords": ["d3js", "visualization", "giottojs", "javascript", "svg", "canvas", "debt", "europe"], "name": "europedebt", "modified": "2015-01-09T10:14:48", "image": "http://giottojs.org/examples/europedebt.png", "html_url": "http://giottojs.org/examples/europedebt", "title": "Central Government Debt in Europe", "api_url": "http://giottojs.org/ng/examples/europedebt.json", "content_type": "text/html"}, "html5mode": true, "year": 2015, "navbar": {"collapseWidth": 768}, "oauths": null, "datetimeFormat": "d MMM y, h:mm:ss a", "ngModules": ["highlight", "lux.blog", "lux.google"], "url": "http://giottojs.org", "dateFormat": "d MMM y", "apiUrls": {}, "lux_version": "0.1.2-alpha.1", "name": "Lux", "google": {"analytics": {"ga": "ga", "id": "UA-54439804-4"}}, "python_version": "3.4.2", "media": "/media", "brand": "Lux"}};
+</script>
+<script type='text/javascript'>
+lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
+<script type='text/javascript'>
+var gexamples = {};
+</script>
+<script type="text/javascript">
+var require = {"paths": {}, "minify": true, "waitSeconds": 200, "baseUrl": "http://giottojs.org/media/", "deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"]};
+</script>
+<script src='http://quantmind.github.io/require-config-js/require.config.min.js' type='application/javascript'></script>
+<script src='//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js' type='application/javascript'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-54439804-4', 'auto');
+  ga('send', 'pageview');
+
+</script></head>
+<body data-ng-controller='Page' data-ng-model='page' data-page=''>
+<navbar data-options="lux.context.navbar"></navbar>
+<div id="page-main">
+<div class="container">
+<div class="row">
+<div class="col-sm-12" data-highlight>
+<div class="page-header">
+<h2>Central Government Debt in Europe</h2>
+</div>
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-sm-10">
+    <div data-options='gexamples.europedebt' class="center-block" giotto-chart></div>
+    <p class="text-right small">Source: <a href="http://ec.europa.eu/eurostat" target="self">Eurostat</a></p>
+    </div>
+    <div class="col-sm-2 small">
+      <lux-form data-options='luxforms.typeform_hEdvA'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.typeform_hEdvA = {"field": {"type": "form", "showLabels": false, "id": "typeform_hEdvA", "model": "TypeForm"}, "children": [{"field": {"type": "fieldset"}, "children": [{"field": {"type": "select", "options": ["svg", "canvas"], "value": "svg", "name": "type", "required": true}}]}]};</script></lux-form>
+      <p>Right click on the chart for additional options</p>
+    </div>
+  </div>
+</div>
+
+<p>Central Government Debt in Europe in 2012 and 2013. This example shows how GiottoJS handles several labels without overlapping them. In addition, a custom drawing is displaied in the center of the pie chart displaying the total debt, almost 10 trillion euros! Germany is the only big European country which decreased its debt in 2013 form the 2012 value.</p>
+<p>Html:</p>
+<pre><code>&lt;div data-options='gexamples.europedebt' giotto-chart&gt;&lt;/div&gt;
+</code></pre>
+<h3>Javascript code</h3>
+<pre><code>gexamples.europedebt = {
+    height: '60%',
+
+    colors: function () {
+        return d3.colorbrewer.YlOrBr[9].slice().reverse();
+    },
+
+    tooltip: {
+      show: true
+    },
+
+    pie: {
+        show: true,
+        labels: {
+            position: 'outside'
+        },
+        innerRadius: 0.7,
+        cornerRadius: 0.01,
+        padAngle: 0.5,
+        fillOpacity: 0.7,
+        active: {
+            fillOpacity: 1
+        },
+        transition: {
+            duration: 1000
+        },
+        formatY: function (d) {
+            return '€ ' + d3.format(',.0f')(d) + 'M';
+        },
+        x: function (d) {return d[1];},
+        y: function (d) {return d[2];}
+    },
+
+    // Custom entry for diplaying the year and the total ammount of debt
+    custom: {
+        show: function () {
+            // display the year and total debt
+            var group = this.group(),
+                width = group.innerWidth(),
+                height = group.innerHeight(),
+                data = this.data(),
+                size = 30*group.factor(),
+                dy = 10*group.factor(),
+                total = 0;
+            data.forEach(function (d) {
+                total += d[2];
+            });
+            total = gexamples.europedebt.pie.formatY(total);
+            if (group.type() === 'svg') {
+                var uid = this.uid() + 'info',
+                    el = group.element().selectAll('#' + uid).data([true]);
+                el.enter().append('g').attr('id', uid);
+                el.attr('transform', 'translate(' + width/2 + ',' + (height - size)/2 + ')');
+                var text = el.selectAll('text').data([this.label() + ' total', total]);
+                text.enter().append('text');
+                d3.giotto.svg.font(text, {size: size + 'px', weight: 'bold'});
+                text.attr('text-anchor', 'middle')
+                    .text(function (d) {return d;})
+                    .attr('y', function (d, i) {return (size + dy)*i;});
+            } else {
+                var ctx = group.context();
+                ctx.save();
+                ctx.translate(width/2, (height - size)/2);
+                ctx.font = d3.giotto.canvas.font(ctx, {size: size + 'px', weight: 'bold'});
+                ctx.textAlign = 'center';
+                ctx.fillText(this.label() + ' total', 0, 0);
+                ctx.fillText(total, 0, size + dy);
+                ctx.restore();
+            }
+        }
+    },
+
+    onInit: function (chart, opts) {
+        var current = 2013;
+            yeardata = {2012: [], 2013: []};
+
+        debtdata.sort(function (a, b) {return d3.descending(a[2],b[2]);}).forEach(function (data) {
+            yeardata[data[0]].push(data);
+        });
+
+        function animate () {
+            current = 2013 + 2012 - current;
+            data = {label: current + '',
+                    data: yeardata[current]};
+
+            if (chart.numSeries()) {
+                chart.each(function (serie) {
+                    serie.label = data.label;
+                    serie.data(data.data);
+                });
+                chart.resume();
+            } else
+                opts.data = [data];
+            d3.timer(animate, 4*opts.pie.transition.duration);
+            return true;
+        }
+
+        animate();
+    },
+
+    // Callback for angular directive
+    angular: function (chart, opts) {
+
+        opts.scope.$on('formFieldChange', function (e, form, field) {
+            if (field === 'type') {
+                opts.type = form[field];
+                chart.resume();
+            }
+        });
+    }
+};
+
+var debtdata = [[2012,"Belgium",342980.3],
+                [2013,"Belgium",351255.9],
+                [2012,"Bulgaria",7172.1],
+                [2013,"Bulgaria",7416.3],
+                [2012,"Czech Republic",66335.7],
+                [2013,"Czech Republic",61236.6],
+                [2012,"Denmark",93842.9],
+                [2013,"Denmark",92733.2],
+                [2012,"Germany",1369103.5],
+                [2013,"Germany",1372828.8],
+                [2012,"Estonia",1228.2],
+                [2013,"Estonia",1310.5],
+                [2012,"Ireland",191779.3],
+                [2013,"Ireland",202337.1],
+                [2012,"Spain",760195.2],
+                [2013,"Spain",836192.7],
+                [2012,"France",1522936.9],
+                [2013,"France",1595410.5],
+                [2012,"Croatia",23737.5],
+                [2013,"Croatia",28215.9],
+                [2012,"Italy",1882380.0],
+                [2013,"Italy",1970530.3],
+                [2012,"Latvia",8808.8],
+                [2013,"Latvia",8626.8],
+                [2012,"Lithuania",12335.1],
+                [2013,"Lithuania",12640.6],
+                [2012,"Luxembourg",8593.3],
+                [2013,"Luxembourg",9769.9],
+                [2012,"Hungary",73102.3],
+                [2013,"Hungary",76213.1],
+                [2012,"Malta",4867.1],
+                [2013,"Malta",5238.8],
+                [2012,"Netherlands",387007.0],
+                [2013,"Netherlands",404294.0],
+                [2012,"Austria",208874.3],
+                [2013,"Austria",214382.0],
+                [2012,"Poland",207248.8],
+                [2013,"Poland",214904.7],
+                [2012,"Portugal",204193.8],
+                [2013,"Portugal",213973.4],
+                [2012,"Romania",48383.4],
+                [2013,"Romania",52402.0],
+                [2012,"Slovenia",18618.0],
+                [2013,"Slovenia",24752.9],
+                [2012,"Slovakia",37280.8],
+                [2013,"Slovakia",39878.2],
+                [2012,"Finland",93900.0],
+                [2013,"Finland",98905.0],
+                [2012,"Sweden",130857.7],
+                [2013,"Sweden",140075.6],
+                [2012,"United Kingdom",1680297.8],
+                [2013,"United Kingdom",1732269.4]];
+</code></pre>
+</div>
+</div>
+</div>
+</div>
+<script>
+
+    gexamples.europedebt = {
+        height: '60%',
+
+        colors: function () {
+            return d3.colorbrewer.YlOrBr[9].slice().reverse();
+        },
+
+        tooltip: {
+          show: true
+        },
+
+        pie: {
+            show: true,
+            labels: {
+                position: 'outside'
+            },
+            innerRadius: 0.7,
+            cornerRadius: 0.01,
+            padAngle: 0.5,
+            fillOpacity: 0.7,
+            active: {
+                fillOpacity: 1
+            },
+            transition: {
+                duration: 1000
+            },
+            formatY: function (d) {
+                return '€ ' + d3.format(',.0f')(d) + 'M';
+            },
+            x: function (d) {return d[1];},
+            y: function (d) {return d[2];}
+        },
+
+        // Custom entry for diplaying the year and the total ammount of debt
+        custom: {
+            show: function () {
+                // display the year and total debt
+                var group = this.group(),
+                    width = group.innerWidth(),
+                    height = group.innerHeight(),
+                    data = this.data(),
+                    size = 30*group.factor(),
+                    dy = 10*group.factor(),
+                    total = 0;
+                data.forEach(function (d) {
+                    total += d[2];
+                });
+                total = gexamples.europedebt.pie.formatY(total);
+                if (group.type() === 'svg') {
+                    var uid = this.uid() + 'info',
+                        el = group.element().selectAll('#' + uid).data([true]);
+                    el.enter().append('g').attr('id', uid);
+                    el.attr('transform', 'translate(' + width/2 + ',' + (height - size)/2 + ')');
+                    var text = el.selectAll('text').data([this.label() + ' total', total]);
+                    text.enter().append('text');
+                    d3.giotto.svg.font(text, {size: size + 'px', weight: 'bold'});
+                    text.attr('text-anchor', 'middle')
+                        .text(function (d) {return d;})
+                        .attr('y', function (d, i) {return (size + dy)*i;});
+                } else {
+                    var ctx = group.context();
+                    ctx.save();
+                    ctx.translate(width/2, (height - size)/2);
+                    ctx.font = d3.giotto.canvas.font(ctx, {size: size + 'px', weight: 'bold'});
+                    ctx.textAlign = 'center';
+                    ctx.fillText(this.label() + ' total', 0, 0);
+                    ctx.fillText(total, 0, size + dy);
+                    ctx.restore();
+                }
+            }
+        },
+
+        onInit: function (chart, opts) {
+            var current = 2013;
+                yeardata = {2012: [], 2013: []};
+
+            debtdata.sort(function (a, b) {return d3.descending(a[2],b[2]);}).forEach(function (data) {
+                yeardata[data[0]].push(data);
+            });
+
+            function animate () {
+                current = 2013 + 2012 - current;
+                data = {label: current + '',
+                        data: yeardata[current]};
+
+                if (chart.numSeries()) {
+                    chart.each(function (serie) {
+                        serie.label = data.label;
+                        serie.data(data.data);
+                    });
+                    chart.resume();
+                } else
+                    opts.data = [data];
+                d3.timer(animate, 4*opts.pie.transition.duration);
+                return true;
+            }
+
+            animate();
+        },
+
+        // Callback for angular directive
+        angular: function (chart, opts) {
+
+            opts.scope.$on('formFieldChange', function (e, form, field) {
+                if (field === 'type') {
+                    opts.type = form[field];
+                    chart.resume();
+                }
+            });
+        }
+    };
+
+    var debtdata = [[2012,"Belgium",342980.3],
+                    [2013,"Belgium",351255.9],
+                    [2012,"Bulgaria",7172.1],
+                    [2013,"Bulgaria",7416.3],
+                    [2012,"Czech Republic",66335.7],
+                    [2013,"Czech Republic",61236.6],
+                    [2012,"Denmark",93842.9],
+                    [2013,"Denmark",92733.2],
+                    [2012,"Germany",1369103.5],
+                    [2013,"Germany",1372828.8],
+                    [2012,"Estonia",1228.2],
+                    [2013,"Estonia",1310.5],
+                    [2012,"Ireland",191779.3],
+                    [2013,"Ireland",202337.1],
+                    [2012,"Spain",760195.2],
+                    [2013,"Spain",836192.7],
+                    [2012,"France",1522936.9],
+                    [2013,"France",1595410.5],
+                    [2012,"Croatia",23737.5],
+                    [2013,"Croatia",28215.9],
+                    [2012,"Italy",1882380.0],
+                    [2013,"Italy",1970530.3],
+                    [2012,"Latvia",8808.8],
+                    [2013,"Latvia",8626.8],
+                    [2012,"Lithuania",12335.1],
+                    [2013,"Lithuania",12640.6],
+                    [2012,"Luxembourg",8593.3],
+                    [2013,"Luxembourg",9769.9],
+                    [2012,"Hungary",73102.3],
+                    [2013,"Hungary",76213.1],
+                    [2012,"Malta",4867.1],
+                    [2013,"Malta",5238.8],
+                    [2012,"Netherlands",387007.0],
+                    [2013,"Netherlands",404294.0],
+                    [2012,"Austria",208874.3],
+                    [2013,"Austria",214382.0],
+                    [2012,"Poland",207248.8],
+                    [2013,"Poland",214904.7],
+                    [2012,"Portugal",204193.8],
+                    [2013,"Portugal",213973.4],
+                    [2012,"Romania",48383.4],
+                    [2013,"Romania",52402.0],
+                    [2012,"Slovenia",18618.0],
+                    [2013,"Slovenia",24752.9],
+                    [2012,"Slovakia",37280.8],
+                    [2013,"Slovakia",39878.2],
+                    [2012,"Finland",93900.0],
+                    [2013,"Finland",98905.0],
+                    [2012,"Sweden",130857.7],
+                    [2013,"Sweden",140075.6],
+                    [2012,"United Kingdom",1680297.8],
+                    [2013,"United Kingdom",1732269.4]];
+
+</script>
+<div id="footer">
+<div class="container">
+<div class="row">
+<div class="col-sm-12 small">
+<p>Library released under the <a href="http://opensource.org/licenses/BSD-3-Clause">BSD License</a>.</p>
+<p>Copyright 2015 <a href="http://lucasbardella.com">Luca Sbardella</a> and <a href="http://quantmind.com">Quantmind</a></p>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

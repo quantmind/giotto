@@ -1,6 +1,6 @@
 //      GiottoJS - v0.1.0
 
-//      Compiled 2015-01-07.
+//      Compiled 2015-01-09.
 //      Copyright (c) 2015 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -637,10 +637,10 @@
 
 
     function giotto_id (element) {
-        var id = element.attr('id');
+        var id = element ? element.attr('id') : null;
         if (!id) {
-            id = 'giotto-element-' + (++_idCounter);
-            element.attr('id', id);
+            id = 'giotto' + (++_idCounter);
+            if (element) element.attr('id', id);
         }
         return id;
     }
@@ -2869,6 +2869,8 @@
         resize: true,
         margin: {top: 20, right: 20, bottom: 20, left: 20},
         colors: d3.scale.category10().range(),
+        darkerColor: 0,
+        brighterColor: 0,
         colorIndex: 0,
         css: null,
         activeEvents: ["mousemove", "touchstart", "touchmove", "mouseout"],
@@ -3150,20 +3152,20 @@
         };
 
         // pick a color
-        paper.pickColor = function (index, darker) {
+        paper.pickColor = function (index) {
             if (arguments.length === 0)
                 index = p.colorIndex++;
-            var dk = 1,
-                k = 0;
+            var dk = 0, bk = 0;
             while (index >= p.colors.length) {
                 index -= p.colors.length;
-                k += dk;
+                dk += p.darkerColor;
+                bk += p.brighterColor;
             }
             var c = p.colors[index];
-            if (darker)
-                c = d3.rgb(c).darker(darker).toString();
-            if (k)
-                c = d3.rgb(c).brighter(k).toString();
+            if (dk)
+                c = d3.rgb(c).darker(dk).toString();
+            else if (bk)
+                c = d3.rgb(c).brighter(bk).toString();
             return c;
         };
 
@@ -3504,28 +3506,31 @@
     };
 
 
+    var drawingOptions = ['fill', 'fillOpacity', 'color', 'colorOpacity',
+                          'lineWidth'];
     //
-    // A drawing is drawn on a group
+    // A drawing is drawn on a group by the renderer function
     function drawing (group, renderer, draw) {
-        var uid = ++_idCounter,
+        var uid = giotto_id(),
             x = d3_geom_pointX,
             y = d3_geom_pointY,
-            size = default_size,
+            opts = {},
+            pointOptions = drawingOptions,
+            size = function (d) {return d.size;},
             changed,
             name,
             data,
-            opts,
             formatX,
             formatY,
             label,
-            dataConstructor;
+            dataConstructor,
+            set;
 
-        draw = highlightMixin(drawingOptions, draw);
-
-        var set = draw.set;
+        draw = highlightMixin(draw);
+        set = draw.set;
 
         draw.uid = function () {
-            return 'giottodraw' + uid;
+            return uid;
         };
 
         draw.remove = noop;
@@ -3570,16 +3575,15 @@
             return draw;
         };
 
-        // set a value and its default
+        // set a value and its default (override highlight)
         draw.set = function (name, value) {
-            if (pointOptions.indexOf(name) === -1) {
-                opts[name] = value;
-            } else if (data) {
+            opts[name] = value;
+            set(name, value);
+            if (data && pointOptions.indexOf(name) > -1) {
                 data.forEach(function (d) {
                     d.set(name, value);
                 });
-            } else
-                set(name, value);
+            }
             return draw;
         };
 
@@ -3631,17 +3635,6 @@
             };
         };
 
-        // replace the data for this drawing
-        draw.data = function (_) {
-            if (arguments.length === 0) return data;
-            changed = true;
-            if (dataConstructor)
-                data = dataConstructor.call(draw, _);
-            else
-                data = _;
-            return draw;
-        };
-
         draw.add = function (d) {
             if (dataConstructor)
                 d = dataConstructor.call(draw, [d]);
@@ -3652,15 +3645,32 @@
             return draw;
         };
 
+        // replace the data for this drawing
+        draw.data = function (_) {
+            if (!arguments.length) return data;
+            changed = true;
+            if (dataConstructor)
+                data = dataConstructor.call(draw, _);
+            else
+                data = _;
+            return draw;
+        };
+
         draw.dataConstructor = function (_) {
-            if (arguments.length === 0) return dataConstructor;
+            if (!arguments.length) return dataConstructor;
             dataConstructor = d3_functor(_);
             return draw;
         };
 
         draw.label = function (_) {
-            if (arguments.length === 0) return label;
+            if (!arguments.length) return label;
             label = _;
+            return draw;
+        };
+
+        draw.pointOptions = function (_) {
+            if (!arguments.length) return pointOptions;
+            pointOptions = _;
             return draw;
         };
 
@@ -3680,8 +3690,8 @@
 
     // A mixin for highlighting elements
     //
-    // THis is used by the drawing and paperData constructors
-    function highlightMixin (parameters, d) {
+    // This is used by the drawing and drawingData constructors
+    function highlightMixin (d) {
         var values = {},
             opts,
             highlight = false;
@@ -3703,7 +3713,7 @@
             var a = d.active,
                 v;
             if (a) {
-                parameters.forEach(function (name) {
+                d.pointOptions().forEach(function (name) {
                     v = a[name];
                     if (v) {
                         if (typeof v === 'string') {
@@ -3723,7 +3733,7 @@
 
         // set a value and its default
         d.set = function (name, value) {
-            if (parameters.indexOf(name) > -1) {
+            if (d.pointOptions().indexOf(name) > -1) {
                 values[name] = value;
                 d[name] = value;
             }
@@ -3732,7 +3742,7 @@
 
         d.reset = function () {
             highlight = false;
-            parameters.forEach(function (name) {
+            d.pointOptions().forEach(function (name) {
                 d[name] = values[name];
             });
             return d;
@@ -3740,7 +3750,7 @@
 
         d.init = function (data, opts, dd) {
             var value;
-            parameters.forEach(function (name) {
+            d.pointOptions().forEach(function (name) {
                 value = data[name] || opts[name];
                 if (isFunction(value) && dd) value = value(dd);
                 values[name] = value;
@@ -3763,18 +3773,11 @@
         return d;
     }
     //
-    // Manage attributes for data to be drawn on papers
-    function paperData (draw, data, parameters, d) {
+    // Manage a data point to be drawn on a drawing
+    function drawingData (draw, data, d) {
         var opts = draw.options();
-        d = highlightMixin(parameters, d);
+        d = highlightMixin(d);
         d.data = data;
-
-        if (isArray(data))
-            d.init(d, opts);
-        else {
-            d.init(data, opts, data);
-            d.active = data.active;
-        }
 
         d.options = function () {
             return opts;
@@ -3788,47 +3791,19 @@
             return draw.group();
         };
 
-        return d;
-    }
-
-    function point (draw, data, size) {
-        var d = paperData(draw, data, pointOptions);
-        d.set('size', data.size === undefined ? size : data.size);
-        return d;
-    }
-
-    var SymbolSize = {
-            circle: 0.7,
-            cross: 0.7,
-            diamond: 0.7,
-            "triangle-up": 0.6,
-            "triangle-down": 0.6
-        },
-
-        drawingOptions = ['fill', 'color', 'fillOpacity',
-                        'colorOpacity', 'lineWidth'],
-
-        pointOptions = extendArray(['size', 'symbol'], drawingOptions),
-
-        default_size = function (d) {
-            return d.size;
-        },
-
-        point_size = function (d) {
-            var s = +d.size;
-            if (isNaN(s)) {
-                var g = d.group();
-                s = g.scale(g.xfromPX(d.size.substring(0, d.size.length-2)));
-            }
-            return s*s*(SymbolSize[d.symbol] || 1);
-        },
-
-        bar_size = function (d) {
-            var w = d.size;
-            if (typeof w === 'function') w = w();
-            return w;
+        d.pointOptions = function () {
+            return draw.pointOptions();
         };
 
+        if (isArray(data))
+            d.init(d, opts);
+        else {
+            d.init(data, opts, data);
+            d.active = data.active;
+        }
+
+        return d;
+    }
 
     //
     //  SVG group
@@ -3913,6 +3888,11 @@
             });
     }
 
+    g.svg.font = function (selection, opts) {
+        opts = extend({}, g.defaults.paper.font, opts);
+        return svg_font(selection, opts);
+    };
+
     //
     //  Canvas
     //  ======================
@@ -3988,6 +3968,11 @@
         return group.factor(_.scale(group));
     };
 
+    g.canvas.font = function (ctx, opts) {
+        opts = extend({}, g.defaults.paper.font, opts);
+        ctx.fillStyle = opts.color;
+        ctx.font = fontString(opts);
+    };
 
     function canvasMixin(d) {
         d.inRange = function () {};
@@ -4360,7 +4345,7 @@
 
     g.createviz('chart', {
         margin: {top: 30, right: 30, bottom: 30, left: 30},
-        chartTypes: ['pie', 'bar', 'line', 'point'],
+        chartTypes: ['pie', 'bar', 'line', 'point', 'custom'],
         serie: {
             x: function (d) {return d[0];},
             y: function (d) {return d[1];}
@@ -4497,7 +4482,7 @@
                     serie.data = o;
                     o = {}; // an ampty object so that it is shown
                 }
-                if (o || opts[type].show) {
+                if (o || (opts[type] && opts[type].show)) {
                     serie[type] = extend({}, opts[type], o);
                     show = true;
                 }
@@ -4639,6 +4624,11 @@
                             serie[type] = chartTypes[type](group, serie.data(), stype).label(serie.label);
                     });
                 } else {
+                    opts.chartTypes.forEach(function (type) {
+                        stype = serie[type];
+                        if (stype)
+                            serie[type].label(serie.label);
+                    });
                     serie.drawXaxis ? domain(group.xaxis()) : scale(group.xaxis());
                     serie.drawYaxis ? domain(group.yaxis()) : scale(group.yaxis());
                 }
@@ -4726,6 +4716,22 @@
             return group.points(data, opts)
                         .x(function (d) {return d.x;})
                         .y(function (d) {return d.y;});
+        },
+
+        custom: function (group, data, opts) {
+            var draw = drawing(group, function () {
+                    return opts.show.call(this);
+                }).options(opts).data(data);
+
+            if (group.type() === 'canvas') {
+                draw = canvasMixin(draw);
+                draw.each = function (callback) {
+                    callback.call(draw);
+                    return draw;
+                };
+            }
+
+            return group.add(draw);
         }
     };
 
@@ -5888,6 +5894,7 @@
             chartColor(group.paper(), copyMissing(p.bar, opts));
 
             return group.add(g[type].barchart)
+                .pointOptions(extendArray(['size'], drawingOptions))
                 .size(bar_size)
                 .options(opts)
                 .dataConstructor(bar_costructor)
@@ -5897,32 +5904,39 @@
 
 
     var bar_costructor = function (rawdata) {
-        var group = this.group(),
-            draw = this,
-            opts = this.options(),
-            data = [],
-            width = opts.width,
-            bar = g[group.type()].bar;
-        if (width === 'auto')
-            width = function () {
-                return d3.round(0.8*(group.innerWidth() / draw.data().length));
-            };
+            var group = this.group(),
+                draw = this,
+                opts = this.options(),
+                data = [],
+                width = opts.width,
+                bar = g[group.type()].bar;
+            if (width === 'auto')
+                width = function () {
+                    return d3.round(0.8*(group.innerWidth() / draw.data().length));
+                };
 
-        for (var i=0; i<rawdata.length; i++)
-            data.push(bar(this, rawdata[i], width));
+            for (var i=0; i<rawdata.length; i++)
+                data.push(bar(this, rawdata[i], width));
 
-        return data;
-    };
+            return data;
+        },
+
+        bar_size = function (d) {
+            var w = d.size;
+            if (typeof w === 'function') w = w();
+            return w;
+        };
 
 
     g.svg.bar = function (draw, data, size) {
-        var p = point(draw, data, size),
+        var d = drawingData(draw, data),
             group = draw.group();
 
-        p.render = function (element) {
+        d.set('size', data.size === undefined ? size : data.size);
+        d.render = function (element) {
             group.draw(element);
         };
-        return p;
+        return d;
     };
 
     g.svg.barchart = function () {
@@ -5989,7 +6003,7 @@
     };
 
     g.canvas.bar = function (draw, data, siz) {
-        var d = canvasMixin(point(draw, data, siz)),
+        var d = canvasMixin(drawingData(draw, data)),
             group = d.group(),
             xscale = group.xaxis().scale(),
             scalex = draw.scalex(),
@@ -5998,6 +6012,8 @@
             factor = draw.factor(),
             ctx = group.context(),
             x, y, y0, y1, w, w0, yb, radius;
+
+        d.set('size', data.size === undefined ? siz : data.size);
 
         d.render = function (context) {
             context = context || ctx;
@@ -6932,7 +6948,11 @@
             chartFormats(group, opts);
             chartColor(group.paper(), copyMissing(p.line, opts));
 
-            return group.add(g[type].path(group)).size(point_size).data(data).options(opts);
+            return group.add(g[type].path(group))
+                        .pointOptions(pointOptions)
+                        .size(point_size)
+                        .data(data)
+                        .options(opts);
         };
     });
 
@@ -7194,6 +7214,7 @@
         innerRadius: 0,
         startAngle: 0,
         formatX: d3_identity,
+        formatPercent: ',.2%',
         active: {
             fill: 'darker',
             color: 'brighter',
@@ -7204,14 +7225,21 @@
         transition: extend({}, g.defaults.transition),
         tooltip: {
             template: function (d) {
-                return "<p><strong style='color:"+d.c+"'>" + d.x + "</strong> " + d.y + "</p>";
+                return "<p><strong>" + d.x + "</strong> " + d.y + "</p>";
             }
+        },
+        labels: {
+            show: true,
+            position: 'ouside',
+            outerRadius: 1.05,
+            color: '#333',
+            colorOpacity: 0.5,
+            lineWidth: 1
         }
     },
 
     function (group, p) {
         var type = group.type(),
-            pieslice = g[type].pieslice,
             arc = d3[type].arc()
                             .innerRadius(function (d) {return d.innerRadius;})
                             .outerRadius(function (d) {return d.outerRadius;});
@@ -7252,12 +7280,32 @@
                 return g[type].pie(this, width, height);
             });
 
-            return draw.options(opts)
-                        .data(data.map(function (d) {return pieslice(draw, d);}));
+            return draw.pointOptions(extendArray(['innerRadius', 'outerRadius'], drawingOptions))
+                        .dataConstructor(pie_costructor)
+                        .options(opts)
+                        .data(data);
         };
     });
 
-    var pieOptions = extendArray(['innerRadius', 'outerRadius'], drawingOptions);
+    var pie_costructor = function (rawdata) {
+        var draw = this,
+            x = draw.x(),
+            pieslice = g[draw.group().type()].pieslice,
+            map = d3.map(this.data() || [], function (d) {return x(d.data);}),
+            data = [],
+            slice;
+        rawdata.forEach(function (d) {
+            slice = map.get(x(d));
+            if (!slice) slice = pieslice(draw, d);
+            else slice.data = d;
+            data.push(slice);
+        });
+        return data;
+    };
+
+    function midAngle(d) {
+        return d.startAngle + (d.endAngle - d.startAngle)/2;
+    }
 
     function pieSlice (draw, data, d) {
         // Default values
@@ -7300,31 +7348,45 @@
             function yy(y) {return Math.round(f*(top - y) + bbox.top);}
         };
 
-        return paperData(draw, data, pieOptions, d);
+        return drawingData(draw, data, d);
     }
 
     g.svg.pie = function (draw, width, height) {
 
         var group = draw.group(),
             container = group.element(),
-            pp = container.select('#' + draw.uid());
+            opts = draw.options(),
+            trans = opts.transition,
+            pp = container.select('#' + draw.uid()),
+            resizing = group.resizing();
 
-        if (!pp.size())
+        if (!pp.size()) {
+            resizing = true;
             pp = container.append("g")
                         .attr('id', draw.uid())
                         .classed('pie', true);
+            pp.append('g').classed('slices', true);
+        }
 
-        pp.attr("transform", "translate(" + width/2 + "," + height/2 + ")")
-            .selectAll(".slice").remove();
+        var slices = pp.attr("transform", "translate(" + width/2 + "," + height/2 + ")")
+                        .select('.slices')
+                        .selectAll(".slice").data(draw.data());
 
-        return group.events(
-                group.draw(pp
-                            .selectAll(".slice")
-                            .data(draw.data())
-                            .enter()
-                            .append("path")
-                            .attr('class', 'slice')
-                            .attr('d', draw.arc)));
+        slices.enter()
+            .append("path")
+            .attr('class', 'slice');
+
+        slices.exit().remove();
+
+        group.events(slices);
+
+        if (opts.labels.show)
+            g.svg.pielabels(draw, pp, opts);
+
+        if (!resizing && trans && trans.duration)
+            slices = slices.transition().duration(trans.duration).ease(trans.ease);
+
+        return group.draw(slices.attr('d', draw.arc));
     };
 
     g.svg.pieslice = function (draw, data) {
@@ -7336,6 +7398,127 @@
         };
 
         return p;
+    };
+
+    g.svg.pielabels = function (draw, container, options) {
+        var group = draw.group(),
+            opts = extend({}, draw.group().options().font, options.labels),
+            labels = container.selectAll('.labels'),
+            trans = options.transition,
+            resizing = group.resizing(),
+            pcf = d3.format(options.formatPercent);
+
+        if (!labels.size()) {
+            resizing = true;
+            labels = container.append('g').classed('labels', true);
+        }
+
+        if (opts.position === 'bar') {
+
+        } else {
+            var x = draw.x(),
+                text = labels.selectAll('text').data(draw.data()),
+                pos;
+            text.enter().append("text");
+            text.exit().remove();
+            svg_font(text, opts);
+
+            if (!resizing && trans && trans.duration)
+                text = text.transition().duration(trans.duration).ease(trans.ease);
+
+            if (opts.position === 'outside') {
+                var outerArc = d3.svg.arc(),
+                    lines = container.selectAll('.lines').data([true]),
+                    radius,
+                    xx;
+
+                lines.enter().append('g').classed('lines', true);
+                lines = lines.selectAll('polyline').data(draw.data());
+                lines.enter().append('polyline');
+                lines.exit().remove();
+
+                if (!resizing && trans && trans.duration)
+                    lines = lines.transition().duration(trans.duration).ease(trans.ease);
+
+                var right = [],
+                    left = [];
+                draw.data().forEach(function (d) {
+                    d.labelAngle = midAngle(d);
+                    d.labelRadius = d.outerRadius*opts.outerRadius;
+                    d.labelTurn = outerArc.innerRadius(d.labelRadius).outerRadius(d.labelRadius).centroid(d);
+                    d.labelY = d.labelTurn[1];
+                    d.labelAngle < π ? right.push(d) : left.push(d);
+                });
+                relax(right);
+                relax(left);
+                lines.attr('points', function (d) {
+                        pos = [1.05 * d.labelRadius * (d.labelAngle < π ? 1 : -1), d.labelY];
+                        return [draw.arc.centroid(d), d.labelTurn, pos];
+                    }).attr('fill', 'none')
+                    .attr('stroke', opts.color)
+                    .attr('stroke-opacity', opts.colorOpacity)
+                    .attr('stroke-width', opts.lineWidth);
+
+                text.text(function (d) {
+                        return x(d.data) + ' ' + pcf(pc(d));
+                    })
+                    .attr('transform', function (d) {
+                        pos = [1.1 * d.labelRadius * (d.labelAngle < π ? 1 : -1), d.labelY];
+                        return 'translate(' + pos + ')';
+                    })
+                    .style('text-anchor', function (d) {
+                        return midAngle(d) < π ? "start":"end";
+                    });
+            }
+        }
+
+        function pc (d) {
+            return (d.endAngle - d.startAngle)/τ;
+        }
+
+        function relax (nodes) {
+            var N = nodes.length,
+                tol = 10000,
+                maxiter = 100;
+            if (N < 3) return;
+            var ymin = group.innerHeight()/2 + group.marginTop(),
+                ymax = group.innerHeight()/2 + group.marginBottom(),
+                iter = 0,
+                dy, y0, y1;
+
+            nodes.sort(function (a, b) {return d3.ascending(a.labelY, b.labelY);});
+
+            ymin = Math.min(nodes[0].labelY, -ymin+10);
+            ymax = Math.max(nodes[N-1].labelY, ymax-10);
+
+            while (tol > 0.5 && iter<maxiter) {
+                y1 = nodes[0].labelY;
+                iter++;
+                tol = 0;
+                nodes[0].dy = 0;
+                for (var i=1; i<nodes.length; ++i) {
+                    y0 = y1;
+                    y1 = nodes[i].labelY;
+                    dy = force(y1-y0);
+                    nodes[i-1].dy -= dy;
+                    nodes[i].dy = dy;
+                }
+                for (i=1; i<nodes.length-1; ++i) {
+                    if (nodes[i].dy < 0)
+                        dy = Math.max(nodes[i].dy, 0.49*(nodes[i-1].labelY - nodes[i].labelY));
+                    else
+                        dy = Math.min(nodes[i].dy, 0.49*(nodes[i+1].labelY - nodes[i].labelY));
+                    tol = Math.max(tol, abs(dy));
+                    nodes[i].labelY += dy;
+                }
+                nodes[0].labelY = Math.max(nodes[0].labelY + nodes[0].dy, ymin);
+                nodes[N-1].labelY = Math.min(nodes[N-1].labelY + nodes[N-1].dy, ymax);
+            }
+
+            function force (dd) {
+                return dd < 20 ? 100/(dd*dd) : 0;
+            }
+        }
     };
 
     g.canvas.pie = function (draw) {
@@ -7409,6 +7592,7 @@
             chartColor(group.paper(), copyMissing(p.point, opts));
 
             return group.add(g[type].points)
+                .pointOptions(pointOptions)
                 .size(point_size)
                 .options(opts)
                 .dataConstructor(point_costructor)
@@ -7417,26 +7601,46 @@
     });
 
 
-    var point_costructor = function (rawdata) {
-        // Default point size
-        var group = this.group(),
-            size = group.scale(group.dim(this.options().size)),
-            point = g[group.type()].point,
-            data = [];
+    var SymbolSize = {
+            circle: 0.7,
+            cross: 0.7,
+            diamond: 0.7,
+            "triangle-up": 0.6,
+            "triangle-down": 0.6
+        },
 
-        for (var i=0; i<rawdata.length; i++)
-            data.push(point(this, rawdata[i], size));
-        return data;
-    };
+        pointOptions = extendArray(['size', 'symbol'], drawingOptions),
+
+        point_size = function (d) {
+            var s = +d.size;
+            if (isNaN(s)) {
+                var g = d.group();
+                s = g.scale(g.xfromPX(d.size.substring(0, d.size.length-2)));
+            }
+            return s*s*(SymbolSize[d.symbol] || 1);
+        },
+
+        point_costructor = function (rawdata) {
+            // Default point size
+            var group = this.group(),
+                size = group.scale(group.dim(this.options().size)),
+                point = g[group.type()].point,
+                data = [];
+
+            for (var i=0; i<rawdata.length; i++)
+                data.push(point(this, rawdata[i], size));
+            return data;
+        };
 
     g.svg.point = function (draw, data, size) {
-        var p = point(draw, data, size),
+        var d = drawingData(draw, data),
             group = draw.group();
 
-        p.render = function (element) {
+        d.set('size', data.size === undefined ? size : data.size);
+        d.render = function (element) {
             group.draw(element).attr('d', draw.symbol);
         };
-        return p;
+        return d;
     };
 
     g.svg.points = function () {
@@ -7480,7 +7684,7 @@
     };
 
     g.canvas.point = function (draw, data, size) {
-        var d = canvasMixin(point(draw, data, size)),
+        var d = canvasMixin(drawingData(draw, data)),
             scalex = draw.scalex(),
             scaley = draw.scaley(),
             factor = draw.factor(),
@@ -7488,11 +7692,13 @@
             ctx = draw.group().context();
 
         function symbol () {
-            if (!draw.symbol)
-                draw.symbol = d3.canvas.symbol().type(function (d) {return d.symbol;})
+            if (!draw.Symbol)
+                draw.Symbol = d3.canvas.symbol().type(function (d) {return d.symbol;})
                                                 .size(draw.size());
-            return draw.symbol;
+            return draw.Symbol;
         }
+
+        d.set('size', data.size === undefined ? size : data.size);
 
         d.render = function (context) {
             context = context || ctx;
