@@ -22,7 +22,7 @@
 <link href='http://giottojs.org/media/giotto/giotto.css' rel='stylesheet' type='text/css'>
 <link href='http://giottojs.org/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var lux = {context: {"apiUrls": {}, "dateFormat": "d MMM y", "lux_version": "0.1.2-alpha.1", "html5mode": true, "datetimeFormat": "d MMM y, h:mm:ss a", "year": 2015, "oauths": null, "navbar": {"collapseWidth": 768}, "name": "Lux", "brand": "Lux", "media": "/media", "page": {"image": "http://giottojs.org/media/giottoweb/giotto.png", "slug": "api/canvas", "content_type": "text/html", "modified": "2014-12-18T09:46:15", "title": "D3 canvas API", "html_url": "http://giottojs.org/api/canvas", "name": "api_canvas", "api_url": "http://giottojs.org/ng/site/api/canvas.json"}, "url": "http://giottojs.org", "google": {"analytics": {"id": "UA-54439804-4", "ga": "ga"}}, "python_version": "3.4.2", "date": "2015-01-09T21-47-07", "ngModules": ["highlight", "lux.google"]}};
+var lux = {context: {"datetimeFormat": "d MMM y, h:mm:ss a", "url": "http://giottojs.org", "year": 2015, "oauths": null, "dateFormat": "d MMM y", "python_version": "3.4.2", "google": {"analytics": {"ga": "ga", "id": "UA-54439804-4"}}, "ngModules": ["lux.google", "highlight", "ui.router"], "name": "Lux", "media": "/media", "navbar": {"collapseWidth": 768}, "brand": "Lux", "uiRouter": "lux.ui.router", "lux_version": "0.1.2-alpha.1", "apiUrls": {}, "html5mode": true, "pages": {"/api/*slug": {"templateUrl": null, "url": "/api/*slug", "name": "apiview", "template": "<div class='angular-view' data-compile-html=''></div>", "parent": "/api/", "controller": "Html5", "api": {"url": "http://giottojs.org/ng/api", "name": "api", "type": "static"}}, "/api": {"url": "/api", "redirectTo": "/api/"}, "/api/": {"templateUrl": null, "url": "/api/", "name": "api", "template": "<div class='angular-view' data-compile-html=''></div>", "parent": null, "controller": "Html5", "api": {"url": "http://giottojs.org/ng/api", "name": "api", "type": "static"}}}, "hrefs": ["/api/", "/api/*slug", "/api"], "page": "/api/*slug", "date": "2015-01-12T10-31-25"}};
 </script>
 <script type='text/javascript'>
 lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
@@ -30,7 +30,7 @@ lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback
 var gexamples = {};
 </script>
 <script type="text/javascript">
-var require = {"minify": true, "baseUrl": "http://giottojs.org/media/", "deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"], "paths": {}, "waitSeconds": 200};
+var require = {"paths": {}, "deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"], "waitSeconds": 200, "baseUrl": "http://giottojs.org/media/", "minify": true};
 </script>
 <script src='http://quantmind.github.io/require-config-js/require.config.min.js' type='application/javascript'></script>
 <script src='//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js' type='application/javascript'></script>
@@ -46,7 +46,7 @@ var require = {"minify": true, "baseUrl": "http://giottojs.org/media/", "deps": 
 </script></head>
 <body data-ng-controller='Page' data-ng-model='page' data-page=''>
 <navbar data-options="lux.context.navbar"></navbar>
-<div id="page-main">
+<div class='angular-view' data-ui-view='main'><div class='hidden' id='seo-view'><div id="page-main">
 <div class="container">
 <div class="row">
 <div class="col-sm-12">
@@ -85,5 +85,5 @@ or polyline, as in a line chart:</p>
 </div>
 </div>
 </div>
-</div></body>
+</div></div></div></body>
 </html>

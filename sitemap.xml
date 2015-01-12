@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-<url><loc>http://giottojs.org/examples/</loc><lastmod>2015-01-09</lastmod><priority>1</priority></url>
+<url><loc>http://giottojs.org/examples/</loc><lastmod>2015-01-12</lastmod><priority>1</priority></url>
 <url><loc>http://giottojs.org/examples/area</loc><lastmod>2014-12-26</lastmod></url>
 <url><loc>http://giottojs.org/examples/areagradient</loc><lastmod>2014-12-27</lastmod></url>
 <url><loc>http://giottojs.org/examples/barchart</loc><lastmod>2014-12-18</lastmod></url>
@@ -16,16 +16,15 @@
 <url><loc>http://giottojs.org/examples/trianglify</loc><lastmod>2014-12-18</lastmod></url>
 <url><loc>http://giottojs.org/examples/wineproduction</loc><lastmod>2014-12-18</lastmod></url>
 <url><loc>http://giottojs.org/examples/zooming</loc><lastmod>2014-12-18</lastmod></url>
-<url><loc>http://giottojs.org/chart</loc><lastmod>2014-12-17</lastmod></url>
-<url><loc>http://giottojs.org/download</loc><lastmod>2014-12-10</lastmod></url>
-<url><loc>http://giottojs.org</loc><lastmod>2014-12-24</lastmod></url>
 <url><loc>http://giottojs.org/api/angular</loc><lastmod>2014-12-31</lastmod></url>
 <url><loc>http://giottojs.org/api/canvas</loc><lastmod>2014-12-18</lastmod></url>
 <url><loc>http://giottojs.org/api/chart</loc><lastmod>2014-12-31</lastmod></url>
 <url><loc>http://giottojs.org/api/drawing</loc><lastmod>2015-01-03</lastmod></url>
-<url><loc>http://giottojs.org/api/group</loc><lastmod>2014-12-22</lastmod></url>
+<url><loc>http://giottojs.org/api/group</loc><lastmod>2015-01-11</lastmod></url>
 <url><loc>http://giottojs.org/api/</loc><lastmod>2014-12-18</lastmod></url>
-<url><loc>http://giottojs.org/api/paper</loc><lastmod>2015-01-09</lastmod></url>
+<url><loc>http://giottojs.org/api/paper</loc><lastmod>2015-01-11</lastmod></url>
 <url><loc>http://giottojs.org/api/visualization</loc><lastmod>2015-01-09</lastmod></url>
-<url><loc>http://giottojs.org/tutorials/loaddata</loc><lastmod>2015-01-09</lastmod></url>
+<url><loc>http://giottojs.org/chart</loc><lastmod>2014-12-17</lastmod></url>
+<url><loc>http://giottojs.org/download</loc><lastmod>2014-12-10</lastmod></url>
+<url><loc>http://giottojs.org</loc><lastmod>2014-12-24</lastmod></url>
 </urlset>

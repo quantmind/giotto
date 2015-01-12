@@ -22,7 +22,7 @@
 <link href='http://giottojs.org/media/giotto/giotto.css' rel='stylesheet' type='text/css'>
 <link href='http://giottojs.org/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var lux = {context: {"apiUrls": {}, "dateFormat": "d MMM y", "lux_version": "0.1.2-alpha.1", "html5mode": true, "datetimeFormat": "d MMM y, h:mm:ss a", "year": 2015, "oauths": null, "navbar": {"collapseWidth": 768}, "name": "Lux", "brand": "Lux", "media": "/media", "page": {"image": "http://giottojs.org/examples/collisions.png", "priority": "0", "slug": "collisions", "robots": ["noindex", "nofollow"], "content_type": "text/html", "description": "A list of GiottoJS examples", "modified": "2014-12-22T08:51:06", "title": "Collision Detection", "html_url": "http://giottojs.org/examples/collisions", "name": "collisions", "api_url": "http://giottojs.org/ng/examples/collisions.json"}, "url": "http://giottojs.org", "google": {"analytics": {"id": "UA-54439804-4", "ga": "ga"}}, "python_version": "3.4.2", "date": "2015-01-09T21-47-07", "ngModules": ["highlight", "lux.blog", "lux.google"]}};
+var lux = {context: {"datetimeFormat": "d MMM y, h:mm:ss a", "url": "http://giottojs.org", "year": 2015, "oauths": null, "dateFormat": "d MMM y", "python_version": "3.4.2", "google": {"analytics": {"ga": "ga", "id": "UA-54439804-4"}}, "ngModules": ["lux.google", "lux.blog", "highlight"], "name": "Lux", "media": "/media", "navbar": {"collapseWidth": 768}, "brand": "Lux", "lux_version": "0.1.2-alpha.1", "apiUrls": {}, "html5mode": true, "page": {"robots": ["noindex", "nofollow"], "name": "collisions", "modified": "2015-01-11T10:01:33", "image": "http://giottojs.org/examples/collisions.png", "content_type": "text/html", "slug": "collisions", "description": "A list of GiottoJS examples", "html_url": "http://giottojs.org/examples/collisions", "priority": "0", "api_url": "http://giottojs.org/ng/examples/collisions.json", "title": "Collision Detection"}, "date": "2015-01-12T10-31-25"}};
 </script>
 <script type='text/javascript'>
 lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
@@ -30,7 +30,7 @@ lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback
 var gexamples = {};
 </script>
 <script type="text/javascript">
-var require = {"minify": true, "baseUrl": "http://giottojs.org/media/", "deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"], "paths": {}, "waitSeconds": 200};
+var require = {"paths": {}, "deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"], "waitSeconds": 200, "baseUrl": "http://giottojs.org/media/", "minify": true};
 </script>
 <script src='http://quantmind.github.io/require-config-js/require.config.min.js' type='application/javascript'></script>
 <script src='//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js' type='application/javascript'></script>
@@ -56,17 +56,17 @@ var require = {"minify": true, "baseUrl": "http://giottojs.org/media/", "deps": 
 <div class="container-fluid">
   <div class="row">
     <div class="col-sm-10">
-      <div data-options="gexamples.force1" style="width: 100%;" giotto-force></div>
+      <div data-options="gexamples.force1" style="width: 100%;" giotto-viz></div>
     </div>
     <div class="col-sm-2 small">
      <div data-jstats></div>
-      <lux-form data-options='luxforms.collision_FCs2j'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.collision_FCs2j = {"field": {"id": "collision_FCs2j", "model": "Collision", "type": "form"}, "children": [{"field": {"type": "fieldset"}, "children": [{"field": {"value": "svg", "name": "type", "options": ["svg", "canvas"], "type": "select", "required": true}}, {"field": {"min": 0, "value": 0.05, "type": "number", "max": 1, "required": true, "name": "gravity"}}, {"field": {"value": -0.02, "name": "charge", "type": "number", "required": true}}, {"field": {"min": 0, "value": 0.9, "type": "number", "max": 1, "required": true, "name": "friction"}}]}]};</script></lux-form>
+      <lux-form data-options='luxforms.collision_JSsbM'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.collision_JSsbM = {"field": {"type": "form", "id": "collision_JSsbM", "model": "Collision"}, "children": [{"field": {"type": "fieldset"}, "children": [{"field": {"value": "svg", "type": "select", "name": "type", "options": ["svg", "canvas"], "required": true}}, {"field": {"type": "number", "name": "gravity", "max": 1, "value": 0.05, "min": 0, "required": true}}, {"field": {"value": -0.02, "type": "number", "name": "charge", "required": true}}, {"field": {"type": "number", "name": "friction", "max": 1, "value": 0.9, "min": 0, "required": true}}]}]};</script></lux-form>
     </div>
   </div>
 </div>
 <h3>Javascript code</h3>
 <pre><code>gexamples.force1 = {
-    margin: {top:0, left:0, right:0, bottom:0},
+    margin: 0,
     nodes: 150,
     minRadius: 0.005,
     maxRadius: 0.02,
@@ -81,50 +81,61 @@ var require = {"minify": true, "baseUrl": "http://giottojs.org/media/", "deps": 
         fillOpacity: 1
     },
 
-    onInit: function (force, opts) {
+    onInit: function (viz, opts) {
 
         var root = {fixed: true, size: 0, x: -1, y: -1},
-            charge = force.charge(),
-            paper;
+            force = d3.layout.force().charge(function (d) {
+                return d.fixed ? opts.charge : 0;
+            }),
+            nodes = d3.range(+opts.nodes).map(function() {
+                var minRadius = +opts.minRadius,
+                    maxRadius = +opts.maxRadius,
+                    dr = maxRadius &gt; minRadius ? maxRadius - minRadius : 0;
+                return {
+                    size: Math.random() * dr + minRadius,
+                    x: Math.random(),
+                    y: Math.random()
+                };
+            }),
+            group;
 
-        // Add nodes
-        force.nodes(d3.range(+opts.nodes).map(function() {
-            var minRadius = +opts.minRadius,
-                maxRadius = +opts.maxRadius,
-                dr = maxRadius &gt; minRadius ? maxRadius - minRadius : 0;
-            return {size: Math.random() * dr + minRadius};
-        })).addNode(root);
+        // Add the dummy node for the mouse
+        nodes.push({fixed: true, size: 0, x: -1, y: -1});
 
-        if (typeof charge !== 'function')
-            force.charge(opts._charge(charge));
+        force.nodes(nodes);
 
         function init () {
-            paper = force.paper(true);
+            group = viz.paper(true).group();
 
-            var group = paper.group();
+            // rescale
+            group.add(function () {
+                group.yaxis().scale().domain([0, group.aspectRatio()]);
+            });
             group.points(force.nodes())
+                    .size(function (d) {return group.scale().invert(d.size);})
                     .x(function (d) {return d.x;})
                     .y(function (d) {return d.y;});
 
-            paper.on("mousemove", function() {
+            viz.paper().on("mousemove.collide", function() {
                 var p1 = d3.mouse(this);
-                root.x = paper.xfromPX(p1[0]);
-                root.y = paper.yfromPX(p1[1]);
+                root.x = group.xfromPX(p1[0]);
+                root.y = group.yfromPX(p1[1]);
                 force.resume();
-            }).on("touchmove", function() {
+            }).on("touchmove.collide", function() {
                 var p1 = d3.touches(this);
-                root.x = paper.xfromPX(p1[0][0]);
-                root.y = paper.yfromPX(p1[0][1]);
+                root.x = group.xfromPX(p1[0][0]);
+                root.y = group.yfromPX(p1[0][1]);
                 force.resume();
             });
         }
 
-
         force.on("tick.collide", function(e) {
-            if (!paper || opts.type !== paper.type()) init();
-            force.collide();
-            paper.render();
+            if (!group || opts.type !== group.type()) init();
+            collide(group, force);
+            group.render();
         });
+
+        force.start();
     },
 
     // Callback when angular directive
@@ -139,23 +150,69 @@ var require = {"minify": true, "baseUrl": "http://giottojs.org/media/", "deps": 
                 force.gravity(value);
             else if (model.field === 'charge')
                 force.charge(opts._charge(value));
-            else if (model.field === 'type') {
-                // rebuild paper
+            else if (model.field === 'type')
                 opts.type = value;
-                force.paper(true);
-                opts.onInit(force);
-            }
+
             force.resume();
         });
 
-    },
-
-    _charge: function (value) {
-        return function (d) {
-            return d.fixed ? value : 0;
-        };
     }
 };
+
+function collide (group, force) {
+    var collidePadding = 0.002,
+        collideBuffer = 0.02,
+        nodes = force.nodes(),
+        scalex = group.xaxis().scale(),
+        scaley = group.yaxis().scale(),
+        buffer = scalex(collideBuffer),
+        padding = scalex(collidePadding),
+        q = d3.geom.quadtree(nodes),
+        node;
+
+        for (var i=0; i&lt;nodes.length; ++i)
+            q.visit(circleCollide(nodes[i], buffer));
+
+    function circleCollide (node, buffer) {
+
+        var r = node.size + buffer,
+            nx1 = node.x - r,
+            nx2 = node.x + r,
+            ny1 = node.y - r,
+            ny2 = node.y + r,
+            dx, dy, d;
+
+        return function(quad, x1, y1, x2, y2) {
+            if (quad.point &amp;&amp; (quad.point !== node)) {
+                dx = node.x - quad.point.x;
+                dy = node.y - quad.point.y;
+                d = Math.sqrt(dx * dx + dy * dy);
+                r = node.size + quad.point.size;
+                if (d &lt; r) {
+                    d = 0.5 * (r - d) / d;
+                    dx *= d;
+                    dy *= d;
+                    if (node.fixed || quad.point.fixed) {
+                        if (node.fixed) {
+                            quad.point.x -= 2*dx;
+                            quad.point.y -= 2*dy;
+                        } else {
+                            node.x += 2*dx;
+                            node.y += 2*dy;
+                        }
+                    } else {
+                        node.x += dx;
+                        node.y += dy;
+                        quad.point.x -= dx;
+                        quad.point.y -= dy;
+                    }
+                }
+            }
+            return x1 &gt; nx2 || x2 &lt; nx1 || y1 &gt; ny2 || y2 &lt; ny1;
+        };
+    }
+
+}
 </code></pre>
 </div>
 </div>
@@ -164,7 +221,7 @@ var require = {"minify": true, "baseUrl": "http://giottojs.org/media/", "deps": 
 <script>
 
     gexamples.force1 = {
-        margin: {top:0, left:0, right:0, bottom:0},
+        margin: 0,
         nodes: 150,
         minRadius: 0.005,
         maxRadius: 0.02,
@@ -179,50 +236,61 @@ var require = {"minify": true, "baseUrl": "http://giottojs.org/media/", "deps": 
             fillOpacity: 1
         },
 
-        onInit: function (force, opts) {
+        onInit: function (viz, opts) {
 
             var root = {fixed: true, size: 0, x: -1, y: -1},
-                charge = force.charge(),
-                paper;
+                force = d3.layout.force().charge(function (d) {
+                    return d.fixed ? opts.charge : 0;
+                }),
+                nodes = d3.range(+opts.nodes).map(function() {
+                    var minRadius = +opts.minRadius,
+                        maxRadius = +opts.maxRadius,
+                        dr = maxRadius > minRadius ? maxRadius - minRadius : 0;
+                    return {
+                        size: Math.random() * dr + minRadius,
+                        x: Math.random(),
+                        y: Math.random()
+                    };
+                }),
+                group;
 
-            // Add nodes
-            force.nodes(d3.range(+opts.nodes).map(function() {
-                var minRadius = +opts.minRadius,
-                    maxRadius = +opts.maxRadius,
-                    dr = maxRadius > minRadius ? maxRadius - minRadius : 0;
-                return {size: Math.random() * dr + minRadius};
-            })).addNode(root);
+            // Add the dummy node for the mouse
+            nodes.push({fixed: true, size: 0, x: -1, y: -1});
 
-            if (typeof charge !== 'function')
-                force.charge(opts._charge(charge));
+            force.nodes(nodes);
 
             function init () {
-                paper = force.paper(true);
+                group = viz.paper(true).group();
 
-                var group = paper.group();
+                // rescale
+                group.add(function () {
+                    group.yaxis().scale().domain([0, group.aspectRatio()]);
+                });
                 group.points(force.nodes())
+                        .size(function (d) {return group.scale().invert(d.size);})
                         .x(function (d) {return d.x;})
                         .y(function (d) {return d.y;});
 
-                paper.on("mousemove", function() {
+                viz.paper().on("mousemove.collide", function() {
                     var p1 = d3.mouse(this);
-                    root.x = paper.xfromPX(p1[0]);
-                    root.y = paper.yfromPX(p1[1]);
+                    root.x = group.xfromPX(p1[0]);
+                    root.y = group.yfromPX(p1[1]);
                     force.resume();
-                }).on("touchmove", function() {
+                }).on("touchmove.collide", function() {
                     var p1 = d3.touches(this);
-                    root.x = paper.xfromPX(p1[0][0]);
-                    root.y = paper.yfromPX(p1[0][1]);
+                    root.x = group.xfromPX(p1[0][0]);
+                    root.y = group.yfromPX(p1[0][1]);
                     force.resume();
                 });
             }
 
-
             force.on("tick.collide", function(e) {
-                if (!paper || opts.type !== paper.type()) init();
-                force.collide();
-                paper.render();
+                if (!group || opts.type !== group.type()) init();
+                collide(group, force);
+                group.render();
             });
+
+            force.start();
         },
 
         // Callback when angular directive
@@ -237,23 +305,70 @@ var require = {"minify": true, "baseUrl": "http://giottojs.org/media/", "deps": 
                     force.gravity(value);
                 else if (model.field === 'charge')
                     force.charge(opts._charge(value));
-                else if (model.field === 'type') {
-                    // rebuild paper
+                else if (model.field === 'type')
                     opts.type = value;
-                    force.paper(true);
-                    opts.onInit(force);
-                }
+
                 force.resume();
             });
 
-        },
-
-        _charge: function (value) {
-            return function (d) {
-                return d.fixed ? value : 0;
-            };
         }
     };
+
+    function collide (group, force) {
+        var collidePadding = 0.002,
+            collideBuffer = 0.02,
+            nodes = force.nodes(),
+            scalex = group.xaxis().scale(),
+            scaley = group.yaxis().scale(),
+            buffer = scalex(collideBuffer),
+            padding = scalex(collidePadding),
+            q = d3.geom.quadtree(nodes),
+            node;
+
+            for (var i=0; i<nodes.length; ++i)
+                q.visit(circleCollide(nodes[i], buffer));
+
+        function circleCollide (node, buffer) {
+
+            var r = node.size + buffer,
+                nx1 = node.x - r,
+                nx2 = node.x + r,
+                ny1 = node.y - r,
+                ny2 = node.y + r,
+                dx, dy, d;
+
+            return function(quad, x1, y1, x2, y2) {
+                if (quad.point && (quad.point !== node)) {
+                    dx = node.x - quad.point.x;
+                    dy = node.y - quad.point.y;
+                    d = Math.sqrt(dx * dx + dy * dy);
+                    r = node.size + quad.point.size;
+                    if (d < r) {
+                        d = 0.5 * (r - d) / d;
+                        dx *= d;
+                        dy *= d;
+                        if (node.fixed || quad.point.fixed) {
+                            if (node.fixed) {
+                                quad.point.x -= 2*dx;
+                                quad.point.y -= 2*dy;
+                            } else {
+                                node.x += 2*dx;
+                                node.y += 2*dy;
+                            }
+                        } else {
+                            node.x += dx;
+                            node.y += dy;
+                            quad.point.x -= dx;
+                            quad.point.y -= dy;
+                        }
+                    }
+                }
+                return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
+            };
+        }
+
+    }
+
 </script>
 <div id="footer">
 <div class="container">
