@@ -1,6 +1,6 @@
 //      GiottoJS - v0.1.0
 
-//      Compiled 2015-01-09.
+//      Compiled 2015-01-12.
 //      Copyright (c) 2015 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -3007,8 +3007,6 @@
             return gradient;
         };
 
-
-
         return gradient;
     };
     var _idCounter = 0;
@@ -3134,9 +3132,10 @@
                 paper.each(function () {
                     this.resize();
                 });
-                events.change.call(paper);
+                events.change.call(paper, {type: 'change'});
             }
             resizing = false;
+            return paper;
         };
 
         paper.boundingBox = function () {
@@ -3148,7 +3147,7 @@
                 h = p.elheight ? getHeight(p.elheight) : p.size[1];
             if (p.min_height)
                 h = Math.max(h, p.min_height);
-            return [w, h];
+            return [Math.round(w), Math.round(h)];
         };
 
         // pick a color
@@ -3446,7 +3445,7 @@
             return rendering;
         };
 
-        // remove all drawings or a drawing by name
+        // remove this group from the paper or a drawing by name
         group.remove = function (name) {
             if (!arguments.lenght) {
                 return group.element().remove();
@@ -3487,9 +3486,6 @@
         group.xfromPX = group.fromPX;
         group.yfromPX = group.fromPX;
 
-        // dimension in the input domain from a 0 <= x <= 1
-        // assume a continuous domain
-        // TODO allow for multiple domain points
         group.dim = function (x) {
             if (!x) return 0;
 
@@ -4797,38 +4793,14 @@
 
         var nodes = [],
             forces = [],
-            scalex = d3.scale.linear(),
-            scaley = d3.scale.linear(),
-            neighbors, friction,
+            friction,
             q, i, j, o, l, s, t, x, y, k;
 
         force.nodes = function(x) {
             if (!arguments.length) return nodes;
-            neighbors = null;
             nodes = x;
             for (i = 0; i < nodes.length; ++i)
-                initNode(nodes[i]).index = i;
-            return force;
-        };
-
-        // internal x-scale to and from [0, 1]
-        force.scalex = function (_) {
-            if (!arguments.length) return scalex;
-            scalex = _;
-            return force;
-        };
-
-        // internal y-scale to and from [0, 1]
-        force.scaley = function (_) {
-            if (!arguments.length) return scaley;
-            scaley = _;
-            return force;
-        };
-
-        // Add a new node to the force layout and return the force object
-        force.addNode = function (o) {
-            o.index = nodes.length;
-            nodes.push(initNode(o));
+                nodes[i].index = i;
             return force;
         };
 
@@ -4898,13 +4870,6 @@
                 }
             }
         });
-
-        function initNode (o) {
-            o.weight = 0;
-            if (isNaN(o.x)) o.x = scalex(Math.random());
-            if (isNaN(o.y)) o.y = scaley(Math.random());
-            return o;
-        }
     });
 
     // gauss-seidel relaxation for links
@@ -6246,6 +6211,24 @@
 
 
 
+    g.paper.plugin('force', {
+        theta: 0.8,
+        friction: 0.9,
+
+    }, function (group, opts) {
+
+        // Add force visualization to the group
+        group.force = function (data, opts) {
+            opts || (opts = {});
+            chartFormats(group, opts);
+            chartColor(group.paper(), copyMissing(p.force, opts));
+
+            return group.add(function () {
+
+            });
+        };
+    });
+
     g.viz.force.plugin(function (force, opts) {
         g._.copyMissing({collidePadding: 0.002, collideBuffer: 0.02}, opts);
 
@@ -6320,9 +6303,6 @@
             var paper = group.paper(),
                 grid, gopts, zooming;
 
-            if (!paper.zoom)
-                paper.zoom = paperzoom(paper);
-
             group.showGrid = function () {
                 if (!grid) {
                     // First time here, setup grid options for y and x coordinates
@@ -6340,7 +6320,7 @@
                         }, opts.grid);
                     }
                     gopts.before = '*';
-                    grid = group.paper().group(gopts);
+                    grid = paper.group(gopts);
                     grid.element().classed('grid', true);
                     grid.xaxis().tickFormat(notick).scale(group.xaxis().scale());
                     grid.yaxis().tickFormat(notick).scale(group.yaxis().scale());
@@ -6412,10 +6392,7 @@
                             zooming = false;
                         });
 
-                        if (type === 'svg')
-                            zoom(grid.element());
-                        else
-                            zoom(grid.paper().canvas());
+                        zoom(grid.paper().element());
 
                         var factor = grid.factor();
 
@@ -6482,16 +6459,6 @@
     });
 
     function notick () {return '';}
-
-    function paperzoom (paper) {
-        var zoom;
-
-        return function (_) {
-            if (!arguments.length) return zoom;
-            zoom = _;
-            return paper;
-        };
-    }
 
 
     var legendDefaults = {
@@ -7585,7 +7552,7 @@
     function (group, p) {
         var type = group.type();
 
-        // Draw scatter points
+        // Draw points in the group
         group.points = function (data, opts) {
             opts || (opts = {});
             chartFormats(group, opts);
@@ -7621,7 +7588,6 @@
         },
 
         point_costructor = function (rawdata) {
-            // Default point size
             var group = this.group(),
                 size = group.scale(group.dim(this.options().size)),
                 point = g[group.type()].point,

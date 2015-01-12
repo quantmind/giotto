@@ -6,7 +6,7 @@ priority: 0
 <div class="container-fluid">
   <div class="row">
     <div class="col-sm-10">
-      <div data-options="gexamples.force1" style="width: 100%;" giotto-force></div>
+      <div data-options="gexamples.force1" style="width: 100%;" giotto-viz></div>
     </div>
     <div class="col-sm-2 small">
      <div data-jstats></div>

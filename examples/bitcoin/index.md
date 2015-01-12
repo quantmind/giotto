@@ -1,4 +1,5 @@
 title: Bitcoin timeseries
+author: Luca Sbardella
 priority: 0
 
 

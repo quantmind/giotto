@@ -1,7 +1,7 @@
 Giotto JS
 ===================
 
-Reusable visualization tools for [d3js](http://d3js.org/).
+D3 base visualization library.
 
 http://giottojs.org
 

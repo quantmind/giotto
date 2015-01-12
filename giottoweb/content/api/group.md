@@ -9,6 +9,10 @@ It is created form a paper and it is always part of a paper.
 
 where ``options`` is an object containing parameters to override the ``paper`` defaults.
 
+**Contents**
+
+[TOC]
+
 # Drawing
 
 ### # group.add(drawing)
@@ -28,27 +32,10 @@ is equivalent to
 
 This method returns the ``drawing`` object added to the group drawing collection.
 
-
-### # group.path(data, [opts])
-
-Create a new path and add it to the drawings collection. Returns the new path
-drawing object which can be act upon via the [drawing api](/api/drawing). The control
-points of the path are given in the ``data`` array which default it is assumed to
-be an array of two elements arrays ``[x, y]``. This can be changed by modifying the
-[drawing.x()](/api/drawing#drawingxx) and [drawing.y()](/api/drawing#drawingyy)
-accessors.
-
-### # group.points(data, [opts])
-
-Create a new [drawing](/api/drawing) of points from ``data`` which by default
-it is assumed to be an array of two elements arrays ``[x, y]``.
-This can be changed by modifying the
-[drawing.x()](/api/drawing#drawingxx) and [drawing.y()](/api/drawing#drawingyy)
-accessors.
-
 ### # group.render()
 
 Render the group by re-rendering all drawings. It returns the group for chaining.
+
 
 ### # group.clear()
 
@@ -60,6 +47,11 @@ Issuing ``render`` after the command will re-render all drawings. It returns the
 ### # group.factor()
 
 For ``svg`` it is 1, for ``canvas`` it depends on the resolution of your screen (for a mac-book pro retina display it is 2).
+
+### # group.size()
+
+Returns a two elements array containing the pixel dimensions of the paper, including any margin. It includes the
+[factor scaling](#groupfactor).
 
 ### # group.width()
 
@@ -103,3 +95,22 @@ range is ``[-5, 5]`` and the [group.innerWidth()](#groupinnerwidth) is ``500px``
     group.dim('250px') = 0
     group.dim('500px') = 5
 
+
+# Plugins
+
+### # group.path(data, [opts])
+
+Create a new path and add it to the drawings collection. Returns the new path
+drawing object which can be act upon via the [drawing api](/api/drawing). The control
+points of the path are given in the ``data`` array which default it is assumed to
+be an array of two elements arrays ``[x, y]``. This can be changed by modifying the
+[drawing.x()](/api/drawing#drawingxx) and [drawing.y()](/api/drawing#drawingyy)
+accessors.
+
+### # group.points(data, [opts])
+
+Create a new [drawing](/api/drawing) of points from ``data`` which by default
+it is assumed to be an array of two elements arrays ``[x, y]``.
+This can be changed by modifying the
+[drawing.x()](/api/drawing#drawingxx) and [drawing.y()](/api/drawing#drawingyy)
+accessors.

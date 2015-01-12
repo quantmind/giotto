@@ -9,38 +9,14 @@
 
         var nodes = [],
             forces = [],
-            scalex = d3.scale.linear(),
-            scaley = d3.scale.linear(),
-            neighbors, friction,
+            friction,
             q, i, j, o, l, s, t, x, y, k;
 
         force.nodes = function(x) {
             if (!arguments.length) return nodes;
-            neighbors = null;
             nodes = x;
             for (i = 0; i < nodes.length; ++i)
-                initNode(nodes[i]).index = i;
-            return force;
-        };
-
-        // internal x-scale to and from [0, 1]
-        force.scalex = function (_) {
-            if (!arguments.length) return scalex;
-            scalex = _;
-            return force;
-        };
-
-        // internal y-scale to and from [0, 1]
-        force.scaley = function (_) {
-            if (!arguments.length) return scaley;
-            scaley = _;
-            return force;
-        };
-
-        // Add a new node to the force layout and return the force object
-        force.addNode = function (o) {
-            o.index = nodes.length;
-            nodes.push(initNode(o));
+                nodes[i].index = i;
             return force;
         };
 
@@ -110,13 +86,6 @@
                 }
             }
         });
-
-        function initNode (o) {
-            o.weight = 0;
-            if (isNaN(o.x)) o.x = scalex(Math.random());
-            if (isNaN(o.y)) o.y = scaley(Math.random());
-            return o;
-        }
     });
 
     // gauss-seidel relaxation for links

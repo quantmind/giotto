@@ -18,7 +18,7 @@
     function (group, p) {
         var type = group.type();
 
-        // Draw scatter points
+        // Draw points in the group
         group.points = function (data, opts) {
             opts || (opts = {});
             chartFormats(group, opts);
@@ -54,7 +54,6 @@
         },
 
         point_costructor = function (rawdata) {
-            // Default point size
             var group = this.group(),
                 size = group.scale(group.dim(this.options().size)),
                 point = g[group.type()].point,

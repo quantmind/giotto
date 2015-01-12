@@ -24,8 +24,19 @@ Chart object can subsequently be created via the ``Chart`` factory function:
     var mychart2 = d3.giotto.Chart(element, options);
 
 
-The visualization base implementation expose most of the functionality needed for
-dealing with the [Paper API]
+The visualization base implementation exposes most of the functionality needed for
+dealing with the [paper] and [group API].
+
+### # viz.element()
+
+Returns a d3 selection containing the outer element of the paper. Equivalent to
+
+    viz.paper().element()
+
+### # viz.loadData()
+
+Load data into the visualization.
+
 
 ### # viz.paper([createNew]) {#viz-paper}
 
@@ -49,3 +60,4 @@ the timer.
 
 [paper]: $site_url/api/paper
 [Paper API]: $site_url/api/paper
+[group API]: $site_url/api/group

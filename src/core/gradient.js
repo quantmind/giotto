@@ -95,7 +95,5 @@
             return gradient;
         };
 
-
-
         return gradient;
     };

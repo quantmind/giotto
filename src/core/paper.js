@@ -121,9 +121,10 @@
                 paper.each(function () {
                     this.resize();
                 });
-                events.change.call(paper);
+                events.change.call(paper, {type: 'change'});
             }
             resizing = false;
+            return paper;
         };
 
         paper.boundingBox = function () {
@@ -135,7 +136,7 @@
                 h = p.elheight ? getHeight(p.elheight) : p.size[1];
             if (p.min_height)
                 h = Math.max(h, p.min_height);
-            return [w, h];
+            return [Math.round(w), Math.round(h)];
         };
 
         // pick a color

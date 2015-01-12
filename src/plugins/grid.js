@@ -14,9 +14,6 @@
             var paper = group.paper(),
                 grid, gopts, zooming;
 
-            if (!paper.zoom)
-                paper.zoom = paperzoom(paper);
-
             group.showGrid = function () {
                 if (!grid) {
                     // First time here, setup grid options for y and x coordinates
@@ -34,7 +31,7 @@
                         }, opts.grid);
                     }
                     gopts.before = '*';
-                    grid = group.paper().group(gopts);
+                    grid = paper.group(gopts);
                     grid.element().classed('grid', true);
                     grid.xaxis().tickFormat(notick).scale(group.xaxis().scale());
                     grid.yaxis().tickFormat(notick).scale(group.yaxis().scale());
@@ -106,10 +103,7 @@
                             zooming = false;
                         });
 
-                        if (type === 'svg')
-                            zoom(grid.element());
-                        else
-                            zoom(grid.paper().canvas());
+                        zoom(grid.paper().element());
 
                         var factor = grid.factor();
 
@@ -176,13 +170,3 @@
     });
 
     function notick () {return '';}
-
-    function paperzoom (paper) {
-        var zoom;
-
-        return function (_) {
-            if (!arguments.length) return zoom;
-            zoom = _;
-            return paper;
-        };
-    }

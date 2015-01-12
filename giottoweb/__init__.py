@@ -14,7 +14,7 @@ STATIC_LOCATION = '../docs/giotto'
 CONTEXT_LOCATION = 'giottoweb/content/context'
 FAVICON = 'giottoweb/favicon.ico'
 MEDIA_URL = '/media/'
-ANGULAR_UI_ROUTER = False
+ANGULAR_UI_ROUTER = True
 STATIC_API = 'ng'
 MINIFIED_MEDIA = True
 EXTENSIONS = ['lux.extensions.base',
@@ -75,8 +75,14 @@ class Extension(lux.Extension):
                                     content=DirContent,
                                     dir='examples',
                                     drafts=False,
+                                    uirouter=False,
                                     index_template='partials/blogindex.html'),
+                               HtmlContent('/api',
+                                           dir='giottoweb/content/api',
+                                           drafts=False,
+                                           meta=meta_default),
                                drafts=False,
+                               uirouter=False,
                                dir='giottoweb/content/site',
                                meta=meta_default)
         dist = MediaBuilder(media_url+'giotto', 'dist', lux=False)

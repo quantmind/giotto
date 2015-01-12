@@ -23,6 +23,9 @@ require(rcfg.min(['lux/lux', 'giotto/giotto', 'angular-ui-router', 'angular-stra
     };
     //
     lux.extend({
+        scroll: {
+            offset: 60
+        },
         navbar: {
             brand: 'GiottoJS',
             //brandImage: lux.media('giottoweb/giotto.svg'),
@@ -34,7 +37,8 @@ require(rcfg.min(['lux/lux', 'giotto/giotto', 'angular-ui-router', 'angular-stra
                 {
                     href: url + '/examples/',
                     icon: 'fa fa-bar-chart',
-                    label: 'examples'
+                    label: 'examples',
+                    target: '_self'
                 },
                 {
                     href: url + '/api/',

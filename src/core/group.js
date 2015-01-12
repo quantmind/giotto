@@ -99,7 +99,7 @@
             return rendering;
         };
 
-        // remove all drawings or a drawing by name
+        // remove this group from the paper or a drawing by name
         group.remove = function (name) {
             if (!arguments.lenght) {
                 return group.element().remove();
@@ -140,9 +140,6 @@
         group.xfromPX = group.fromPX;
         group.yfromPX = group.fromPX;
 
-        // dimension in the input domain from a 0 <= x <= 1
-        // assume a continuous domain
-        // TODO allow for multiple domain points
         group.dim = function (x) {
             if (!x) return 0;
 

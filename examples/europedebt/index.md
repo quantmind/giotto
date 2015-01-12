@@ -1,6 +1,6 @@
 title: Central Government Debt in Europe
-description: Central Government Debt in Europe in 2012 and 2013. This example shows how GiottoJS handle several labels without overlapping them.
-keywords: d3js, visualization, giottojs, javascript, svg, canvas, debt, europe
+description: Central Government Debt in Europe in 2012 and 2013. This example shows how GiottoJS handles several labels without overlapping them.
+keywords: d3js, visualization, giottojs, javascript, svg, canvas, debt, europe, piechart
 image: $site_url/examples/europedebt.png
 date: 9 January 2015
 author: Luca Sbardella
@@ -18,8 +18,9 @@ author: Luca Sbardella
   </div>
 </div>
 
-Central Government Debt in Europe in 2012 and 2013. This example shows how GiottoJS handle several labels without overlapping them. In addition, a custom drawing is displaied in the center of the pie chart displaying the total debt, almost 10 trillion euros! Germany is the only big European country which decreased its debt in 2013 form the 2012 value.
+Central Government Debt in Europe in 2012 and 2013. This example shows how GiottoJS handles several labels without overlapping them. In addition, a ``custom`` drawing is added in the center of the pie chart displaying the total debt, <strong>almost 10 trillion euros</strong>!
+Germany is the only big European country which decreased its debt in 2013 from the 2012 level. Italy is the biggest borrower, the UK a close second.
 
 Html:
 
-    <div data-options='gexamples.transition1' giotto-chart></div>
+    <div data-options='gexamples.europedebt' giotto-chart></div>

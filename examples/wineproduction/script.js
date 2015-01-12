@@ -15,7 +15,7 @@
 
     gexamples.piecharts = {
         height: '80%',
-        margin: 50,
+        margin: 80,
 
         tooltip: {
           show: true
@@ -31,7 +31,8 @@
             },
             labels: {
                 position: 'outside'
-            }
+            },
+            formatPercent: ',.1%'
         },
 
         data: [{label: 'Wine Production 2013', data: oivdata}],
