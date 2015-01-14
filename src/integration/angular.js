@@ -18,6 +18,35 @@
         var ag = {},
             mod;
 
+        // Mixin for adding scope method to visualization objects
+        ag.mixin = function (d) {
+            var scope;
+
+            d.scope = function (_) {
+                if (!arguments.length) return scope;
+                var opts = d.options();
+                scope = _;
+                if (isFunction(opts.angular))
+                    opts.angular(d, opts);
+
+                return d;
+            };
+
+            if (d.tick) {
+                var tick = d.tick;
+
+                d.tick = function() {
+                    if (scope && scope.stats)
+                        scope.stats.begin();
+                    tick();
+                    if (scope && scope.stats)
+                        scope.stats.end();
+                };
+            }
+
+            return d;
+        };
+
         ag.module = function (angular, moduleName, deps) {
 
             if (!arguments.length) return mod;
@@ -36,6 +65,30 @@
                         };
 
                     }])
+
+                    .directive('giottoCollection', function () {
+
+                        return {
+                            restrict: 'AE',
+
+                            controller: ['$scope', function (scope) {
+                                scope.giottoCollection = ag.mixin(g.collection());
+                            }],
+
+                            link: function (scope, element, attrs) {
+                                var options = getOptions(attrs),
+                                    require = options.require;
+                                if (require) {
+                                    if (!g._.isArray(require)) require = [require];
+                                    g.require(require, function (opts) {
+                                        extend(options, opts);
+                                        scope.giottoCollection.options(options).scope(scope).start();
+                                    });
+                                } else
+                                    scope.giottoCollection.options(options).scope(scope).start();
+                            }
+                        };
+                    })
 
                     .directive('jstats', function () {
                         return {
@@ -69,18 +122,21 @@
             }
 
             function startViz(scope, element, options, injected) {
-                options.scope = scope;
+                var collection = scope.giottoCollection;
+
                 for (var i=0; i<injected.length; ++i)
                     options[injects[i]] = injected[i];
-                var viz = vizType(element[0], options);
-                options = viz.options();
+
+                var viz = ag.mixin(vizType(element[0])).options(options).scope(scope);
                 element.data(name, viz);
 
-                if (_.isFunction(options.angular))
-                    options.angular(viz, options);
-
-                scope.$emit('giotto-viz', viz);
-                viz.start();
+                if (collection) {
+                    var key = options.key || collection.size() + 1;
+                    collection.set(key, viz);
+                } else {
+                    scope.$emit('giotto-viz', viz);
+                    viz.start();
+                }
             }
 
             injects.push(function () {

@@ -8,6 +8,8 @@
             lineWidth: 0.5,
             zoomx: false,
             zoomy: false,
+            xaxis: true,
+            yaxis: true,
             scaleExtent: [1, 10]
         },
         function (group, opts) {
@@ -22,12 +24,12 @@
                         gopts.xaxis = extend({
                             position: 'top',
                             size: 0,
-                            show: opts.xaxis.grid === undefined || opts.xaxis.grid
+                            show: opts.grid.xaxis
                         }, opts.grid);
                         gopts.yaxis = extend({
                             position: 'left',
                             size: 0,
-                            show: opts.yaxis.grid === undefined || opts.yaxis.grid
+                            show: opts.grid.yaxis
                         }, opts.grid);
                     }
                     gopts.before = '*';

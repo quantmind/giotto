@@ -1,7 +1,7 @@
 
     g.createviz('chart', {
         margin: {top: 30, right: 30, bottom: 30, left: 30},
-        chartTypes: ['pie', 'bar', 'line', 'point', 'custom'],
+        chartTypes: ['map', 'pie', 'bar', 'line', 'point', 'custom'],
         serie: {
             x: function (d) {return d[0];},
             y: function (d) {return d[1];}
@@ -47,30 +47,14 @@
         };
 
         chart.render = function () {
-            var paper = chart.paper(),
-                data = opts.data;
+            var paper = chart.paper();
             drawing = true;
-            opts.data = null;
 
-            // load data if in options
-            if (data === undefined && opts.src) {
-                return chart.loadData(chart.resume);
-            }
-
-            if (isFunction(data))
-                data = data(chart);
-
-            if (data || opts.type !== paper.type()) {
-
-                if (data)
-                    addSeries(data);
-
-                if (opts.type !== paper.type()) {
-                    paper = chart.paper(true);
-                    chart.each(function (serie) {
-                        serie.clear();
-                    });
-                }
+            if (opts.type !== paper.type()) {
+                paper = chart.paper(true);
+                chart.each(function (serie) {
+                    serie.clear();
+                });
             }
 
             chart.each(function (serie) {
@@ -113,17 +97,27 @@
 
         // INTERNALS
 
+        chart.on('data.build_series', function () {
+            var data = chart.data();
+            series = [];
+            addSeries(data);
+        });
+
         function chartSerie (data) {
             var serie = extend({}, opts.serie),
-                group, color, show;
+                group, color, show, scaled;
 
-            if (data && !isArray(data)) {
+            if (!data) return;
+
+            if (!g.data.isData(data)) {
                 extend(serie, data);
                 data = serie.data;
                 delete serie.data;
+                if (!data) return;
+            } else if (!isArray(data)) {
+                serie.x = data.x();
+                serie.y = data.y();
             }
-
-            if (!data) return;
 
             serie.index = series.length;
 
@@ -151,16 +145,17 @@
             opts.chartTypes.forEach(function (type) {
                 var o = serie[type];
 
-                if (o && type !== 'pie') {
+                if (o && chartTypes[type].scaled) {
                     // pick a default color if one is not given
                     if (!color)
                         color = chartColor(chart.paper(), o);
                     if (!o.color)
                         o.color = color;
+                    scaled = true;
                 }
             });
 
-            if (!serie.pie) {
+            if (scaled) {
                 if (serie.yaxis === undefined)
                     serie.yaxis = 1;
                 if (!serie.axisgroup) serie.axisgroup = 1;
@@ -192,8 +187,8 @@
             serie.data = function (_) {
                 if (!arguments.length) return data;
 
-                // Not a pie chart, check axis and ranges
-                if (!serie.pie) {
+                // check axis and ranges
+                if (scaled) {
 
                     var ranges = allranges[serie.axisgroup],
                         p = ranges[serie.xaxis.position],
@@ -328,20 +323,15 @@
         function addSeries (series) {
             // Loop through series and add them to the chart series collection
             // No drawing nor rendering involved
-            var data = [], ranges, p;
+            if (!series.forEach) series = [series];
 
             series.forEach(function (serie) {
 
                 if (isFunction(serie))
                     serie = serie(chart);
 
-                serie = chartSerie(serie);
-
-                if (serie)
-                    data.push(serie);
+                chartSerie(serie);
             });
-
-            return data;
         }
 
         function axisGroupId (axisgroup) {
@@ -350,29 +340,40 @@
 
     });
 
+    function scaled (c) {
+
+        function f(group, data, opts) {
+            return c(group, data, opts)
+                        .x(function (d) {return d.x;})
+                        .y(function (d) {return d.y;});
+        }
+
+        f.scaled = true;
+
+        return f;
+    }
+
     var chartTypes = {
+
+        map: function (group, data, opts) {
+            return group.map(data, opts);
+        },
 
         pie: function (group, data, opts) {
             return group.pie(data, opts);
         },
 
-        bar: function (group, data, opts) {
-            return group.barchart(data, opts)
-                        .x(function (d) {return d.x;})
-                        .y(function (d) {return d.y;});
-        },
+        bar: scaled(function (group, data, opts) {
+            return group.barchart(data, opts);
+        }),
 
-        line: function (group, data, opts) {
-            return group.path(data, opts)
-                        .x(function (d) {return d.x;})
-                        .y(function (d) {return d.y;});
-        },
+        line: scaled(function (group, data, opts) {
+            return group.path(data, opts);
+        }),
 
-        point: function (group, data, opts) {
-            return group.points(data, opts)
-                        .x(function (d) {return d.x;})
-                        .y(function (d) {return d.y;});
-        },
+        point: scaled(function (group, data, opts) {
+            return group.points(data, opts);
+        }),
 
         custom: function (group, data, opts) {
             var draw = drawing(group, function () {

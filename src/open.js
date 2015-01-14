@@ -24,7 +24,9 @@
             d3: d3,
             math: {},
             svg: {},
-            canvas: {}
+            canvas: {},
+            geo: {},
+            data: {}
         },
         g = giotto;
 

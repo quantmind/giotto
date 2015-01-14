@@ -1,0 +1,63 @@
+
+    // Convert an array of array obtained from reading a CSV file into an array of objects
+    g.data.fromcsv = function (data) {
+        var labels = data[0],
+            rows = [],
+            o, j;
+        for (var i=1; i<data.length; ++i) {
+            o = {};
+            for (j=0; j<labels.length; ++j)
+                o[labels[j]] = data[i][j];
+            rows.push(o);
+        }
+        return rows;
+    };
+
+    g.data.multi = function (data) {
+        var multi = {};
+
+        multi.serie = function () {
+            var serie = {},
+                x, y;
+
+            serie.x = function (_) {
+                if (!arguments.length) return x;
+                if (!isFunction(_)) _ = label_functor(_);
+                x = _;
+                return serie;
+            };
+
+            serie.y = function (_) {
+                if (!arguments.length) return y;
+                if (!isFunction(_)) _ = label_functor(_);
+                y = _;
+                return serie;
+            };
+
+            serie.forEach = function (callback) {
+                if (data)
+                    data.forEach(function (d) {
+                        callback([x(d), y(d)]);
+                    });
+                return serie;
+            };
+
+            serie.isData = d3_true;
+
+            return serie;
+        };
+
+        multi.isData = d3_true;
+
+        function label_functor (label) {
+            return function (d) {
+                return d[label];
+            };
+        }
+
+        return multi;
+    };
+
+    g.data.isData = function (data) {
+        return data && (isArray(data) || (data.isData && data.isData()));
+    };

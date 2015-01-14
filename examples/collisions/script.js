@@ -18,9 +18,7 @@
         onInit: function (viz, opts) {
 
             var root = {fixed: true, size: 0, x: -1, y: -1},
-                force = d3.layout.force().charge(function (d) {
-                    return d.fixed ? opts.charge : 0;
-                }),
+                force = d3.layout.force(),
                 nodes = d3.range(+opts.nodes).map(function() {
                     var minRadius = +opts.minRadius,
                         maxRadius = +opts.maxRadius,
@@ -34,9 +32,11 @@
                 group;
 
             // Add the dummy node for the mouse
-            nodes.push({fixed: true, size: 0, x: -1, y: -1});
+            //nodes.push({fixed: true, size: 0, x: -1, y: -1});
 
-            force.nodes(nodes);
+            force.nodes(nodes).charge(opts._charge(opts.charge));
+
+            viz.force = force;
 
             function init () {
                 group = viz.paper(true).group();
@@ -44,9 +44,12 @@
                 // rescale
                 group.add(function () {
                     group.yaxis().scale().domain([0, group.aspectRatio()]);
+                    force.size([1, group.aspectRatio()]);
                 });
                 group.points(force.nodes())
-                        .size(function (d) {return group.scale().invert(d.size);})
+                        .size(function (d) {
+                            return group.scale(d.size);
+                        })
                         .x(function (d) {return d.x;})
                         .y(function (d) {return d.y;});
 
@@ -65,27 +68,33 @@
 
             force.on("tick.collide", function(e) {
                 if (!group || opts.type !== group.type()) init();
-                collide(group, force);
+                //collide(group, force);
                 group.render();
             });
 
             force.start();
         },
 
+        _charge: function (charge) {
+            return function (d) {
+                return charge; //d.fixed ? opts.charge : 0;
+            };
+        },
+
         // Callback when angular directive
-        angular: function (force, opts) {
+        angular: function (viz, opts) {
 
-            opts.scope.$on('formFieldChange', function (e, model) {
-                var value = model.form[model.field];
+            opts.scope.$on('formFieldChange', function (e, model, field) {
+                var force = viz.force;
 
-                if (model.field === 'friction' && value)
-                    force.friction(value);
-                else if (model.field === 'gravity')
-                    force.gravity(value);
-                else if (model.field === 'charge')
-                    force.charge(opts._charge(value));
-                else if (model.field === 'type')
-                    opts.type = value;
+                if (field === 'friction' && model.friction)
+                    force.friction(model.friction);
+                else if (field === 'gravity')
+                    force.gravity(model.gravity);
+                else if (field === 'charge')
+                    force.charge(opts._charge(model.charge)).start();
+                else if (field === 'type')
+                    opts.type = model.type;
 
                 force.resume();
             });

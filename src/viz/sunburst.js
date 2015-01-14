@@ -73,13 +73,8 @@
         };
 
         // draw
-        self.draw = function (data) {
-            data = data || opts.data;
-            opts.data = null;
-
-            // load data if in options
-            if (data === undefined && opts.src)
-                return self.loadData(self.resume);
+        self.draw = function () {
+            var data = self.data();
 
             if (!paper || opts.type !== group.type()) {
                 paper = self.paper(true);
@@ -160,7 +155,7 @@
 
             //
             if (!self.select(initNode, 0))
-                opts.event.change({type: 'change', viz: self});
+                self.event('change').call(self, {type: 'change'});
         }
 
         function scale (radius) {
@@ -199,7 +194,7 @@
                 .each('end', function (e, i) {
                     if (node === e) {
                         current = e;
-                        opts.event.change({type: 'change', viz: self});
+                        self.event('change').call(self, {type: 'change'});
                     }
                 });
 

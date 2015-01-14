@@ -6,6 +6,82 @@
     g.vizplugin = function (callback) {
         g.vizplugins.push(callback);
     };
+
+    // Mixin for visualization classes and visualization collection
+    g.vizmixin = function (d) {
+        var uid = ++_idCounter,
+            loading_data = false,
+            opts = {},
+            data;
+
+        d.uid = function () {
+            return uid;
+        };
+
+        d.event = function (name) {
+            return noop;
+        };
+
+        // returns the options object
+        d.options = function (_) {
+            if (!arguments.length) return opts;
+            extend(opts, _);
+            return d;
+        };
+
+        d.load = function (callback) {
+            var _ = opts.data;
+            delete opts.data;
+
+            if (_) {
+                if (isFunction(_))
+                    _ = _(d);
+                d.data(_, callback);
+            } else if (opts.src && !loading_data) {
+                loading_data = true;
+                var src = opts.src,
+                    loader = opts.loader;
+                if (!loader) {
+                    loader = d3.json;
+                    if (src.substring(src.length-4) === '.csv') loader = d3.csv;
+                }
+                g.log.info('Giotto loading data from ' + opts.src);
+
+                return loader(opts.src, function(error, xd) {
+                    loading_data = false;
+                    if (arguments.length === 1) xd = error;
+                    else if(error)
+                        return g.log.error(error);
+
+                    d.data(xd, callback);
+                });
+            } else if (callback) {
+                callback();
+            }
+
+            return d;
+        };
+
+        //
+        // Set new data for the visualization
+        d.data = function (_, callback) {
+            if (!arguments.length) return data;
+
+            if (opts.processData)
+                _ = opts.processData(_);
+
+            data = _;
+
+            if (callback)
+                callback();
+
+            d.event('data').call(d, {type: 'data'});
+
+            return d;
+        };
+
+        return d;
+    };
     //
     // Factory of Giotto visualization factories
     //  name: name of the visualization constructor, the constructor is
@@ -21,22 +97,16 @@
 
         plugins = [],
 
-        vizType = function (element, opts) {
+        vizType = function (element) {
 
-            if (isObject(element)) {
-                opts = element;
-                element = null;
-            }
-            opts = extend({}, vizType.defaults, opts);
-
-            var viz = {},
-                uid = ++_idCounter,
-                event = d3.dispatch.apply(d3, opts.events),
+            var viz = g.vizmixin({}).options(vizType.defaults),
+                events = d3.dispatch.apply(d3, g.constants.vizevents),
                 alpha = 0,
-                loading_data = false,
                 paper;
 
-            opts.event = event;
+            viz.event = function (name) {
+                return events[name];
+            };
 
             // Return the visualization type (a function)
             viz.vizType = function () {
@@ -47,15 +117,11 @@
                 return vizType.vizName();
             };
 
-            viz.uid = function () {
-                return uid;
-            };
-
             viz.paper = function (createNew) {
                 if (createNew || paper === undefined) {
                     if (paper)
                         paper.clear();
-                    paper = g.paper(element, opts);
+                    paper = g.paper(element, viz.options());
                 }
                 return paper;
             };
@@ -77,7 +143,7 @@
                     if (x > 0) alpha = x; // we might keep it hot
                     else alpha = 0; // or, next tick will dispatch "end"
                 } else if (x > 0) { // otherwise, fire it up!
-                    event.start({type: "start", alpha: alpha = x});
+                    events.start({type: "start", alpha: alpha = x});
                     d3.timer(viz.tick);
                 }
 
@@ -93,24 +159,17 @@
             };
 
             viz.tick = function() {
-                if (opts.scope && opts.scope.stats)
-                    opts.scope.stats.begin();
-
                 // simulated annealing, basically
                 if ((alpha *= 0.99) < 0.005) {
-                    event.end({type: "end", alpha: alpha = 0});
+                    events.end({type: "end", alpha: alpha = 0});
                     return true;
                 }
-
-                event.tick({type: "tick", alpha: alpha});
-
-                if (opts.scope && opts.scope.stats)
-                    opts.scope.stats.end();
+                events.tick({type: "tick", alpha: alpha});
             };
 
             // Starts the visualization
             viz.start = function () {
-                return viz.resume();
+                return onInitViz(viz, init).load(viz.resume);
             };
 
             // render the visualization by invoking the render method of the paper
@@ -119,73 +178,28 @@
                 return viz;
             };
 
-            viz.loadData = function (callback) {
-                if (opts.src && !loading_data) {
-                    loading_data = true;
-                    var src = opts.src,
-                        loader = opts.loader;
-                    if (!loader) {
-                        loader = d3.json;
-                        if (src.substring(src.length-4) === '.csv') loader = d3.csv;
-                    }
-                    g.log.info('Giotto loading data from ' + opts.src);
-                    return loader(opts.src, function(error, json) {
-                        loading_data = false;
-                        if (!error) {
-                            viz.setData(json, callback);
-                        }
-                    });
-                }
-            };
-
-            //
-            // Set new data for the visualization
-            viz.setData = function (data, callback) {
-                if (opts.processData)
-                    data = opts.processData(data);
-                if (isObject(data) && data.data)
-                    extend(opts, data);
-                else
-                    opts.data = data;
-                if (callback)
-                    callback();
-            };
-
-            // returns the options object
-            viz.options = function () {
-                return opts;
-            };
-
             viz.image = function () {
                 return paper.image();
             };
 
-            viz.xyfunction = g.math.xyfunction;
-
-            d3.rebind(viz, event, 'on');
-
-            // If constructor available, call it first
-            if (constructor)
-                constructor(viz, opts);
-
-            // Inject plugins for all visualizations
-            for (i=0; i < g.vizplugins.length; ++i)
-                g.vizplugins[i](viz, opts);
-
-            // Inject visualization plugins
-            for (var i=0; i < plugins.length; ++i)
-                plugins[i](viz, opts);
-
-            // if the onInit callback available, execute it
-            if (opts.onInit) {
-                var init = getObject(opts.onInit);
-                if (isFunction(init))
-                    init(viz, opts);
-                else
-                    g.log.error('Could not locate onInit function ' + opts.onInit);
-            }
+            d3.rebind(viz, events, 'on');
 
             return viz;
+
+            function init () {
+                var opts = viz.options();
+                // If constructor available, call it first
+                if (constructor)
+                    constructor(viz, opts);
+
+                // Inject plugins for all visualizations
+                for (i=0; i < g.vizplugins.length; ++i)
+                    g.vizplugins[i](viz, opts);
+
+                // Inject visualization plugins
+                for (var i=0; i < plugins.length; ++i)
+                    plugins[i](viz, opts);
+            }
         };
 
         g.viz[name] = vizType;
@@ -204,3 +218,22 @@
     };
 
     g.createviz('viz');
+
+    function onInitViz(viz, init) {
+        if (!viz.__init__) {
+            viz.__init__ = true;
+            if (init) init();
+
+            var opts = viz.options();
+            // if the onInit callback available, execute it
+            if (opts.onInit) {
+                init = getObject(opts.onInit);
+
+                if (isFunction(init))
+                    init(viz, opts);
+                else
+                    g.log.error('Could not locate onInit function ' + opts.onInit);
+            }
+        }
+        return viz;
+    }

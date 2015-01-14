@@ -92,14 +92,10 @@
             };
         }
 
-        var points = pp.selectAll('*');
-        if (data.length != points.length) {
-            points.remove();
-            points = pp.selectAll('*')
-                    .data(this.data())
-                    .enter()
-                    .append('path');
-        }
+        var points = pp.selectAll('*').data(this.data());
+        points.enter().append('path');
+        points.exit().remove();
+
         group.events(group.draw(points
                  .attr("transform", function(d) {
                      return "translate(" + scalex(d.data) + "," + scaley(d.data) + ")";

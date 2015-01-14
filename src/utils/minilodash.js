@@ -279,4 +279,9 @@
                 bits.push(v);
         }
         return bits.join(' ');
+    },
+    //
+    now = _.now = function () {
+        return Date.now ? Date.now() : new Date().getTime();
     };
+

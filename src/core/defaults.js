@@ -34,9 +34,6 @@
         //
         // Optional callback after initialisation
         onInit: null,
-        //
-        // Default events dispatched by the visualization
-        events: ['build', 'change', 'start', 'tick', 'end'],
 
         // Rightclick menu
         contextmenu: [{
@@ -52,5 +49,6 @@
         DEFAULT_VIZ_GROUP: 'default_viz_group',
         WIDTH: 400,
         HEIGHT: 300,
+        vizevents: ['build', 'data', 'change', 'start', 'tick', 'end'],
         leaflet: 'http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css'
     };

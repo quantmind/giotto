@@ -42,12 +42,12 @@
         // Callback for angular directive
         angular: function (chart, opts) {
 
-            opts.scope.$on('formFieldChange', function (e, form) {
+            chart.scope().$on('formFieldChange', function (e, form) {
                 opts.type = form.type;
                 chart.resume();
             });
 
-            opts.scope.$on('randomiseClick', function (e) {
+            chart.scope().$on('randomiseClick', function (e) {
                 e.preventDefault();
                 chart.each(function (serie) {
                     serie.data(randomPath(300));

@@ -27,10 +27,10 @@
         },
 
         // Callback for angular directive
-        angular: function (chart, opts) {
+        angular: function (chart) {
 
-            opts.scope.$on('formFieldChange', function (e, form) {
-                opts.type = form.type;
+            chart.scope().$on('formFieldChange', function (e, form) {
+                chart.options().type = form.type;
                 chart.resume();
             });
         }

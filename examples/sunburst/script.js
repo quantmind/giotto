@@ -10,8 +10,8 @@
 
         colors: function (d3) {return d3.scale.category20().range();},
 
-        angular: function (viz, opts) {
-            opts.scope.$on('formFieldChange', function (e, o) {
+        angular: function (viz) {
+            viz.scope().$on('formFieldChange', function (e, o) {
                 if (o.scale)
                     viz.scale(o.scale).resume();
             });
