@@ -23,15 +23,15 @@
 <link href='http://giottojs.org/media/giotto/giotto.css' rel='stylesheet' type='text/css'>
 <link href='http://giottojs.org/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var lux = {context: {"datetimeFormat": "d MMM y, h:mm:ss a", "url": "http://giottojs.org", "year": 2015, "oauths": null, "dateFormat": "d MMM y", "python_version": "3.4.2", "google": {"analytics": {"ga": "ga", "id": "UA-54439804-4"}}, "ngModules": ["lux.google", "lux.blog", "highlight"], "name": "Lux", "media": "/media", "navbar": {"collapseWidth": 768}, "brand": "Lux", "lux_version": "0.1.2-alpha.1", "apiUrls": {}, "html5mode": true, "page": {"name": "zooming", "modified": "2014-12-18T17:55:56", "image": "http://giottojs.org/examples/zooming.png", "content_type": "text/html", "slug": "zooming", "description": "Zooming on SVG and Canvas with GiottoJS using d3js behavour zoom", "html_url": "http://giottojs.org/examples/zooming", "author": ["Luca Sbardella"], "date": "2014-12-18T00:00:00", "api_url": "http://giottojs.org/ng/examples/zooming.json", "title": "Zooming"}, "date": "2015-01-12T10-31-25"}};
+var lux = {context: {"media": "/media", "python_version": "3.4.2", "datetimeFormat": "d MMM y, h:mm:ss a", "date": "2015-01-15T11-04-25", "brand": "Lux", "apiUrls": {}, "oauths": null, "lux_version": "0.1.2-alpha.1", "year": 2015, "url": "http://giottojs.org", "html5mode": true, "dateFormat": "d MMM y", "name": "Lux", "navbar": {"collapseWidth": 768}, "ngModules": ["lux.blog", "highlight", "lux.google"], "page": {"description": "Zooming on SVG and Canvas with GiottoJS using d3js behavour zoom", "content_type": "text/html", "date": "2014-12-18T00:00:00", "image": "http://giottojs.org/examples/zooming.png", "html_url": "http://giottojs.org/examples/zooming", "name": "zooming", "api_url": "http://giottojs.org/ng/examples/zooming.json", "modified": "2014-12-18T17:55:56", "title": "Zooming", "author": ["Luca Sbardella"], "slug": "zooming"}, "google": {"analytics": {"ga": "ga", "id": "UA-54439804-4"}}}};
 </script>
 <script type='text/javascript'>
 lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
 <script type='text/javascript'>
-var gexamples = {};
+var gexamples = {}, giottoQueue = [];
 </script>
 <script type="text/javascript">
-var require = {"paths": {}, "deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"], "waitSeconds": 200, "baseUrl": "http://giottojs.org/media/", "minify": true};
+var require = {"minify": true, "baseUrl": "http://giottojs.org/media/", "waitSeconds": 200, "deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"], "paths": {}};
 </script>
 <script src='http://quantmind.github.io/require-config-js/require.config.min.js' type='application/javascript'></script>
 <script src='//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js' type='application/javascript'></script>
@@ -54,7 +54,7 @@ var require = {"paths": {}, "deps": ["http://giottojs.org/media/giottoweb/giotto
 <div class="page-header">
 <h2>Zooming</h2>
 </div>
-<div style="width: 100px" class="center-block"><lux-form data-options='luxforms.typeform_OmlDB'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.typeform_OmlDB = {"field": {"showLabels": false, "type": "form", "id": "typeform_OmlDB", "model": "TypeForm"}, "children": [{"field": {"type": "fieldset"}, "children": [{"field": {"value": "svg", "type": "select", "name": "type", "options": ["svg", "canvas"], "required": true}}]}]};</script></lux-form></div>
+<div style="width: 100px" class="center-block"><lux-form data-options='luxforms.typeform_IYODv'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.typeform_IYODv = {"field": {"id": "typeform_IYODv", "model": "TypeForm", "type": "form", "showLabels": false}, "children": [{"field": {"type": "fieldset"}, "children": [{"field": {"name": "type", "value": "svg", "type": "select", "options": ["svg", "canvas"], "required": true}}]}]};</script></lux-form></div>
 
 <div data-options='gexamples.zooming1' style="max-width: 600px" class="center-block" giotto-chart></div>
 
@@ -80,10 +80,10 @@ in the grid parameter as shown below.</p>
     data: function (chart) {
         var X = d3.range(-5, 5, 0.1);
 
-        return [chart.xyfunction(X, function (x) {
+        return [d3.giotto.math.xyfunction(X, function (x) {
                     return 1/(1+Math.exp(-x));
                 }),
-                chart.xyfunction(X, function (x) {
+                d3.giotto.math.xyfunction(X, function (x) {
                     var d = 1/(1+Math.exp(-x));
                     return d*(1 - d);
                 })];
@@ -92,7 +92,7 @@ in the grid parameter as shown below.</p>
     // Callback for angular directive
     angular: function (chart, opts) {
 
-        opts.scope.$on('formFieldChange', function (e, form, field) {
+        chart.scope().$on('formFieldChange', function (e, form, field) {
             if (field === 'type') {
                 opts.type = form[field];
                 chart.resume();
@@ -122,10 +122,10 @@ in the grid parameter as shown below.</p>
         data: function (chart) {
             var X = d3.range(-5, 5, 0.1);
 
-            return [chart.xyfunction(X, function (x) {
+            return [d3.giotto.math.xyfunction(X, function (x) {
                         return 1/(1+Math.exp(-x));
                     }),
-                    chart.xyfunction(X, function (x) {
+                    d3.giotto.math.xyfunction(X, function (x) {
                         var d = 1/(1+Math.exp(-x));
                         return d*(1 - d);
                     })];
@@ -134,7 +134,7 @@ in the grid parameter as shown below.</p>
         // Callback for angular directive
         angular: function (chart, opts) {
 
-            opts.scope.$on('formFieldChange', function (e, form, field) {
+            chart.scope().$on('formFieldChange', function (e, form, field) {
                 if (field === 'type') {
                     opts.type = form[field];
                     chart.resume();

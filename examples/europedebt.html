@@ -6,8 +6,8 @@
 <meta content='IE=edge' http-equiv='X-UA-Compatible'>
 <meta content='width=device-width, initial-scale=1' name='viewport'>
 <meta content='Central Government Debt in Europe in 2012 and 2013. This example shows how GiottoJS handles several labels without overlapping them.' name='description'>
-<meta content='Luca Sbardella' name='author'>
 <meta content='d3js, visualization, giottojs, javascript, svg, canvas, debt, europe, piechart' name='keywords'>
+<meta content='Luca Sbardella' name='author'>
 <meta content='website' property='og:type'>
 <meta content='http://giottojs.org/examples/europedebt' property='og:url'>
 <meta content='Central Government Debt in Europe' property='og:title'>
@@ -24,15 +24,15 @@
 <link href='http://giottojs.org/media/giotto/giotto.css' rel='stylesheet' type='text/css'>
 <link href='http://giottojs.org/media/giottoweb/giottoweb.css' rel='stylesheet' type='text/css'>
 <script type='text/javascript'>
-var lux = {context: {"datetimeFormat": "d MMM y, h:mm:ss a", "url": "http://giottojs.org", "year": 2015, "oauths": null, "dateFormat": "d MMM y", "python_version": "3.4.2", "google": {"analytics": {"ga": "ga", "id": "UA-54439804-4"}}, "ngModules": ["lux.google", "lux.blog", "highlight"], "name": "Lux", "media": "/media", "navbar": {"collapseWidth": 768}, "brand": "Lux", "lux_version": "0.1.2-alpha.1", "apiUrls": {}, "html5mode": true, "page": {"name": "europedebt", "modified": "2015-01-09T21:45:41", "description": "Central Government Debt in Europe in 2012 and 2013. This example shows how GiottoJS handles several labels without overlapping them.", "api_url": "http://giottojs.org/ng/examples/europedebt.json", "title": "Central Government Debt in Europe", "image": "http://giottojs.org/examples/europedebt.png", "slug": "europedebt", "html_url": "http://giottojs.org/examples/europedebt", "author": ["Luca Sbardella"], "date": "2015-01-09T00:00:00", "keywords": ["d3js", "visualization", "giottojs", "javascript", "svg", "canvas", "debt", "europe", "piechart"], "content_type": "text/html"}, "date": "2015-01-12T10-31-25"}};
+var lux = {context: {"media": "/media", "python_version": "3.4.2", "datetimeFormat": "d MMM y, h:mm:ss a", "date": "2015-01-15T11-04-25", "brand": "Lux", "apiUrls": {}, "oauths": null, "lux_version": "0.1.2-alpha.1", "year": 2015, "url": "http://giottojs.org", "html5mode": true, "dateFormat": "d MMM y", "name": "Lux", "navbar": {"collapseWidth": 768}, "ngModules": ["lux.blog", "highlight", "lux.google"], "page": {"date": "2015-01-09T00:00:00", "image": "http://giottojs.org/examples/europedebt.png", "description": "Central Government Debt in Europe in 2012 and 2013. This example shows how GiottoJS handles several labels without overlapping them.", "api_url": "http://giottojs.org/ng/examples/europedebt.json", "author": ["Luca Sbardella"], "slug": "europedebt", "name": "europedebt", "keywords": ["d3js", "visualization", "giottojs", "javascript", "svg", "canvas", "debt", "europe", "piechart"], "modified": "2015-01-09T21:45:41", "html_url": "http://giottojs.org/examples/europedebt", "title": "Central Government Debt in Europe", "content_type": "text/html"}, "google": {"analytics": {"ga": "ga", "id": "UA-54439804-4"}}}};
 </script>
 <script type='text/javascript'>
 lux.require=function(a,b){if(lux.angular||!lux.context.uiRouter){var c={callback:b};lux.requireQueue.push(c),require(rcfg.min(a),function(){c.arguments=Array.prototype.slice.call(arguments,0)})}},lux.requireQueue=[],lux.loadRequire=function(a){if(!this.loadingRequire){var b=this.requireQueue,c=[];this.loadingRequire=!0,this.requireQueue=c;for(var d=0;d<b.length;++d)void 0===b[d].arguments?c.push(b[d]):b[d].callback.apply(this.root,b[d].arguments);this.loadingRequire=!1,c.length?setTimeout(function(){lux.loadRequire(a)}):a&&a()}};</script>
 <script type='text/javascript'>
-var gexamples = {};
+var gexamples = {}, giottoQueue = [];
 </script>
 <script type="text/javascript">
-var require = {"paths": {}, "deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"], "waitSeconds": 200, "baseUrl": "http://giottojs.org/media/", "minify": true};
+var require = {"minify": true, "baseUrl": "http://giottojs.org/media/", "waitSeconds": 200, "deps": ["http://giottojs.org/media/giottoweb/giottoweb.js"], "paths": {}};
 </script>
 <script src='http://quantmind.github.io/require-config-js/require.config.min.js' type='application/javascript'></script>
 <script src='//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js' type='application/javascript'></script>
@@ -62,7 +62,7 @@ var require = {"paths": {}, "deps": ["http://giottojs.org/media/giottoweb/giotto
     <p class="text-right small">Source: <a href="http://ec.europa.eu/eurostat" target="self">Eurostat</a></p>
     </div>
     <div class="col-sm-2 small">
-      <lux-form data-options='luxforms.typeform_OmlDB'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.typeform_OmlDB = {"field": {"showLabels": false, "type": "form", "id": "typeform_OmlDB", "model": "TypeForm"}, "children": [{"field": {"type": "fieldset"}, "children": [{"field": {"value": "svg", "type": "select", "name": "type", "options": ["svg", "canvas"], "required": true}}]}]};</script></lux-form>
+      <lux-form data-options='luxforms.typeform_IYODv'><script>if (!this.luxforms) {this.luxforms = {};} this.luxforms.typeform_IYODv = {"field": {"id": "typeform_IYODv", "model": "TypeForm", "type": "form", "showLabels": false}, "children": [{"field": {"type": "fieldset"}, "children": [{"field": {"name": "type", "value": "svg", "type": "select", "options": ["svg", "canvas"], "required": true}}]}]};</script></lux-form>
       <p>Right click on the chart for additional options</p>
     </div>
   </div>
@@ -177,7 +177,7 @@ Germany is the only big European country which decreased its debt in 2013 from t
     // Callback for angular directive
     angular: function (chart, opts) {
 
-        opts.scope.$on('formFieldChange', function (e, form, field) {
+        chart.scope().$on('formFieldChange', function (e, form, field) {
             if (field === 'type') {
                 opts.type = form[field];
                 chart.resume();
@@ -348,7 +348,7 @@ var debtdata = [[2012,"Belgium",342980.3],
         // Callback for angular directive
         angular: function (chart, opts) {
 
-            opts.scope.$on('formFieldChange', function (e, form, field) {
+            chart.scope().$on('formFieldChange', function (e, form, field) {
                 if (field === 'type') {
                     opts.type = form[field];
                     chart.resume();

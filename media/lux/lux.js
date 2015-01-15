@@ -1,6 +1,6 @@
 //      Lux Library - v0.1.1
 
-//      Compiled 2015-01-11.
+//      Compiled 2015-01-13.
 //      Copyright (c) 2015 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -47,10 +47,7 @@ function(angular, root) {
             media: '',  // default url for media content
             html5mode: true, //  html5mode for angular
             hashPrefix: '!',
-            ngModules: [],
-            loadRequire: function (callback) {
-                callback();
-            }
+            ngModules: []
         };
     //
     lux.$ = $;

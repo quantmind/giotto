@@ -1,6 +1,6 @@
 //      GiottoJS - v0.1.0
 
-//      Compiled 2015-01-12.
+//      Compiled 2015-01-15.
 //      Copyright (c) 2015 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -32,7 +32,9 @@
             d3: d3,
             math: {},
             svg: {},
-            canvas: {}
+            canvas: {},
+            geo: {},
+            data: {}
         },
         g = giotto;
 
@@ -288,6 +290,70 @@
       ["n", "s"],
       []
     ];
+
+
+    // Convert an array of array obtained from reading a CSV file into an array of objects
+    g.data.fromcsv = function (data) {
+        var labels = data[0],
+            rows = [],
+            o, j;
+        for (var i=1; i<data.length; ++i) {
+            o = {};
+            for (j=0; j<labels.length; ++j)
+                o[labels[j]] = data[i][j];
+            rows.push(o);
+        }
+        return rows;
+    };
+
+    g.data.multi = function (data) {
+        var multi = {};
+
+        multi.serie = function () {
+            var serie = {},
+                x, y;
+
+            serie.x = function (_) {
+                if (!arguments.length) return x;
+                if (!isFunction(_)) _ = label_functor(_);
+                x = _;
+                return serie;
+            };
+
+            serie.y = function (_) {
+                if (!arguments.length) return y;
+                if (!isFunction(_)) _ = label_functor(_);
+                y = _;
+                return serie;
+            };
+
+            serie.forEach = function (callback) {
+                if (data)
+                    data.forEach(function (d) {
+                        callback([x(d), y(d)]);
+                    });
+                return serie;
+            };
+
+            serie.isData = d3_true;
+
+            return serie;
+        };
+
+        multi.isData = d3_true;
+
+        function label_functor (label) {
+            return function (d) {
+                return d[label];
+            };
+        }
+
+        return multi;
+    };
+
+    g.data.isData = function (data) {
+        return data && (isArray(data) || (data.isData && data.isData()));
+    };
 
     function noop () {}
 
@@ -633,7 +699,12 @@
                 bits.push(v);
         }
         return bits.join(' ');
+    },
+    //
+    now = _.now = function () {
+        return Date.now ? Date.now() : new Date().getTime();
     };
+
 
 
     function giotto_id (element) {
@@ -2889,9 +2960,6 @@
         //
         // Optional callback after initialisation
         onInit: null,
-        //
-        // Default events dispatched by the visualization
-        events: ['build', 'change', 'start', 'tick', 'end'],
 
         // Rightclick menu
         contextmenu: [{
@@ -2907,6 +2975,7 @@
         DEFAULT_VIZ_GROUP: 'default_viz_group',
         WIDTH: 400,
         HEIGHT: 300,
+        vizevents: ['build', 'data', 'change', 'start', 'tick', 'end'],
         leaflet: 'http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css'
     };
 
@@ -2991,7 +3060,17 @@
 
         gradient.colors = function (_) {
             if (!arguments.length) return colors;
-            colors = _;
+            var step = 100/_.length;
+            colors = _.map(function (c, i) {
+                if (isString(c)) c = {color: c};
+                if (c.offset === undefined) c.offset = Math.round(step*i);
+                return c;
+            });
+            return gradient;
+        };
+
+        gradient.opacity = function (o) {
+            colors.forEach(function (c) {c.opacity = o;});
             return gradient;
         };
 
@@ -3004,6 +3083,18 @@
         gradient.y2 = function (_) {
             if (!arguments.length) return y2;
             y2 = _;
+            return gradient;
+        };
+
+        gradient.x1 = function (_) {
+            if (!arguments.length) return x1;
+            x1 = _;
+            return gradient;
+        };
+
+        gradient.x2 = function (_) {
+            if (!arguments.length) return x2;
+            x2 = _;
             return gradient;
         };
 
@@ -3020,6 +3111,8 @@
             p = element;
             element = null;
         }
+        if (element && isFunction(element.node))
+            element = element.node();
         if (!element)
             element = document.createElement('div');
 
@@ -3340,7 +3433,10 @@
     g.paper.plugins = [];
 
     g.paper.plugin = function (name, defaults, plugin) {
-        g.defaults.paper[name] = defaults;
+        if (arguments.length === 3)
+            g.defaults.paper[name] = defaults;
+        else
+            plugin = name;
         g.paper.plugins.push(plugin);
     };
 
@@ -3829,19 +3925,6 @@
             return group;
         };
 
-        group.setBackground = function (b, o) {
-            if (!o) return;
-
-            if (isObject(b)) {
-                if (b.fillOpacity !== undefined)
-                    o.attr('fill-opacity', b.fillOpacity);
-                b = b.fill;
-            }
-            if (isString(b))
-                o.attr('fill', b);
-            return group;
-        };
-
         group.draw = function (selection) {
             return selection
                 .attr('stroke', function (d) {return d.color;})
@@ -3954,13 +4037,6 @@
             return group;
         };
 
-        group.setBackground = function (b, context) {
-            context = context || ctx;
-            if (isObject(b)) context.fillStyle = d3.canvas.rgba(b.fill, b.fillOpacity);
-            else if (isString(b)) context.fillStyle = b;
-            return group;
-        };
-
         return group.factor(_.scale(group));
     };
 
@@ -4003,6 +4079,82 @@
     g.vizplugin = function (callback) {
         g.vizplugins.push(callback);
     };
+
+    // Mixin for visualization classes and visualization collection
+    g.vizmixin = function (d) {
+        var uid = ++_idCounter,
+            loading_data = false,
+            opts = {},
+            data;
+
+        d.uid = function () {
+            return uid;
+        };
+
+        d.event = function (name) {
+            return noop;
+        };
+
+        // returns the options object
+        d.options = function (_) {
+            if (!arguments.length) return opts;
+            extend(opts, _);
+            return d;
+        };
+
+        d.load = function (callback) {
+            var _ = opts.data;
+            delete opts.data;
+
+            if (_) {
+                if (isFunction(_))
+                    _ = _(d);
+                d.data(_, callback);
+            } else if (opts.src && !loading_data) {
+                loading_data = true;
+                var src = opts.src,
+                    loader = opts.loader;
+                if (!loader) {
+                    loader = d3.json;
+                    if (src.substring(src.length-4) === '.csv') loader = d3.csv;
+                }
+                g.log.info('Giotto loading data from ' + opts.src);
+
+                return loader(opts.src, function(error, xd) {
+                    loading_data = false;
+                    if (arguments.length === 1) xd = error;
+                    else if(error)
+                        return g.log.error(error);
+
+                    d.data(xd, callback);
+                });
+            } else if (callback) {
+                callback();
+            }
+
+            return d;
+        };
+
+        //
+        // Set new data for the visualization
+        d.data = function (_, callback) {
+            if (!arguments.length) return data;
+
+            if (opts.processData)
+                _ = opts.processData(_);
+
+            data = _;
+
+            if (callback)
+                callback();
+
+            d.event('data').call(d, {type: 'data'});
+
+            return d;
+        };
+
+        return d;
+    };
     //
     // Factory of Giotto visualization factories
     //  name: name of the visualization constructor, the constructor is
@@ -4018,22 +4170,16 @@
 
         plugins = [],
 
-        vizType = function (element, opts) {
+        vizType = function (element) {
 
-            if (isObject(element)) {
-                opts = element;
-                element = null;
-            }
-            opts = extend({}, vizType.defaults, opts);
-
-            var viz = {},
-                uid = ++_idCounter,
-                event = d3.dispatch.apply(d3, opts.events),
+            var viz = g.vizmixin({}).options(vizType.defaults),
+                events = d3.dispatch.apply(d3, g.constants.vizevents),
                 alpha = 0,
-                loading_data = false,
                 paper;
 
-            opts.event = event;
+            viz.event = function (name) {
+                return events[name];
+            };
 
             // Return the visualization type (a function)
             viz.vizType = function () {
@@ -4044,15 +4190,11 @@
                 return vizType.vizName();
             };
 
-            viz.uid = function () {
-                return uid;
-            };
-
             viz.paper = function (createNew) {
                 if (createNew || paper === undefined) {
                     if (paper)
                         paper.clear();
-                    paper = g.paper(element, opts);
+                    paper = g.paper(element, viz.options());
                 }
                 return paper;
             };
@@ -4074,7 +4216,7 @@
                     if (x > 0) alpha = x; // we might keep it hot
                     else alpha = 0; // or, next tick will dispatch "end"
                 } else if (x > 0) { // otherwise, fire it up!
-                    event.start({type: "start", alpha: alpha = x});
+                    events.start({type: "start", alpha: alpha = x});
                     d3.timer(viz.tick);
                 }
 
@@ -4090,24 +4232,17 @@
             };
 
             viz.tick = function() {
-                if (opts.scope && opts.scope.stats)
-                    opts.scope.stats.begin();
-
                 // simulated annealing, basically
                 if ((alpha *= 0.99) < 0.005) {
-                    event.end({type: "end", alpha: alpha = 0});
+                    events.end({type: "end", alpha: alpha = 0});
                     return true;
                 }
-
-                event.tick({type: "tick", alpha: alpha});
-
-                if (opts.scope && opts.scope.stats)
-                    opts.scope.stats.end();
+                events.tick({type: "tick", alpha: alpha});
             };
 
             // Starts the visualization
             viz.start = function () {
-                return viz.resume();
+                return onInitViz(viz, init).load(viz.resume);
             };
 
             // render the visualization by invoking the render method of the paper
@@ -4116,73 +4251,28 @@
                 return viz;
             };
 
-            viz.loadData = function (callback) {
-                if (opts.src && !loading_data) {
-                    loading_data = true;
-                    var src = opts.src,
-                        loader = opts.loader;
-                    if (!loader) {
-                        loader = d3.json;
-                        if (src.substring(src.length-4) === '.csv') loader = d3.csv;
-                    }
-                    g.log.info('Giotto loading data from ' + opts.src);
-                    return loader(opts.src, function(error, json) {
-                        loading_data = false;
-                        if (!error) {
-                            viz.setData(json, callback);
-                        }
-                    });
-                }
-            };
-
-            //
-            // Set new data for the visualization
-            viz.setData = function (data, callback) {
-                if (opts.processData)
-                    data = opts.processData(data);
-                if (isObject(data) && data.data)
-                    extend(opts, data);
-                else
-                    opts.data = data;
-                if (callback)
-                    callback();
-            };
-
-            // returns the options object
-            viz.options = function () {
-                return opts;
-            };
-
             viz.image = function () {
                 return paper.image();
             };
 
-            viz.xyfunction = g.math.xyfunction;
-
-            d3.rebind(viz, event, 'on');
-
-            // If constructor available, call it first
-            if (constructor)
-                constructor(viz, opts);
-
-            // Inject plugins for all visualizations
-            for (i=0; i < g.vizplugins.length; ++i)
-                g.vizplugins[i](viz, opts);
-
-            // Inject visualization plugins
-            for (var i=0; i < plugins.length; ++i)
-                plugins[i](viz, opts);
-
-            // if the onInit callback available, execute it
-            if (opts.onInit) {
-                var init = getObject(opts.onInit);
-                if (isFunction(init))
-                    init(viz, opts);
-                else
-                    g.log.error('Could not locate onInit function ' + opts.onInit);
-            }
+            d3.rebind(viz, events, 'on');
 
             return viz;
+
+            function init () {
+                var opts = viz.options();
+                // If constructor available, call it first
+                if (constructor)
+                    constructor(viz, opts);
+
+                // Inject plugins for all visualizations
+                for (i=0; i < g.vizplugins.length; ++i)
+                    g.vizplugins[i](viz, opts);
+
+                // Inject visualization plugins
+                for (var i=0; i < plugins.length; ++i)
+                    plugins[i](viz, opts);
+            }
         };
 
         g.viz[name] = vizType;
@@ -4201,6 +4291,25 @@
     };
 
     g.createviz('viz');
+
+    function onInitViz(viz, init) {
+        if (!viz.__init__) {
+            viz.__init__ = true;
+            if (init) init();
+
+            var opts = viz.options();
+            // if the onInit callback available, execute it
+            if (opts.onInit) {
+                init = getObject(opts.onInit);
+
+                if (isFunction(init))
+                    init(viz, opts);
+                else
+                    g.log.error('Could not locate onInit function ' + opts.onInit);
+            }
+        }
+        return viz;
+    }
 
 
     g.contextMenu = function () {
@@ -4341,7 +4450,7 @@
 
     g.createviz('chart', {
         margin: {top: 30, right: 30, bottom: 30, left: 30},
-        chartTypes: ['pie', 'bar', 'line', 'point', 'custom'],
+        chartTypes: ['map', 'pie', 'bar', 'line', 'point', 'custom'],
         serie: {
             x: function (d) {return d[0];},
             y: function (d) {return d[1];}
@@ -4352,6 +4461,7 @@
 
         var series = [],
             allranges = {},
+            clean = true,
             drawing;
 
         chart.numSeries = function () {
@@ -4387,30 +4497,20 @@
         };
 
         chart.render = function () {
-            var paper = chart.paper(),
-                data = opts.data;
+            var paper = chart.paper();
             drawing = true;
-            opts.data = null;
 
-            // load data if in options
-            if (data === undefined && opts.src) {
-                return chart.loadData(chart.resume);
+            if (opts.type !== paper.type()) {
+                clean = true;
+                paper = chart.paper(true);
+                chart.each(function (serie) {
+                    serie.clear();
+                });
             }
 
-            if (isFunction(data))
-                data = data(chart);
-
-            if (data || opts.type !== paper.type()) {
-
-                if (data)
-                    addSeries(data);
-
-                if (opts.type !== paper.type()) {
-                    paper = chart.paper(true);
-                    chart.each(function (serie) {
-                        serie.clear();
-                    });
-                }
+            if (clean) {
+                clean = false;
+                if (opts.fill) paper.group({margin: 0}).fill(opts.fill);
             }
 
             chart.each(function (serie) {
@@ -4425,15 +4525,19 @@
         };
 
         chart.setSerieOption = function (type, field, value) {
-
             if (opts.chartTypes.indexOf(type) === -1) return;
 
             if (!chart.numSeries()) {
                 opts[type][field] = value;
             } else {
+                var stype;
                 chart.each(function (serie) {
-                    if (serie[type])
-                        serie[type].set(field, value);
+                    stype = serie[type];
+                    if (stype)
+                        if (isFunction(stype.set))
+                            stype.set(field, value);
+                        else
+                            stype[field] = value;
                 });
             }
         };
@@ -4453,17 +4557,27 @@
 
         // INTERNALS
 
+        chart.on('data.build_series', function () {
+            var data = chart.data();
+            series = [];
+            addSeries(data);
+        });
+
         function chartSerie (data) {
             var serie = extend({}, opts.serie),
-                group, color, show;
+                group, color, show, scaled;
 
-            if (data && !isArray(data)) {
+            if (!data) return;
+
+            if (!g.data.isData(data)) {
                 extend(serie, data);
                 data = serie.data;
                 delete serie.data;
+                if (!data) return;
+            } else if (!isArray(data)) {
+                serie.x = data.x();
+                serie.y = data.y();
             }
-
-            if (!data) return;
 
             serie.index = series.length;
 
@@ -4491,16 +4605,17 @@
             opts.chartTypes.forEach(function (type) {
                 var o = serie[type];
 
-                if (o && type !== 'pie') {
+                if (o && chartTypes[type].scaled) {
                     // pick a default color if one is not given
                     if (!color)
                         color = chartColor(chart.paper(), o);
                     if (!o.color)
                         o.color = color;
+                    scaled = true;
                 }
             });
 
-            if (!serie.pie) {
+            if (scaled) {
                 if (serie.yaxis === undefined)
                     serie.yaxis = 1;
                 if (!serie.axisgroup) serie.axisgroup = 1;
@@ -4532,8 +4647,8 @@
             serie.data = function (_) {
                 if (!arguments.length) return data;
 
-                // Not a pie chart, check axis and ranges
-                if (!serie.pie) {
+                // check axis and ranges
+                if (scaled) {
 
                     var ranges = allranges[serie.axisgroup],
                         p = ranges[serie.xaxis.position],
@@ -4668,20 +4783,15 @@
         function addSeries (series) {
             // Loop through series and add them to the chart series collection
             // No drawing nor rendering involved
-            var data = [], ranges, p;
+            if (!series.forEach) series = [series];
 
             series.forEach(function (serie) {
 
                 if (isFunction(serie))
                     serie = serie(chart);
 
-                serie = chartSerie(serie);
-
-                if (serie)
-                    data.push(serie);
+                chartSerie(serie);
             });
-
-            return data;
         }
 
         function axisGroupId (axisgroup) {
@@ -4690,29 +4800,40 @@
 
     });
 
+    function scaled (c) {
+
+        function f(group, data, opts) {
+            return c(group, data, opts)
+                        .x(function (d) {return d.x;})
+                        .y(function (d) {return d.y;});
+        }
+
+        f.scaled = true;
+
+        return f;
+    }
+
     var chartTypes = {
+
+        map: function (group, data, opts) {
+            return group.map(data, opts);
+        },
 
         pie: function (group, data, opts) {
             return group.pie(data, opts);
         },
 
-        bar: function (group, data, opts) {
-            return group.barchart(data, opts)
-                        .x(function (d) {return d.x;})
-                        .y(function (d) {return d.y;});
-        },
+        bar: scaled(function (group, data, opts) {
+            return group.barchart(data, opts);
+        }),
 
-        line: function (group, data, opts) {
-            return group.path(data, opts)
-                        .x(function (d) {return d.x;})
-                        .y(function (d) {return d.y;});
-        },
+        line: scaled(function (group, data, opts) {
+            return group.path(data, opts);
+        }),
 
-        point: function (group, data, opts) {
-            return group.points(data, opts)
-                        .x(function (d) {return d.x;})
-                        .y(function (d) {return d.y;});
-        },
+        point: scaled(function (group, data, opts) {
+            return group.points(data, opts);
+        }),
 
         custom: function (group, data, opts) {
             var draw = drawing(group, function () {
@@ -4731,7 +4852,7 @@
         }
     };
 
-    g.Chart = g.viz.Chart;
+    g.chart = g.viz.chart;
 
 
     var xyData = function (data, x, y) {
@@ -4782,6 +4903,27 @@
         return data;
     };
 
+    //
+    // Manage a collection of visualizations
+    g.collection = function () {
+        var collection = g.vizmixin(d3.map());
+
+        collection.start = function () {
+            return onInitViz(collection).load(start);
+        };
+
+        return collection;
+
+        function start () {
+            var opts = collection.options();
+
+            collection.forEach(function (key, viz) {
+                var o = opts[key];
+                if (o) viz.options(o);
+                viz.data(collection.data()).start();
+            });
+        }
+    };
     //
     //
     // Force layout example
@@ -5288,13 +5430,8 @@
         };
 
         // draw
-        self.draw = function (data) {
-            data = data || opts.data;
-            opts.data = null;
-
-            // load data if in options
-            if (data === undefined && opts.src)
-                return self.loadData(self.resume);
+        self.draw = function () {
+            var data = self.data();
 
             if (!paper || opts.type !== group.type()) {
                 paper = self.paper(true);
@@ -5375,7 +5512,7 @@
 
             //
             if (!self.select(initNode, 0))
-                opts.event.change({type: 'change', viz: self});
+                self.event('change').call(self, {type: 'change'});
         }
 
         function scale (radius) {
@@ -5414,7 +5551,7 @@
                 .each('end', function (e, i) {
                     if (node === e) {
                         current = e;
-                        opts.event.change({type: 'change', viz: self});
+                        self.event('change').call(self, {type: 'change'});
                     }
                 });
 
@@ -6211,80 +6348,101 @@
 
 
 
-    g.paper.plugin('force', {
+    g.paper.plugin('bubble', {
+        force: false,
         theta: 0.8,
-        friction: 0.9,
-
+        friction: 0.9
     }, function (group, opts) {
 
         // Add force visualization to the group
-        group.force = function (data, opts) {
+        group.bubble = function (data, opts) {
             opts || (opts = {});
             chartFormats(group, opts);
-            chartColor(group.paper(), copyMissing(p.force, opts));
+            copyMissing(p.bubble, opts);
 
-            return group.add(function () {
-
-            });
+            return group.add(g[type].bubble)
+                        .dataConstructor(bubble_costructor)
+                        .options(opts);
         };
     });
 
-    g.viz.force.plugin(function (force, opts) {
-        g._.copyMissing({collidePadding: 0.002, collideBuffer: 0.02}, opts);
+    var bubble_costructor = function (rawdata) {
+        return rawdata;
+    };
 
-        force.collide = function () {
-            var snodes = [],
-                nodes = force.nodes(),
-                scalex = force.scalex(),
-                scaley = force.scaley(),
-                buffer = scalex(opts.collideBuffer),
-                padding = scalex(opts.collidePadding),
-                q = force.quadtree(),
-                node;
+    g.svg.bubble = function () {
+        var group = this.group(),
+            opts = this.options(),
+            bubble = d3.layout.pack()
+                        .padding(opts.padding)
+                        .size([group.innerWidth(), group.innerHeight()])
+                        .sort(null)
+                        .data(this.data()),
+            elem = group.element().selectAll("#" + this.uid()).data([true]);
 
-            for (var i=0; i<nodes.length; ++i)
-                q.visit(circleCollide(nodes[i], buffer));
+        elem.enter().append('g').attr('id', thiss.uid());
+
+    };
+
+    g.paper.plugin(function (group) {
+
+        var type = group.type();
+
+        group.fill = function (opts) {
+            if (!isObject(opts)) opts = {fill: opts};
+
+            return group.add(type === 'svg' ? FillSvg : FillCanvas)
+                        .options(opts);
         };
 
-        function circleCollide (node, buffer) {
+        if (type === 'svg')
+            group.setBackground = function (b, o) {
+                if (!o) return;
 
-            var r = node.size + buffer,
-                nx1 = node.x - r,
-                nx2 = node.x + r,
-                ny1 = node.y - r,
-                ny2 = node.y + r,
-                dx, dy, d;
-
-            return function(quad, x1, y1, x2, y2) {
-                if (quad.point && (quad.point !== node)) {
-                    dx = node.x - quad.point.x;
-                    dy = node.y - quad.point.y;
-                    d = Math.sqrt(dx * dx + dy * dy);
-                    r = node.size + quad.point.size;
-                    if (d < r) {
-                        d = 0.5 * (r - d) / d;
-                        dx *= d;
-                        dy *= d;
-                        if (node.fixed || quad.point.fixed) {
-                            if (node.fixed) {
-                                quad.point.x -= 2*dx;
-                                quad.point.y -= 2*dy;
-                            } else {
-                                node.x += 2*dx;
-                                node.y += 2*dy;
-                            }
-                        } else {
-                            node.x += dx;
-                            node.y += dy;
-                            quad.point.x -= dx;
-                            quad.point.y -= dy;
-                        }
-                    }
+                if (isObject(b)) {
+                    if (b.fillOpacity !== undefined)
+                        o.attr('fill-opacity', b.fillOpacity);
+                    b = b.fill;
                 }
-                return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
+                if (isString(b))
+                    o.attr('fill', b);
+                else if(isFunction(b))
+                    b(o);
+                return group;
             };
+        else
+            group.setBackground = function (b, context) {
+                var fill = b;
+                context = context || group.context();
+                if (isObject(fill)) fill = fill.fill;
+
+                if (isFunction(fill))
+                    fill(group.element());
+                else if (isObject(b))
+                    context.fillStyle = d3.canvas.rgba(b.fill, b.fillOpacity);
+                else if (isString(b))
+                    context.fillStyle = b;
+                return group;
+            };
+
+        function FillSvg () {
+            var rect = group.element().selectAll('rect').data([true]),
+                fill = this.fill;
+            rect.enter().append('rect').attr('x', 0).attr('y', 0);
+            rect.attr('width', group.innerWidth()).attr('height', group.innerWidth());
+            group.setBackground(this, rect);
         }
 
+        function FillCanvas () {
+            var ctx = group.context(),
+                width = group.innerWidth(),
+                height = group.innerHeight();
+            ctx.beginPath();
+            ctx.rect(0, 0, width, height);
+            if (isFunction(this.fill))
+                this.fill.x1(0).y1(0).x2(width).y2(height);
+            group.setBackground(this);
+        }
     });
 
     //
@@ -6297,6 +6455,8 @@
             lineWidth: 0.5,
             zoomx: false,
             zoomy: false,
+            xaxis: true,
+            yaxis: true,
             scaleExtent: [1, 10]
         },
         function (group, opts) {
@@ -6311,12 +6471,12 @@
                         gopts.xaxis = extend({
                             position: 'top',
                             size: 0,
-                            show: opts.xaxis.grid === undefined || opts.xaxis.grid
+                            show: opts.grid.xaxis
                         }, opts.grid);
                         gopts.yaxis = extend({
                             position: 'left',
                             size: 0,
-                            show: opts.yaxis.grid === undefined || opts.yaxis.grid
+                            show: opts.grid.yaxis
                         }, opts.grid);
                     }
                     gopts.before = '*';
@@ -6459,6 +6619,48 @@
     });
 
     function notick () {return '';}
+
+
+    g.geo.leaflet = function (element, opts) {
+
+        if (typeof L === 'undefined') {
+            g._.loadCss(g.constants.leaflet);
+            g.require(['leaflet'], function () {
+                viz.start();
+            });
+        } else {
+            var map = new L.map(element, {
+                center: opts.center,
+                zoom: opts.zoom
+            });
+            if (opts.zoomControl) {
+                if (!opts.wheelZoom)
+                    map.scrollWheelZoom.disable();
+            } else {
+                map.dragging.disable();
+                map.touchZoom.disable();
+                map.doubleClickZoom.disable();
+                map.scrollWheelZoom.disable();
+
+                // Disable tap handler, if present.
+                if (map.tap) map.tap.disable();
+            }
+
+            // Attach the view reset callback
+            map.on("viewreset", function () {
+                for (var i=0; i<callbacks.length; ++i)
+                    callbacks[i]();
+            });
+
+            viz.resume();
+        }
+        d3.geo.transform({point: LeafletProjectPoint});
+
+        function LeafletProjectPoint (x, y) {
+            var point = map.latLngToLayerPoint(new L.LatLng(y, x));
+            this.stream.point(point.x, point.y);
+        }
+    };
 
 
     var legendDefaults = {
@@ -6758,6 +6960,94 @@
             ctx.restore();
         }
     });
+
+
+    // Map charts and animations
+    g.paper.plugin('map', {
+        width: 'auto',
+        color: null,
+        fill: true,
+        fillOpacity: 1,
+        colorOpacity: 1,
+        lineWidth: 1,
+        projection: null,
+        features: null,
+        // Radius in pixels of rounded corners. Set to 0 for no rounded corners
+        radius: 4,
+        active: {
+            fill: 'darker',
+            color: 'brighter'
+        },
+        transition: extend({}, g.defaults.transition)
+    },
+
+    function (group, p) {
+
+        group.map = function (data, opts) {
+            var type = group.type(),
+                features,
+                path;
+
+            opts || (opts = {});
+            copyMissing(p.map, opts);
+
+            var map = group.add(mapdraw(group, g[type].mapdraw))
+                           .options(opts)
+                           .data(data);
+        };
+    });
+
+    function mapdraw (group, renderer) {
+        var path = d3.geo.path(),
+            draw = drawing(group, renderer),
+            features;
+
+        draw.path = function () {
+
+            var opts = draw.options(),
+                projection;
+
+            if (opts && opts.projection) {
+                projection = opts.projection;
+                if (isString(projection)) {
+                    projection = g.geo[projection];
+                    if (projection) {
+                        projection(draw, path);
+                        return path;
+                    }
+                    projection = d3.get[projection];
+                }
+            }
+            if (projection)
+                path.transform(projection);
+            else
+                path.transform(d3.geo.albersUsa);
+
+            return path;
+        };
+
+        draw.features = function (_) {
+            if (!arguments.length) return features;
+            features = _;
+            return draw;
+        };
+
+        return draw;
+    }
+
+    g.svg.mapdraw = function () {
+        var draw = this,
+            chart = draw.group().element().selectAll("#" + draw.uid()).data([true]),
+            features = draw.features();
+
+        chart.enter().append("path").attr('id', draw.uid());
+
+        if (!features)
+            return draw.options().features(function (features) {
+                draw.features(features).render();
+            });
+    };
+
 
 
     g.contextMenu = function () {
@@ -7626,14 +7916,10 @@
             };
         }
 
-        var points = pp.selectAll('*');
-        if (data.length != points.length) {
-            points.remove();
-            points = pp.selectAll('*')
-                    .data(this.data())
-                    .enter()
-                    .append('path');
-        }
+        var points = pp.selectAll('*').data(this.data());
+        points.enter().append('path');
+        points.exit().remove();
+
         group.events(group.draw(points
                  .attr("transform", function(d) {
                      return "translate(" + scalex(d.data) + "," + scaley(d.data) + ")";
@@ -8110,55 +8396,6 @@
 
     var tooltipCss = {'d3-tip:after': {}};
 
-
-    g.viz.force.plugin(function (force, opts) {
-        var xc = 0,
-            yc = 1;
-
-        if (opts.velocity === undefined)
-            opts.velocity = 0;
-
-        force.velocity = function (x) {
-            if (!arguments.length) return typeof opts.velocity === "function" ? opts.velocity : +opts.velocity;
-            opts.velocity = x;
-            return force;
-        };
-
-        force.velocity_x = function (x) {
-            if (!arguments.length) return xc;
-            xc = x;
-            return force;
-        };
-
-        force.velocity_y = function (y) {
-            if (!arguments.length) return yc;
-            yc = y;
-            return force;
-        };
-
-        force.addForce(function () {
-            var velocity = force.velocity();
-            if (!velocity) return;
-            var nodes = force.nodes(),
-                node, v;
-
-            if (typeof opts.velocity !== "function")
-                velocity = asFunction(velocity);
-
-            for (var i=0; i<nodes.length; ++i) {
-                node = nodes[i];
-                if (!node.fixed) {
-                    v = velocity(node);
-                    node.x += v[xc];
-                    node.y += v[yc];
-                }
-            }
-        });
-
-        function asFunction (value) {
-            return function (d) {return value;};
-        }
-    });
     //
     //  Optional Angular Integration
     //  ==================================
@@ -8179,6 +8416,35 @@
         var ag = {},
             mod;
 
+        // Mixin for adding scope method to visualization objects
+        ag.mixin = function (d) {
+            var scope;
+
+            d.scope = function (_) {
+                if (!arguments.length) return scope;
+                var opts = d.options();
+                scope = _;
+                if (isFunction(opts.angular))
+                    opts.angular(d, opts);
+
+                return d;
+            };
+
+            if (d.tick) {
+                var tick = d.tick;
+
+                d.tick = function() {
+                    if (scope && scope.stats)
+                        scope.stats.begin();
+                    tick();
+                    if (scope && scope.stats)
+                        scope.stats.end();
+                };
+            }
+
+            return d;
+        };
+
         ag.module = function (angular, moduleName, deps) {
 
             if (!arguments.length) return mod;
@@ -8197,6 +8463,30 @@
                         };
 
                     }])
+
+                    .directive('giottoCollection', function () {
+
+                        return {
+                            restrict: 'AE',
+
+                            controller: ['$scope', function (scope) {
+                                scope.giottoCollection = ag.mixin(g.collection());
+                            }],
+
+                            link: function (scope, element, attrs) {
+                                var options = getOptions(attrs),
+                                    require = options.require;
+                                if (require) {
+                                    if (!g._.isArray(require)) require = [require];
+                                    g.require(require, function (opts) {
+                                        extend(options, opts);
+                                        scope.giottoCollection.options(options).scope(scope).start();
+                                    });
+                                } else
+                                    scope.giottoCollection.options(options).scope(scope).start();
+                            }
+                        };
+                    })
 
                     .directive('jstats', function () {
                         return {
@@ -8230,18 +8520,21 @@
             }
 
             function startViz(scope, element, options, injected) {
-                options.scope = scope;
+                var collection = scope.giottoCollection;
+
                 for (var i=0; i<injected.length; ++i)
                     options[injects[i]] = injected[i];
-                var viz = vizType(element[0], options);
-                options = viz.options();
+
+                var viz = ag.mixin(vizType(element[0])).options(options).scope(scope);
                 element.data(name, viz);
 
-                if (_.isFunction(options.angular))
-                    options.angular(viz, options);
-
-                scope.$emit('giotto-viz', viz);
-                viz.start();
+                if (collection) {
+                    var key = options.key || collection.size() + 1;
+                    collection.set(key, viz);
+                } else {
+                    scope.$emit('giotto-viz', viz);
+                    viz.start();
+                }
             }
 
             injects.push(function () {
