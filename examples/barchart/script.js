@@ -16,7 +16,7 @@
         data: function (chart) {
             var X = d3.range(-5, 5, 0.5);
 
-            return [chart.xyfunction(X, function (x) {
+            return [d3.giotto.math.xyfunction(X, function (x) {
                         return 1/(1+Math.exp(-x)) - 0.5;
                     })];
         },
@@ -31,10 +31,10 @@
                 }
             }
 
-            opts.scope.$on('formReady', function (e, form) {
+            chart.scope().$on('formReady', function (e, form) {
                 update(form);
             });
-            opts.scope.$on('formFieldChange', function (e, form) {
+            chart.scope().$on('formFieldChange', function (e, form) {
                 update(form);
             });
         }

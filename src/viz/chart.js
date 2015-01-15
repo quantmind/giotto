@@ -12,6 +12,7 @@
 
         var series = [],
             allranges = {},
+            clean = true,
             drawing;
 
         chart.numSeries = function () {
@@ -51,10 +52,16 @@
             drawing = true;
 
             if (opts.type !== paper.type()) {
+                clean = true;
                 paper = chart.paper(true);
                 chart.each(function (serie) {
                     serie.clear();
                 });
+            }
+
+            if (clean) {
+                clean = false;
+                if (opts.fill) paper.group({margin: 0}).fill(opts.fill);
             }
 
             chart.each(function (serie) {
@@ -69,15 +76,19 @@
         };
 
         chart.setSerieOption = function (type, field, value) {
-
             if (opts.chartTypes.indexOf(type) === -1) return;
 
             if (!chart.numSeries()) {
                 opts[type][field] = value;
             } else {
+                var stype;
                 chart.each(function (serie) {
-                    if (serie[type])
-                        serie[type].set(field, value);
+                    stype = serie[type];
+                    if (stype)
+                        if (isFunction(stype.set))
+                            stype.set(field, value);
+                        else
+                            stype[field] = value;
                 });
             }
         };
@@ -392,7 +403,7 @@
         }
     };
 
-    g.Chart = g.viz.Chart;
+    g.chart = g.viz.chart;
 
 
     var xyData = function (data, x, y) {

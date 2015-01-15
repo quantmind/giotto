@@ -79,7 +79,17 @@
 
         gradient.colors = function (_) {
             if (!arguments.length) return colors;
-            colors = _;
+            var step = 100/_.length;
+            colors = _.map(function (c, i) {
+                if (isString(c)) c = {color: c};
+                if (c.offset === undefined) c.offset = Math.round(step*i);
+                return c;
+            });
+            return gradient;
+        };
+
+        gradient.opacity = function (o) {
+            colors.forEach(function (c) {c.opacity = o;});
             return gradient;
         };
 
@@ -92,6 +102,18 @@
         gradient.y2 = function (_) {
             if (!arguments.length) return y2;
             y2 = _;
+            return gradient;
+        };
+
+        gradient.x1 = function (_) {
+            if (!arguments.length) return x1;
+            x1 = _;
+            return gradient;
+        };
+
+        gradient.x2 = function (_) {
+            if (!arguments.length) return x2;
+            x2 = _;
             return gradient;
         };
 

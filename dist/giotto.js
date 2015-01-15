@@ -1,6 +1,6 @@
 //      GiottoJS - v0.1.0
 
-//      Compiled 2015-01-14.
+//      Compiled 2015-01-15.
 //      Copyright (c) 2015 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -3060,7 +3060,17 @@
 
         gradient.colors = function (_) {
             if (!arguments.length) return colors;
-            colors = _;
+            var step = 100/_.length;
+            colors = _.map(function (c, i) {
+                if (isString(c)) c = {color: c};
+                if (c.offset === undefined) c.offset = Math.round(step*i);
+                return c;
+            });
+            return gradient;
+        };
+
+        gradient.opacity = function (o) {
+            colors.forEach(function (c) {c.opacity = o;});
             return gradient;
         };
 
@@ -3073,6 +3083,18 @@
         gradient.y2 = function (_) {
             if (!arguments.length) return y2;
             y2 = _;
+            return gradient;
+        };
+
+        gradient.x1 = function (_) {
+            if (!arguments.length) return x1;
+            x1 = _;
+            return gradient;
+        };
+
+        gradient.x2 = function (_) {
+            if (!arguments.length) return x2;
+            x2 = _;
             return gradient;
         };
 
@@ -3089,6 +3111,8 @@
             p = element;
             element = null;
         }
+        if (element && isFunction(element.node))
+            element = element.node();
         if (!element)
             element = document.createElement('div');
 
@@ -3409,7 +3433,10 @@
     g.paper.plugins = [];
 
     g.paper.plugin = function (name, defaults, plugin) {
-        g.defaults.paper[name] = defaults;
+        if (arguments.length === 3)
+            g.defaults.paper[name] = defaults;
+        else
+            plugin = name;
         g.paper.plugins.push(plugin);
     };
 
@@ -3898,19 +3925,6 @@
             return group;
         };
 
-        group.setBackground = function (b, o) {
-            if (!o) return;
-
-            if (isObject(b)) {
-                if (b.fillOpacity !== undefined)
-                    o.attr('fill-opacity', b.fillOpacity);
-                b = b.fill;
-            }
-            if (isString(b))
-                o.attr('fill', b);
-            return group;
-        };
-
         group.draw = function (selection) {
             return selection
                 .attr('stroke', function (d) {return d.color;})
@@ -4020,13 +4034,6 @@
             var factor = group.factor();
             ctx.setTransform(1, 0, 0, 1, 0, 0);
             ctx.translate(factor*p.margin.left, factor*p.margin.top);
-            return group;
-        };
-
-        group.setBackground = function (b, context) {
-            context = context || ctx;
-            if (isObject(b)) context.fillStyle = d3.canvas.rgba(b.fill, b.fillOpacity);
-            else if (isString(b)) context.fillStyle = b;
             return group;
         };
 
@@ -4454,6 +4461,7 @@
 
         var series = [],
             allranges = {},
+            clean = true,
             drawing;
 
         chart.numSeries = function () {
@@ -4493,10 +4501,16 @@
             drawing = true;
 
             if (opts.type !== paper.type()) {
+                clean = true;
                 paper = chart.paper(true);
                 chart.each(function (serie) {
                     serie.clear();
                 });
+            }
+
+            if (clean) {
+                clean = false;
+                if (opts.fill) paper.group({margin: 0}).fill(opts.fill);
             }
 
             chart.each(function (serie) {
@@ -4511,15 +4525,19 @@
         };
 
         chart.setSerieOption = function (type, field, value) {
-
             if (opts.chartTypes.indexOf(type) === -1) return;
 
             if (!chart.numSeries()) {
                 opts[type][field] = value;
             } else {
+                var stype;
                 chart.each(function (serie) {
-                    if (serie[type])
-                        serie[type].set(field, value);
+                    stype = serie[type];
+                    if (stype)
+                        if (isFunction(stype.set))
+                            stype.set(field, value);
+                        else
+                            stype[field] = value;
                 });
             }
         };
@@ -4834,7 +4852,7 @@
         }
     };
 
-    g.Chart = g.viz.Chart;
+    g.chart = g.viz.chart;
 
 
     var xyData = function (data, x, y) {
@@ -6365,6 +6383,68 @@
         elem.enter().append('g').attr('id', thiss.uid());
 
     };
+
+    g.paper.plugin(function (group) {
+
+        var type = group.type();
+
+        group.fill = function (opts) {
+            if (!isObject(opts)) opts = {fill: opts};
+
+            return group.add(type === 'svg' ? FillSvg : FillCanvas)
+                        .options(opts);
+        };
+
+        if (type === 'svg')
+            group.setBackground = function (b, o) {
+                if (!o) return;
+
+                if (isObject(b)) {
+                    if (b.fillOpacity !== undefined)
+                        o.attr('fill-opacity', b.fillOpacity);
+                    b = b.fill;
+                }
+                if (isString(b))
+                    o.attr('fill', b);
+                else if(isFunction(b))
+                    b(o);
+                return group;
+            };
+        else
+            group.setBackground = function (b, context) {
+                var fill = b;
+                context = context || group.context();
+                if (isObject(fill)) fill = fill.fill;
+
+                if (isFunction(fill))
+                    fill(group.element());
+                else if (isObject(b))
+                    context.fillStyle = d3.canvas.rgba(b.fill, b.fillOpacity);
+                else if (isString(b))
+                    context.fillStyle = b;
+                return group;
+            };
+
+        function FillSvg () {
+            var rect = group.element().selectAll('rect').data([true]),
+                fill = this.fill;
+            rect.enter().append('rect').attr('x', 0).attr('y', 0);
+            rect.attr('width', group.innerWidth()).attr('height', group.innerWidth());
+            group.setBackground(this, rect);
+        }
+
+        function FillCanvas () {
+            var ctx = group.context(),
+                width = group.innerWidth(),
+                height = group.innerHeight();
+            ctx.beginPath();
+            ctx.rect(0, 0, width, height);
+            if (isFunction(this.fill))
+                this.fill.x1(0).y1(0).x2(width).y2(height);
+            group.setBackground(this);
+        }
+    });
+
     //
     //  Add grid functionality
     g.paper.plugin('grid', {

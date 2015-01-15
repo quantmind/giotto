@@ -9,6 +9,8 @@
             p = element;
             element = null;
         }
+        if (element && isFunction(element.node))
+            element = element.node();
         if (!element)
             element = document.createElement('div');
 
@@ -329,6 +331,9 @@
     g.paper.plugins = [];
 
     g.paper.plugin = function (name, defaults, plugin) {
-        g.defaults.paper[name] = defaults;
+        if (arguments.length === 3)
+            g.defaults.paper[name] = defaults;
+        else
+            plugin = name;
         g.paper.plugins.push(plugin);
     };

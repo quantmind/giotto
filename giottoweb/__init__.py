@@ -1,7 +1,4 @@
-'''
-Lux application for building the example website
-
-https://github.com/quantmind/lux
+'''Lux application for building giottojs.org
 '''
 DESCRIPTION = ('GiottoJS is a javascript visualization library built on '
                'top of d3js. '
@@ -90,5 +87,5 @@ class Extension(lux.Extension):
         return [dist, data, examples]
 
     def on_html_document(self, app, request, doc):
-        doc.head.embedded_js.append('var gexamples = {};\n')
+        doc.head.embedded_js.append('var gexamples = {}, giottoQueue = [];\n')
 

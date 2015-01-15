@@ -1,5 +1,6 @@
 title: World map
 author: Luca Sbardella
+priority: 0
 
 
 <div class="container">

@@ -63,13 +63,6 @@
             return group;
         };
 
-        group.setBackground = function (b, context) {
-            context = context || ctx;
-            if (isObject(b)) context.fillStyle = d3.canvas.rgba(b.fill, b.fillOpacity);
-            else if (isString(b)) context.fillStyle = b;
-            return group;
-        };
-
         return group.factor(_.scale(group));
     };
 

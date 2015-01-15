@@ -50,10 +50,10 @@
                 chart.resume();
             }
 
-            opts.scope.$on('formReady', function (e, form) {
+            chart.scope().$on('formReady', function (e, form) {
                 update(form);
             });
-            opts.scope.$on('formFieldChange', function (e, form) {
+            chart.scope().$on('formFieldChange', function (e, form) {
                 update(form);
             });
         }

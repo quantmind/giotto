@@ -65,7 +65,7 @@
         // Callback for angular directive
         angular: function (chart, opts) {
 
-            opts.scope.$on('formFieldChange', function (e, form) {
+            chart.scope().$on('formFieldChange', function (e, form) {
                 opts.type = form.type;
                 chart.resume();
             });

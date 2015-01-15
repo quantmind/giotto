@@ -26,19 +26,6 @@
             return group;
         };
 
-        group.setBackground = function (b, o) {
-            if (!o) return;
-
-            if (isObject(b)) {
-                if (b.fillOpacity !== undefined)
-                    o.attr('fill-opacity', b.fillOpacity);
-                b = b.fill;
-            }
-            if (isString(b))
-                o.attr('fill', b);
-            return group;
-        };
-
         group.draw = function (selection) {
             return selection
                 .attr('stroke', function (d) {return d.color;})
