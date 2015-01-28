@@ -1,5 +1,8 @@
+    var inlinePositions = ['bottom', 'top'];
 
-    var legendDefaults = {
+    //
+    //  Add legend functionality to Charts
+    g.viz.chart.plugin('legend', {
         show: false,
         margin: 50,
         position: 'top-right',
@@ -18,28 +21,8 @@
         }
     },
 
-    inlinePositions = ['bottom', 'top'];
-
-    //
-    //  Add legend functionality to Charts
-    g.viz.chart.plugin(function (chart, opts) {
-
-        opts.legend = extend({}, legendDefaults, opts.legend);
-        opts.legend.font = extend({}, opts.font, opts.legend.font);
-
-        opts.contextmenu.push({
-            label: function () {
-                if (chart.paper().select('.chart-legend'))
-                    return 'Hide legend';
-                else
-                    return 'Show legend';
-            },
-            callback: function () {
-                var group = chart.paper().select('.chart-legend');
-                if (group) group.remove();
-                else chart.Legend(true).render();
-            }
-        });
+    function (chart) {
+        var opts;
 
         chart.Legend = function (build) {
             var labels = [],
@@ -54,6 +37,23 @@
         };
 
         chart.on('tick.legend', function () {
+            if (!opts) {
+                opts = chart.options();
+                opts.contextmenu.push({
+                    label: function () {
+                        if (chart.paper().select('.chart-legend'))
+                            return 'Hide legend';
+                        else
+                            return 'Show legend';
+                    },
+                    callback: function () {
+                        var group = chart.paper().select('.chart-legend');
+                        if (group) group.remove();
+                        else chart.Legend(true).render();
+                    }
+                });
+            }
+
             if (chart.drawing()) return;
             if (opts.legend.show)
                 chart.Legend(true).render();
@@ -223,6 +223,9 @@
                 width = 0,
                 height = 0;
 
+            ctx.save();
+            group.transform(ctx);
+
             d.font.size = fsize + 'px';
             ctx.font = fontString(d.font);
             d.font.size = font_size;
@@ -253,7 +256,6 @@
             height -= 2*factor*d.lineWidth;
 
             // Draw the rectangle containing the legend
-            ctx.save();
             ctx.translate(xy[0], xy[1]);
             ctx.beginPath();
             d3.canvas.drawPolygon(ctx, [[-padding, -padding], [width, -padding], [width, height], [-padding, height]], d.radius);

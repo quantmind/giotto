@@ -1,5 +1,4 @@
-    // Axis functionalities for groups
-    g.paper.plugin('axis', {
+    var axisDefaults = {
         tickSize: '6px',
         outerTickSize: '6px',
         tickPadding: '3px',
@@ -9,6 +8,32 @@
         //minTickSize: undefined,
         min: null,
         max: null
+    };
+
+    function axisOptions (opts, value, font) {
+        extend(opts, value);
+        return copyMissing(font, opts);
+    }
+
+    function extendAxis (name) {
+
+        return function (opts, value) {
+            return axisOptions(opts[name], value, opts.font);
+        };
+    }
+
+    g.options.processors.xaxis = extendAxis('xaxis');
+    g.options.processors.yaxis = extendAxis('yaxis');
+    g.options.processors.yaxis2 = extendAxis('yaxis2');
+
+    // Axis functionalities for groups
+    g.paper.plugin('axis',
+
+    function (opts) {
+        // Inherit axis properties
+        opts.xaxis = axisOptions(extend({position: 'bottom'}, axisDefaults), opts.xaxis, opts.font);
+        opts.yaxis = axisOptions(extend({position: 'left'}, axisDefaults),  opts.yaxis, opts.font);
+        opts.yaxis2 = axisOptions(extend({position: 'right'}, axisDefaults),  opts.yaxis2, opts.font);
     },
 
     function (group, opts) {
@@ -104,18 +129,6 @@
         group.resetAxis();
     });
 
-
-    function paperAxis (p) {
-        // Inherit axis properties
-        p.xaxis = extend({position: 'bottom'}, p.axis, p.xaxis);
-        p.yaxis = extend({position: 'left'}, p.axis,  p.yaxis);
-        p.yaxis2 = extend({position: 'right'}, p.axis,  p.yaxis2);
-        //
-        copyMissing(p.font, p.xaxis);
-        copyMissing(p.font, p.yaxis);
-        copyMissing(p.font, p.yaxis2);
-    }
-
     g.svg.axis = function (group, axis, xy) {
         return drawing(group, function () {
             var x =0,
@@ -160,11 +173,10 @@
 
     g.canvas.axis = function (group, axis, xy) {
         var d = canvasMixin(drawing(group)),
-            ctx = group.context(),
-            opts;
+            opts, ctx;
 
-        d.render = function (context) {
-            context = context || ctx;
+        d.render = function () {
+            ctx = d.context();
             opts = d.options();
             if (opts.show === false) return d;
 
@@ -172,31 +184,27 @@
                 y = 0,
                 size = opts.size;
 
-            context.save();
+            ctx.save();
+            group.transform(ctx);
 
             // size of font
             opts.size = group.scale(group.dim(size)) + 'px';
-            context.font = fontString(opts);
+            ctx.font = fontString(opts);
             opts.size = size;
 
             ctx.strokeStyle = d3.canvas.rgba(d.color, d.colorOpacity);
-            context.fillStyle = d.color;
+            ctx.fillStyle = d.color;
             ctx.lineWidth = group.factor()*d.lineWidth;
 
             if (xy[0] === 'x')
                 y = opts.position === 'top' ? 0 : group.innerHeight();
             else
                 x = opts.position === 'left' ? 0 : group.innerWidth();
-            context.translate(x, y);
+            ctx.translate(x, y);
             axis.textRotate(d3_radians*(opts.textRotate || 0)).textAlign(opts.textAnchor);
-            axis(d3.select(context.canvas));
-            context.stroke();
-            context.restore();
-            return d;
-        };
-
-        d.context = function (context) {
-            ctx = context;
+            axis(d3.select(ctx.canvas));
+            ctx.stroke();
+            ctx.restore();
             return d;
         };
 

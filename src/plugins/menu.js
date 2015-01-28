@@ -1,19 +1,18 @@
 
     g.contextMenu = function () {
-        var menu = {},
-            element = null,
+        var element = null,
             menuElement = null,
             opened = false,
             disabled = false,
             events = d3.dispatch('open', 'close');
 
-        menu.bind = function (element, callback) {
+        function menu (element, callback) {
             init();
             element
                 .on('keyup.gmenu', handleKeyUpEvent)
                 .on('click.gmenu', handleClickEvent)
                 .on('contextmenu.gmenu', handleContextMenu(callback));
-        };
+        }
 
         menu.disabled  = function (x) {
             if (!arguments.length) return disabled;
@@ -39,15 +38,16 @@
         }
 
         function handleContextMenu (callback) {
-            return function () {
-                if (disabled) return;
-                var event = d3.event;
-                event.preventDefault();
-                event.stopPropagation();
-                close();
-                element = this;
-                open(event, callback);
-            };
+            if (callback)
+                return function () {
+                    if (disabled) return;
+                    var event = d3.event;
+                    event.preventDefault();
+                    event.stopPropagation();
+                    close();
+                    element = this;
+                    open(event, callback);
+                };
         }
 
         function open (event, callback) {
@@ -110,9 +110,10 @@
     g.contextmenu = g.contextMenu();
 
 
-    g.vizplugin(function (viz, opts) {
+    g.vizplugin(function (viz) {
 
         viz.contextmenu = function (menu) {
+            var opts = viz.options();
             menu.append('ul')
                 .attr('class', 'dropdown-menu')
                 .attr('role', 'menu')
@@ -129,8 +130,13 @@
                 });
         };
 
-        if (opts.contextmenu)
-            g.contextmenu.bind(viz.element(), function (menu) {
-                return viz.contextmenu(menu);
-            });
+        viz.on('tick.menu', function () {
+            var opts = viz.options();
+            if (opts.contextmenu)
+                g.contextmenu(viz.element(), function (menu) {
+                    return viz.contextmenu(menu);
+                });
+            else
+                g.contextmenu(viz.element());
+        });
     });

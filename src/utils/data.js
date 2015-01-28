@@ -42,9 +42,24 @@
                 return serie;
             };
 
+            serie.all = function () {
+                if (data)
+                    return data.map(function (d) {
+                        return [x(d), y(d)];
+                    });
+                else
+                    return [];
+            };
+
             serie.isData = d3_true;
 
             return serie;
+        };
+
+        multi.map = function (key, values) {
+            if (!isFunction(key)) key = label_functor(key);
+            if (!isFunction(values)) values = label_functor(values);
+            return d3.map(data.map(values), key);
         };
 
         multi.isData = d3_true;
@@ -59,5 +74,6 @@
     };
 
     g.data.isData = function (data) {
-        return data && (isArray(data) || (data.isData && data.isData()));
+        if (isObject(data) && g.data.isData(data.data)) return false;
+        return data ? true : false;
     };

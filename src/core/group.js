@@ -7,20 +7,22 @@
             type = p.type,
             d3v = d3[type],
             scale = d3.scale.linear(),
-            group = {};
+            events = d3.dispatch.apply(null, g.constants.groupEvents),
+            group = giottoMixin(d3.rebind({}, events, 'on'), p);
 
         element.__group__ = group;
+        p = group.options();
 
         group.type = function () {
             return type;
         };
 
-        group.element = function () {
-            return d3.select(element);
+        group.event = function (name) {
+            return events[name] || noop;
         };
 
-        group.options = function () {
-            return p;
+        group.element = function () {
+            return d3.select(element);
         };
 
         group.paper = function () {

@@ -3,43 +3,42 @@
     g.paper.plugin('grid', {
             color: '#333',
             colorOpacity: 0.3,
-            fill: '#c6dbef',
+            fill: 'none',
             fillOpacity: 0.2,
             lineWidth: 0.5,
-            zoomx: false,
-            zoomy: false,
             xaxis: true,
-            yaxis: true,
-            scaleExtent: [1, 10]
+            yaxis: true
         },
-        function (group, opts) {
+        function (group) {
             var paper = group.paper(),
-                grid, gopts, zooming;
+                grid, gopts;
 
+            // Show the grid
             group.showGrid = function () {
                 if (!grid) {
                     // First time here, setup grid options for y and x coordinates
                     if (!gopts) {
-                        gopts = extend({}, opts);
+                        gopts = extend({}, group.options());
                         gopts.xaxis = extend({
                             position: 'top',
                             size: 0,
-                            show: opts.grid.xaxis
-                        }, opts.grid);
+                            show: gopts.grid.xaxis
+                        }, gopts.grid);
                         gopts.yaxis = extend({
                             position: 'left',
                             size: 0,
-                            show: opts.grid.yaxis
-                        }, opts.grid);
+                            show: gopts.grid.yaxis
+                        }, gopts.grid);
                     }
                     gopts.before = '*';
                     grid = paper.group(gopts);
                     grid.element().classed('grid', true);
                     grid.xaxis().tickFormat(notick).scale(group.xaxis().scale());
                     grid.yaxis().tickFormat(notick).scale(group.yaxis().scale());
-                    grid.add(rectangle).options(opts.grid);
+                    grid.add(Rectangle).options(gopts.grid);
                     if (gopts.xaxis.show) grid.drawXaxis();
                     if (gopts.yaxis.show) grid.drawYaxis();
+                    grid.on('zoom', zoomgrid);
                     grid.render();
                 } else
                     grid.clear().render();
@@ -52,17 +51,15 @@
                 return group;
             };
 
-
             // The redering function for the grid
-            var rectangle = function () {
+            function Rectangle () {
                 var width = grid.innerWidth(),
                     height = grid.innerHeight(),
                     type = grid.type(),
-                    scalex, scaley, zoom;
+                    opts = this.group().options(),
+                    scalex, scaley;
 
                 if (type === 'svg') {
-                    if (zooming) return;
-
                     var rect = grid.element().select('.grid-rectangle');
 
                     if (!rect.node())
@@ -75,81 +72,42 @@
                 } else {
                     // canvas
                     var ctx = grid.context();
+                    ctx.save();
+                    group.transform(ctx);
                     ctx.beginPath();
                     ctx.rect(0, 0, width, height);
-                    this.setBackground(ctx);
-                    ctx.fill();
-                }
-
-                // Add zoom functionality - when not zooming!
-                if (!zooming) {
-
-                    grid.xaxis().tickSize(-height, 0);
-                    grid.yaxis().tickSize(-width, 0);
-
-                    if (!zoom && (opts.grid.zoomx || opts.grid.zoomy)) {
-
-                        zoom = d3.behavior.zoom().on('zoom', function () {
-                            zooming = true;
-                            if (scalex) {
-                                var x1 = scalex.invert(opts.margin.left),
-                                    x2 = scalex.invert(opts.size[0] - opts.margin.right);
-                                grid.xaxis().scale().domain([x1, x2]);
-                            }
-                            if (scaley) {
-                                var y1 = scalex.invert(opts.margin.top),
-                                    y2 = scalex.invert(opts.size[1] - opts.margin.bottom);
-                                grid.yaxis().scale().domain([y1, y2]);
-                            }
-                            paper.render();
-                            zooming = false;
-                        });
-
-                        zoom(grid.paper().element());
-
-                        var factor = grid.factor();
-
-                        if (factor === 1) {
-                            if (opts.grid.zoomx)
-                                zoom.x(grid.xaxis().scale());
-
-                            if (opts.grid.zoomy)
-                                zoom.y(grid.yaxis().scale());
-                        } else {
-
-                            if (opts.grid.zoomx) {
-                                scalex = grid.xaxis().scale().copy();
-                                var x1 = scalex.invert(-factor*opts.margin.left),
-                                    x2 = scalex.invert(factor*(opts.size[0] - opts.margin.left));
-                                scalex.domain([x1, x2]).range([0, opts.size[0]]);
-                                zoom.x(scalex);
-                            }
-
-                            if (opts.grid.zoomy) {
-                                scaley = grid.yaxis().scale().copy();
-                                var y1 = scaley.invert(-factor*opts.margin.left),
-                                    y2 = scaley.invert(factor*(opts.size[1] - opts.margin.bottom));
-                                scaley.domain([y1, y2]).range([opts.size[1], 0]);
-                                zoom.y(scaley);
-                            }
-                        }
-
-                        if (opts.grid.scaleExtent)
-                            zoom.scaleExtent(opts.grid.scaleExtent);
+                    if (this.fill != 'none') {
+                        this.setBackground(ctx);
+                        ctx.fill();
                     }
+                    ctx.restore();
                 }
-            };
+
+                grid.xaxis().tickSize(-height, 0);
+                grid.yaxis().tickSize(-width, 0);
+            }
+
+            function zoomgrid () {
+                if (scalex) {
+                    var x1 = scalex.invert(opts.margin.left),
+                        x2 = scalex.invert(opts.size[0] - opts.margin.right);
+                    grid.xaxis().scale().domain([x1, x2]);
+                }
+                if (scaley) {
+                    var y1 = scalex.invert(opts.margin.top),
+                        y2 = scalex.invert(opts.size[1] - opts.margin.bottom);
+                    grid.yaxis().scale().domain([y1, y2]);
+                }
+            }
         });
 
     //
     //  Add grid functionality to charts
-    g.viz.chart.plugin(function (chart, opts) {
-        var grid;
-        opts.grid = extend({show: false}, opts.grid);
+    g.viz.chart.plugin(function (chart) {
 
         // Show grid
         chart.showGrid = function () {
-            chart.paper().each('.reference' + chart.uid(), function () {
+            chart.paper().each('.reference', function () {
                 this.showGrid();
             });
             return chart;
@@ -157,14 +115,16 @@
 
         // Hide grid
         chart.hideGrid = function () {
-            chart.paper().each('.reference' + chart.uid(), function () {
+            chart.paper().each('.reference', function () {
                 this.hideGrid();
             });
             return chart;
         };
 
         chart.on('tick.grid', function () {
-            if (opts.grid.show)
+            var grid = chart.options().grid;
+
+            if (grid.show)
                 chart.showGrid();
             else
                 chart.hideGrid();
@@ -172,3 +132,4 @@
     });
 
     function notick () {return '';}
+

@@ -149,6 +149,12 @@
             return draw;
         };
 
+        draw.changed = function () {
+            var c = changed;
+            changed = false;
+            return c;
+        };
+
         draw.dataConstructor = function (_) {
             if (!arguments.length) return dataConstructor;
             dataConstructor = d3_functor(_);
@@ -201,11 +207,11 @@
 
         d.highLight = function () {
             if (highlight) return d;
-            highlight = true;
 
             var a = d.active,
                 v;
             if (a) {
+                highlight = true;
                 d.pointOptions().forEach(function (name) {
                     v = a[name];
                     if (v) {
@@ -222,6 +228,10 @@
                 });
             }
             return d;
+        };
+
+        d.highlighted = function () {
+            return highlight;
         };
 
         // set a value and its default
@@ -248,7 +258,7 @@
                 if (isFunction(value) && dd) value = value(dd);
                 values[name] = value;
             });
-            if (opts.active) {
+            if (opts.active && d.active !== false) {
                 if (!data.active)
                     data.active = {};
                 copyMissing(opts.active, data.active);
@@ -266,7 +276,7 @@
         return d;
     }
     //
-    // Manage a data point to be drawn on a drawing
+    // Manage a data point to be drawn on a drawing collection
     function drawingData (draw, data, d) {
         var opts = draw.options();
         d = highlightMixin(d);
@@ -288,7 +298,7 @@
             return draw.pointOptions();
         };
 
-        if (isArray(data))
+        if (!data || isArray(data))
             d.init(d, opts);
         else {
             d.init(data, opts, data);

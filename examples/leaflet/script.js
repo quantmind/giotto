@@ -1,10 +1,22 @@
     gexamples.leaflet1 = {
+        data: [[]],
 
-        tile: 'leaflet',
-
-        center: [32, 103.14],
-
-        wheelZoom: false,
+        map: {
+            tile: 'leaflet',
+            center: [32, 103.14],
+            wheelZoom: false,
+            features: function (callback) {
+                d3.giotto.require(['topojson'], function (topojson) {
+                    d3.json('/data/world-topo.json', function (topology) {
+                        callback([{
+                            path: topojson.feature(topology, topology.objects.china_adm1),
+                            name: 'regions',
+                            fill: '#fff'
+                        }]);
+                    });
+                });
+            }
+        },
 
         onInit: function (viz) {
             var http = 'http://{s}.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={token}',

@@ -32,7 +32,9 @@
         "grunt-contrib-jshint": "",
         "grunt-contrib-jasmine": "",
         "grunt-template-jasmine-istanbul": "",
-        "grunt-coveralls": ""
+        "grunt-coveralls": "",
+        "grunt-contrib-jasmine": "",
+        "grunt-string-to-js": ""
     },
     "scripts": {
         "test": "grunt jasmine && grunt coveralls"

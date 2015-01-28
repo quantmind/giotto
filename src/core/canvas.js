@@ -27,8 +27,6 @@
 
         group.render = function () {
             d3.canvas.clear(ctx);
-            var factor = group.factor();
-            ctx.translate(factor*p.margin.left, factor*p.margin.top);
             return render();
         };
 
@@ -73,8 +71,25 @@
     };
 
     function canvasMixin(d) {
+        var ctx,
+            reset = d.reset,
+            group = d.group();
+
         d.inRange = function () {};
+
         d.bbox = function () {};
+
+        d.reset = function () {
+            ctx = group.context();
+            return reset.call(d);
+        };
+
+        d.context = function (_) {
+            if (!arguments.length) return ctx;
+            ctx = _;
+            return d;
+        };
+
         return d;
     }
 

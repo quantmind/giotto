@@ -1,7 +1,7 @@
     //
     // Manage a collection of visualizations
     g.collection = function () {
-        var collection = g.vizmixin(d3.map());
+        var collection = vizMixin(d3.map());
 
         collection.start = function () {
             return onInitViz(collection).load(start);

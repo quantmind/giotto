@@ -1,6 +1,15 @@
 
     d3.canvas.pixelRatio = window.devicePixelRatio || 1;
 
+    d3.canvas.webgl = function (canvas) {
+        if (!arguments.length) canvas = document.createElement('canvas');
+        try {
+            return canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        } catch (e) {
+            return;
+        }
+    };
+
     d3.canvas.clear = function (ctx) {
         ctx.beginPath();
         ctx.closePath();

@@ -6,12 +6,9 @@
             return d3.colorbrewer.YlOrBr[9].slice().reverse();
         },
 
-        tooltip: {
-          show: true
-        },
+        tooltip: true,
 
         pie: {
-            show: true,
             labels: {
                 position: 'outside'
             },
@@ -33,7 +30,7 @@
         },
 
         // Custom entry for diplaying the year and the total ammount of debt
-        custom: {
+        customkkkk: {
             show: function () {
                 // display the year and total debt
                 var group = this.group(),
@@ -96,11 +93,7 @@
                 return true;
             }
 
-            animate();
-        },
-
-        // Callback for angular directive
-        angular: function (chart, opts) {
+            //animate();
 
             chart.scope().$on('formFieldChange', function (e, form, field) {
                 if (field === 'type') {

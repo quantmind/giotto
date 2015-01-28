@@ -1,5 +1,5 @@
 
-    function _newPaperAttr (element, p) {
+    function _paperSize (element, p) {
         var width, height;
 
         if (p) {
@@ -9,9 +9,6 @@
         }
         else
             p = {};
-
-        if (isFunction (p.colors))
-            p.colors = p.colors(d3);
 
         if (!width) {
             width = getWidth(element);
@@ -33,10 +30,6 @@
             height = d3.round(p.height_percentage*width);
         }
 
-        groupMargins(p);
-        copyMissing(g.defaults.paper, p, true);
-        paperAxis(p);
-
         p.size = [width, height];
         p.giotto = 'giotto-group';
 
@@ -47,11 +40,4 @@
         p.__paper__ = element.node();
 
         return p;
-    }
-
-    function groupMargins (opts) {
-        if (opts.margin !== undefined && !isObject(opts.margin)) {
-            var m = opts.margin;
-            opts.margin = {left: m, right: m, top: m, bottom: m};
-        }
     }

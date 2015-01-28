@@ -6,7 +6,7 @@
         maxZoom: 18,
         zoomControl: true,
         wheelZoom: true,
-    }, function (viz, opts) {
+    }, function (viz) {
 
         viz.start = function () {};
 

@@ -1,10 +1,7 @@
-    var _idCounter = 0;
     //
     // Create a new paper for drawing stuff
     g.paper = function (element, p) {
-
         // Setup
-
         if (isObject(element)) {
             p = element;
             element = null;
@@ -14,21 +11,21 @@
         if (!element)
             element = document.createElement('div');
 
-        p = _newPaperAttr(element, p);
+        p = _paperSize(element, p);
 
-        var events = d3.dispatch.apply(null, extendArray(['change'], p.activeEvents)),
-            paper = d3.rebind({}, events, 'on'),
-            uid = ++_idCounter,
+        var events = d3.dispatch.apply(null, extendArray(['change', 'active', 'activeout'], g.constants.pointEvents)),
+            paper = giottoMixin(d3.rebind({}, events, 'on'), p),
+            tasks = [],
             resizing = false;
 
         paper.event = function (name) {
-            return events[name];
+            return events[name] || noop;
         };
 
         // Create a new group for this paper
         paper.group = function (opts) {
             // Inject plugins
-            opts = groupOptions(opts);
+            opts = p.copy(opts);
             var group = g.group[opts.type](paper, opts),
                 plugins = g.paper.plugins;
 
@@ -36,10 +33,6 @@
             for (var i=0; i < plugins.length; ++i)
                 plugins[i](group, opts);
             return group;
-        };
-
-        paper.uid = function () {
-            return uid;
         };
 
         paper.size = function () {
@@ -141,29 +134,6 @@
             return [Math.round(w), Math.round(h)];
         };
 
-        // pick a color
-        paper.pickColor = function (index) {
-            if (arguments.length === 0)
-                index = p.colorIndex++;
-            var dk = 0, bk = 0;
-            while (index >= p.colors.length) {
-                index -= p.colors.length;
-                dk += p.darkerColor;
-                bk += p.brighterColor;
-            }
-            var c = p.colors[index];
-            if (dk)
-                c = d3.rgb(c).darker(dk).toString();
-            else if (bk)
-                c = d3.rgb(c).brighter(bk).toString();
-            return c;
-        };
-
-        // Access internal options
-        paper.options = function () {
-            return p;
-        };
-
         // Create an svg container
         paper.svg = function (build) {
             var svg = paper.element().select('svg.giotto');
@@ -231,6 +201,7 @@
                                 });
                 node = canvas.node();
                 d3.canvas.retinaScale(node.getContext('2d'), p.size[0], p.size[1]);
+                paper.registerEvents(canvas, g.constants.pointEvents);
             } else if (node)
                 d3.canvas.resize(node.getContext('2d'), p.size[0], p.size[1]);
             return canvas;
@@ -294,6 +265,31 @@
             return type;
         };
         //
+        // register events on a DOM selection.
+        paper.registerEvents = function (selection, events, uid, callback) {
+            var target, ename;
+
+            events.forEach(function (event) {
+                ename = uid ? event + '.' + uid : event;
+
+                selection.on(ename, function () {
+                    if (uid && !paper.element().select('#' + uid).size())
+                        // remove the event handler
+                        selection.on(event + '.' + uid, null);
+                    else {
+                        target = callback ? callback.call(this) : this;
+                        paper.event(d3.event.type).call(target);
+                    }
+                });
+            });
+
+            return selection;
+        };
+        //
+        paper.task = function (callback) {
+            tasks.push(callback);
+        };
+        //
         if (p.css)
             addCss('#giotto-paper-' + paper.uid(), p.css);
 
@@ -314,26 +310,18 @@
                 }
             });
         }
+
+        d3.timer(function () {
+            if (!paper.element().size()) return true;
+            for (var i=0; i<tasks.length; ++i) {
+                tasks[i]();
+            }
+        });
+        //
+        activeEvents(paper);
         //
         return paper;
-
-        function groupOptions (opts) {
-            opts || (opts = {});
-            groupMargins(opts);
-            if (!opts.yaxis || opts.yaxis === 1)
-                opts.yaxis = p.yaxis;
-            else if (opts.yaxis === 2)
-                opts.yaxis = p.yaxis2;
-            return copyMissing(p, opts);
-        }
     };
 
     g.paper.plugins = [];
-
-    g.paper.plugin = function (name, defaults, plugin) {
-        if (arguments.length === 3)
-            g.defaults.paper[name] = defaults;
-        else
-            plugin = name;
-        g.paper.plugins.push(plugin);
-    };
+    g.paper.plugin = registerPlugin(g.paper.plugins);

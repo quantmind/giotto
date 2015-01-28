@@ -3,11 +3,11 @@
 
         height: '70%',
         tooltip: {show: true},
-        grid: {
-            show: true,
-            zoomx: true
+        grid: true,
+        zoom: {
+            x: true,
+            y: false
         },
-
         point: {show: true},
         line: {show: true},
 

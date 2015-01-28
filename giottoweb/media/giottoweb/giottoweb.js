@@ -1,7 +1,7 @@
 //
 //  Script for giotto website
 //  =============================
-require(rcfg.min(['lux/lux', 'giotto/giotto', 'angular-ui-router', 'angular-strap']), function (lux, d3) {
+require(rcfg.min(['lux/lux', 'giotto/giotto', 'd3-geo-projection', 'angular-ui-router', 'angular-strap']), function (lux, d3) {
 
     var url = lux.context.url,
         sitemap = function () {

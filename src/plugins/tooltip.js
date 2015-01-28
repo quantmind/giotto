@@ -2,124 +2,95 @@
     //
     //  Tooltip functionality for SVG paper
     g.paper.plugin('tooltip', {
-            className: 'd3-tip',
-            show: false,
-            interact: true,
-            fill: '#deebf7',
-            fillOpacity: 0.8,
-            color: '#222',
-            padding: '8px',
-            radius: '3px',
-            offset: [20, 20],
-            template: function (d) {
-                return "<p><span style='color:"+d.c+"'>" + d.l + "</span>  <strong>" + d.x + ": </strong><span>" + d.y + "</span></p>";
-            },
-            font: {
-                size: '14px'
-            }
+        className: 'd3-tip',
+        fill: '#deebf7',
+        fillOpacity: 0.8,
+        color: '#222',
+        padding: '8px',
+        radius: '3px',
+        offset: [20, 20],
+        template: function (d) {
+            return "<p><span style='color:"+d.c+"'>" + d.l + "</span>  <strong>" + d.x + ": </strong><span>" + d.y + "</span></p>";
         },
+        font: {
+            size: '14px'
+        }
+    },
 
-        function (group, opts) {
-            var paper = group.paper();
+    function (group) {
+        var paper = group.paper();
+        if (!paper.showTooltip) activateTooltip(paper);
+    });
 
-            if (opts.tooltip.show) opts.tooltip.interact = true;
 
-            if (paper.tooltip || !opts.tooltip.interact) return;
+    function activateTooltip (paper) {
+        var opts = paper.options(),
+            tooltip;
 
-            if (!tooltip && opts.tooltip.show) tooltip = gitto_tip(opts).offset(opts.tooltip.offset);
-            if (!tooltip) tooltip = gitto_tip(opts);
+        paper.showTooltip = function () {
+            if (!tooltip) tooltip = gitto_tip(opts).offset(opts.tooltip.offset);
+            show();
+            return paper;
+        };
 
-            paper.tooltip = tooltip;
+        paper.hideTooltip = function () {
+            if (tooltip) tooltip.hide();
+            return paper;
+        };
 
-            var data, draw;
+        paper.removeTooltip = function () {
+            if (tooltip) tooltip.hide();
+            opts.tooltip.show = false;
+            tooltip = null;
+            return paper;
+        };
 
-            if (paper.type() === 'svg') {
-
-                opts.activeEvents.forEach(function (event) {
-                    paper.on(event + '.tooltip', function () {
-                        var el = d3.select(this);
-                        data = el.size() ? el.datum() : null;
-
-                        if (!data || d3.event.type === 'mouseout') {
-                            tooltip.hide(true);
-                        } else if (data && data.reset) {
-                            if (d3.event.active === undefined) {
-                                tooltip.hide(true);
-                                d3.event.active = tooltip.active;
-                            }
-                            tooltip.active.push(el);
-                            data.highLight().render(el);
-                        }
-                    }).on(event + '.tooltip-show', function () {
-                        if (tooltip.active.length) {
-                            var bbox = getScreenBBox(tooltip.active[0].node()),
-                                direction = bbox.tooltip || 'n';
-                            if (tooltip.active.length > 1) {
-                                direction = 'e';
-                                for (var i=1; i<tooltip.active.length; ++i) {
-                                    var bbox2 = getScreenBBox(tooltip.active[i].node());
-                                    bbox[direction].y += bbox2[direction].y;
-                                }
-                                bbox[direction].y /= tooltip.active.length;
-                            }
-                            tooltip.bbox(bbox).direction(direction).show();
-                        }
-                    });
-                });
-            } else {
-
-                var overlay = paper.canvasOverlay();
-
-                opts.activeEvents.forEach(function (event) {
-
-                    overlay.on(event + '.tooltip', function () {
-                        var ctx = this.getContext('2d'),
-                            point,
-                            a;
-
-                        d3.canvas.clear(ctx);
-                        point = d3.canvas.mouse(this);
-                        tooltip.hide();
-
-                        tooltip.active = paper.canvasDataAtPoint(point);
-
-                        if (tooltip.active.length) {
-                            var direction, bbox, bbox2;
-
-                            for (var i=0; i<tooltip.active.length; ++i) {
-                                a = tooltip.active[i];
-                                a.group().transform(ctx);
-                                a.highLight().render(ctx);
-                                if (i && bbox) {
-                                    bbox2 = a.bbox();
-                                    direction = 'e';
-                                    bbox[direction].y += bbox2[direction].y;
-                                } else if (!i) {
-                                    bbox = a.bbox();
-                                    direction = bbox.tooltip || 'n';
-                                }
-                            }
-                            if (bbox) {
-                                bbox[direction].y /= tooltip.active.length;
-                                tooltip.bbox(bbox).direction(direction).show();
-                            }
-                        }
-                    });
-                });
+        paper.on('active.tooltip', function () {
+            if (tooltip) {
+                tooltip.active = this;
+                show();
+            }
+        }).on('activeout.tooltip', function () {
+            if (tooltip) {
+                tooltip.active.splice(0);
+                tooltip.hide();
             }
         });
+
+        paper.task(function () {
+            if (opts.tooltip.show) show();
+        });
+
+        if (opts.tooltip.show) paper.showTooltip();
+
+        function show () {
+            var active = tooltip.active;
+            if (!active.length) return tooltip.hide();
+
+            var bbox = getBbox(active[0]),
+                direction = bbox.tooltip || 'n';
+            if (active.length > 1) {
+                direction = 'e';
+                for (var i=1; i<active.length; ++i) {
+                    var bbox2 = getBbox(active[i]);
+                    bbox[direction].y += bbox2[direction].y;
+                }
+                bbox[direction].y /= active.length;
+            }
+            tooltip.bbox(bbox).direction(direction).show();
+        }
+
+        function getBbox (node) {
+            if (isFunction(node.bbox)) return node.bbox();
+            else return getScreenBBox(node);
+        }
+    }
 
 
     function gitto_tip (options) {
         var opts = options.tooltip,
             font = extend({}, options.font, opts.font),
-            tip = g.tip(),
-            hide = tip.hide;
-
-        if (!opts.show) {
-            tip.show = noop;
-            hide = noop;
-        }
+            tip = g.tip();
 
         tip.active = [];
 
@@ -145,7 +116,7 @@
 
             for (var i=0; i<tip.active.length; ++i) {
                 data = tip.active[i];
-                if (data.datum) data = data.datum();
+                if (!data.draw) data = d3.select(data).datum();
                 draw = data.draw();
                 template = tooltip_template(draw);
 
@@ -158,17 +129,6 @@
             }
             return html;
         });
-
-        tip.hide = function (render) {
-            for (var i=0; i<tip.active.length; ++i) {
-                var data = tip.active[i];
-                if (data.datum) data = data.datum();
-                data.reset();
-                if (render) data.render(tip.active[i]);
-            }
-            tip.active = [];
-            hide();
-        };
 
         return tip;
 

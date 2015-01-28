@@ -32,25 +32,11 @@
                 .attr('stroke-opacity', function (d) {return d.colorOpacity;})
                 .attr('stroke-width', function (d) {return d.lineWidth;})
                 .attr('fill', function (d) {return d.fill;})
-                .attr('fill-opacity', function (d) {return d.fillOpacity;});
+                .attr('fill-opacity', function (d) {return d.fill === 'none' ? undefined : d.fillOpacity;});
         };
 
         group.events = function (selection, uid, callback) {
-            var name = uid || p.giotto,
-                target;
-
-            p.activeEvents.forEach(function (event) {
-                selection.on(event + '.' + name, function () {
-                    if (uid && !paper.element().select('#' + uid).size())
-                        selection.on(event + '.' + uid, null);
-                    else {
-                        target = callback ? callback.call(this) : this;
-                        paper.event(d3.event.type).call(target);
-                    }
-                });
-            });
-
-            return selection;
+            return paper.registerEvents(selection, g.constants.pointEvents, uid, callback);
         };
 
         return group;

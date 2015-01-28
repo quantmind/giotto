@@ -3,7 +3,9 @@
         force: false,
         theta: 0.8,
         friction: 0.9
-    }, function (group, opts) {
+    },
+
+    function (group, opts) {
 
         // Add force visualization to the group
         group.bubble = function (data, opts) {

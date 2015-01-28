@@ -72,6 +72,9 @@ module.exports = function (grunt) {
     // Initialise Grunt with all tasks defined above
     grunt.initConfig({
         pkg: grunt.file.readJSON('package.json'),
+        str2js: {
+            NS: { 'src/text/text.js': ['src/text/giotto.min.css']}
+        },
         concat: concats,
         uglify: uglify_libs(),
         jshint: jshint_libs(),
@@ -128,6 +131,7 @@ module.exports = function (grunt) {
     });
     //
     // These plugins provide necessary tasks.
+    grunt.loadNpmTasks('grunt-string-to-js');
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-contrib-concat');
@@ -137,7 +141,7 @@ module.exports = function (grunt) {
     grunt.registerTask('gruntfile', 'jshint Gruntfile.js',
             ['jshint:gruntfile']);
     grunt.registerTask('build', 'Compile and lint all libraries',
-            ['gruntfile', 'concat', 'jshint', 'uglify']);
+            ['gruntfile', 'str2js', 'concat', 'jshint', 'uglify']);
     grunt.registerTask('coverage', 'Test coverage using Jasmine and Istanbul',
             ['jasmine:coverage']);
     grunt.registerTask('all', 'Compile lint and test all libraries',

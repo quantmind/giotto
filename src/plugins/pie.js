@@ -19,7 +19,6 @@
             //outerRadius: 105%,
             fillOpacity: 1
         },
-        transition: extend({}, g.defaults.transition),
         tooltip: {
             template: function (d) {
                 return "<p><strong>" + d.x + "</strong> " + d.y + "</p>";
@@ -114,6 +113,9 @@
         dd.fill = dd.fill || draw.paper().pickColor();
         dd.color = dd.color || d3.rgb(dd.fill).darker().toString();
 
+        d = drawingData(draw, data, d);
+        if (group.type() === 'canvas') d = canvasMixin(d);
+
         d.bbox = function () {
             var bbox = target.getBoundingClientRect(),
                 c1 = Math.sin(d.startAngle),
@@ -145,7 +147,7 @@
             function yy(y) {return Math.round(f*(top - y) + bbox.top);}
         };
 
-        return drawingData(draw, data, d);
+        return d;
     }
 
     g.svg.pie = function (draw, width, height) {
@@ -325,39 +327,34 @@
     };
 
     g.canvas.pieslice = function (draw, data) {
-        var d = pieSlice(draw, data, canvasMixin({})),
+        var d = pieSlice(draw, data, {}),
             group = draw.group(),
-            factor = draw.factor(),
-            ctx = group.context();
+            factor = draw.factor();
 
-        d.render = function (context) {
-            context = context || ctx;
-            context.save();
-            context.translate(0.5*group.innerWidth(), 0.5*group.innerHeight());
-            context.fillStyle = d3.canvas.rgba(d.fill, d.fillOpacity);
-            context.strokeStyle = d3.canvas.rgba(d.color, d.colorOpacity);
-            context.lineWidth = factor*d.lineWidth;
-            draw.arc.context(context)(d);
-            context.fill();
-            context.stroke();
-            context.restore();
-            return d;
-        };
-
-        d.context = function (context) {
-            ctx = context;
-            return d;
+        d.render = function () {
+            return _draw(function (ctx) {
+                d3.canvas.style(ctx, d);
+                return d;
+            });
         };
 
         d.inRange = function (ex, ey) {
-            ctx.save();
-            ctx.translate(0.5*group.innerWidth(), 0.5*group.innerHeight());
-            draw.arc.context(ctx)(d);
-            var res = ctx.isPointInPath(ex, ey);
-            ctx.restore();
-            return res;
+            return _draw(function (ctx) {
+                return ctx.isPointInPath(ex, ey);
+            });
         };
 
         return d;
+
+        function _draw (callback) {
+            var ctx = d.context();
+            ctx.save();
+            group.transform(ctx);
+            ctx.translate(0.5*group.innerWidth(), 0.5*group.innerHeight());
+            draw.arc.context(ctx)(d);
+            var r = callback(ctx);
+            ctx.restore();
+            return r;
+        }
     };
 

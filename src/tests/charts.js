@@ -6,8 +6,15 @@
         function chart(opts) {
             opts || (opts = {});
             opts.type = type;
-            return g.viz.chart(opts);
+            return g.viz.chart().options(opts);
         }
+
+        it ('No paper', function () {
+            var c = chart();
+            c.createPaper = function (){};
+            var paper = c.paper();
+            expect(paper).toBe(undefined);
+        });
 
         it('Test auto axis', function (done) {
             var c = chart(),
@@ -55,6 +62,8 @@
                     }),
                 count = 0;
 
+            expect(c.options().point.show).toBe(true);
+
             c.addSerie(d3.range(800).map(function () {
                 return [Math.random(), norm()];
             }));
@@ -63,8 +72,6 @@
                 count++;
                 expect(serie.group()).toBe(undefined);
                 expect(serie.point).not.toBe(undefined);
-                expect(serie.point.symbol).toBe('circle');
-
                 expect(serie.line).toBe(undefined);
                 expect(serie.bar).toBe(undefined);
             });
@@ -72,9 +79,17 @@
             expect(count).toBe(1);
 
             c.start().on('tick.test', function () {
+                var paper = c.paper();
+                expect(paper.options().point.symbol).toBe('circle');
+
                 c.each(function (serie) {
                     var group = serie.group();
                     expect(group).not.toBe(undefined);
+                    expect(group.options().point.symbol).toBe('circle');
+
+                    //expect(serie.point.options().symbol).toBe('circle');
+                    expect(serie.line).toBe(undefined);
+                    expect(serie.bar).toBe(undefined);
                 });
                 done();
             });
@@ -176,6 +191,21 @@
         });
     }
 
+    describe("Chart class", function() {
+        var chart = d3.giotto.chart,
+            _ = d3.giotto._;
+
+        it ('access', function () {
+            expect(chart).toBe(d3.giotto.viz.chart);
+            expect(_.isObject(chart.defaults)).toBe(true);
+            expect(chart.defaults.line).toBe(undefined);
+            expect(chart.defaults.points).toBe(undefined);
+            expect(chart.defaults.bar).toBe(undefined);
+            expect(chart.defaults.pie).toBe(undefined);
+        });
+
+
+    });
 
     describe("SVG charts", function() {
         testCharts('svg');

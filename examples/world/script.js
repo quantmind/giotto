@@ -6,25 +6,79 @@
         loader: function (src, callback) {
             return d3.dsv(';', 'text/csv')(src, function (error, data) {
                 if (!error) {
-                    var gt = d3.giotto;
-                    data = gt.data.multi(gt.data.fromcsv(data));
-                }
-                callback(error, data);
+                    callback(d3.giotto.data.multi(data));
+                } else
+                    callback(error, data);
             });
         },
 
+        onInit: function (container) {
+            container.scope().year = 2013;
+        },
+
+        slider: {
+            axis: true,
+            min: 1960,
+            max: 2013,
+            step: 1,
+            onInit: function (slider) {
+                var scope = slider.scope();
+                scope.year = slider.value(scope.year).value();
+                slider.on('slide', function (e, value) {
+                    scope.year = value;
+                    scope.$apply();
+                }).on('slideend', function (e, value) {
+                    scope.$emit('yearchange', value);
+                });
+            }
+        },
+
+        // World map
         world: {
+            //type: 'canvas',
+            tooltip: {
+                show: true
+            },
+            colors: function (d3) {return d3.colorbrewer.YlGnBu[9];},
             margin: 0,
-            processData: function (data) {
-                return [data.serie().x('Country').y(2013)];
+            height: '60%',
+            zoom: true,
+            grid: true,
+            onInit: function (chart) {
+                var scope = chart.scope();
+                scope.$on('yearchange', function (e, value) {
+                    var data = map_data(scope.giottoCollection.data(), value);
+                    chart.each(function (serie) {
+                        serie.data(data);
+                    }).resume();
+                });
+            },
+            processData: function (multi) {
+                return [map_data(multi, this.scope().year)];
             },
             map: {
                 show: true,
+                scale: 0.6,
+                grid: true,
+                projection: 'kavrayskiy7',
+                active: {
+                    fill: '#993404'
+                },
+                transition: {
+                    duration: 500
+                },
+                // load features
                 features: function (callback) {
                     d3.giotto.require(['topojson'], function (topojson) {
-                        d3.json('/data/world-topo.json', function (topology) {
-                            countries = topojson.feature(worldtopo, worldtopo.objects.countries);
-                            callback({countries: countries});
+                        d3.json('/data/world-110m.json', function (topology) {
+                            var countries = topojson.feature(topology, topology.objects.countries);
+
+                            callback([{
+                                object: {type: "Sphere"},
+                                name: 'sea',
+                                fill: '#c6dbef'
+                            },
+                            d3.giotto.data.geo(countries.features).scale(d3.scale.log())]);
                         });
                     });
                 }
@@ -33,6 +87,26 @@
 
         timeserie: {
             line: {show: true},
-            point: {show: true}
+            point: {show: true},
+            processData: function (multi) {
+                return [[]];
+            },
+            onInit: function (timeserie) {
+                var map = chart.scope().container.map;
+            }
         }
     };
+
+    function map_data (multi, year) {
+        return multi.map('code', function (d) {
+            var value = d[year];
+            if (value)
+                return {
+                    code: d['Country Code'],
+                    label: d['Country Name'],
+                    value: value
+                };
+            else
+                return {};
+        });
+    }

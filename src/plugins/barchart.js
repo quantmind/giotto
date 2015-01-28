@@ -11,8 +11,7 @@
         active: {
             fill: 'darker',
             color: 'brighter'
-        },
-        transition: extend({}, g.defaults.transition)
+        }
     },
 
     function (group, p) {
@@ -140,25 +139,21 @@
             scaley = draw.scaley(),
             size = draw.size(),
             factor = draw.factor(),
-            ctx = group.context(),
             x, y, y0, y1, w, w0, yb, radius;
 
         d.set('size', data.size === undefined ? siz : data.size);
 
-        d.render = function (context) {
-            context = context || ctx;
-            context.fillStyle = d3.canvas.rgba(d.fill, d.fillOpacity);
-            context.strokeStyle = d3.canvas.rgba(d.color, d.colorOpacity);
-            context.lineWidth = factor*d.lineWidth;
-            _draw(context);
-            context.fill();
-            context.stroke();
-            return d;
+        d.render = function () {
+            return _draw(function (ctx) {
+                d3.canvas.style(ctx, d);
+                return d;
+            });
         };
 
         d.inRange = function (ex, ey) {
-            _draw(ctx);
-            return ctx.isPointInPath(ex, ey);
+            return _draw(function (ctx) {
+                return ctx.isPointInPath(ex, ey);
+            });
         };
 
         d.bbox = function () {
@@ -179,9 +174,12 @@
 
         return d;
 
-        function _draw (context) {
+        function _draw (callback) {
+            var ctx = d.context();
+            ctx.save();
+            group.transform(ctx);
             radius = factor*draw.options().radius;
-            context.beginPath();
+            ctx.beginPath();
             x = scalex(d.data);
             w0 = 0;
             if (xscale.invert)
@@ -190,7 +188,10 @@
                 w = xscale.rangeBand();
             y = scaley(d.data);
             y0 = group.scaley(0);
-            d3.canvas.drawPolygon(context, [[x-w0, y0], [x+w, y0], [x+w, y], [x-w0, y]], radius);
-            context.closePath();
+            d3.canvas.drawPolygon(ctx, [[x-w0, y0], [x+w, y0], [x+w, y], [x-w0, y]], radius);
+            ctx.closePath();
+            var r = callback(ctx);
+            ctx.restore();
+            return r;
         }
     };

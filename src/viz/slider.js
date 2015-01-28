@@ -8,9 +8,10 @@
             orientation = "horizontal",
             axis = false,
             margin = 50,
-            value,
             active = 1,
             snap = false,
+            theme = 'default',
+            value,
             scale;
 
         // Private variables
@@ -25,17 +26,16 @@
         function slider (selection) {
 
             selection.each(function() {
+                var uid = ++_idCounter;
 
                 // Create scale if not defined by user
-                if (!scale) {
-                    scale = d3.scale.linear().domain([min, max]);
-                }
+                if (!scale) scale = d3.scale.linear().domain([min, max]);
 
                 // Start value
                 value = value || scale.domain()[0];
 
                 // DIV container
-                var div = d3.select(this).classed("d3-slider d3-slider-" + orientation, true);
+                var div = d3.select(this).classed("d3-slider d3-slider-" + orientation + " d3-slider-" + theme, true);
 
                 var drag = d3.behavior.drag();
                 drag.on('dragend', function() {
@@ -118,11 +118,15 @@
                 }
 
                 if (axis) {
-                    createAxis(div);
+                    var svg = createAxis();
+                    renderAxis(svg);
+                    d3.select(window).on('resize.slider' + uid, function () {
+                        renderAxis();
+                    });
                 }
 
 
-                function createAxis(dom) {
+                function createAxis() {
 
                     // Create axis if not defined by user
                     if (typeof axis === "boolean") {
@@ -131,6 +135,7 @@
                             .ticks(Math.round(sliderLength / 100))
                             .tickFormat(tickFormat)
                             .orient((orientation === "horizontal") ? "bottom" : "right");
+                        div.classed('d3-slider-axis', true);
 
                     }
 
@@ -139,11 +144,15 @@
                     axis.scale(axisScale);
 
                     // Create SVG axis container
-                    var svg = dom.append("svg")
+                    var s = div.append("svg")
                         .classed("d3-slider-axis d3-slider-axis-" + axis.orient(), true)
                         .on("click", stopPropagation);
+                    s.append('g');
+                    return s;
+                }
 
-                    var g = svg.append("g");
+                function renderAxis() {
+                    var g = svg.select('g');
 
                     // Horizontal axis
                     if (orientation === "horizontal") {
@@ -181,7 +190,6 @@
                     }
 
                     g.call(axis);
-
                 }
 
                 function onClickHorizontal() {
@@ -350,12 +358,6 @@
             return slider;
         };
 
-        slider.margin = function(_) {
-            if (!arguments.length) return margin;
-            margin = _;
-            return slider;
-        };
-
         slider.value = function(_) {
             if (!arguments.length) return value;
             if (value)
@@ -379,4 +381,29 @@
         d3.rebind(slider, dispatch, "on");
 
         return slider;
+    };
+
+    g.viz.slider = function (element) {
+        var slider = vizMixin(g.slider()),
+            options = slider.options;
+
+        slider.options = function (_) {
+            if (!arguments.length) return options();
+            forEach(_, function (value, key) {
+                if (isFunction(slider[key])) slider[key](value);
+            });
+            return options(_);
+        };
+
+        slider.start = function () {
+            slider(d3.select(element));
+            var opts = options(),
+                onInit = opts.onInit;
+            if (onInit) onInit(slider, opts);
+        };
+
+        return slider;
+    };
+    g.viz.slider.vizName = function () {
+        return 'slider';
     };

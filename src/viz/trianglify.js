@@ -9,7 +9,7 @@
         cellpadding: 0,
         x_gradient: null,
         y_gradient: null
-    }, function (tri, opts) {
+    }, function (tri) {
         var t;
 
         tri.gradient = function (value) {
@@ -42,7 +42,8 @@
 
 
         function build () {
-            var cellsize = +opts.cellsize,
+            var opts = tri.options(),
+                cellsize = +opts.cellsize,
                 cellpadding = +opts.cellpadding,
                 fillOpacity = +opts.fillOpacity,
                 strokeOpacity = +opts.strokeOpacity,

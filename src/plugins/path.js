@@ -4,12 +4,12 @@
         colorOpacity: 1,
         fillOpacity: 0.4,
         lineWidth: 2,
-        transition: extend({}, g.defaults.transition),
         fill: 'color'
     },
 
     function (group, p) {
         var type = group.type();
+        copyMissing(g.defaults.paper.line, p.line);
 
         // Draw a path or an area
         group.path = function (data, opts) {
@@ -133,13 +133,15 @@
         var d = canvasMixin(pathdraw(group)),
             scalex = d.scalex,
             scaley = d.scaley,
-            ctx = group.context(),
-            opts, data, active;
+            opts, data, active, ctx;
 
-        d.render = function (context) {
+        d.render = function () {
             opts = d.options();
             data = d.path_data();
-            context = context || ctx;
+            ctx = d.context();
+
+            ctx.save();
+            group.transform(ctx);
 
             if (opts.area) {
                 var background = group.paper().canvasBackground(true).node().getContext('2d');
@@ -172,13 +174,9 @@
             }
             ctx.strokeStyle = d.color;
             ctx.lineWidth = group.factor()*d.lineWidth;
-            d.path_line().context(context)(data);
-            context.stroke();
-            return d;
-        };
-
-        d.context = function (context) {
-            ctx = context;
+            d.path_line().context(ctx)(data);
+            ctx.stroke();
+            ctx.restore();
             return d;
         };
 

@@ -14,7 +14,7 @@
         initNode: null
     },
 
-    function (self, opts) {
+    function (self) {
 
         var namecolors = {},
             current,
@@ -42,7 +42,7 @@
 
             if (isArray(node)) {
                 var path = node;
-                node = current;
+                node = self.root();
                 for (var n=0; n<path.length; ++n) {
                     var name = path[n];
                     if (node.children) {
@@ -65,8 +65,17 @@
             return current;
         };
 
+        // Return the root node
+        self.root = function () {
+            var r = current;
+            while (r && r.parent)
+                r = r.parent;
+            return r;
+        };
+
         // Set the scale or returns it
         self.scale = function (scale) {
+            var opts = self.options();
             if (!arguments.length) return opts.scale;
             opts.scale = scale;
             return self;
@@ -74,7 +83,8 @@
 
         // draw
         self.draw = function () {
-            var data = self.data();
+            var data = self.data(),
+                opts = self.options();
 
             if (!paper || opts.type !== group.type()) {
                 paper = self.paper(true);
@@ -105,6 +115,7 @@
                 height = 0.5*group.innerHeight(),
                 xs = group.marginLeft() + width,
                 ys = group.marginTop() + height,
+                opts = self.options(),
                 sunburst = group.element().attr("transform", "translate(" + xs + "," + ys + ")");
 
             current = data[0];
@@ -159,6 +170,7 @@
         }
 
         function scale (radius) {
+            var opts = self.options();
             //if (opts.scale === 'log')
             //    return d3.scale.log().range([1, radius]);
             if (opts.scale === 'linear')
@@ -178,6 +190,8 @@
 
         function select (node, transition) {
             if (!node || node === current) return;
+            var opts = self.options();
+
             if (transition === undefined) transition = +opts.transition;
 
             if (text) text.transition().attr("opacity", 0);

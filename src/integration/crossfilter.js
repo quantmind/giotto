@@ -1,12 +1,20 @@
+    g.defaults.crossfilter = {
+        tolerance: 1.1
+    };
 
-    g.crossfilter = function (options) {
+    g.crossfilter = function (data, opts, callback) {
+        if (arguments.length === 2 && isFunction(opts)) {
+            callback = opts;
+            opts = {};
+        }
+        opts = extend({}, g.defaults.crossfilter, opts);
+
         var cf = {
-            dims: {},
-            tolerance: options.tolerance === undefined ? g.crossfilter.tolerance : options.tolerance
+            dims: {}
         };
 
         // Add a new dimension to the crossfilter
-        cf.addDimension = function (name, callback) {
+        cf.dimension = function (name, callback) {
             if (!callback) {
                 callback = function (d) {
                     return d[name];
@@ -82,15 +90,14 @@
             if (!g.crossfilter.lib)
                 throw Error('Could not find crossfilter library');
 
-            cf.data = g.crossfilter.lib(options.data);
+            data = g.crossfilter.lib(data);
 
             if (g._.isArray(options.dimensions))
                 options.dimensions.forEach(function (o) {
                     cf.addDimension(o);
                 });
 
-            if (options.callback)
-                options.callback(cf);
+            if (callback) callback(cf);
         }
 
         if (g.crossfilter.lib === undefined)

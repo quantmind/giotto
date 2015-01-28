@@ -26,7 +26,6 @@
         },
 
         legend: {
-            show: true,
             position: 'top-left',
             margin: 50
         },

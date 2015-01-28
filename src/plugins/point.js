@@ -116,8 +116,7 @@
             scalex = draw.scalex(),
             scaley = draw.scaley(),
             factor = draw.factor(),
-            group = draw.group(),
-            ctx = draw.group().context();
+            group = draw.group();
 
         function symbol () {
             if (!draw.Symbol)
@@ -128,26 +127,17 @@
 
         d.set('size', data.size === undefined ? size : data.size);
 
-        d.render = function (context) {
-            context = context || ctx;
-            context.save();
-            _draw(context);
-            d3.canvas.style(context, d);
-            context.restore();
-            return d;
-        };
-
-        d.context = function (context) {
-            ctx = context;
-            return d;
+        d.render = function () {
+            return _draw(function (ctx) {
+                d3.canvas.style(ctx, d);
+                return d;
+            });
         };
 
         d.inRange = function (ex, ey) {
-            ctx.save();
-            _draw(ctx);
-            var res = ctx.isPointInPath(ex, ey);
-            ctx.restore();
-            return res;
+            return _draw(function (ctx) {
+                return ctx.isPointInPath(ex, ey);
+            });
         };
 
         d.bbox = function () {
@@ -159,8 +149,14 @@
 
         return d;
 
-        function _draw (context) {
-            context.translate(scalex(d.data), scaley(d.data));
-            symbol().context(context)(d);
+        function _draw (callback) {
+            var ctx = d.context();
+            ctx.save();
+            group.transform(ctx);
+            ctx.translate(scalex(d.data), scaley(d.data));
+            symbol().context(ctx)(d);
+            var r = callback(ctx);
+            ctx.restore();
+            return r;
         }
     };

@@ -23,8 +23,7 @@ EXTENSIONS = ['lux.extensions.base',
               'lux.extensions.oauth',
               'lux.extensions.code',
               'giottoweb.giotto']
-HTML_LINKS = ['giotto/giotto.css',
-              'giottoweb/giottoweb.css']
+HTML_LINKS = ['giottoweb/giottoweb.css']
 REQUIREJS = ['.giottoweb/giottoweb.js']
 
 HTML_META = [{'http-equiv': 'X-UA-Compatible',
@@ -87,5 +86,6 @@ class Extension(lux.Extension):
         return [dist, data, examples]
 
     def on_html_document(self, app, request, doc):
+        doc.head.scripts.paths['d3-geo-projection'] = 'giottoweb/d3-geo-projection/d3.geo.projection'
         doc.head.embedded_js.append('var gexamples = {}, giottoQueue = [];\n')
 

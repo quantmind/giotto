@@ -8,7 +8,7 @@
         }
     },
 
-    function (chart, opts) {
+    function (chart) {
 
         var series = [],
             allranges = {},
@@ -48,7 +48,8 @@
         };
 
         chart.render = function () {
-            var paper = chart.paper();
+            var opts = chart.options(),
+                paper = chart.paper();
             drawing = true;
 
             if (opts.type !== paper.type()) {
@@ -76,6 +77,7 @@
         };
 
         chart.setSerieOption = function (type, field, value) {
+            var opts = chart.options();
             if (opts.chartTypes.indexOf(type) === -1) return;
 
             if (!chart.numSeries()) {
@@ -115,7 +117,8 @@
         });
 
         function chartSerie (data) {
-            var serie = extend({}, opts.serie),
+            var opts = chart.options(),
+                serie = extend({}, opts.serie),
                 group, color, show, scaled;
 
             if (!data) return;
@@ -125,9 +128,6 @@
                 data = serie.data;
                 delete serie.data;
                 if (!data) return;
-            } else if (!isArray(data)) {
-                serie.x = data.x();
-                serie.y = data.y();
             }
 
             serie.index = series.length;
@@ -159,7 +159,7 @@
                 if (o && chartTypes[type].scaled) {
                     // pick a default color if one is not given
                     if (!color)
-                        color = chartColor(chart.paper(), o);
+                        color = chartColor(chart, o);
                     if (!o.color)
                         o.color = color;
                     scaled = true;
@@ -245,7 +245,8 @@
             };
 
             serie.draw = function () {
-                var stype;
+                var opts = chart.options(),
+                    stype;
 
                 if (!group) {
 
@@ -262,10 +263,8 @@
                     group = chart.paper().classGroup(slugify(serie.label), extend({}, serie));
 
                     // Is this the reference serie for its axisgroup?
-                    group.element().classed('chart' + chart.uid(), true);
-
                     if (serie.reference)
-                        group.element().classed('reference' + chart.uid(), true)
+                        group.element().classed('reference', true)
                                        .classed(axisGroupId(serie.axisgroup), true);
 
                     // Draw X axis or set the scale of the reference X-axis

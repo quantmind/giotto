@@ -1,6 +1,6 @@
 //      GiottoJS - v0.1.0
 
-//      Compiled 2015-01-15.
+//      Compiled 2015-01-28.
 //      Copyright (c) 2015 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -51,8 +51,6 @@
         require(deps, callback);
         return g;
     };
-
-
 
     // D3 internal functions used by GiottoJS, mainly by the canvas module
     // These are copied from d3.js
@@ -335,9 +333,24 @@
                 return serie;
             };
 
+            serie.all = function () {
+                if (data)
+                    return data.map(function (d) {
+                        return [x(d), y(d)];
+                    });
+                else
+                    return [];
+            };
+
             serie.isData = d3_true;
 
             return serie;
+        };
+
+        multi.map = function (key, values) {
+            if (!isFunction(key)) key = label_functor(key);
+            if (!isFunction(values)) values = label_functor(values);
+            return d3.map(data.map(values), key);
         };
 
         multi.isData = d3_true;
@@ -352,7 +365,8 @@
     };
 
     g.data.isData = function (data) {
-        return data && (isArray(data) || (data.isData && data.isData()));
+        if (isObject(data) && g.data.isData(data.data)) return false;
+        return data ? true : false;
     };
 
     function noop () {}
@@ -812,389 +826,6 @@
 
         return bbox;
     }
-
-
-    g.slider = function () {
-        // Public variables width default settings
-        var min = 0,
-            max = 100,
-            step = 0.01,
-            animate = true,
-            orientation = "horizontal",
-            axis = false,
-            margin = 50,
-            value,
-            active = 1,
-            snap = false,
-            scale;
-
-        // Private variables
-        var axisScale,
-            dispatch = d3.dispatch("slide", "slideend"),
-            formatPercent = d3.format(".2%"),
-            tickFormat = d3.format(".0"),
-            handle1,
-            handle2 = null,
-            sliderLength;
-
-        function slider (selection) {
-
-            selection.each(function() {
-
-                // Create scale if not defined by user
-                if (!scale) {
-                    scale = d3.scale.linear().domain([min, max]);
-                }
-
-                // Start value
-                value = value || scale.domain()[0];
-
-                // DIV container
-                var div = d3.select(this).classed("d3-slider d3-slider-" + orientation, true);
-
-                var drag = d3.behavior.drag();
-                drag.on('dragend', function() {
-                    dispatch.slideend(d3.event, value);
-                });
-
-                // Slider handle
-                //if range slider, create two
-                var divRange;
-
-                if (value.length == 2) {
-                    handle1 = div.append("a")
-                        .classed("d3-slider-handle", true)
-                        .attr("xlink:href", "#")
-                        .attr('id', "handle-one")
-                        .on("click", stopPropagation)
-                        .call(drag);
-                    handle2 = div.append("a")
-                        .classed("d3-slider-handle", true)
-                        .attr('id', "handle-two")
-                        .attr("xlink:href", "#")
-                        .on("click", stopPropagation)
-                        .call(drag);
-                } else {
-                    handle1 = div.append("a")
-                        .classed("d3-slider-handle", true)
-                        .attr("xlink:href", "#")
-                        .attr('id', "handle-one")
-                        .on("click", stopPropagation)
-                        .call(drag);
-                }
-
-                // Horizontal slider
-                if (orientation === "horizontal") {
-
-                    div.on("click", onClickHorizontal);
-
-                    if (value.length == 2) {
-                        divRange = d3.select(this).append('div').classed("d3-slider-range", true);
-
-                        handle1.style("left", formatPercent(scale(value[0])));
-                        divRange.style("left", formatPercent(scale(value[0])));
-                        drag.on("drag", onDragHorizontal);
-
-                        var width = 100 - parseFloat(formatPercent(scale(value[1])));
-                        handle2.style("left", formatPercent(scale(value[1])));
-                        divRange.style("right", width + "%");
-                        drag.on("drag", onDragHorizontal);
-
-                    } else {
-                        handle1.style("left", formatPercent(scale(value)));
-                        drag.on("drag", onDragHorizontal);
-                    }
-
-                    sliderLength = parseInt(div.style("width"), 10);
-
-                } else { // Vertical
-
-                    div.on("click", onClickVertical);
-                    drag.on("drag", onDragVertical);
-                    if (value.length == 2) {
-                        divRange = d3.select(this).append('div').classed("d3-slider-range-vertical", true);
-
-                        handle1.style("bottom", formatPercent(scale(value[0])));
-                        divRange.style("bottom", formatPercent(scale(value[0])));
-                        drag.on("drag", onDragVertical);
-
-                        var top = 100 - parseFloat(formatPercent(scale(value[1])));
-                        handle2.style("bottom", formatPercent(scale(value[1])));
-                        divRange.style("top", top + "%");
-                        drag.on("drag", onDragVertical);
-
-                    } else {
-                        handle1.style("bottom", formatPercent(scale(value)));
-                        drag.on("drag", onDragVertical);
-                    }
-
-                    sliderLength = parseInt(div.style("height"), 10);
-
-                }
-
-                if (axis) {
-                    createAxis(div);
-                }
-
-
-                function createAxis(dom) {
-
-                    // Create axis if not defined by user
-                    if (typeof axis === "boolean") {
-
-                        axis = d3.svg.axis()
-                            .ticks(Math.round(sliderLength / 100))
-                            .tickFormat(tickFormat)
-                            .orient((orientation === "horizontal") ? "bottom" : "right");
-
-                    }
-
-                    // Copy slider scale to move from percentages to pixels
-                    axisScale = scale.copy().range([0, sliderLength]);
-                    axis.scale(axisScale);
-
-                    // Create SVG axis container
-                    var svg = dom.append("svg")
-                        .classed("d3-slider-axis d3-slider-axis-" + axis.orient(), true)
-                        .on("click", stopPropagation);
-
-                    var g = svg.append("g");
-
-                    // Horizontal axis
-                    if (orientation === "horizontal") {
-
-                        svg.style("margin-left", - margin + "px");
-
-                        svg.attr({
-                            width: sliderLength + margin * 2,
-                            height: margin
-                        });
-
-                        if (axis.orient() === "top") {
-                            svg.style("top", - margin + "px");
-                            g.attr("transform", "translate(" + margin + "," + margin + ")");
-                        } else { // bottom
-                            g.attr("transform", "translate(" + margin + ",0)");
-                        }
-
-                    } else { // Vertical
-
-                        svg.style("top", - margin + "px");
-
-                        svg.attr({
-                            width: margin,
-                            height: sliderLength + margin * 2
-                        });
-
-                        if (axis.orient() === "left") {
-                            svg.style("left", - margin + "px");
-                            g.attr("transform", "translate(" + margin + "," + margin + ")");
-                        } else { // right
-                            g.attr("transform", "translate(" + 0 + "," + margin + ")");
-                        }
-
-                    }
-
-                    g.call(axis);
-
-                }
-
-                function onClickHorizontal() {
-                    if (!value.length) {
-                        var pos = Math.max(0, Math.min(sliderLength, d3.event.offsetX || d3.event.layerX));
-                        moveHandle(stepValue(scale.invert(pos / sliderLength)));
-                    }
-                }
-
-                function onClickVertical() {
-                    if (!value.length) {
-                        var pos = sliderLength - Math.max(0, Math.min(sliderLength, d3.event.offsetY || d3.event.layerY));
-                        moveHandle(stepValue(scale.invert(pos / sliderLength)));
-                    }
-                }
-
-                function onDragHorizontal() {
-                    if (d3.event.sourceEvent.target.id === "handle-one") {
-                        active = 1;
-                    } else if (d3.event.sourceEvent.target.id == "handle-two") {
-                        active = 2;
-                    }
-                    var pos = Math.max(0, Math.min(sliderLength, d3.event.x));
-                    moveHandle(stepValue(scale.invert(pos / sliderLength)));
-                }
-
-                function onDragVertical() {
-                    if (d3.event.sourceEvent.target.id === "handle-one") {
-                        active = 1;
-                    } else if (d3.event.sourceEvent.target.id == "handle-two") {
-                        active = 2;
-                    }
-                    var pos = sliderLength - Math.max(0, Math.min(sliderLength, d3.event.y));
-                    moveHandle(stepValue(scale.invert(pos / sliderLength)));
-                }
-
-                function stopPropagation() {
-                    d3.event.stopPropagation();
-                }
-
-            });
-
-        }
-
-        // Move slider handle on click/drag
-        function moveHandle (newValue) {
-            var currentValue = value.length ? value[active - 1] : value,
-                oldPos = formatPercent(scale(stepValue(currentValue))),
-                newPos = formatPercent(scale(stepValue(newValue))),
-                position = (orientation === "horizontal") ? "left" : "bottom";
-            if (oldPos !== newPos) {
-
-                if (value.length === 2) {
-                    value[active - 1] = newValue;
-                    if (d3.event)
-                        dispatch.slide(d3.event, value);
-                } else if (d3.event)
-                    dispatch.slide(d3.event.sourceEvent || d3.event, value = newValue);
-
-                if (value[0] >= value[1]) return;
-                if (active === 1) {
-                    if (value.length === 2) {
-                        (position === "left") ? divRange.style("left", newPos) : divRange.style("bottom", newPos);
-                    }
-
-                    if (animate) {
-                        handle1.transition()
-                            .styleTween(position, function() {
-                            return d3.interpolate(oldPos, newPos);
-                        })
-                            .duration((typeof animate === "number") ? animate : 250);
-                    } else {
-                        handle1.style(position, newPos);
-                    }
-                } else {
-
-                    var width = 100 - parseFloat(newPos);
-                    var top = 100 - parseFloat(newPos);
-
-                    (position === "left") ? divRange.style("right", width + "%") : divRange.style("top", top + "%");
-
-                    if (animate) {
-                        handle2.transition()
-                            .styleTween(position, function() {
-                            return d3.interpolate(oldPos, newPos);
-                        })
-                            .duration((typeof animate === "number") ? animate : 250);
-                    } else {
-                        handle2.style(position, newPos);
-                    }
-                }
-            }
-        }
-
-        // Calculate nearest step value
-        function stepValue (val) {
-
-            if (val === scale.domain()[0] || val === scale.domain()[1]) {
-                return val;
-            }
-
-            var alignValue = val;
-            if (snap) {
-                var val_i = scale(val);
-                var dist = scale.ticks().map(function(d) {
-                    return val_i - scale(d);
-                });
-                var i = -1,
-                    index = 0,
-                    r = scale.range()[1];
-                do {
-                    i++;
-                    if (Math.abs(dist[i]) < r) {
-                        r = Math.abs(dist[i]);
-                        index = i;
-                    }
-                } while (dist[i] > 0 && i < dist.length - 1);
-                alignValue = scale.ticks()[index];
-            } else {
-                var valModStep = (val - scale.domain()[0]) % step;
-                alignValue = val - valModStep;
-
-                if (Math.abs(valModStep) * 2 >= step) {
-                    alignValue += (valModStep > 0) ? step : -step;
-                }
-            }
-
-            return alignValue;
-
-        }
-
-        // Getter/setter functions
-        slider.min = function(_) {
-            if (!arguments.length) return min;
-            min = _;
-            return slider;
-        };
-
-        slider.max = function(_) {
-            if (!arguments.length) return max;
-            max = _;
-            return slider;
-        };
-
-        slider.step = function(_) {
-            if (!arguments.length) return step;
-            step = _;
-            return slider;
-        };
-
-        slider.animate = function(_) {
-            if (!arguments.length) return animate;
-            animate = _;
-            return slider;
-        };
-
-        slider.orientation = function(_) {
-            if (!arguments.length) return orientation;
-            orientation = _;
-            return slider;
-        };
-
-        slider.axis = function(_) {
-            if (!arguments.length) return axis;
-            axis = _;
-            return slider;
-        };
-
-        slider.margin = function(_) {
-            if (!arguments.length) return margin;
-            margin = _;
-            return slider;
-        };
-
-        slider.value = function(_) {
-            if (!arguments.length) return value;
-            if (value)
-                moveHandle(stepValue(_));
-            value = _;
-            return slider;
-        };
-
-        slider.snap = function(_) {
-            if (!arguments.length) return snap;
-            snap = _;
-            return slider;
-        };
-
-        slider.scale = function(_) {
-            if (!arguments.length) return scale;
-            scale = _;
-            return slider;
-        };
-
-        d3.rebind(slider, dispatch, "on");
-
-        return slider;
-    };
 
 
     g.math.distances = {
@@ -2364,6 +1995,15 @@
 
     d3.canvas.pixelRatio = window.devicePixelRatio || 1;
 
+    d3.canvas.webgl = function (canvas) {
+        if (!arguments.length) canvas = document.createElement('canvas');
+        try {
+            return canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        } catch (e) {
+            return;
+        }
+    };
+
     d3.canvas.clear = function (ctx) {
         ctx.beginPath();
         ctx.closePath();
@@ -2924,6 +2564,318 @@
 
         return transition;
     };
+
+    function activeEvents (paper) {
+
+        var activeElements = [],
+            activeIn = [],
+            activeOut = [],
+            canvases = [],
+            opts = paper.options(),
+            index;
+
+        paper.activeOut = function (d) {
+            if (activeOut.indexOf(d) === -1) activeOut.push(d);
+            var index = activeIn.indexOf(d);
+            if (index > -1) activeIn.splice(index, 1);
+            return paper;
+        };
+
+        paper.activeIn = function (d) {
+            if (activeIn.indexOf(d) === -1) activeIn.push(d);
+            var index = activeOut.indexOf(d);
+            if (index > -1) activeOut.splice(index, 1);
+            return paper;
+        };
+
+        // paper task for
+        //  * De-activating elements no longer active
+        //  * Activating active elements
+        paper.task(function () {
+            var el;
+
+            // clear canvases managing active events
+            canvases.splice(0).forEach(function (ctx) {
+                d3.canvas.clear(ctx);
+            });
+
+            if (activeOut.length) {
+                activeOut.forEach(function (a) {
+                    index = activeElements.indexOf(a);
+                    if (index > -1) activeElements.splice(index, 1);
+                    if (isCanvas(a))
+                        a.reset();
+                    else {
+                        el = d3.select(a);
+                        el.datum().reset().render(el);
+                    }
+                });
+                paper.event('activeout').call(activeOut.splice(0));
+            }
+
+            activeIn.forEach(function (a) {
+                index = activeElements.indexOf(a);
+                if (index === -1) {
+                    activeElements.push(a);
+                    if (!isCanvas(a)) {
+                        el = d3.select(a);
+                        el.datum().highLight().render(el);
+                    }
+                }
+            });
+
+            activeElements.forEach(function (a) {
+                if (isCanvas(a)) a.highLight().render();
+            });
+
+            if (activeIn.splice(0).length)
+                paper.event('active').call(activeElements.slice());
+        });
+
+
+        g.constants.pointEvents.forEach(function (event) {
+
+            paper.on(event, function () {
+                var el = d3.select(this);
+                if (el.size()) {
+                    if (this.getContext) activeCanvas(paper, this.getContext('2d'));
+                    else activeSvg(paper, el);
+                }
+            });
+        });
+
+
+        function activeSvg (paper, el) {
+            var data = el.datum();
+            if (!data || !data.highlighted) return;
+            var node = el.node();
+
+            if (d3.event.type === 'mouseout')
+                paper.activeOut(node);
+            else
+                paper.activeIn(node);
+        }
+
+        function activeCanvas (paper, ctx) {
+            var point = d3.canvas.mouse(ctx.canvas),
+                active = paper.canvasDataAtPoint(point);
+
+            if (canvases.indexOf(ctx) === -1) canvases.push(ctx);
+
+            if (ctx.paperactive)
+                ctx.paperactive.forEach(function (a) {
+                    if (active.indexOf(a) === -1)
+                        paper.activeOut(a);
+                });
+            ctx.paperactive = active.map(function (a) {
+                paper.activeIn(a.context(ctx));
+                return a;
+            });
+        }
+
+        function isCanvas (a) {
+            return isFunction(a.context);
+        }
+    }
+
+    var fillSpecials = [true, 'none', 'color'];
+
+    function chartColor(paper, opts) {
+        if (!opts.color)
+            if (opts.fill && fillSpecials.indexOf(opts.fill) === -1)
+                opts.color = d3.rgb(opts.fill).darker().toString();
+            else
+                opts.color = paper.pickColor();
+
+        if (opts.fill === true)
+            opts.fill = d3.rgb(opts.color).brighter().toString();
+        else if (opts.fill === 'color')
+            opts.fill = opts.color;
+
+        return opts.color;
+    }
+
+    function pickColor (d) {
+        if (d.fill && fillSpecials.indexOf(opts.fill) === -1)
+            return d.fill;
+        else
+            return d.color;
+    }
+
+    function chartFormats (group, opts, m) {
+        if (!opts.formatX) opts.formatX = formatter(group.xaxis());
+        if (!opts.formatY) opts.formatY = formatter(group.yaxis());
+    }
+
+    function formatter (axis) {
+        var format = axis.tickFormat();
+        if (!format)
+            format = axis.scale().tickFormat ? axis.scale().tickFormat(1000) : d3_identity;
+        return format;
+    }
+
+    var _idCounter = 0;
+
+    // Base giotto mixin for paper, group and viz
+    function giottoMixin (d, opts, plugins) {
+        var uid = ++_idCounter;
+
+        opts = g.options(opts).pluginOptions(plugins || g.paper.plugins);
+
+        d.uid = function () {
+            return uid;
+        };
+
+        d.event = function (name) {
+            return noop;
+        };
+
+        // returns the options object
+        d.options = function (_) {
+            if (!arguments.length) return opts;
+            opts.extend(_);
+            return d;
+        };
+
+        // pick a color
+        d.pickColor = function (index) {
+            if (arguments.length === 0)
+                index = opts.colorIndex++;
+            var dk = 0, bk = 0;
+            while (index >= opts.colors.length) {
+                index -= opts.colors.length;
+                dk += opts.darkerColor;
+                bk += opts.brighterColor;
+            }
+            var c = opts.colors[index];
+            if (dk)
+                c = d3.rgb(c).darker(dk).toString();
+            else if (bk)
+                c = d3.rgb(c).brighter(bk).toString();
+            return c;
+        };
+
+        return d;
+    }
+
+        // Mixin for visualization classes and visualization collection
+    function vizMixin (d, plugins) {
+        var loading_data = false,
+            data;
+
+        giottoMixin(d, {}, plugins).load = function (callback) {
+            var opts = d.options(),
+                _ = opts.data;
+            delete opts.data;
+
+            if (_) {
+                if (isFunction(_))
+                    _ = _(d);
+                d.data(_, callback);
+            } else if (opts.src && !loading_data) {
+                loading_data = true;
+                var src = opts.src,
+                    loader = opts.loader;
+                if (!loader) {
+                    loader = d3.json;
+                    if (src.substring(src.length-4) === '.csv') loader = d3.csv;
+                }
+                g.log.info('Giotto loading data from ' + opts.src);
+
+                return loader(opts.src, function(error, xd) {
+                    loading_data = false;
+                    if (arguments.length === 1) xd = error;
+                    else if(error)
+                        return g.log.error(error);
+
+                    d.data(xd, callback);
+                });
+            } else if (callback) {
+                callback();
+            }
+
+            return d;
+        };
+
+        //
+        // Set new data for the visualization
+        d.data = function (_, callback) {
+            if (!arguments.length) return data;
+            var opts = d.options();
+
+            if (opts.processData)
+                _ = opts.processData.call(d, _);
+
+            data = _;
+
+            if (callback)
+                callback();
+
+            d.event('data').call(d, {type: 'data'});
+
+            return d;
+        };
+
+        return d;
+    }
+
+    function registerPlugin (plugins) {
+
+        return function (name, defaults, plugin) {
+            if (arguments.length === 3) {
+                plugin.defaults = defaults;
+                plugin.pluginName = name;
+            }
+            else
+                plugin = name;
+            plugins.push(plugin);
+        };
+    }
+
+
+    function _paperSize (element, p) {
+        var width, height;
+
+        if (p) {
+            if (p.__paper__ === element) return p;
+            width = p.width;
+            height = p.height;
+        }
+        else
+            p = {};
+
+        if (!width) {
+            width = getWidth(element);
+            if (width)
+                p.elwidth = getWidthElement(element);
+            else
+                width = g.constants.WIDTH;
+        }
+
+        if (!height) {
+            height = getHeight(element);
+            if (height)
+                p.elheight = getHeightElement(element);
+            else
+                height = g.constants.HEIGHT;
+        }
+        else if (typeof(height) === "string" && height.indexOf('%') === height.length-1) {
+            p.height_percentage = 0.01*parseFloat(height);
+            height = d3.round(p.height_percentage*width);
+        }
+
+        p.size = [width, height];
+        p.giotto = 'giotto-group';
+
+        element = d3.select(element);
+        var position = element.style('position');
+        if (!position || position === 'static')
+            element.style('position', 'relative');
+        p.__paper__ = element.node();
+
+        return p;
+    }
+
     //
     //  Defaults for Papers, Groups, Drawings and Visualizations
 
@@ -2934,26 +2886,29 @@
         ease: 'easeInOutCubic'
     };
 
+    g.defaults.font = {
+        color: '#444',
+        size: '11px',
+        weight: 'normal',
+        lineHeight: 13,
+        style: "normal",
+        family: "sans-serif",
+        variant: "small-caps"
+    };
+
     g.defaults.paper = {
         type: 'svg',
         resizeDelay: 200,
         resize: true,
+        interact: true,
         margin: {top: 20, right: 20, bottom: 20, left: 20},
         colors: d3.scale.category10().range(),
         darkerColor: 0,
         brighterColor: 0,
         colorIndex: 0,
         css: null,
-        activeEvents: ["mousemove", "touchstart", "touchmove", "mouseout"],
-        font: {
-            color: '#444',
-            size: '11px',
-            weight: 'normal',
-            lineHeight: 13,
-            style: "normal",
-            family: "sans-serif",
-            variant: "small-caps"
-        }
+        transition : g.defaults.transition,
+        font: g.defaults.font
     };
 
     g.defaults.viz = extend({
@@ -2975,10 +2930,110 @@
         DEFAULT_VIZ_GROUP: 'default_viz_group',
         WIDTH: 400,
         HEIGHT: 300,
-        vizevents: ['build', 'data', 'change', 'start', 'tick', 'end'],
+        vizevents: ['data', 'change', 'start', 'tick', 'end'],
+        pointEvents: ["mouseenter", "mousemove", "touchstart", "touchmove", "mouseleave", "mouseout"],
+        groupEvents: [],
         leaflet: 'http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css'
     };
 
+
+    g.options = function (opts) {
+        opts || (opts = {});
+        if (!isFunction(opts.pluginOptions))
+            return initOptions({}, {}).extend(g.defaults.paper).extend(opts);
+        else
+            return opts;
+    };
+
+    g.options.processors = {
+        //
+        colors: function (_, value) {
+            if (isFunction (value)) value = value(d3);
+            return value;
+        },
+        //
+        font: extendOption('font'),
+        //
+        transition: extendOption('transition'),
+        //
+        margin: function (opts, value) {
+            if (!isObject(value)) value = {left: value, right: value, top: value, bottom: value};
+            return value;
+        }
+    };
+
+    function extendOption (name) {
+
+        return function (opts, value) {
+            if (!isObject(value)) value = {};
+            return extend({}, opts[name], value);
+        };
+    }
+
+    function initOptions (opts, pluginOptions) {
+
+        opts.extend = function (o) {
+            var popts;
+
+            forEach(o, function (value, name) {
+                if (name.substring(0, 1) !== '_') {
+                    popts = pluginOptions[name];
+                    if (popts)
+                        value = _optionsExtend(opts[name], _pluginOptions(value));
+                    else if (g.options.processors[name])
+                        value = g.options.processors[name](opts, value);
+                    opts[name] = value;
+                }
+            });
+            return opts;
+        };
+
+        opts.pluginOptions = function (plugins) {
+            if (!arguments.length) return pluginOptions;
+            var name, o;
+
+            plugins.forEach(function (plugin) {
+                name = plugin.pluginName;
+                if (name && pluginOptions[name] === undefined) {
+                    pluginOptions[name] = plugin;
+                    o = opts[name] = _pluginOptions(opts[name]);
+                    if (isFunction(plugin.defaults))
+                        plugin.defaults(opts);
+                    else {
+                        copyMissing(plugin.defaults, o, true);
+                        o.transition = extend({}, opts.transition, o.transition);
+                    }
+                }
+            });
+            return opts;
+        };
+
+        opts.copy = function (o) {
+            if (o && isFunction(o.pluginOptions)) return o;
+            else return initOptions(extend({}, opts), extend({}, pluginOptions));
+        };
+
+        return opts;
+
+        function _optionsExtend (target, source) {
+            if (!isObject(target)) return source;
+
+            forEach(source, function (value, name) {
+                if (isObject(value))
+                    value = extend(target[name], value);
+                if (g.options.processors[name])
+                    value = g.options.processors[name](opts, value);
+                target[name] = value;
+            });
+        }
+
+        function _pluginOptions (opts) {
+            if (opts === true) opts = {show: true};
+            else if (!opts) opts = {show: false};
+            else if (opts.show === undefined) opts.show = true;
+            return opts;
+        }
+    }
 
     g.gradient = function () {
         var colors = [{
@@ -3100,13 +3155,10 @@
 
         return gradient;
     };
-    var _idCounter = 0;
     //
     // Create a new paper for drawing stuff
     g.paper = function (element, p) {
-
         // Setup
-
         if (isObject(element)) {
             p = element;
             element = null;
@@ -3116,21 +3168,21 @@
         if (!element)
             element = document.createElement('div');
 
-        p = _newPaperAttr(element, p);
+        p = _paperSize(element, p);
 
-        var events = d3.dispatch.apply(null, extendArray(['change'], p.activeEvents)),
-            paper = d3.rebind({}, events, 'on'),
-            uid = ++_idCounter,
+        var events = d3.dispatch.apply(null, extendArray(['change', 'active', 'activeout'], g.constants.pointEvents)),
+            paper = giottoMixin(d3.rebind({}, events, 'on'), p),
+            tasks = [],
             resizing = false;
 
         paper.event = function (name) {
-            return events[name];
+            return events[name] || noop;
         };
 
         // Create a new group for this paper
         paper.group = function (opts) {
             // Inject plugins
-            opts = groupOptions(opts);
+            opts = p.copy(opts);
             var group = g.group[opts.type](paper, opts),
                 plugins = g.paper.plugins;
 
@@ -3138,10 +3190,6 @@
             for (var i=0; i < plugins.length; ++i)
                 plugins[i](group, opts);
             return group;
-        };
-
-        paper.uid = function () {
-            return uid;
         };
 
         paper.size = function () {
@@ -3243,29 +3291,6 @@
             return [Math.round(w), Math.round(h)];
         };
 
-        // pick a color
-        paper.pickColor = function (index) {
-            if (arguments.length === 0)
-                index = p.colorIndex++;
-            var dk = 0, bk = 0;
-            while (index >= p.colors.length) {
-                index -= p.colors.length;
-                dk += p.darkerColor;
-                bk += p.brighterColor;
-            }
-            var c = p.colors[index];
-            if (dk)
-                c = d3.rgb(c).darker(dk).toString();
-            else if (bk)
-                c = d3.rgb(c).brighter(bk).toString();
-            return c;
-        };
-
-        // Access internal options
-        paper.options = function () {
-            return p;
-        };
-
         // Create an svg container
         paper.svg = function (build) {
             var svg = paper.element().select('svg.giotto');
@@ -3333,6 +3358,7 @@
                                 });
                 node = canvas.node();
                 d3.canvas.retinaScale(node.getContext('2d'), p.size[0], p.size[1]);
+                paper.registerEvents(canvas, g.constants.pointEvents);
             } else if (node)
                 d3.canvas.resize(node.getContext('2d'), p.size[0], p.size[1]);
             return canvas;
@@ -3396,6 +3422,31 @@
             return type;
         };
         //
+        // register events on a DOM selection.
+        paper.registerEvents = function (selection, events, uid, callback) {
+            var target, ename;
+
+            events.forEach(function (event) {
+                ename = uid ? event + '.' + uid : event;
+
+                selection.on(ename, function () {
+                    if (uid && !paper.element().select('#' + uid).size())
+                        // remove the event handler
+                        selection.on(event + '.' + uid, null);
+                    else {
+                        target = callback ? callback.call(this) : this;
+                        paper.event(d3.event.type).call(target);
+                    }
+                });
+            });
+
+            return selection;
+        };
+        //
+        paper.task = function (callback) {
+            tasks.push(callback);
+        };
+        //
         if (p.css)
             addCss('#giotto-paper-' + paper.uid(), p.css);
 
@@ -3416,29 +3467,21 @@
                 }
             });
         }
+
+        d3.timer(function () {
+            if (!paper.element().size()) return true;
+            for (var i=0; i<tasks.length; ++i) {
+                tasks[i]();
+            }
+        });
+        //
+        activeEvents(paper);
         //
         return paper;
-
-        function groupOptions (opts) {
-            opts || (opts = {});
-            groupMargins(opts);
-            if (!opts.yaxis || opts.yaxis === 1)
-                opts.yaxis = p.yaxis;
-            else if (opts.yaxis === 2)
-                opts.yaxis = p.yaxis2;
-            return copyMissing(p, opts);
-        }
     };
 
     g.paper.plugins = [];
-
-    g.paper.plugin = function (name, defaults, plugin) {
-        if (arguments.length === 3)
-            g.defaults.paper[name] = defaults;
-        else
-            plugin = name;
-        g.paper.plugins.push(plugin);
-    };
+    g.paper.plugin = registerPlugin(g.paper.plugins);
 
 
     g.group = function (paper, element, p, _) {
@@ -3449,20 +3492,22 @@
             type = p.type,
             d3v = d3[type],
             scale = d3.scale.linear(),
-            group = {};
+            events = d3.dispatch.apply(null, g.constants.groupEvents),
+            group = giottoMixin(d3.rebind({}, events, 'on'), p);
 
         element.__group__ = group;
+        p = group.options();
 
         group.type = function () {
             return type;
         };
 
-        group.element = function () {
-            return d3.select(element);
+        group.event = function (name) {
+            return events[name] || noop;
         };
 
-        group.options = function () {
-            return p;
+        group.element = function () {
+            return d3.select(element);
         };
 
         group.paper = function () {
@@ -3748,6 +3793,12 @@
             return draw;
         };
 
+        draw.changed = function () {
+            var c = changed;
+            changed = false;
+            return c;
+        };
+
         draw.dataConstructor = function (_) {
             if (!arguments.length) return dataConstructor;
             dataConstructor = d3_functor(_);
@@ -3800,11 +3851,11 @@
 
         d.highLight = function () {
             if (highlight) return d;
-            highlight = true;
 
             var a = d.active,
                 v;
             if (a) {
+                highlight = true;
                 d.pointOptions().forEach(function (name) {
                     v = a[name];
                     if (v) {
@@ -3821,6 +3872,10 @@
                 });
             }
             return d;
+        };
+
+        d.highlighted = function () {
+            return highlight;
         };
 
         // set a value and its default
@@ -3847,7 +3902,7 @@
                 if (isFunction(value) && dd) value = value(dd);
                 values[name] = value;
             });
-            if (opts.active) {
+            if (opts.active && d.active !== false) {
                 if (!data.active)
                     data.active = {};
                 copyMissing(opts.active, data.active);
@@ -3865,7 +3920,7 @@
         return d;
     }
     //
-    // Manage a data point to be drawn on a drawing
+    // Manage a data point to be drawn on a drawing collection
     function drawingData (draw, data, d) {
         var opts = draw.options();
         d = highlightMixin(d);
@@ -3887,7 +3942,7 @@
             return draw.pointOptions();
         };
 
-        if (isArray(data))
+        if (!data || isArray(data))
             d.init(d, opts);
         else {
             d.init(data, opts, data);
@@ -3931,25 +3986,11 @@
                 .attr('stroke-opacity', function (d) {return d.colorOpacity;})
                 .attr('stroke-width', function (d) {return d.lineWidth;})
                 .attr('fill', function (d) {return d.fill;})
-                .attr('fill-opacity', function (d) {return d.fillOpacity;});
+                .attr('fill-opacity', function (d) {return d.fill === 'none' ? undefined : d.fillOpacity;});
         };
 
         group.events = function (selection, uid, callback) {
-            var name = uid || p.giotto,
-                target;
-
-            p.activeEvents.forEach(function (event) {
-                selection.on(event + '.' + name, function () {
-                    if (uid && !paper.element().select('#' + uid).size())
-                        selection.on(event + '.' + uid, null);
-                    else {
-                        target = callback ? callback.call(this) : this;
-                        paper.event(d3.event.type).call(target);
-                    }
-                });
-            });
-
-            return selection;
+            return paper.registerEvents(selection, g.constants.pointEvents, uid, callback);
         };
 
         return group;
@@ -4001,8 +4042,6 @@
 
         group.render = function () {
             d3.canvas.clear(ctx);
-            var factor = group.factor();
-            ctx.translate(factor*p.margin.left, factor*p.margin.top);
             return render();
         };
 
@@ -4047,8 +4086,25 @@
     };
 
     function canvasMixin(d) {
+        var ctx,
+            reset = d.reset,
+            group = d.group();
+
         d.inRange = function () {};
+
         d.bbox = function () {};
+
+        d.reset = function () {
+            ctx = group.context();
+            return reset.call(d);
+        };
+
+        d.context = function (_) {
+            if (!arguments.length) return ctx;
+            ctx = _;
+            return d;
+        };
+
         return d;
     }
 
@@ -4076,85 +4132,8 @@
     // Plugins for all visualization classes
     g.vizplugins = [];
     //
-    g.vizplugin = function (callback) {
-        g.vizplugins.push(callback);
-    };
+    g.vizplugin = registerPlugin(g.vizplugins);
 
-    // Mixin for visualization classes and visualization collection
-    g.vizmixin = function (d) {
-        var uid = ++_idCounter,
-            loading_data = false,
-            opts = {},
-            data;
-
-        d.uid = function () {
-            return uid;
-        };
-
-        d.event = function (name) {
-            return noop;
-        };
-
-        // returns the options object
-        d.options = function (_) {
-            if (!arguments.length) return opts;
-            extend(opts, _);
-            return d;
-        };
-
-        d.load = function (callback) {
-            var _ = opts.data;
-            delete opts.data;
-
-            if (_) {
-                if (isFunction(_))
-                    _ = _(d);
-                d.data(_, callback);
-            } else if (opts.src && !loading_data) {
-                loading_data = true;
-                var src = opts.src,
-                    loader = opts.loader;
-                if (!loader) {
-                    loader = d3.json;
-                    if (src.substring(src.length-4) === '.csv') loader = d3.csv;
-                }
-                g.log.info('Giotto loading data from ' + opts.src);
-
-                return loader(opts.src, function(error, xd) {
-                    loading_data = false;
-                    if (arguments.length === 1) xd = error;
-                    else if(error)
-                        return g.log.error(error);
-
-                    d.data(xd, callback);
-                });
-            } else if (callback) {
-                callback();
-            }
-
-            return d;
-        };
-
-        //
-        // Set new data for the visualization
-        d.data = function (_, callback) {
-            if (!arguments.length) return data;
-
-            if (opts.processData)
-                _ = opts.processData(_);
-
-            data = _;
-
-            if (callback)
-                callback();
-
-            d.event('data').call(d, {type: 'data'});
-
-            return d;
-        };
-
-        return d;
-    };
     //
     // Factory of Giotto visualization factories
     //  name: name of the visualization constructor, the constructor is
@@ -4170,9 +4149,13 @@
 
         plugins = [],
 
+        _plugins = function () {
+            return extendArray([], g.paper.plugins, g.vizplugins, plugins);
+        },
+
         vizType = function (element) {
 
-            var viz = g.vizmixin({}).options(vizType.defaults),
+            var viz = vizMixin({}, _plugins()).options(vizType.defaults),
                 events = d3.dispatch.apply(d3, g.constants.vizevents),
                 alpha = 0,
                 paper;
@@ -4194,9 +4177,13 @@
                 if (createNew || paper === undefined) {
                     if (paper)
                         paper.clear();
-                    paper = g.paper(element, viz.options());
+                    paper = viz.createPaper();
                 }
                 return paper;
+            };
+
+            viz.createPaper = function () {
+                return g.paper(element, viz.options());
             };
 
             viz.element = function () {
@@ -4242,7 +4229,7 @@
 
             // Starts the visualization
             viz.start = function () {
-                return onInitViz(viz, init).load(viz.resume);
+                return onInitViz(viz).load(viz.resume);
             };
 
             // render the visualization by invoking the render method of the paper
@@ -4257,35 +4244,30 @@
 
             d3.rebind(viz, events, 'on');
 
+            // If constructor available, call it first
+            if (constructor)
+                constructor(viz);
+
+            // Inject plugins for all visualizations
+            for (i=0; i < g.vizplugins.length; ++i)
+                g.vizplugins[i](viz);
+
+            // Inject visualization plugins
+            for (var i=0; i < plugins.length; ++i)
+                plugins[i](viz);
+
             return viz;
-
-            function init () {
-                var opts = viz.options();
-                // If constructor available, call it first
-                if (constructor)
-                    constructor(viz, opts);
-
-                // Inject plugins for all visualizations
-                for (i=0; i < g.vizplugins.length; ++i)
-                    g.vizplugins[i](viz, opts);
-
-                // Inject visualization plugins
-                for (var i=0; i < plugins.length; ++i)
-                    plugins[i](viz, opts);
-            }
         };
 
         g.viz[name] = vizType;
 
-        vizType.defaults = extend({}, g.defaults.viz, g.defaults.paper, defaults);
+        vizType.defaults = extend({}, g.defaults.viz, defaults);
 
         vizType.vizName = function () {
             return name;
         };
 
-        vizType.plugin = function (callback) {
-            plugins.push(callback);
-        };
+        vizType.plugin = registerPlugin(plugins);
 
         return vizType;
     };
@@ -4312,142 +4294,6 @@
     }
 
 
-    g.contextMenu = function () {
-        var menu = {},
-            element = null,
-            menuElement = null,
-            opened = false,
-            disabled = false,
-            events = d3.dispatch('open', 'close');
-
-        menu.bind = function (element, callback) {
-            init();
-            element.on('keyup.gmenu', handleKeyUpEvent);
-            element.on('click.gmenu', handleClickEvent);
-            element.on('contextmenu.gmenu', handleContextMenu(callback));
-        };
-
-        menu.disabled  = function (x) {
-            if (!arguments.length) return disabled;
-            disabled = x ? true : false;
-            return menu;
-        };
-
-        d3.rebind(menu, events, 'on');
-
-        return menu;
-
-        // INTERNALS
-
-        function handleKeyUpEvent () {
-            if (!disabled && opened && d3.event.keyCode === 27)
-                close();
-        }
-
-        function handleClickEvent () {
-            var event = d3.event;
-            if (!disabled && opened && event.button !== 2 || event.target !== element)
-                close();
-        }
-
-        function handleContextMenu (callback) {
-            return function () {
-                if (disabled) return;
-                var event = d3.event;
-                event.preventDefault();
-                event.stopPropagation();
-                close();
-                element = this;
-                open(event, callback);
-            };
-        }
-
-        function open (event, callback) {
-            if (callback) callback(menuElement);
-            menuElement.classed('open', true);
-
-            var docLeft = (window.pageXOffset || document.scrollLeft || 0) - (document.clientLeft || 0),
-                docTop = (window.pageYOffset || document.scrollTop || 0) - (document.clientTop || 0),
-                elementWidth = menuElement.node().scrollWidth,
-                elementHeight = menuElement.node().scrollHeight,
-                docWidth = document.clientWidth + docLeft,
-                docHeight = document.clientHeight + docTop,
-                totalWidth = elementWidth + event.pageX,
-                totalHeight = elementHeight + event.pageY,
-                left = Math.max(event.pageX - docLeft, 0),
-                top = Math.max(event.pageY - docTop, 0);
-
-            if (totalWidth > docWidth)
-                left = left - (totalWidth - docWidth);
-
-            if (totalHeight > docHeight)
-                top = top - (totalHeight - docHeight);
-
-            menuElement.style({
-                top: top + 'px',
-                left: left + 'px',
-                position: 'fixed'
-            });
-            opened = true;
-        }
-
-        function close () {
-            menuElement.classed('open', false);
-            if (opened)
-                events.close();
-            opened = false;
-        }
-
-        function init () {
-            if (!menuElement) {
-
-                menuElement = d3.select(document.createElement('div'))
-                                .attr('class', 'giotto-menu');
-                close();
-                document.body.appendChild(menuElement.node());
-
-                d3.select(document)
-                    .on('keyup.gmenu', handleKeyUpEvent)
-                    // Firefox treats a right-click as a click and a contextmenu event
-                    // while other browsers just treat it as a contextmenu event
-                    .on('click.gmenu', handleClickEvent)
-                    .on('contextmenu.gmenu', handleClickEvent);
-            }
-        }
-
-    };
-
-    //
-    // Context menu singletone
-    g.contextmenu = g.contextMenu();
-
-
-    g.vizplugin(function (viz, opts) {
-
-        viz.contextmenu = function (menu) {
-            menu.append('ul')
-                .attr('class', 'dropdown-menu')
-                .attr('role', 'menu')
-                .selectAll('li')
-                .data(opts.contextmenu)
-                .enter()
-                .append('li')
-                .append('a')
-                .attr('role', 'menuitem')
-                .text(function (d) {return isFunction(d.label) ? d.label() : d.label;})
-                .attr('href', '#')
-                .on('click', function (d) {
-                    if (d.callback) d.callback(viz);
-                });
-        };
-
-        if (opts.contextmenu)
-            g.contextmenu.bind(viz.element(), function (menu) {
-                return viz.contextmenu(menu);
-            });
-    });
-
-
     g.createviz('chart', {
         margin: {top: 30, right: 30, bottom: 30, left: 30},
         chartTypes: ['map', 'pie', 'bar', 'line', 'point', 'custom'],
@@ -4457,7 +4303,7 @@
         }
     },
 
-    function (chart, opts) {
+    function (chart) {
 
         var series = [],
             allranges = {},
@@ -4497,7 +4343,8 @@
         };
 
         chart.render = function () {
-            var paper = chart.paper();
+            var opts = chart.options(),
+                paper = chart.paper();
             drawing = true;
 
             if (opts.type !== paper.type()) {
@@ -4525,6 +4372,7 @@
         };
 
         chart.setSerieOption = function (type, field, value) {
+            var opts = chart.options();
             if (opts.chartTypes.indexOf(type) === -1) return;
 
             if (!chart.numSeries()) {
@@ -4564,7 +4412,8 @@
         });
 
         function chartSerie (data) {
-            var serie = extend({}, opts.serie),
+            var opts = chart.options(),
+                serie = extend({}, opts.serie),
                 group, color, show, scaled;
 
             if (!data) return;
@@ -4574,9 +4423,6 @@
                 data = serie.data;
                 delete serie.data;
                 if (!data) return;
-            } else if (!isArray(data)) {
-                serie.x = data.x();
-                serie.y = data.y();
             }
 
             serie.index = series.length;
@@ -4608,7 +4454,7 @@
                 if (o && chartTypes[type].scaled) {
                     // pick a default color if one is not given
                     if (!color)
-                        color = chartColor(chart.paper(), o);
+                        color = chartColor(chart, o);
                     if (!o.color)
                         o.color = color;
                     scaled = true;
@@ -4694,7 +4540,8 @@
             };
 
             serie.draw = function () {
-                var stype;
+                var opts = chart.options(),
+                    stype;
 
                 if (!group) {
 
@@ -4711,10 +4558,8 @@
                     group = chart.paper().classGroup(slugify(serie.label), extend({}, serie));
 
                     // Is this the reference serie for its axisgroup?
-                    group.element().classed('chart' + chart.uid(), true);
-
                     if (serie.reference)
-                        group.element().classed('reference' + chart.uid(), true)
+                        group.element().classed('reference', true)
                                        .classed(axisGroupId(serie.axisgroup), true);
 
                     // Draw X axis or set the scale of the reference X-axis
@@ -4906,7 +4751,7 @@
     //
     // Manage a collection of visualizations
     g.collection = function () {
-        var collection = g.vizmixin(d3.map());
+        var collection = vizMixin(d3.map());
 
         collection.start = function () {
             return onInitViz(collection).load(start);
@@ -4924,324 +4769,6 @@
             });
         }
     };
-    //
-    //
-    // Force layout example
-    g.createviz('force', {
-        theta: 0.8,
-        friction: 0.9,
-
-    }, function (force, opts) {
-
-        var nodes = [],
-            forces = [],
-            friction,
-            q, i, j, o, l, s, t, x, y, k;
-
-        force.nodes = function(x) {
-            if (!arguments.length) return nodes;
-            nodes = x;
-            for (i = 0; i < nodes.length; ++i)
-                nodes[i].index = i;
-            return force;
-        };
-
-        force.theta = function(x) {
-            if (!arguments.length) return +opts.theta;
-            opts.theta = x;
-            return force;
-        };
-
-        force.friction = function(x) {
-            if (!arguments.length) return +opts.friction;
-            opts.friction = x;
-            return force;
-        };
-
-        force.quadtree = function (createNew) {
-            if (!q || createNew)
-                q = d3.geom.quadtree(nodes);
-            return q;
-        };
-
-        force.addForce = function (callback) {
-            forces.push(callback);
-        };
-
-        // Draw points in the paper
-        force.drawPoints = function (group) {
-            var colors = opts.colors,
-                j = 0;
-
-            if (!group) group = force.paper().classGroup('force');
-
-            for (i=0; i<nodes.length; i++) {
-                if (!nodes[i].fill) {
-                    nodes[i].fill = colors[j % colors.length];
-                    j++;
-                }
-            }
-
-            return group.points(nodes);
-        };
-
-        force.drawQuadTree = function (options) {
-            return force.paper().drawQuadTree(force.quadtree, options);
-        };
-
-        force.on('tick.main', function() {
-            q = null;
-            i = -1; while (++i < nodes.length) {
-                o = nodes[i];
-                o.px = o.x;
-                o.py = o.y;
-            }
-
-            for (i=0; i<forces.length; ++i)
-                forces[i]();
-
-            friction = force.friction();
-            i = -1; while (++i < nodes.length) {
-                o = nodes[i];
-                if (o.fixed) {
-                    o.x = o.px;
-                    o.y = o.py;
-                } else  {
-                    o.x -= (o.px - o.x) * friction;
-                    o.y -= (o.py - o.y) * friction;
-                }
-            }
-        });
-    });
-
-    // gauss-seidel relaxation for links
-    g.viz.force.plugin(function (force, opts) {
-        var links = [],
-            distances, strengths,
-            nodes, i, o, s, t, x, y, l;
-
-        g._.copyMissing({linkStrength: 1, linkDistance: 20}, opts);
-
-
-        force.linkStrength = function(x) {
-            if (!arguments.length) return opts.linkStrength;
-            opts.linkStrength = typeof x === "function" ? x : +x;
-            return force;
-        };
-
-        force.linkDistance = function(x) {
-            if (!arguments.length) return opts.linkDistance;
-            opts.linkDistance = typeof x === "function" ? x : +x;
-            return force;
-        };
-
-        force.addForce(function () {
-            if (!distances)
-                _init();
-
-            for (i = 0; i < links.length; ++i) {
-                o = links[i];
-                s = o.source;
-                t = o.target;
-                x = t.x - s.x;
-                y = t.y - s.y;
-                l = (x * x + y * y);
-                if (l) {
-                    l = opts.alpha * strengths[i] * ((l = Math.sqrt(l)) - distances[i]) / l;
-                    x *= l;
-                    y *= l;
-                    t.x -= x * (k = s.weight / (t.weight + s.weight));
-                    t.y -= y * k;
-                    s.x += x * (k = 1 - k);
-                    s.y += y * k;
-                }
-            }
-        });
-
-        function _init () {
-            var linkDistance = opts.linkDistance,
-                linkStrength = opts.linkStrength,
-                nodes = force.nodes();
-            distances = [];
-            strengths = [];
-
-            if (links.length) {
-
-                for (i = 0; i < links.length; ++i) {
-                    o = links[i];
-                    if (typeof o.source == "number") o.source = nodes[o.source];
-                    if (typeof o.target == "number") o.target = nodes[o.target];
-                    ++o.source.weight;
-                    ++o.target.weight;
-                }
-
-                if (typeof linkDistance === "function")
-                    for (i = 0; i < links.length; ++i)
-                        distances[i] = +linkDistance.call(force, links[i], i);
-                else
-                    for (i = 0; i < links.length; ++i)
-                        distances[i] = linkDistance;
-
-                if (typeof linkStrength === "function")
-                    for (i = 0; i < links.length; ++i)
-                        strengths[i] = +linkStrength.call(force, links[i], i);
-                else
-                    for (i = 0; i < links.length; ++i)
-                        strengths[i] = linkStrength;
-            }
-        }
-    });
-
-    //
-    // Gravity plugin
-    g.viz.force.plugin(function (force, opts) {
-        var i, k, o, nodes;
-
-        if (opts.gravity === undefined)
-            opts.gravity = 0.05;
-
-        force.gravity = function (x) {
-            if (!arguments.length) return +opts.gravity;
-            opts.gravity = x;
-            return force;
-        };
-
-        force.addForce(function () {
-            k = force.alpha() * opts.gravity;
-            nodes = force.nodes();
-
-            var xc = force.scalex()(0.5),
-                yc = force.scaley()(0.5);
-            for (i = 0; i < nodes.length; ++i) {
-                o = nodes[i];
-                if (!o.fixed) {
-                    o.x += (xc - o.x) * k;
-                    o.y += (yc - o.y) * k;
-                }
-            }
-        });
-    });
-
-    //
-    // Charge plugin
-    g.viz.force.plugin(function (force, opts) {
-        var charges,
-            charge, nodes, q, i, k, o,
-            chargeDistance2;
-
-        g._.copyMissing({charge: -30, chargeDistance: Infinity}, opts);
-
-        force.charge = function (x) {
-            if (!arguments.length) return typeof opts.charge === "function" ? opts.charge : +opts.charge;
-            opts.charge = x;
-            if (charges)
-                _init();
-            return force;
-        };
-
-        force.chargeDistance = function(x) {
-            if (!arguments.length) return +opts.chargeDistance;
-            opts.chargeDistance2 = +x;
-            chargeDistance2 = x * x;
-            return force;
-        };
-
-        force.addForce(function () {
-            // compute quadtree center of mass and apply charge forces
-            nodes = force.nodes();
-            charge = force.charge();
-            if (charge && nodes.length) {
-                if (!charges)
-                    _init();
-
-                d3_layout_forceAccumulate(q = force.quadtree(), force.alpha(), charges);
-                i = -1; while (++i < nodes.length) {
-                    o = nodes[i];
-                    if (!o.fixed) q.visit(repulse(o));
-                }
-            }
-        });
-
-        function _init () {
-            force.chargeDistance(opts.chargeDistance);
-            charge = force.charge();
-            nodes = force.nodes();
-            charges = [];
-            if (typeof charge === "function")
-                for (i = 0; i < nodes.length; ++i)
-                    charges[i] = +charge.call(force, nodes[i], i);
-            else
-                for (i = 0; i < nodes.length; ++i)
-                    charges[i] = charge;
-        }
-
-        function repulse(node) {
-            var theta = force.theta(),
-                theta2 = theta*theta;
-
-            return function(quad, x1, _, x2) {
-                if (quad.point !== node && quad.charge) {
-                    var dx = quad.cx - node.x,
-                        dy = quad.cy - node.y,
-                        dw = x2 - x1,
-                        dn = dx * dx + dy * dy;
-
-                    /* Barnes-Hut criterion. */
-                    if (dw * dw / theta2 < dn) {
-                        if (dn < chargeDistance2) {
-                            k = quad.charge / dn;
-                            node.px -= dx * k;
-                            node.py -= dy * k;
-                        }
-                        return true;
-                    }
-
-                    if (quad.point && dn && dn < chargeDistance2) {
-                        k = quad.pointCharge / dn;
-                        node.px -= dx * k;
-                        node.py -= dy * k;
-                    }
-                }
-                return !quad.charge;
-            };
-        }
-
-        function d3_layout_forceAccumulate(quad, alpha, charges) {
-            var scalex = force.scalex(),
-                scaley = force.scaley(),
-                cx = 0,
-                cy = 0;
-            quad.charge = 0;
-            if (!quad.leaf) {
-                var nodes = quad.nodes,
-                    n = nodes.length,
-                    i = -1,
-                    c;
-                while (++i < n) {
-                    c = nodes[i];
-                    if (!c) continue;
-                    d3_layout_forceAccumulate(c, alpha, charges);
-                    quad.charge += c.charge;
-                    cx += c.charge * c.cx;
-                    cy += c.charge * c.cy;
-                }
-            }
-            if (quad.point) {
-                // jitter internal nodes that are coincident
-                if (!quad.leaf) {
-                    quad.point.x += scalex(Math.random()) - scalex(0.5);
-                    quad.point.y += scaley(Math.random()) - scaley(0.5);
-                }
-                var k = alpha * charges[quad.point.index];
-                quad.charge += quad.pointCharge = k;
-                cx += k * quad.point.x;
-                cy += k * quad.point.y;
-            }
-            quad.cx = quad.charge ? cx / quad.charge : 0;
-            quad.cy = quad.charge ? cy / quad.charge : 0;
-        }
-    });
-
 
     g.createviz('map', {
         tile: null,
@@ -5250,7 +4777,7 @@
         maxZoom: 18,
         zoomControl: true,
         wheelZoom: true,
-    }, function (viz, opts) {
+    }, function (viz) {
 
         viz.start = function () {};
 
@@ -5355,6 +4882,416 @@
 
 
 
+
+    g.slider = function () {
+        // Public variables width default settings
+        var min = 0,
+            max = 100,
+            step = 0.01,
+            animate = true,
+            orientation = "horizontal",
+            axis = false,
+            margin = 50,
+            active = 1,
+            snap = false,
+            theme = 'default',
+            value,
+            scale;
+
+        // Private variables
+        var axisScale,
+            dispatch = d3.dispatch("slide", "slideend"),
+            formatPercent = d3.format(".2%"),
+            tickFormat = d3.format(".0"),
+            handle1,
+            handle2 = null,
+            sliderLength;
+
+        function slider (selection) {
+
+            selection.each(function() {
+                var uid = ++_idCounter;
+
+                // Create scale if not defined by user
+                if (!scale) scale = d3.scale.linear().domain([min, max]);
+
+                // Start value
+                value = value || scale.domain()[0];
+
+                // DIV container
+                var div = d3.select(this).classed("d3-slider d3-slider-" + orientation + " d3-slider-" + theme, true);
+
+                var drag = d3.behavior.drag();
+                drag.on('dragend', function() {
+                    dispatch.slideend(d3.event, value);
+                });
+
+                // Slider handle
+                //if range slider, create two
+                var divRange;
+
+                if (value.length == 2) {
+                    handle1 = div.append("a")
+                        .classed("d3-slider-handle", true)
+                        .attr("xlink:href", "#")
+                        .attr('id', "handle-one")
+                        .on("click", stopPropagation)
+                        .call(drag);
+                    handle2 = div.append("a")
+                        .classed("d3-slider-handle", true)
+                        .attr('id', "handle-two")
+                        .attr("xlink:href", "#")
+                        .on("click", stopPropagation)
+                        .call(drag);
+                } else {
+                    handle1 = div.append("a")
+                        .classed("d3-slider-handle", true)
+                        .attr("xlink:href", "#")
+                        .attr('id', "handle-one")
+                        .on("click", stopPropagation)
+                        .call(drag);
+                }
+
+                // Horizontal slider
+                if (orientation === "horizontal") {
+
+                    div.on("click", onClickHorizontal);
+
+                    if (value.length == 2) {
+                        divRange = d3.select(this).append('div').classed("d3-slider-range", true);
+
+                        handle1.style("left", formatPercent(scale(value[0])));
+                        divRange.style("left", formatPercent(scale(value[0])));
+                        drag.on("drag", onDragHorizontal);
+
+                        var width = 100 - parseFloat(formatPercent(scale(value[1])));
+                        handle2.style("left", formatPercent(scale(value[1])));
+                        divRange.style("right", width + "%");
+                        drag.on("drag", onDragHorizontal);
+
+                    } else {
+                        handle1.style("left", formatPercent(scale(value)));
+                        drag.on("drag", onDragHorizontal);
+                    }
+
+                    sliderLength = parseInt(div.style("width"), 10);
+
+                } else { // Vertical
+
+                    div.on("click", onClickVertical);
+                    drag.on("drag", onDragVertical);
+                    if (value.length == 2) {
+                        divRange = d3.select(this).append('div').classed("d3-slider-range-vertical", true);
+
+                        handle1.style("bottom", formatPercent(scale(value[0])));
+                        divRange.style("bottom", formatPercent(scale(value[0])));
+                        drag.on("drag", onDragVertical);
+
+                        var top = 100 - parseFloat(formatPercent(scale(value[1])));
+                        handle2.style("bottom", formatPercent(scale(value[1])));
+                        divRange.style("top", top + "%");
+                        drag.on("drag", onDragVertical);
+
+                    } else {
+                        handle1.style("bottom", formatPercent(scale(value)));
+                        drag.on("drag", onDragVertical);
+                    }
+
+                    sliderLength = parseInt(div.style("height"), 10);
+
+                }
+
+                if (axis) {
+                    var svg = createAxis();
+                    renderAxis(svg);
+                    d3.select(window).on('resize.slider' + uid, function () {
+                        renderAxis();
+                    });
+                }
+
+
+                function createAxis() {
+
+                    // Create axis if not defined by user
+                    if (typeof axis === "boolean") {
+
+                        axis = d3.svg.axis()
+                            .ticks(Math.round(sliderLength / 100))
+                            .tickFormat(tickFormat)
+                            .orient((orientation === "horizontal") ? "bottom" : "right");
+                        div.classed('d3-slider-axis', true);
+
+                    }
+
+                    // Copy slider scale to move from percentages to pixels
+                    axisScale = scale.copy().range([0, sliderLength]);
+                    axis.scale(axisScale);
+
+                    // Create SVG axis container
+                    var s = div.append("svg")
+                        .classed("d3-slider-axis d3-slider-axis-" + axis.orient(), true)
+                        .on("click", stopPropagation);
+                    s.append('g');
+                    return s;
+                }
+
+                function renderAxis() {
+                    var g = svg.select('g');
+
+                    // Horizontal axis
+                    if (orientation === "horizontal") {
+
+                        svg.style("margin-left", - margin + "px");
+
+                        svg.attr({
+                            width: sliderLength + margin * 2,
+                            height: margin
+                        });
+
+                        if (axis.orient() === "top") {
+                            svg.style("top", - margin + "px");
+                            g.attr("transform", "translate(" + margin + "," + margin + ")");
+                        } else { // bottom
+                            g.attr("transform", "translate(" + margin + ",0)");
+                        }
+
+                    } else { // Vertical
+
+                        svg.style("top", - margin + "px");
+
+                        svg.attr({
+                            width: margin,
+                            height: sliderLength + margin * 2
+                        });
+
+                        if (axis.orient() === "left") {
+                            svg.style("left", - margin + "px");
+                            g.attr("transform", "translate(" + margin + "," + margin + ")");
+                        } else { // right
+                            g.attr("transform", "translate(" + 0 + "," + margin + ")");
+                        }
+
+                    }
+
+                    g.call(axis);
+                }
+
+                function onClickHorizontal() {
+                    if (!value.length) {
+                        var pos = Math.max(0, Math.min(sliderLength, d3.event.offsetX || d3.event.layerX));
+                        moveHandle(stepValue(scale.invert(pos / sliderLength)));
+                    }
+                }
+
+                function onClickVertical() {
+                    if (!value.length) {
+                        var pos = sliderLength - Math.max(0, Math.min(sliderLength, d3.event.offsetY || d3.event.layerY));
+                        moveHandle(stepValue(scale.invert(pos / sliderLength)));
+                    }
+                }
+
+                function onDragHorizontal() {
+                    if (d3.event.sourceEvent.target.id === "handle-one") {
+                        active = 1;
+                    } else if (d3.event.sourceEvent.target.id == "handle-two") {
+                        active = 2;
+                    }
+                    var pos = Math.max(0, Math.min(sliderLength, d3.event.x));
+                    moveHandle(stepValue(scale.invert(pos / sliderLength)));
+                }
+
+                function onDragVertical() {
+                    if (d3.event.sourceEvent.target.id === "handle-one") {
+                        active = 1;
+                    } else if (d3.event.sourceEvent.target.id == "handle-two") {
+                        active = 2;
+                    }
+                    var pos = sliderLength - Math.max(0, Math.min(sliderLength, d3.event.y));
+                    moveHandle(stepValue(scale.invert(pos / sliderLength)));
+                }
+
+                function stopPropagation() {
+                    d3.event.stopPropagation();
+                }
+
+            });
+
+        }
+
+        // Move slider handle on click/drag
+        function moveHandle (newValue) {
+            var currentValue = value.length ? value[active - 1] : value,
+                oldPos = formatPercent(scale(stepValue(currentValue))),
+                newPos = formatPercent(scale(stepValue(newValue))),
+                position = (orientation === "horizontal") ? "left" : "bottom";
+            if (oldPos !== newPos) {
+
+                if (value.length === 2) {
+                    value[active - 1] = newValue;
+                    if (d3.event)
+                        dispatch.slide(d3.event, value);
+                } else if (d3.event)
+                    dispatch.slide(d3.event.sourceEvent || d3.event, value = newValue);
+
+                if (value[0] >= value[1]) return;
+                if (active === 1) {
+                    if (value.length === 2) {
+                        (position === "left") ? divRange.style("left", newPos) : divRange.style("bottom", newPos);
+                    }
+
+                    if (animate) {
+                        handle1.transition()
+                            .styleTween(position, function() {
+                            return d3.interpolate(oldPos, newPos);
+                        })
+                            .duration((typeof animate === "number") ? animate : 250);
+                    } else {
+                        handle1.style(position, newPos);
+                    }
+                } else {
+
+                    var width = 100 - parseFloat(newPos);
+                    var top = 100 - parseFloat(newPos);
+
+                    (position === "left") ? divRange.style("right", width + "%") : divRange.style("top", top + "%");
+
+                    if (animate) {
+                        handle2.transition()
+                            .styleTween(position, function() {
+                            return d3.interpolate(oldPos, newPos);
+                        })
+                            .duration((typeof animate === "number") ? animate : 250);
+                    } else {
+                        handle2.style(position, newPos);
+                    }
+                }
+            }
+        }
+
+        // Calculate nearest step value
+        function stepValue (val) {
+
+            if (val === scale.domain()[0] || val === scale.domain()[1]) {
+                return val;
+            }
+
+            var alignValue = val;
+            if (snap) {
+                var val_i = scale(val);
+                var dist = scale.ticks().map(function(d) {
+                    return val_i - scale(d);
+                });
+                var i = -1,
+                    index = 0,
+                    r = scale.range()[1];
+                do {
+                    i++;
+                    if (Math.abs(dist[i]) < r) {
+                        r = Math.abs(dist[i]);
+                        index = i;
+                    }
+                } while (dist[i] > 0 && i < dist.length - 1);
+                alignValue = scale.ticks()[index];
+            } else {
+                var valModStep = (val - scale.domain()[0]) % step;
+                alignValue = val - valModStep;
+
+                if (Math.abs(valModStep) * 2 >= step) {
+                    alignValue += (valModStep > 0) ? step : -step;
+                }
+            }
+
+            return alignValue;
+
+        }
+
+        // Getter/setter functions
+        slider.min = function(_) {
+            if (!arguments.length) return min;
+            min = _;
+            return slider;
+        };
+
+        slider.max = function(_) {
+            if (!arguments.length) return max;
+            max = _;
+            return slider;
+        };
+
+        slider.step = function(_) {
+            if (!arguments.length) return step;
+            step = _;
+            return slider;
+        };
+
+        slider.animate = function(_) {
+            if (!arguments.length) return animate;
+            animate = _;
+            return slider;
+        };
+
+        slider.orientation = function(_) {
+            if (!arguments.length) return orientation;
+            orientation = _;
+            return slider;
+        };
+
+        slider.axis = function(_) {
+            if (!arguments.length) return axis;
+            axis = _;
+            return slider;
+        };
+
+        slider.value = function(_) {
+            if (!arguments.length) return value;
+            if (value)
+                moveHandle(stepValue(_));
+            value = _;
+            return slider;
+        };
+
+        slider.snap = function(_) {
+            if (!arguments.length) return snap;
+            snap = _;
+            return slider;
+        };
+
+        slider.scale = function(_) {
+            if (!arguments.length) return scale;
+            scale = _;
+            return slider;
+        };
+
+        d3.rebind(slider, dispatch, "on");
+
+        return slider;
+    };
+
+    g.viz.slider = function (element) {
+        var slider = vizMixin(g.slider()),
+            options = slider.options;
+
+        slider.options = function (_) {
+            if (!arguments.length) return options();
+            forEach(_, function (value, key) {
+                if (isFunction(slider[key])) slider[key](value);
+            });
+            return options(_);
+        };
+
+        slider.start = function () {
+            slider(d3.select(element));
+            var opts = options(),
+                onInit = opts.onInit;
+            if (onInit) onInit(slider, opts);
+        };
+
+        return slider;
+    };
+    g.viz.slider.vizName = function () {
+        return 'slider';
+    };
+
     //
     //  Sunburst visualization
     //
@@ -5371,7 +5308,7 @@
         initNode: null
     },
 
-    function (self, opts) {
+    function (self) {
 
         var namecolors = {},
             current,
@@ -5399,7 +5336,7 @@
 
             if (isArray(node)) {
                 var path = node;
-                node = current;
+                node = self.root();
                 for (var n=0; n<path.length; ++n) {
                     var name = path[n];
                     if (node.children) {
@@ -5422,8 +5359,17 @@
             return current;
         };
 
+        // Return the root node
+        self.root = function () {
+            var r = current;
+            while (r && r.parent)
+                r = r.parent;
+            return r;
+        };
+
         // Set the scale or returns it
         self.scale = function (scale) {
+            var opts = self.options();
             if (!arguments.length) return opts.scale;
             opts.scale = scale;
             return self;
@@ -5431,7 +5377,8 @@
 
         // draw
         self.draw = function () {
-            var data = self.data();
+            var data = self.data(),
+                opts = self.options();
 
             if (!paper || opts.type !== group.type()) {
                 paper = self.paper(true);
@@ -5462,6 +5409,7 @@
                 height = 0.5*group.innerHeight(),
                 xs = group.marginLeft() + width,
                 ys = group.marginTop() + height,
+                opts = self.options(),
                 sunburst = group.element().attr("transform", "translate(" + xs + "," + ys + ")");
 
             current = data[0];
@@ -5516,6 +5464,7 @@
         }
 
         function scale (radius) {
+            var opts = self.options();
             //if (opts.scale === 'log')
             //    return d3.scale.log().range([1, radius]);
             if (opts.scale === 'linear')
@@ -5535,6 +5484,8 @@
 
         function select (node, transition) {
             if (!node || node === current) return;
+            var opts = self.options();
+
             if (transition === undefined) transition = +opts.transition;
 
             if (text) text.transition().attr("opacity", 0);
@@ -5678,7 +5629,7 @@
         cellpadding: 0,
         x_gradient: null,
         y_gradient: null
-    }, function (tri, opts) {
+    }, function (tri) {
         var t;
 
         tri.gradient = function (value) {
@@ -5711,7 +5662,8 @@
 
 
         function build () {
-            var cellsize = +opts.cellsize,
+            var opts = tri.options(),
+                cellsize = +opts.cellsize,
                 cellpadding = +opts.cellpadding,
                 fillOpacity = +opts.fillOpacity,
                 strokeOpacity = +opts.strokeOpacity,
@@ -5765,8 +5717,7 @@
         }
     });
 
-    // Axis functionalities for groups
-    g.paper.plugin('axis', {
+    var axisDefaults = {
         tickSize: '6px',
         outerTickSize: '6px',
         tickPadding: '3px',
@@ -5776,6 +5727,32 @@
         //minTickSize: undefined,
         min: null,
         max: null
+    };
+
+    function axisOptions (opts, value, font) {
+        extend(opts, value);
+        return copyMissing(font, opts);
+    }
+
+    function extendAxis (name) {
+
+        return function (opts, value) {
+            return axisOptions(opts[name], value, opts.font);
+        };
+    }
+
+    g.options.processors.xaxis = extendAxis('xaxis');
+    g.options.processors.yaxis = extendAxis('yaxis');
+    g.options.processors.yaxis2 = extendAxis('yaxis2');
+
+    // Axis functionalities for groups
+    g.paper.plugin('axis',
+
+    function (opts) {
+        // Inherit axis properties
+        opts.xaxis = axisOptions(extend({position: 'bottom'}, axisDefaults), opts.xaxis, opts.font);
+        opts.yaxis = axisOptions(extend({position: 'left'}, axisDefaults),  opts.yaxis, opts.font);
+        opts.yaxis2 = axisOptions(extend({position: 'right'}, axisDefaults),  opts.yaxis2, opts.font);
     },
 
     function (group, opts) {
@@ -5871,18 +5848,6 @@
         group.resetAxis();
     });
 
-
-    function paperAxis (p) {
-        // Inherit axis properties
-        p.xaxis = extend({position: 'bottom'}, p.axis, p.xaxis);
-        p.yaxis = extend({position: 'left'}, p.axis,  p.yaxis);
-        p.yaxis2 = extend({position: 'right'}, p.axis,  p.yaxis2);
-        //
-        copyMissing(p.font, p.xaxis);
-        copyMissing(p.font, p.yaxis);
-        copyMissing(p.font, p.yaxis2);
-    }
-
     g.svg.axis = function (group, axis, xy) {
         return drawing(group, function () {
             var x =0,
@@ -5927,11 +5892,10 @@
 
     g.canvas.axis = function (group, axis, xy) {
         var d = canvasMixin(drawing(group)),
-            ctx = group.context(),
-            opts;
+            opts, ctx;
 
-        d.render = function (context) {
-            context = context || ctx;
+        d.render = function () {
+            ctx = d.context();
             opts = d.options();
             if (opts.show === false) return d;
 
@@ -5939,31 +5903,27 @@
                 y = 0,
                 size = opts.size;
 
-            context.save();
+            ctx.save();
+            group.transform(ctx);
 
             // size of font
             opts.size = group.scale(group.dim(size)) + 'px';
-            context.font = fontString(opts);
+            ctx.font = fontString(opts);
             opts.size = size;
 
             ctx.strokeStyle = d3.canvas.rgba(d.color, d.colorOpacity);
-            context.fillStyle = d.color;
+            ctx.fillStyle = d.color;
             ctx.lineWidth = group.factor()*d.lineWidth;
 
             if (xy[0] === 'x')
                 y = opts.position === 'top' ? 0 : group.innerHeight();
             else
                 x = opts.position === 'left' ? 0 : group.innerWidth();
-            context.translate(x, y);
+            ctx.translate(x, y);
             axis.textRotate(d3_radians*(opts.textRotate || 0)).textAlign(opts.textAnchor);
-            axis(d3.select(context.canvas));
-            context.stroke();
-            context.restore();
-            return d;
-        };
-
-        d.context = function (context) {
-            ctx = context;
+            axis(d3.select(ctx.canvas));
+            ctx.stroke();
+            ctx.restore();
             return d;
         };
 
@@ -5983,8 +5943,7 @@
         active: {
             fill: 'darker',
             color: 'brighter'
-        },
-        transition: extend({}, g.defaults.transition)
+        }
     },
 
     function (group, p) {
@@ -6112,25 +6071,21 @@
             scaley = draw.scaley(),
             size = draw.size(),
             factor = draw.factor(),
-            ctx = group.context(),
             x, y, y0, y1, w, w0, yb, radius;
 
         d.set('size', data.size === undefined ? siz : data.size);
 
-        d.render = function (context) {
-            context = context || ctx;
-            context.fillStyle = d3.canvas.rgba(d.fill, d.fillOpacity);
-            context.strokeStyle = d3.canvas.rgba(d.color, d.colorOpacity);
-            context.lineWidth = factor*d.lineWidth;
-            _draw(context);
-            context.fill();
-            context.stroke();
-            return d;
+        d.render = function () {
+            return _draw(function (ctx) {
+                d3.canvas.style(ctx, d);
+                return d;
+            });
         };
 
         d.inRange = function (ex, ey) {
-            _draw(ctx);
-            return ctx.isPointInPath(ex, ey);
+            return _draw(function (ctx) {
+                return ctx.isPointInPath(ex, ey);
+            });
         };
 
         d.bbox = function () {
@@ -6151,9 +6106,12 @@
 
         return d;
 
-        function _draw (context) {
+        function _draw (callback) {
+            var ctx = d.context();
+            ctx.save();
+            group.transform(ctx);
             radius = factor*draw.options().radius;
-            context.beginPath();
+            ctx.beginPath();
             x = scalex(d.data);
             w0 = 0;
             if (xscale.invert)
@@ -6162,147 +6120,151 @@
                 w = xscale.rangeBand();
             y = scaley(d.data);
             y0 = group.scaley(0);
-            d3.canvas.drawPolygon(context, [[x-w0, y0], [x+w, y0], [x+w, y], [x-w0, y]], radius);
-            context.closePath();
+            d3.canvas.drawPolygon(ctx, [[x-w0, y0], [x+w, y0], [x+w, y], [x-w0, y]], radius);
+            ctx.closePath();
+            var r = callback(ctx);
+            ctx.restore();
+            return r;
         }
     };
     //
     //  Add brush functionality to svg paper
     g.paper.plugin('brush', {
-            axis: null, // set one of 'x', 'y' or 'xy'
-            fill: '#000',
-            fillOpacity: 0.125
-        },
-        function (group, opts) {
-            var brush, brushDrawing;
+        axis: 'x', // set one of 'x', 'y' or 'xy'
+        fill: '#000',
+        fillOpacity: 0.125
+    },
 
-            group.brush = function () {
-                return brush;
-            };
+    function (group) {
+        var brush, brushDrawing;
 
-            // Add a brush to the paper if not already available
-            group.addBrush = function (options) {
-                if (brushDrawing) return brushDrawing;
-                extend(opts.brush, options);
+        group.brush = function () {
+            return brush;
+        };
 
-                brushDrawing = group.add(function () {
+        // Add a brush to the group if not already available
+        group.addBrush = function (options) {
+            if (brushDrawing) return brushDrawing;
 
-                    var draw = this,
-                        type = group.type(),
-                        resizing = group.resizing();
+            brushDrawing = group.add(function () {
 
-                    if (!brush) {
-                        resizing = true;
-                        brush = d3[type].brush()
-                                .on("brushstart", brushstart)
-                                .on("brush", brushmove)
-                                .on("brushend", brushend);
+                var draw = this,
+                    opts = draw.options(),
+                    type = group.type(),
+                    resizing = group.resizing();
 
-                        if (opts.brush.axis === 'x' || opts.brush.axis === 'xy')
-                            brush.x(group.xaxis().scale());
+                if (!brush) {
+                    resizing = true;
+                    brush = d3[type].brush()
+                            .on("brushstart", brushstart)
+                            .on("brush", brushmove)
+                            .on("brushend", brushend);
 
-                        if (opts.brush.axis === 'y' || opts.brush.axis === 'xy')
-                            brush.y(group.yaxis().scale());
+                    if (opts.axis === 'x' || opts.axis === 'xy')
+                        brush.x(group.xaxis().scale());
 
-                        if (opts.brush.extent) brush.extent(opts.brush.extent);
+                    if (opts.axis === 'y' || opts.axis === 'xy')
+                        brush.y(group.yaxis().scale());
 
-                        if (type === 'svg') {
-                            brush.selectDraw = selectDraw;
+                    if (opts.extent) brush.extent(opts.extent);
 
-                        } else {
+                    if (type === 'svg') {
+                        brush.selectDraw = selectDraw;
 
-                            brush.selectDraw = function (draw) {
-                                selectDraw(draw, group.paper().canvasOverlay().node().getContext('2d'));
-                            };
-                        }
+                    } else {
+
+                        brush.selectDraw = function (draw) {
+                            selectDraw(draw, group.paper().canvasOverlay().node().getContext('2d'));
+                        };
                     }
-
-                    if (resizing) {
-                        brush.extent(brush.extent());
-
-                        if (type === 'svg') {
-                            var gb = group.element().select('.brush');
-
-                            if (!gb.node())
-                                gb = group.element().append('g').classed('brush', true);
-
-                            var rect = gb.call(brush).selectAll("rect");
-
-                            this.setBackground(rect);
-
-                            if (opts.brush.axis === 'x')
-                                rect.attr("y", -6).attr("height", group.innerHeight() + 7);
-
-                            brushstart();
-                            brushmove();
-                            brushend();
-                        } else {
-                            brush.fillStyle(d3.canvas.rgba(this.fill, this.fillOpacity))
-                                 .rect([group.marginLeft(), group.marginTop(),
-                                        group.innerWidth(), group.innerHeight()]);
-                            group.paper().canvasOverlay().call(brush);
-                        }
-                    }
-
-                });
-
-                return brushDrawing.options(opts.brush);
-            };
-
-            function brushstart () {
-                group.element().classed('selecting', true);
-                if (opts.brush.start) opts.brush.start();
-            }
-
-            function brushmove () {
-                if (opts.brush.move) opts.brush.move();
-            }
-
-            function brushend () {
-                group.element().classed('selecting', false);
-                if (opts.brush.end) opts.brush.end();
-            }
-
-            function selectDraw (draw, ctx) {
-                var x = draw.x(),
-                    selected = [],
-                    xval,
-                    s = brush.extent();
-
-                if (ctx) {
-                    var group = draw.group();
-                    ctx.save();
-                    ctx.translate(group.marginLeft(), group.marginTop());
                 }
 
-                draw.each(function () {
-                    if (this.data) {
-                        xval = x(this.data);
-                        if (s[0] <= xval && xval <= s[1]) {
-                            this.highLight();
-                            if (ctx) this.render(ctx);
-                            selected.push(this);
-                        }
-                        else
-                            this.reset();
+                if (resizing) {
+                    brush.extent(brush.extent());
+
+                    if (type === 'svg') {
+                        var gb = group.element().select('.brush');
+
+                        if (!gb.node())
+                            gb = group.element().append('g').classed('brush', true);
+
+                        var rect = gb.call(brush).selectAll("rect");
+
+                        this.setBackground(rect);
+
+                        if (opts.axis === 'x')
+                            rect.attr("y", -6).attr("height", group.innerHeight() + 7);
+
+                        brushstart();
+                        brushmove();
+                        brushend();
+                    } else {
+                        brush.fillStyle(d3.canvas.rgba(this.fill, this.fillOpacity))
+                             .rect([group.marginLeft(), group.marginTop(),
+                                    group.innerWidth(), group.innerHeight()]);
+                        group.paper().canvasOverlay().call(brush);
                     }
-                });
+                }
 
-                if (ctx) ctx.restore();
-                else draw.render();
+                function brushstart () {
+                    group.element().classed('selecting', true);
+                    if (opts.start) opts.start();
+                }
 
-                return selected;
+                function brushmove () {
+                    if (opts.move) opts.move();
+                }
+
+                function brushend () {
+                    group.element().classed('selecting', false);
+                    if (opts.end) opts.end();
+                }
+
+            });
+
+            return brushDrawing.options(extend({}, group.options().brush, options));
+        };
+
+        function selectDraw (draw, ctx) {
+            var x = draw.x(),
+                selected = [],
+                xval,
+                s = brush.extent();
+
+            if (ctx) {
+                var group = draw.group();
+                ctx.save();
+                ctx.translate(group.marginLeft(), group.marginTop());
             }
-        });
+
+            draw.each(function () {
+                if (this.data) {
+                    xval = x(this.data);
+                    if (s[0] <= xval && xval <= s[1]) {
+                        this.highLight();
+                        if (ctx) this.render(ctx);
+                        selected.push(this);
+                    }
+                    else
+                        this.reset();
+                }
+            });
+
+            if (ctx) ctx.restore();
+            else draw.render();
+
+            return selected;
+        }
+    });
 
     //  Add brush functionality to charts
-    g.viz.chart.plugin(function (chart, opts) {
+    g.viz.chart.plugin(function (chart) {
         var brush, brushopts;
 
         // Show grid
         chart.addBrush = function () {
 
-            brush = opts.brush;
+            brush = chart.options().brush;
 
             var start = brush.start,
                 move = brush.move,
@@ -6333,14 +6295,14 @@
                 if (end) end(chart);
             };
 
-            chart.paper().each('.reference' + chart.uid(), function () {
+            chart.paper().each('.reference', function () {
                 this.addBrush(brushopts).render();
             });
             return chart;
         };
 
         chart.on('tick.brush', function () {
-            if (opts.brush && opts.brush.axis)
+            if (chart.options().brush.show)
                 chart.addBrush();
         });
 
@@ -6352,7 +6314,9 @@
         force: false,
         theta: 0.8,
         friction: 0.9
-    }, function (group, opts) {
+    },
+
+    function (group, opts) {
 
         // Add force visualization to the group
         group.bubble = function (data, opts) {
@@ -6450,43 +6414,42 @@
     g.paper.plugin('grid', {
             color: '#333',
             colorOpacity: 0.3,
-            fill: '#c6dbef',
+            fill: 'none',
             fillOpacity: 0.2,
             lineWidth: 0.5,
-            zoomx: false,
-            zoomy: false,
             xaxis: true,
-            yaxis: true,
-            scaleExtent: [1, 10]
+            yaxis: true
         },
-        function (group, opts) {
+        function (group) {
             var paper = group.paper(),
-                grid, gopts, zooming;
+                grid, gopts;
 
+            // Show the grid
             group.showGrid = function () {
                 if (!grid) {
                     // First time here, setup grid options for y and x coordinates
                     if (!gopts) {
-                        gopts = extend({}, opts);
+                        gopts = extend({}, group.options());
                         gopts.xaxis = extend({
                             position: 'top',
                             size: 0,
-                            show: opts.grid.xaxis
-                        }, opts.grid);
+                            show: gopts.grid.xaxis
+                        }, gopts.grid);
                         gopts.yaxis = extend({
                             position: 'left',
                             size: 0,
-                            show: opts.grid.yaxis
-                        }, opts.grid);
+                            show: gopts.grid.yaxis
+                        }, gopts.grid);
                     }
                     gopts.before = '*';
                     grid = paper.group(gopts);
                     grid.element().classed('grid', true);
                     grid.xaxis().tickFormat(notick).scale(group.xaxis().scale());
                     grid.yaxis().tickFormat(notick).scale(group.yaxis().scale());
-                    grid.add(rectangle).options(opts.grid);
+                    grid.add(Rectangle).options(gopts.grid);
                     if (gopts.xaxis.show) grid.drawXaxis();
                     if (gopts.yaxis.show) grid.drawYaxis();
+                    grid.on('zoom', zoomgrid);
                     grid.render();
                 } else
                     grid.clear().render();
@@ -6499,17 +6462,15 @@
                 return group;
             };
 
-
             // The redering function for the grid
-            var rectangle = function () {
+            function Rectangle () {
                 var width = grid.innerWidth(),
                     height = grid.innerHeight(),
                     type = grid.type(),
-                    scalex, scaley, zoom;
+                    opts = this.group().options(),
+                    scalex, scaley;
 
                 if (type === 'svg') {
-                    if (zooming) return;
-
                     var rect = grid.element().select('.grid-rectangle');
 
                     if (!rect.node())
@@ -6522,81 +6483,42 @@
                 } else {
                     // canvas
                     var ctx = grid.context();
+                    ctx.save();
+                    group.transform(ctx);
                     ctx.beginPath();
                     ctx.rect(0, 0, width, height);
-                    this.setBackground(ctx);
-                    ctx.fill();
-                }
-
-                // Add zoom functionality - when not zooming!
-                if (!zooming) {
-
-                    grid.xaxis().tickSize(-height, 0);
-                    grid.yaxis().tickSize(-width, 0);
-
-                    if (!zoom && (opts.grid.zoomx || opts.grid.zoomy)) {
-
-                        zoom = d3.behavior.zoom().on('zoom', function () {
-                            zooming = true;
-                            if (scalex) {
-                                var x1 = scalex.invert(opts.margin.left),
-                                    x2 = scalex.invert(opts.size[0] - opts.margin.right);
-                                grid.xaxis().scale().domain([x1, x2]);
-                            }
-                            if (scaley) {
-                                var y1 = scalex.invert(opts.margin.top),
-                                    y2 = scalex.invert(opts.size[1] - opts.margin.bottom);
-                                grid.yaxis().scale().domain([y1, y2]);
-                            }
-                            paper.render();
-                            zooming = false;
-                        });
-
-                        zoom(grid.paper().element());
-
-                        var factor = grid.factor();
-
-                        if (factor === 1) {
-                            if (opts.grid.zoomx)
-                                zoom.x(grid.xaxis().scale());
-
-                            if (opts.grid.zoomy)
-                                zoom.y(grid.yaxis().scale());
-                        } else {
-
-                            if (opts.grid.zoomx) {
-                                scalex = grid.xaxis().scale().copy();
-                                var x1 = scalex.invert(-factor*opts.margin.left),
-                                    x2 = scalex.invert(factor*(opts.size[0] - opts.margin.left));
-                                scalex.domain([x1, x2]).range([0, opts.size[0]]);
-                                zoom.x(scalex);
-                            }
-
-                            if (opts.grid.zoomy) {
-                                scaley = grid.yaxis().scale().copy();
-                                var y1 = scaley.invert(-factor*opts.margin.left),
-                                    y2 = scaley.invert(factor*(opts.size[1] - opts.margin.bottom));
-                                scaley.domain([y1, y2]).range([opts.size[1], 0]);
-                                zoom.y(scaley);
-                            }
-                        }
-
-                        if (opts.grid.scaleExtent)
-                            zoom.scaleExtent(opts.grid.scaleExtent);
+                    if (this.fill != 'none') {
+                        this.setBackground(ctx);
+                        ctx.fill();
                     }
+                    ctx.restore();
                 }
-            };
+
+                grid.xaxis().tickSize(-height, 0);
+                grid.yaxis().tickSize(-width, 0);
+            }
+
+            function zoomgrid () {
+                if (scalex) {
+                    var x1 = scalex.invert(opts.margin.left),
+                        x2 = scalex.invert(opts.size[0] - opts.margin.right);
+                    grid.xaxis().scale().domain([x1, x2]);
+                }
+                if (scaley) {
+                    var y1 = scalex.invert(opts.margin.top),
+                        y2 = scalex.invert(opts.size[1] - opts.margin.bottom);
+                    grid.yaxis().scale().domain([y1, y2]);
+                }
+            }
         });
 
     //
     //  Add grid functionality to charts
-    g.viz.chart.plugin(function (chart, opts) {
-        var grid;
-        opts.grid = extend({show: false}, opts.grid);
+    g.viz.chart.plugin(function (chart) {
 
         // Show grid
         chart.showGrid = function () {
-            chart.paper().each('.reference' + chart.uid(), function () {
+            chart.paper().each('.reference', function () {
                 this.showGrid();
             });
             return chart;
@@ -6604,14 +6526,16 @@
 
         // Hide grid
         chart.hideGrid = function () {
-            chart.paper().each('.reference' + chart.uid(), function () {
+            chart.paper().each('.reference', function () {
                 this.hideGrid();
             });
             return chart;
         };
 
         chart.on('tick.grid', function () {
-            if (opts.grid.show)
+            var grid = chart.options().grid;
+
+            if (grid.show)
                 chart.showGrid();
             else
                 chart.hideGrid();
@@ -6619,6 +6543,7 @@
     });
 
     function notick () {return '';}
+
 
 
     g.geo.leaflet = function (element, opts) {
@@ -6662,8 +6587,11 @@
         }
     };
 
+    var inlinePositions = ['bottom', 'top'];
 
-    var legendDefaults = {
+    //
+    //  Add legend functionality to Charts
+    g.viz.chart.plugin('legend', {
         show: false,
         margin: 50,
         position: 'top-right',
@@ -6682,28 +6610,8 @@
         }
     },
 
-    inlinePositions = ['bottom', 'top'];
-
-    //
-    //  Add legend functionality to Charts
-    g.viz.chart.plugin(function (chart, opts) {
-
-        opts.legend = extend({}, legendDefaults, opts.legend);
-        opts.legend.font = extend({}, opts.font, opts.legend.font);
-
-        opts.contextmenu.push({
-            label: function () {
-                if (chart.paper().select('.chart-legend'))
-                    return 'Hide legend';
-                else
-                    return 'Show legend';
-            },
-            callback: function () {
-                var group = chart.paper().select('.chart-legend');
-                if (group) group.remove();
-                else chart.Legend(true).render();
-            }
-        });
+    function (chart) {
+        var opts;
 
         chart.Legend = function (build) {
             var labels = [],
@@ -6718,6 +6626,23 @@
         };
 
         chart.on('tick.legend', function () {
+            if (!opts) {
+                opts = chart.options();
+                opts.contextmenu.push({
+                    label: function () {
+                        if (chart.paper().select('.chart-legend'))
+                            return 'Hide legend';
+                        else
+                            return 'Show legend';
+                    },
+                    callback: function () {
+                        var group = chart.paper().select('.chart-legend');
+                        if (group) group.remove();
+                        else chart.Legend(true).render();
+                    }
+                });
+            }
+
             if (chart.drawing()) return;
             if (opts.legend.show)
                 chart.Legend(true).render();
@@ -6887,6 +6812,9 @@
                 width = 0,
                 height = 0;
 
+            ctx.save();
+            group.transform(ctx);
+
             d.font.size = fsize + 'px';
             ctx.font = fontString(d.font);
             d.font.size = font_size;
@@ -6917,7 +6845,6 @@
             height -= 2*factor*d.lineWidth;
 
             // Draw the rectangle containing the legend
-            ctx.save();
             ctx.translate(xy[0], xy[1]);
             ctx.beginPath();
             d3.canvas.drawPolygon(ctx, [[-padding, -padding], [width, -padding], [width, height], [-padding, height]], d.radius);
@@ -6962,23 +6889,96 @@
     });
 
 
+    g.data.geo = function (features) {
+        var value = function (d) {return d.value;},
+            label = function (d) {return d.label;},
+            minval=Infinity,
+            maxval=-Infinity,
+            scale = d3.scale.linear(),
+            data;
+
+        function geo (mapdata) {
+            var d, val;
+            minval=Infinity;
+            maxval=-Infinity;
+
+            features.forEach(function (feature) {
+                feature = {object: feature};
+                d = data && data.get ? data.get(feature.object.id) : null;
+                if (d) {
+                    val = +value(d);
+                    if (val === val) {
+                        minval = Math.min(val, minval);
+                        maxval = Math.max(val, maxval);
+                        feature.data = [label(d), val];
+                    }
+                }
+                mapdata.push(feature);
+            });
+            if (scale(0) !== scale(0)) {
+                minval = Math.max(minval, 1);
+                maxval = Math.max(maxval, minval);
+            }
+            scale.domain([minval, maxval]);
+            return mapdata;
+        }
+
+        geo.value = function (_) {
+            if (!arguments.length) return value;
+            value = d3_functor(_);
+            return geo;
+        };
+
+        geo.label = function (_) {
+            if (!arguments.length) return label;
+            label = d3_functor(_);
+            return geo;
+        };
+
+        geo.data = function (_) {
+            if (!arguments.length) return data;
+            data = _;
+            return geo;
+        };
+
+        geo.minvalue = function () {
+            return minval;
+        };
+
+        geo.maxvalue = function () {
+            return maxval;
+        };
+
+        geo.scale = function (_) {
+            if (!arguments.length) return scale;
+            scale = _;
+            return geo;
+        };
+
+        return geo;
+    };
+
     // Map charts and animations
     g.paper.plugin('map', {
-        width: 'auto',
-        color: null,
-        fill: true,
+        scale: 1,
+        color: '#333',
+        missingFill: '#d9d9d9',
+        fill: 'none',
         fillOpacity: 1,
         colorOpacity: 1,
-        lineWidth: 1,
+        lineWidth: 0.5,
         projection: null,
         features: null,
-        // Radius in pixels of rounded corners. Set to 0 for no rounded corners
-        radius: 4,
+        dataScale: 'log',
         active: {
-            fill: 'darker',
-            color: 'brighter'
+            fill: 'darker'
         },
-        transition: extend({}, g.defaults.transition)
+        formatX: d3_identity,
+        tooltip: {
+            template: function (d) {
+                return "<p><strong>" + d.x + "</strong> " + d.y + "</p>";
+            }
+        }
     },
 
     function (group, p) {
@@ -6990,81 +6990,210 @@
 
             opts || (opts = {});
             copyMissing(p.map, opts);
+            group.element().classed('geo', true);
 
             var map = group.add(mapdraw(group, g[type].mapdraw))
                            .options(opts)
                            .data(data);
+            return map;
         };
     });
 
     function mapdraw (group, renderer) {
         var path = d3.geo.path(),
+            feature = g[group.type()].feature,
             draw = drawing(group, renderer),
+            dataFeatures,
             features;
 
         draw.path = function () {
 
             var opts = draw.options(),
+                width = Math.round(0.5 * group.innerWidth()),
+                height = Math.round(0.5 * group.innerHeight()),
+                scale = Math.round(opts.scale*Math.min(width, height)),
                 projection;
 
-            if (opts && opts.projection) {
+            if (opts.projection) {
                 projection = opts.projection;
                 if (isString(projection)) {
-                    projection = g.geo[projection];
-                    if (projection) {
-                        projection(draw, path);
+                    if (g.geo[projection]) {
+                        g.geo[projection](draw, path);
                         return path;
                     }
-                    projection = d3.get[projection];
+                    projection = d3.geo[projection];
                 }
             }
-            if (projection)
-                path.transform(projection);
-            else
-                path.transform(d3.geo.albersUsa);
+            if (!projection)
+                projection = d3.geo.mercator;
 
-            return path;
+            projection = projection()
+                            .scale(scale)
+                            .translate([width, height]);
+
+            return path.projection(projection);
         };
 
         draw.features = function (_) {
             if (!arguments.length) return features;
             features = _;
+            dataFeatures = null;
             return draw;
         };
 
+        draw.graticule = function () {
+            var g = {object: d3.geo.graticule()()};
+            return extend(g, group.options().grid, draw.options().grid);
+        };
+
+        draw.dataFeatures = function () {
+            if (features && (draw.changed() || !dataFeatures))
+                dataFeatures = buildDataFeatures();
+            return dataFeatures;
+        };
+
         return draw;
+
+        function buildDataFeatures () {
+            var mapdata = [],
+                opts = draw.options();
+            features.forEach(function (d) {
+                if (isFunction(d) && isFunction(d.data)) {
+                    var fdata = d.data(draw.data())([]),
+                        scale = d.scale(),
+                        color = d3.scale.quantize()
+                                    .domain(scale.range())
+                                    .range(group.options().colors);
+                    fdata.forEach(function (d) {
+                        if (d.data)
+                            d.fill = color(scale(d.data[1]));
+                        else {
+                            d.active = false;
+                            d.fill = opts.missingFill;
+                        }
+                        mapdata.push(feature(draw, d.data, d));
+                    });
+                }
+                else {
+                    d.active = false;
+                    mapdata.push(feature(draw, null, d));
+                }
+            });
+            return mapdata;
+        }
     }
 
+    // Draw the map on SVG
     g.svg.mapdraw = function () {
         var draw = this,
-            chart = draw.group().element().selectAll("#" + draw.uid()).data([true]),
-            features = draw.features();
+            opts = draw.options(),
+            group = draw.group(),
+            chart = group.element().selectAll("#" + draw.uid()),
+            trans = opts.transition,
+            features = draw.features(),
+            resizing = group.resizing();
 
-        chart.enter().append("path").attr('id', draw.uid());
+        if (!chart.size()) {
+            chart = group.element().append("g").attr('id', draw.uid());
+            resizing = true;
+        }
 
         if (!features)
-            return draw.options().features(function (features) {
+            return opts.features(function (features) {
                 draw.features(features).render();
             });
+
+        var mapdata = draw.dataFeatures();
+        if (opts.grid) {
+            mapdata = mapdata.slice();
+            mapdata.push(draw.graticule());
+        }
+
+        var paths = chart.selectAll('path').data(mapdata),
+            path = draw.path();
+
+        paths.enter().append('path');
+        paths.exit().remove();
+        group.events(paths);
+
+        if (!resizing && trans && trans.duration)
+            paths = paths.transition().duration(trans.duration).ease(trans.ease);
+
+        group.draw(paths)
+            .style('vector-effect', 'non-scaling-stroke')
+            .attr('id', function (d) { return d.object.id;})
+            .attr('d', function (d) {
+                return path(d.object);
+            });
+
+
+        group.on('zoom.map', function () {
+            chart.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+        });
+    };
+
+    g.svg.feature = function (draw, data, feature) {
+        var group = draw.group();
+        feature = drawingData(draw, data, feature);
+
+        feature.render = function (element) {
+            group.draw(element);
+        };
+
+        return feature;
+    };
+
+    // Draw the map on Canvas
+    g.canvas.mapdraw = function () {
+        var draw = this,
+            opts = draw.options(),
+            group = draw.group(),
+            features = draw.features();
+
+        if (!features)
+            return opts.features(function (features) {
+                draw.features(features).render();
+            });
+
+        if (opts.grid) {
+            features = features.slice();
+            features.push(draw.graticule());
+        }
+
+        var path = draw.path(),
+            ctx = group.context();
+
+        path.context(ctx);
+        features.forEach(function (d) {
+            path(d.object);
+        });
+    };
+
+    g.canvas.feature = function (draw, feature) {
+        var group = draw.group();
+
+        feature.render = function (element) {
+            group.draw(element).attr('d', draw.symbol ? draw.symbol : draw.path());
+        };
+
+        return feature;
     };
 
 
-
     g.contextMenu = function () {
-        var menu = {},
-            element = null,
+        var element = null,
             menuElement = null,
             opened = false,
             disabled = false,
             events = d3.dispatch('open', 'close');
 
-        menu.bind = function (element, callback) {
+        function menu (element, callback) {
             init();
             element
                 .on('keyup.gmenu', handleKeyUpEvent)
                 .on('click.gmenu', handleClickEvent)
                 .on('contextmenu.gmenu', handleContextMenu(callback));
-        };
+        }
 
         menu.disabled  = function (x) {
             if (!arguments.length) return disabled;
@@ -7090,15 +7219,16 @@
         }
 
         function handleContextMenu (callback) {
-            return function () {
-                if (disabled) return;
-                var event = d3.event;
-                event.preventDefault();
-                event.stopPropagation();
-                close();
-                element = this;
-                open(event, callback);
-            };
+            if (callback)
+                return function () {
+                    if (disabled) return;
+                    var event = d3.event;
+                    event.preventDefault();
+                    event.stopPropagation();
+                    close();
+                    element = this;
+                    open(event, callback);
+                };
         }
 
         function open (event, callback) {
@@ -7161,9 +7291,10 @@
     g.contextmenu = g.contextMenu();
 
 
-    g.vizplugin(function (viz, opts) {
+    g.vizplugin(function (viz) {
 
         viz.contextmenu = function (menu) {
+            var opts = viz.options();
             menu.append('ul')
                 .attr('class', 'dropdown-menu')
                 .attr('role', 'menu')
@@ -7180,10 +7311,15 @@
                 });
         };
 
-        if (opts.contextmenu)
-            g.contextmenu.bind(viz.element(), function (menu) {
-                return viz.contextmenu(menu);
-            });
+        viz.on('tick.menu', function () {
+            var opts = viz.options();
+            if (opts.contextmenu)
+                g.contextmenu(viz.element(), function (menu) {
+                    return viz.contextmenu(menu);
+                });
+            else
+                g.contextmenu(viz.element());
+        });
     });
 
     // Scapper point chart
@@ -7192,12 +7328,12 @@
         colorOpacity: 1,
         fillOpacity: 0.4,
         lineWidth: 2,
-        transition: extend({}, g.defaults.transition),
         fill: 'color'
     },
 
     function (group, p) {
         var type = group.type();
+        copyMissing(g.defaults.paper.line, p.line);
 
         // Draw a path or an area
         group.path = function (data, opts) {
@@ -7321,13 +7457,15 @@
         var d = canvasMixin(pathdraw(group)),
             scalex = d.scalex,
             scaley = d.scaley,
-            ctx = group.context(),
-            opts, data, active;
+            opts, data, active, ctx;
 
-        d.render = function (context) {
+        d.render = function () {
             opts = d.options();
             data = d.path_data();
-            context = context || ctx;
+            ctx = d.context();
+
+            ctx.save();
+            group.transform(ctx);
 
             if (opts.area) {
                 var background = group.paper().canvasBackground(true).node().getContext('2d');
@@ -7360,13 +7498,9 @@
             }
             ctx.strokeStyle = d.color;
             ctx.lineWidth = group.factor()*d.lineWidth;
-            d.path_line().context(context)(data);
-            context.stroke();
-            return d;
-        };
-
-        d.context = function (context) {
-            ctx = context;
+            d.path_line().context(ctx)(data);
+            ctx.stroke();
+            ctx.restore();
             return d;
         };
 
@@ -7479,7 +7613,6 @@
             //outerRadius: 105%,
             fillOpacity: 1
         },
-        transition: extend({}, g.defaults.transition),
         tooltip: {
             template: function (d) {
                 return "<p><strong>" + d.x + "</strong> " + d.y + "</p>";
@@ -7574,6 +7707,9 @@
         dd.fill = dd.fill || draw.paper().pickColor();
         dd.color = dd.color || d3.rgb(dd.fill).darker().toString();
 
+        d = drawingData(draw, data, d);
+        if (group.type() === 'canvas') d = canvasMixin(d);
+
         d.bbox = function () {
             var bbox = target.getBoundingClientRect(),
                 c1 = Math.sin(d.startAngle),
@@ -7605,7 +7741,7 @@
             function yy(y) {return Math.round(f*(top - y) + bbox.top);}
         };
 
-        return drawingData(draw, data, d);
+        return d;
     }
 
     g.svg.pie = function (draw, width, height) {
@@ -7785,40 +7921,35 @@
     };
 
     g.canvas.pieslice = function (draw, data) {
-        var d = pieSlice(draw, data, canvasMixin({})),
+        var d = pieSlice(draw, data, {}),
             group = draw.group(),
-            factor = draw.factor(),
-            ctx = group.context();
+            factor = draw.factor();
 
-        d.render = function (context) {
-            context = context || ctx;
-            context.save();
-            context.translate(0.5*group.innerWidth(), 0.5*group.innerHeight());
-            context.fillStyle = d3.canvas.rgba(d.fill, d.fillOpacity);
-            context.strokeStyle = d3.canvas.rgba(d.color, d.colorOpacity);
-            context.lineWidth = factor*d.lineWidth;
-            draw.arc.context(context)(d);
-            context.fill();
-            context.stroke();
-            context.restore();
-            return d;
-        };
-
-        d.context = function (context) {
-            ctx = context;
-            return d;
+        d.render = function () {
+            return _draw(function (ctx) {
+                d3.canvas.style(ctx, d);
+                return d;
+            });
         };
 
         d.inRange = function (ex, ey) {
-            ctx.save();
-            ctx.translate(0.5*group.innerWidth(), 0.5*group.innerHeight());
-            draw.arc.context(ctx)(d);
-            var res = ctx.isPointInPath(ex, ey);
-            ctx.restore();
-            return res;
+            return _draw(function (ctx) {
+                return ctx.isPointInPath(ex, ey);
+            });
         };
 
         return d;
+
+        function _draw (callback) {
+            var ctx = d.context();
+            ctx.save();
+            group.transform(ctx);
+            ctx.translate(0.5*group.innerWidth(), 0.5*group.innerHeight());
+            draw.arc.context(ctx)(d);
+            var r = callback(ctx);
+            ctx.restore();
+            return r;
+        }
     };
 
 
@@ -7940,8 +8071,7 @@
             scalex = draw.scalex(),
             scaley = draw.scaley(),
             factor = draw.factor(),
-            group = draw.group(),
-            ctx = draw.group().context();
+            group = draw.group();
 
         function symbol () {
             if (!draw.Symbol)
@@ -7952,26 +8082,17 @@
 
         d.set('size', data.size === undefined ? size : data.size);
 
-        d.render = function (context) {
-            context = context || ctx;
-            context.save();
-            _draw(context);
-            d3.canvas.style(context, d);
-            context.restore();
-            return d;
-        };
-
-        d.context = function (context) {
-            ctx = context;
-            return d;
+        d.render = function () {
+            return _draw(function (ctx) {
+                d3.canvas.style(ctx, d);
+                return d;
+            });
         };
 
         d.inRange = function (ex, ey) {
-            ctx.save();
-            _draw(ctx);
-            var res = ctx.isPointInPath(ex, ey);
-            ctx.restore();
-            return res;
+            return _draw(function (ctx) {
+                return ctx.isPointInPath(ex, ey);
+            });
         };
 
         d.bbox = function () {
@@ -7983,9 +8104,15 @@
 
         return d;
 
-        function _draw (context) {
-            context.translate(scalex(d.data), scaley(d.data));
-            symbol().context(context)(d);
+        function _draw (callback) {
+            var ctx = d.context();
+            ctx.save();
+            group.transform(ctx);
+            ctx.translate(scalex(d.data), scaley(d.data));
+            symbol().context(ctx)(d);
+            var r = callback(ctx);
+            ctx.restore();
+            return r;
         }
     };
 
@@ -7993,124 +8120,95 @@
     //
     //  Tooltip functionality for SVG paper
     g.paper.plugin('tooltip', {
-            className: 'd3-tip',
-            show: false,
-            interact: true,
-            fill: '#deebf7',
-            fillOpacity: 0.8,
-            color: '#222',
-            padding: '8px',
-            radius: '3px',
-            offset: [20, 20],
-            template: function (d) {
-                return "<p><span style='color:"+d.c+"'>" + d.l + "</span>  <strong>" + d.x + ": </strong><span>" + d.y + "</span></p>";
-            },
-            font: {
-                size: '14px'
-            }
+        className: 'd3-tip',
+        fill: '#deebf7',
+        fillOpacity: 0.8,
+        color: '#222',
+        padding: '8px',
+        radius: '3px',
+        offset: [20, 20],
+        template: function (d) {
+            return "<p><span style='color:"+d.c+"'>" + d.l + "</span>  <strong>" + d.x + ": </strong><span>" + d.y + "</span></p>";
         },
+        font: {
+            size: '14px'
+        }
+    },
 
-        function (group, opts) {
-            var paper = group.paper();
+    function (group) {
+        var paper = group.paper();
+        if (!paper.showTooltip) activateTooltip(paper);
+    });
 
-            if (opts.tooltip.show) opts.tooltip.interact = true;
 
-            if (paper.tooltip || !opts.tooltip.interact) return;
+    function activateTooltip (paper) {
+        var opts = paper.options(),
+            tooltip;
 
-            if (!tooltip && opts.tooltip.show) tooltip = gitto_tip(opts).offset(opts.tooltip.offset);
-            if (!tooltip) tooltip = gitto_tip(opts);
+        paper.showTooltip = function () {
+            if (!tooltip) tooltip = gitto_tip(opts).offset(opts.tooltip.offset);
+            show();
+            return paper;
+        };
 
-            paper.tooltip = tooltip;
+        paper.hideTooltip = function () {
+            if (tooltip) tooltip.hide();
+            return paper;
+        };
 
-            var data, draw;
+        paper.removeTooltip = function () {
+            if (tooltip) tooltip.hide();
+            opts.tooltip.show = false;
+            tooltip = null;
+            return paper;
+        };
 
-            if (paper.type() === 'svg') {
-
-                opts.activeEvents.forEach(function (event) {
-                    paper.on(event + '.tooltip', function () {
-                        var el = d3.select(this);
-                        data = el.size() ? el.datum() : null;
-
-                        if (!data || d3.event.type === 'mouseout') {
-                            tooltip.hide(true);
-                        } else if (data && data.reset) {
-                            if (d3.event.active === undefined) {
-                                tooltip.hide(true);
-                                d3.event.active = tooltip.active;
-                            }
-                            tooltip.active.push(el);
-                            data.highLight().render(el);
-                        }
-                    }).on(event + '.tooltip-show', function () {
-                        if (tooltip.active.length) {
-                            var bbox = getScreenBBox(tooltip.active[0].node()),
-                                direction = bbox.tooltip || 'n';
-                            if (tooltip.active.length > 1) {
-                                direction = 'e';
-                                for (var i=1; i<tooltip.active.length; ++i) {
-                                    var bbox2 = getScreenBBox(tooltip.active[i].node());
-                                    bbox[direction].y += bbox2[direction].y;
-                                }
-                                bbox[direction].y /= tooltip.active.length;
-                            }
-                            tooltip.bbox(bbox).direction(direction).show();
-                        }
-                    });
-                });
-            } else {
-
-                var overlay = paper.canvasOverlay();
-
-                opts.activeEvents.forEach(function (event) {
-
-                    overlay.on(event + '.tooltip', function () {
-                        var ctx = this.getContext('2d'),
-                            point,
-                            a;
-
-                        d3.canvas.clear(ctx);
-                        point = d3.canvas.mouse(this);
-                        tooltip.hide();
-
-                        tooltip.active = paper.canvasDataAtPoint(point);
-
-                        if (tooltip.active.length) {
-                            var direction, bbox, bbox2;
-
-                            for (var i=0; i<tooltip.active.length; ++i) {
-                                a = tooltip.active[i];
-                                a.group().transform(ctx);
-                                a.highLight().render(ctx);
-                                if (i && bbox) {
-                                    bbox2 = a.bbox();
-                                    direction = 'e';
-                                    bbox[direction].y += bbox2[direction].y;
-                                } else if (!i) {
-                                    bbox = a.bbox();
-                                    direction = bbox.tooltip || 'n';
-                                }
-                            }
-                            if (bbox) {
-                                bbox[direction].y /= tooltip.active.length;
-                                tooltip.bbox(bbox).direction(direction).show();
-                            }
-                        }
-                    });
-                });
+        paper.on('active.tooltip', function () {
+            if (tooltip) {
+                tooltip.active = this;
+                show();
+            }
+        }).on('activeout.tooltip', function () {
+            if (tooltip) {
+                tooltip.active.splice(0);
+                tooltip.hide();
             }
         });
+
+        paper.task(function () {
+            if (opts.tooltip.show) show();
+        });
+
+        if (opts.tooltip.show) paper.showTooltip();
+
+        function show () {
+            var active = tooltip.active;
+            if (!active.length) return tooltip.hide();
+
+            var bbox = getBbox(active[0]),
+                direction = bbox.tooltip || 'n';
+            if (active.length > 1) {
+                direction = 'e';
+                for (var i=1; i<active.length; ++i) {
+                    var bbox2 = getBbox(active[i]);
+                    bbox[direction].y += bbox2[direction].y;
+                }
+                bbox[direction].y /= active.length;
+            }
+            tooltip.bbox(bbox).direction(direction).show();
+        }
+
+        function getBbox (node) {
+            if (isFunction(node.bbox)) return node.bbox();
+            else return getScreenBBox(node);
+        }
+    }
 
 
     function gitto_tip (options) {
         var opts = options.tooltip,
             font = extend({}, options.font, opts.font),
-            tip = g.tip(),
-            hide = tip.hide;
-
-        if (!opts.show) {
-            tip.show = noop;
-            hide = noop;
-        }
+            tip = g.tip();
 
         tip.active = [];
 
@@ -8136,7 +8234,7 @@
 
             for (var i=0; i<tip.active.length; ++i) {
                 data = tip.active[i];
-                if (data.datum) data = data.datum();
+                if (!data.draw) data = d3.select(data).datum();
                 draw = data.draw();
                 template = tooltip_template(draw);
 
@@ -8149,17 +8247,6 @@
             }
             return html;
         });
-
-        tip.hide = function (render) {
-            for (var i=0; i<tip.active.length; ++i) {
-                var data = tip.active[i];
-                if (data.datum) data = data.datum();
-                data.reset();
-                if (render) data.render(tip.active[i]);
-            }
-            tip.active = [];
-            hide();
-        };
 
         return tip;
 
@@ -8397,6 +8484,104 @@
     var tooltipCss = {'d3-tip:after': {}};
 
     //
+    //  Add zoom functionality to charts
+    g.constants.groupEvents.push('zoom');
+
+    g.chart.plugin('zoom', {
+        x: true,
+        y: true,
+        scaleExtent: [1, 10]
+    },
+
+    function (chart) {
+        var zooming = false;
+
+        chart.zooming = function () {
+            return zooming;
+        };
+
+        // Enable zoom on the chart
+        chart.enableZoom = function () {
+            var opts = chart.options().zoom,
+                zoom = d3.behavior.zoom()
+                    .scaleExtent(opts.scaleExtent)
+                    .on('zoom', function () {
+                        zooming = true;
+                        chart.each(function (serie) {
+                            zoomGroup(serie.group());
+                        });
+                        zooming = false;
+                    });
+
+            if (opts.scaleExtent)
+                zoom.scaleExtent(opts.scaleExtent);
+
+            zoom(chart.element());
+        };
+
+        chart.on('tick.zoom', function () {
+            var zoom = chart.options().zoom;
+
+            //if (zoom.x || zoom.y)
+            //    chart.enableZoom();
+        });
+
+        function zoomGroup (group) {
+            if (scalex) {
+                var x1 = scalex.invert(opts.margin.left),
+                    x2 = scalex.invert(opts.size[0] - opts.margin.right);
+                grid.xaxis().scale().domain([x1, x2]);
+            }
+            if (scaley) {
+                var y1 = scalex.invert(opts.margin.top),
+                    y2 = scalex.invert(opts.size[1] - opts.margin.bottom);
+                grid.yaxis().scale().domain([y1, y2]);
+            }
+            paper.render();
+
+        }
+
+        function __() {
+            var factor = grid.factor();
+
+            if (factor === 1) {
+                if (opts.grid.zoomx)
+                    zoom.x(grid.xaxis().scale());
+
+                if (opts.grid.zoomy)
+                    zoom.y(grid.yaxis().scale());
+            } else {
+
+                if (opts.grid.zoomx) {
+                    scalex = grid.xaxis().scale().copy();
+                    var x1 = scalex.invert(-factor*opts.margin.left),
+                        x2 = scalex.invert(factor*(opts.size[0] - opts.margin.left));
+                    scalex.domain([x1, x2]).range([0, opts.size[0]]);
+                    zoom.x(scalex);
+                }
+
+                if (opts.grid.zoomy) {
+                    scaley = grid.yaxis().scale().copy();
+                    var y1 = scaley.invert(-factor*opts.margin.left),
+                        y2 = scaley.invert(factor*(opts.size[1] - opts.margin.bottom));
+                    scaley.domain([y1, y2]).range([opts.size[1], 0]);
+                    zoom.y(scaley);
+                }
+            }
+        }
+    });
+
+var NS = NS || {};
+NS["src/text/giotto.min.css"] = "@charset \"UTF-8\";.sunburst text{z-index:9999}.sunburst path{stroke:#fff;fill-rule:evenodd}.axis,.d3-slider-axis line{fill:none;shape-rendering:crispEdges}.line{fill:none}.d3-tip:after{line-height:1;position:absolute;width:100%;display:inline;font-size:16px;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}.d3-tip.n:after{text-align:center;content:\"\\25BC\";top:100%;margin:-2px 0 0;left:0}.d3-tip.e:after{content:\"\\25C0\";top:50%;margin:-4px 0 0;left:-8px}.d3-tip.s:after{text-align:center;content:\"\\25B2\";top:-8px;margin:0 0 2px;left:0}.d3-tip.w:after{content:\"\\25B6\";top:50%;margin:-4px 0 0 -1px;left:100%}.d3-slider{position:relative;z-index:2;font-family:Verdana,Arial,sans-serif;margin:20px;font-size:1.1em;border:1px solid}.d3-slider-horizontal{height:.8em}.d3-slider-horizontal.d3-slider-axis{margin-bottom:30px}.d3-slider-range{position:absolute;height:.8em;right:0;left:0}.d3-slider-range-vertical{position:absolute;right:0;top:0;left:0}.d3-slider-range-vertical.d3-slider-axis{margin-right:30px}.d3-slider-vertical{height:100px;width:.8em}.d3-slider-handle{position:absolute;height:1.2em;width:1.2em;z-index:3;-webkit-border-radius:4px;-moz-border-radius:4px;border-radius:4px;border:1px solid}.d3-slider-horizontal .d3-slider-handle{margin-left:-.6em;top:-.25em}.d3-slider-axis{position:relative;z-index:1}.d3-slider-axis-bottom{top:.8em}.d3-slider-axis-right{left:.8em}.d3-slider-axis path{stroke-width:0;fill:none}.d3-slider-axis text{font-size:11px}.d3-slider-vertical .d3-slider-handle{margin-left:0;margin-bottom:-.6em;left:-.25em}";
+
+    // load Css unless blocked
+    if (root.giottostyle !== false) {
+        var giottostyle = document.createElement("style");
+        giottostyle.innerHTML = NS["src/text/giotto.min.css"];
+        document.getElementsByTagName("head")[0].appendChild(giottostyle);
+    }
+
+    //
     //  Optional Angular Integration
     //  ==================================
     //
@@ -8582,15 +8767,23 @@
         return ag;
     }());
 
+    g.defaults.crossfilter = {
+        tolerance: 1.1
+    };
 
-    g.crossfilter = function (options) {
+    g.crossfilter = function (data, opts, callback) {
+        if (arguments.length === 2 && isFunction(opts)) {
+            callback = opts;
+            opts = {};
+        }
+        opts = extend({}, g.defaults.crossfilter, opts);
+
         var cf = {
-            dims: {},
-            tolerance: options.tolerance === undefined ? g.crossfilter.tolerance : options.tolerance
+            dims: {}
         };
 
         // Add a new dimension to the crossfilter
-        cf.addDimension = function (name, callback) {
+        cf.dimension = function (name, callback) {
             if (!callback) {
                 callback = function (d) {
                     return d[name];
@@ -8666,15 +8859,14 @@
             if (!g.crossfilter.lib)
                 throw Error('Could not find crossfilter library');
 
-            cf.data = g.crossfilter.lib(options.data);
+            data = g.crossfilter.lib(data);
 
             if (g._.isArray(options.dimensions))
                 options.dimensions.forEach(function (o) {
                     cf.addDimension(o);
                 });
 
-            if (options.callback)
-                options.callback(cf);
+            if (callback) callback(cf);
         }
 
         if (g.crossfilter.lib === undefined)
@@ -8695,100 +8887,6 @@
 
     g.crossfilter.tolerance = 1.1;
 
-
-    var fillSpecials = [true, 'none', 'color'];
-
-    function chartColor(paper, opts) {
-        if (!opts.color)
-            if (opts.fill && fillSpecials.indexOf(opts.fill) === -1)
-                opts.color = d3.rgb(opts.fill).darker().toString();
-            else
-                opts.color = paper.pickColor();
-
-        if (opts.fill === true)
-            opts.fill = d3.rgb(opts.color).brighter().toString();
-        else if (opts.fill === 'color')
-            opts.fill = opts.color;
-
-        return opts.color;
-    }
-
-    function pickColor (d) {
-        if (d.fill && fillSpecials.indexOf(opts.fill) === -1)
-            return d.fill;
-        else
-            return d.color;
-    }
-
-    function chartFormats (group, opts, m) {
-        if (!opts.formatX) opts.formatX = formatter(group.xaxis());
-        if (!opts.formatY) opts.formatY = formatter(group.yaxis());
-    }
-
-    function formatter (axis) {
-        var format = axis.tickFormat();
-        if (!format)
-            format = axis.scale().tickFormat ? axis.scale().tickFormat(1000) : d3_identity;
-        return format;
-    }
-
-
-    function _newPaperAttr (element, p) {
-        var width, height;
-
-        if (p) {
-            if (p.__paper__ === element) return p;
-            width = p.width;
-            height = p.height;
-        }
-        else
-            p = {};
-
-        if (isFunction (p.colors))
-            p.colors = p.colors(d3);
-
-        if (!width) {
-            width = getWidth(element);
-            if (width)
-                p.elwidth = getWidthElement(element);
-            else
-                width = g.constants.WIDTH;
-        }
-
-        if (!height) {
-            height = getHeight(element);
-            if (height)
-                p.elheight = getHeightElement(element);
-            else
-                height = g.constants.HEIGHT;
-        }
-        else if (typeof(height) === "string" && height.indexOf('%') === height.length-1) {
-            p.height_percentage = 0.01*parseFloat(height);
-            height = d3.round(p.height_percentage*width);
-        }
-
-        groupMargins(p);
-        copyMissing(g.defaults.paper, p, true);
-        paperAxis(p);
-
-        p.size = [width, height];
-        p.giotto = 'giotto-group';
-
-        element = d3.select(element);
-        var position = element.style('position');
-        if (!position || position === 'static')
-            element.style('position', 'relative');
-        p.__paper__ = element.node();
-
-        return p;
-    }
-
-    function groupMargins (opts) {
-        if (opts.margin !== undefined && !isObject(opts.margin)) {
-            var m = opts.margin;
-            opts.margin = {left: m, right: m, top: m, bottom: m};
-        }
-    }
 
 
     return d3;

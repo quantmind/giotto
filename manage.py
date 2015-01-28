@@ -12,9 +12,9 @@ def argv(*argv):
 
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == 'build_static':
-        args = argv('style', '--cssfile', 'dist/giotto')
-        #if '--nominify' not in sys.argv:
-        #    args.append('--minify')
+        args = argv('style', '--cssfile', 'src/text/giotto')
+        if '--nominify' not in sys.argv:
+            args.append('--minify')
         # Build css file for giotto
         lux.execute_from_config('giottoweb',
                                 argv=args,
