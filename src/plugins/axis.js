@@ -7,33 +7,25 @@
         textAnchor: null,
         //minTickSize: undefined,
         min: null,
-        max: null
+        max: null,
     };
-
-    function axisOptions (opts, value, font) {
-        extend(opts, value);
-        return copyMissing(font, opts);
-    }
-
-    function extendAxis (name) {
-
-        return function (opts, value) {
-            return axisOptions(opts[name], value, opts.font);
-        };
-    }
-
-    g.options.processors.xaxis = extendAxis('xaxis');
-    g.options.processors.yaxis = extendAxis('yaxis');
-    g.options.processors.yaxis2 = extendAxis('yaxis2');
 
     // Axis functionalities for groups
     g.paper.plugin('axis',
 
     function (opts) {
         // Inherit axis properties
-        opts.xaxis = axisOptions(extend({position: 'bottom'}, axisDefaults), opts.xaxis, opts.font);
-        opts.yaxis = axisOptions(extend({position: 'left'}, axisDefaults),  opts.yaxis, opts.font);
-        opts.yaxis2 = axisOptions(extend({position: 'right'}, axisDefaults),  opts.yaxis2, opts.font);
+        var register = registerPlugin([]);
+        register('xaxis', axisOptions(extend({position: 'bottom'}, axisDefaults), opts.xaxis), function (){});
+        register('yaxis', axisOptions(extend({position: 'left'}, axisDefaults),  opts.yaxis), function (){});
+        register('yaxis2', axisOptions(extend({position: 'right'}, axisDefaults),  opts.yaxis2), function (){});
+        opts.pluginOptions(register.plugins);
+
+        function axisOptions (o, value) {
+            extend(o, value);
+            o.font = extend({}, o.font, opts.font);
+            return o;
+        }
     },
 
     function (group, opts) {

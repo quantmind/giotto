@@ -9,6 +9,7 @@
             xaxis: true,
             yaxis: true
         },
+
         function (group) {
             var paper = group.paper(),
                 grid, gopts;

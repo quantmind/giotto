@@ -13,37 +13,32 @@
             if (isFunction (value)) value = value(d3);
             return value;
         },
-        //
-        font: extendOption('font'),
-        //
-        transition: extendOption('transition'),
-        //
+        font: extendOption,
+        transition: extendOption,
         margin: function (opts, value) {
             if (!isObject(value)) value = {left: value, right: value, top: value, bottom: value};
             return value;
         }
     };
 
-    function extendOption (name) {
-
-        return function (opts, value) {
-            if (!isObject(value)) value = {};
-            return extend({}, opts[name], value);
-        };
+    function extendOption (opts, value) {
+        opts || (opts = {});
+        return extend(opts, value);
     }
 
     function initOptions (opts, pluginOptions) {
 
         opts.extend = function (o) {
-            var popts;
+            var popts, opn;
 
+            // Loop through object values
             forEach(o, function (value, name) {
                 if (name.substring(0, 1) !== '_') {
                     popts = pluginOptions[name];
                     if (popts)
                         value = _optionsExtend(opts[name], _pluginOptions(value));
                     else if (g.options.processors[name])
-                        value = g.options.processors[name](opts, value);
+                        value = g.options.processors[name](opts[name], value);
                     opts[name] = value;
                 }
             });
@@ -82,17 +77,18 @@
 
             forEach(source, function (value, name) {
                 if (isObject(value))
-                    value = extend(target[name], value);
+                    value = extendOption(target[name], value);
                 if (g.options.processors[name])
-                    value = g.options.processors[name](opts, value);
+                    value = g.options.processors[name](target[name], value);
                 target[name] = value;
             });
+            return target;
         }
 
-        function _pluginOptions (opts) {
-            if (opts === true) opts = {show: true};
-            else if (!opts) opts = {show: false};
-            else if (opts.show === undefined) opts.show = true;
-            return opts;
+        function _pluginOptions (o) {
+            if (o === true) o = {show: true};
+            else if (!o) o = {show: false};
+            else if (o.show === undefined) o.show = true;
+            return o;
         }
     }

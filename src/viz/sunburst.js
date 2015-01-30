@@ -7,7 +7,9 @@
         // Add the order of labels if available in the data
         addorder: false,
         // speed in transitions
-        transition: 750,
+        transition: {
+            duration: 750
+        },
         //
         scale: 'sqrt',
         //
@@ -192,7 +194,7 @@
             if (!node || node === current) return;
             var opts = self.options();
 
-            if (transition === undefined) transition = +opts.transition;
+            if (transition === undefined) transition = +opts.transition.duration;
 
             if (text) text.transition().attr("opacity", 0);
             //

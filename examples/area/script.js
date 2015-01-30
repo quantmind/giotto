@@ -9,13 +9,9 @@
             y: function (d) {return d.value;}
         },
 
-        grid: {
-            show: true,
-            fill: '#fff'
-        },
+        grid: true,
 
         line: {
-            show: true,
             area: true,
             lineWidth: 1,
             color: '#2ca25f',
@@ -27,19 +23,17 @@
             }
         },
 
-        tooltip: {
-            show: true
-        },
+        tooltip: true,
 
         data: function () {
             return [randomPath(300)];
         },
 
         // Callback for angular directive
-        angular: function (chart, opts) {
+        onInit: function (chart) {
 
             chart.scope().$on('formFieldChange', function (e, form) {
-                opts.type = form.type;
+                opts.options().type = form.type;
                 chart.resume();
             });
         }

@@ -1,15 +1,15 @@
-    // Scapper point chart
+    // Line chart
     g.paper.plugin('line', {
         interpolate: 'cardinal',
         colorOpacity: 1,
         fillOpacity: 0.4,
         lineWidth: 2,
-        fill: 'color'
+        fill: 'color',
+        active: {}
     },
 
     function (group, p) {
         var type = group.type();
-        copyMissing(g.defaults.paper.line, p.line);
 
         // Draw a path or an area
         group.path = function (data, opts) {

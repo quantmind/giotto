@@ -105,7 +105,7 @@
 
     function registerPlugin (plugins) {
 
-        return function (name, defaults, plugin) {
+        var register = function (name, defaults, plugin) {
             if (arguments.length === 3) {
                 plugin.defaults = defaults;
                 plugin.pluginName = name;
@@ -114,4 +114,6 @@
                 plugin = name;
             plugins.push(plugin);
         };
+        register.plugins = plugins;
+        return register;
     }
