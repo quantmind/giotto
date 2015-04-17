@@ -103,6 +103,7 @@
         return d;
     }
 
+    // Create a function for registering plugins
     function registerPlugin (plugins) {
 
         var register = function (name, defaults, plugin) {

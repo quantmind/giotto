@@ -1,38 +1,96 @@
 @charset "UTF-8";
 /*
 ------------------------------------------------------------------
-Created by lux in 0.12 seconds
-Date: 2015-01-30 16:50:32
+Created by lux in 0.07 seconds
+Date: 2015-04-17 17:48:39
 
 http://quantmind.github.io/lux/
 ------------------------------------------------------------------ */
 
-.lazyContainer {
-    position: relative;
+.hljs-comment,.hljs-title{color:#8e908c}.hljs-variable,.hljs-attribute,.hljs-tag,.hljs-regexp,.ruby .hljs-constant,.xml .hljs-tag .hljs-title,.xml .hljs-pi,.xml .hljs-doctype,.html .hljs-doctype,.css .hljs-id,.css .hljs-class,.css .hljs-pseudo{color:#c82829}.hljs-number,.hljs-preprocessor,.hljs-pragma,.hljs-built_in,.hljs-literal,.hljs-params,.hljs-constant{color:#f5871f}.ruby .hljs-class .hljs-title,.css .hljs-rules .hljs-attribute{color:#eab700}.hljs-string,.hljs-value,.hljs-inheritance,.hljs-header,.ruby .hljs-symbol,.xml .hljs-cdata{color:#718c00}.css .hljs-hexcolor{color:#3e999f}.hljs-function,.python .hljs-decorator,.python .hljs-title,.ruby .hljs-function .hljs-title,.ruby .hljs-title .hljs-keyword,.perl .hljs-sub,.javascript .hljs-title,.coffeescript .hljs-title{color:#4271ae}.hljs-keyword,.javascript .hljs-function{color:#8959a8}.hljs{display:block;overflow-x:auto;background:white;color:#4d4d4c;padding:0.5em;-webkit-text-size-adjust:none}.coffeescript .javascript,.javascript .xml,.tex .hljs-formula,.xml .javascript,.xml .vbscript,.xml .css,.xml .hljs-cdata{opacity:0.5}
+body {
+    line-height: 1.5;
+    background: #fff;
+    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+    font-style: normal;
+    color: rgba(0, 0, 0, 0.8);
+    font-size: 16px;
+    min-height: 101%;
+    height: 101%;
 }
 
-.lazyContainer > .content {
+.fullpage {
     min-height: 100%;
-    width: 100%;
-    position: absolute;
-    top: 0;
-    left: 0;
+    height: 100%;
 }
 
 .push-bottom {
     margin-bottom: 20px !important;
 }
 
-.hljs-comment,.hljs-title{color:#8e908c}.hljs-variable,.hljs-attribute,.hljs-tag,.hljs-regexp,.ruby .hljs-constant,.xml .hljs-tag .hljs-title,.xml .hljs-pi,.xml .hljs-doctype,.html .hljs-doctype,.css .hljs-id,.css .hljs-class,.css .hljs-pseudo{color:#c82829}.hljs-number,.hljs-preprocessor,.hljs-pragma,.hljs-built_in,.hljs-literal,.hljs-params,.hljs-constant{color:#f5871f}.ruby .hljs-class .hljs-title,.css .hljs-rules .hljs-attribute{color:#eab700}.hljs-string,.hljs-value,.hljs-inheritance,.hljs-header,.ruby .hljs-symbol,.xml .hljs-cdata{color:#718c00}.css .hljs-hexcolor{color:#3e999f}.hljs-function,.python .hljs-decorator,.python .hljs-title,.ruby .hljs-function .hljs-title,.ruby .hljs-title .hljs-keyword,.perl .hljs-sub,.javascript .hljs-title,.coffeescript .hljs-title{color:#4271ae}.hljs-keyword,.javascript .hljs-function{color:#8959a8}.hljs{display:block;overflow-x:auto;background:white;color:#4d4d4c;padding:0.5em;-webkit-text-size-adjust:none}.coffeescript .javascript,.javascript .xml,.tex .hljs-formula,.xml .javascript,.xml .vbscript,.xml .css,.xml .hljs-cdata{opacity:0.5}
-body {
-    font-style: normal;
-    font-size: 18px;
+.lazyContainer {
+    position: relative;
+}
+
+.lazyContainer > .content {
+    top: 0;
+    position: absolute;
+    width: 100%;
+    left: 0;
+    min-height: 100%;
+}
+
+.navbar {
+    min-height: 50px;
+}
+
+.navbar .navbar-toggle {
+    margin-top: 8px;
+}
+
+.navbar-default {
+    background: #f8f8f8;
+}
+
+.navbar2-wrapper {
+    min-height: 100%;
+    width: 100%;
+}
+
+.navbar2-wrapper > .navbar {
+    margin-bottom: 0;
+}
+
+.navbar2-page {
     background: #fff;
-    font-family: "freight-text-pro",Georgia,Cambria,"Times New Roman",Times,serif;
-    line-height: 1.5;
-    color: rgba(0, 0, 0, 0.8);
-    min-height: 101%;
-    height: 101%;
+    padding: 15px 15px 0;
+}
+
+@media all and (min-width:768px) {
+    .navbar2-page {
+        margin: 0 0 0 200px;
+    }
+
+    .navbar2-wrapper.navbar-default .navbar2-page {
+        border-left: 1px solid #e7e7e7;
+    }
+
+}
+@media all and (min-width:768px) {
+    .sidebar {
+        position: absolute;
+        width: 200px;
+        margin-top: 51px;
+        z-index: 1;
+    }
+
+}
+.nav-second-level li a {
+    padding-left: 37px;
+}
+
+.nav.navbar-nav > li > a {
+    outline: none;
 }
 
 p.form-error {
@@ -43,35 +101,32 @@ p.form-error {
     display: none;
 }
 
+.form-group .error-block,
+form {
+    font-size: 14px;
+}
+
 .form-group.has-error .help-block.active,
 .form-error span {
     display: block;
 }
 
-.nav-second-level li a {
-    padding-left: 37px;
-}
-
-.nav.navbar-nav > li > a {
-    outline: none;
-}
-
 .katex-outer {
-    display: block;
+    margin-bottom: 10px;
     margin-left: auto;
+    display: block;
     margin-right: auto;
     margin-bottom: 10px;
-    display: block;
     margin-left: auto;
+    display: block;
     margin-right: auto;
-    margin-bottom: 10px;
 }
 
 code.hljs.inline {
-    display: inline;
     padding: 2px 4px;
     display: inline;
     padding: 2px 4px;
+    display: inline;
 }
 
 dl dd {
@@ -101,10 +156,8 @@ dl.function dt tt.descname {
 dl.class dt,
 dl.function dt {
     font-weight: normal;
-    font-size: 18px;
     color: #888;
     font-weight: normal;
-    font-size: 18px;
     color: #888;
 }
 
@@ -117,47 +170,6 @@ dl.function dt {
     display: none !important;
 }
 
-.navbar {
-    min-height: 50px;
-}
-
-.navbar .navbar-toggle {
-    margin-top: 8px;
-}
-
-.navbar-default {
-    background: #f8f8f8;
-}
-
-.navbar2-wrapper {
-    min-height: 100%;
-    width: 100%;
-}
-
-.navbar2-page {
-    background: #fff;
-    padding: 70px 15px 0;
-}
-
-@media all and (min-width:768px) {
-    .navbar2-page {
-        margin: 0 0 0 200px;
-    }
-
-    .navbar2-wrapper.navbar-default .navbar2-page {
-        border-left: 1px solid #e7e7e7;
-    }
-
-}
-@media all and (min-width:768px) {
-    .sidebar {
-        width: 200px;
-        position: absolute;
-        z-index: 1;
-        margin-top: 51px;
-    }
-
-}
 .scroll-target {
     background: #99EBFF;
 }
@@ -171,8 +183,8 @@ dl.function dt {
 }
 
 .media-list > .media > a {
-    text-decoration: none;
     color: #808080;
+    text-decoration: none;
 }
 
 .media-list > .media > a .post-body {
@@ -186,15 +198,15 @@ dl.function dt {
 
 .post-image {
     width: 140px;
-    float: left;
     height: auto;
     max-height: 140px;
+    float: left;
 }
 
 .post-image-xs {
-    width: auto;
     max-height: 150px;
     max-width: 90%;
+    width: auto;
 }
 
 h1:hover > a.headerlink,
@@ -208,10 +220,10 @@ dt:hover > a.headerlink {
 }
 
 a.headerlink {
-    text-decoration: none;
-    color: #eee;
-    visibility: hidden;
     padding: 0 4px;
+    visibility: hidden;
+    color: #eee;
+    text-decoration: none;
 }
 
 a.headerlink:hover {
@@ -223,8 +235,8 @@ a.headerlink:hover {
 }
 
 div.viewcode-block:target {
-    margin: -1px -10px;
     padding: 0 10px;
+    margin: -1px -10px;
 }
 
 table.docutils.field-list th {
@@ -241,11 +253,11 @@ table.docutils.field-list th {
 }
 
 .page-header.index-header {
-    width: 101%;
+    min-height: 100%;
     background: #333;
     margin: 0;
-    min-height: 100%;
     height: 101%;
+    width: 101%;
     color: #fff;
 }
 
@@ -255,10 +267,6 @@ html,
     height: 101%;
 }
 
-form {
-    font-size: 14px;
-}
-
 #page-main {
     min-height: 400px;
     padding-bottom: 50px;
@@ -266,9 +274,9 @@ form {
 
 #footer {
     min-height: 300px;
-    padding: 30px 0 40px;
     background: #333;
     color: #b3b3b3;
+    padding: 30px 0 40px;
 }
 
 #lux-logo {
@@ -286,9 +294,9 @@ form {
 }
 
 .trianglify-box {
+    padding: 20px;
     max-width: 400px;
     background: rgba(255, 255, 255, 0.6);
-    padding: 20px;
     -webkit-border-radius: 5px;
        -moz-border-radius: 5px;
             border-radius: 5px;
@@ -298,9 +306,9 @@ form {
 }
 
 .features article {
+    padding: 30px;
     width: 33.33%;
     float: left;
-    padding: 30px;
 }
 
 .features article:before {
@@ -340,14 +348,14 @@ form {
 
 #page-error a,
 #page-error a:hover {
-    text-decoration: underline;
     color: #fff;
+    text-decoration: underline;
 }
 
 .error-message-container {
-    background: rgba(0, 0, 0, 0.4);
-    height: 100%;
     padding: 40px 120px;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
     -webkit-box-sizing: border-box;
        -moz-box-sizing: border-box;
             box-sizing: border-box;
@@ -363,8 +371,8 @@ form {
     }
 
     .error-message-container {
-        text-align: center;
         padding: 40px 0;
+        text-align: center;
     }
 
 }

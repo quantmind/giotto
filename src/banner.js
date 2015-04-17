@@ -26,7 +26,7 @@
         factory(d3, root);
     }
 }(function(d3, root) {
-    "use strict";
+    //"use strict";
     var giotto = {
             version: "<%= pkg.version %>",
             d3: d3,
