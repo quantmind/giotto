@@ -4,13 +4,11 @@
         min_height: 250,
 
         grid: {
-            show: true,
             fill: '#fff',
             fillOpacity: 1
         },
 
         line: {
-            show: true,
             area: true,
             lineWidth: 1,
             fillOpacity: 0.8,
@@ -27,7 +25,7 @@
         },
 
         // Callback for angular directive
-        angular: function (chart) {
+        onInit: function (chart) {
 
             chart.scope().$on('formFieldChange', function (e, form) {
                 chart.options().type = form.type;

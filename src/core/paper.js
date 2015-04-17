@@ -85,6 +85,8 @@
                 d3.canvas.clear(back.getContext('2d'));
             if (over)
                 d3.canvas.clear(over.getContext('2d'));
+            if (p.fill)
+                paper.element().style('background', p.fill);
             paper.each(function () {
                 this.render();
             });

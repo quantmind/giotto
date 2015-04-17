@@ -5,9 +5,11 @@
         lineWidth: 1,
         textRotate: 0,
         textAnchor: null,
+        color: '#444',
+        colorOpacity: 1,
         //minTickSize: undefined,
         min: null,
-        max: null,
+        max: null
     };
 
     // Axis functionalities for groups
@@ -99,6 +101,7 @@
                     scale = group.ordinalScale(axis, ranges[i]);
                 } else {
                     o.auto = isNull(o.min) || isNull(o.max);
+                    if (o.scale === 'time') scale = axis.scale(d3.time.scale()).scale();
                     scale.range(ranges[i]);
                 }
 
@@ -109,9 +112,14 @@
                       .tickPadding(tickPadding)
                       .orient(o.position);
 
+                //if (!o.tickFormat && o.scale === 'time') o.tickFormat = '%Y-%m-%d';
+
                 if (o.tickFormat) {
                     var f = o.tickFormat;
-                    if (isString(f)) f = d3.format(f);
+                    if (isString(f)) {
+                        if (o.scale === 'time') f = d3.time.format(f);
+                        else f = d3.format(f);
+                    }
                     axis.tickFormat(f);
                 }
             });
@@ -126,7 +134,8 @@
             var x =0,
                 y = 0,
                 ax = group.element().select('.' + xy),
-                opts = this.options();
+                opts = this.options(),
+                font = opts.font;
             if (opts.show === false) {
                 ax.remove();
                 return;
@@ -144,7 +153,7 @@
                  .attr('stroke-opacity', this.colorOpacity)
                  .attr('stroke-width', this.lineWidth)
                  .attr('fill', 'none');
-            if (opts.size === 0)
+            if (!font)
                 ax.selectAll('text').remove();
             else {
                 var text = ax.selectAll('text');
@@ -156,7 +165,7 @@
                     text.attr('dx', opts.dx);
                 if (opts.dy)
                     text.attr('dy', opts.dy);
-                svg_font(text, opts);
+                svg_font(text, font);
             }
             return ax;
         });
@@ -165,24 +174,27 @@
 
     g.canvas.axis = function (group, axis, xy) {
         var d = canvasMixin(drawing(group)),
-            opts, ctx;
+            ctx;
 
         d.render = function () {
-            ctx = d.context();
-            opts = d.options();
-            if (opts.show === false) return d;
-
             var x = 0,
                 y = 0,
-                size = opts.size;
+                ctx = d.context(),
+                opts = d.options(),
+                font = opts.font;
+
+            if (!opts.show) return d;
 
             ctx.save();
             group.transform(ctx);
 
             // size of font
-            opts.size = group.scale(group.dim(size)) + 'px';
-            ctx.font = fontString(opts);
-            opts.size = size;
+            if (font) {
+                var size = font.size;
+                font.size = group.scale(group.dim(size)) + 'px';
+                ctx.font = fontString(font);
+                font.size = size;
+            }
 
             ctx.strokeStyle = d3.canvas.rgba(d.color, d.colorOpacity);
             ctx.fillStyle = d.color;

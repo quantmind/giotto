@@ -2,6 +2,9 @@
     g.createviz('chart', {
         margin: {top: 30, right: 30, bottom: 30, left: 30},
         chartTypes: ['map', 'pie', 'bar', 'line', 'point', 'custom'],
+        xaxis: true,
+        yaxis: true,
+        yaxis2: true,
         serie: {
             x: function (d) {return d[0];},
             y: function (d) {return d[1];}
@@ -12,7 +15,6 @@
 
         var series = [],
             allranges = {},
-            clean = true,
             drawing;
 
         chart.numSeries = function () {
@@ -53,16 +55,10 @@
             drawing = true;
 
             if (opts.type !== paper.type()) {
-                clean = true;
                 paper = chart.paper(true);
                 chart.each(function (serie) {
                     serie.clear();
                 });
-            }
-
-            if (clean) {
-                clean = false;
-                if (opts.fill) paper.group({margin: 0}).fill(opts.fill);
             }
 
             chart.each(function (serie) {

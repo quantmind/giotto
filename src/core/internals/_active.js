@@ -9,9 +9,15 @@
             index;
 
         paper.activeOut = function (d) {
-            if (activeOut.indexOf(d) === -1) activeOut.push(d);
-            var index = activeIn.indexOf(d);
-            if (index > -1) activeIn.splice(index, 1);
+            if (!arguments.length) {
+                activeElements.forEach(function (a) {
+                    paper.activeOut(a);
+                });
+            } else {
+                if (activeOut.indexOf(d) === -1) activeOut.push(d);
+                var index = activeIn.indexOf(d);
+                if (index > -1) activeIn.splice(index, 1);
+            }
             return paper;
         };
 
@@ -81,10 +87,14 @@
 
         function activeSvg (paper, el) {
             var data = el.datum();
-            if (!data || !data.highlighted) return;
+            if (!data || !data.highlighted)
+                return paper.activeOut();
+
             var node = el.node();
 
             if (d3.event.type === 'mouseout')
+                paper.activeOut(node);
+            else if (d3.event.type === 'mouseout')
                 paper.activeOut(node);
             else
                 paper.activeIn(node);

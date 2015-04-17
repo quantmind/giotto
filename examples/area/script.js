@@ -33,7 +33,7 @@
         onInit: function (chart) {
 
             chart.scope().$on('formFieldChange', function (e, form) {
-                opts.options().type = form.type;
+                chart.options().type = form.type;
                 chart.resume();
             });
         }

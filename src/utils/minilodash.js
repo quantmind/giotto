@@ -175,6 +175,10 @@
         return ostring.call(value) === '[object Array]';
     },
     //
+    isDate = _.isDate = function (value) {
+        return ostring.call(value) === '[object Date]';
+    },
+    //
     isNull = _.isNull = function (value) {
         return value === undefined || value === null;
     },

@@ -29,7 +29,8 @@
 
     function formatter (axis) {
         var format = axis.tickFormat();
-        if (!format)
+        if (!format) {
             format = axis.scale().tickFormat ? axis.scale().tickFormat(1000) : d3_identity;
+        }
         return format;
     }

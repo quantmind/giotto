@@ -1,6 +1,6 @@
 //      GiottoJS - v0.1.0
 
-//      Compiled 2015-01-30.
+//      Compiled 2015-03-24.
 //      Copyright (c) 2015 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -607,6 +607,10 @@
     //
     isArray = _.isArray = function (value) {
         return ostring.call(value) === '[object Array]';
+    },
+    //
+    isDate = _.isDate = function (value) {
+        return ostring.call(value) === '[object Date]';
     },
     //
     isNull = _.isNull = function (value) {
@@ -2575,9 +2579,15 @@
             index;
 
         paper.activeOut = function (d) {
-            if (activeOut.indexOf(d) === -1) activeOut.push(d);
-            var index = activeIn.indexOf(d);
-            if (index > -1) activeIn.splice(index, 1);
+            if (!arguments.length) {
+                activeElements.forEach(function (a) {
+                    paper.activeOut(a);
+                });
+            } else {
+                if (activeOut.indexOf(d) === -1) activeOut.push(d);
+                var index = activeIn.indexOf(d);
+                if (index > -1) activeIn.splice(index, 1);
+            }
             return paper;
         };
 
@@ -2647,10 +2657,14 @@
 
         function activeSvg (paper, el) {
             var data = el.datum();
-            if (!data || !data.highlighted) return;
+            if (!data || !data.highlighted)
+                return paper.activeOut();
+
             var node = el.node();
 
             if (d3.event.type === 'mouseout')
+                paper.activeOut(node);
+            else if (d3.event.type === 'mouseout')
                 paper.activeOut(node);
             else
                 paper.activeIn(node);
@@ -2709,8 +2723,9 @@
 
     function formatter (axis) {
         var format = axis.tickFormat();
-        if (!format)
+        if (!format) {
             format = axis.scale().tickFormat ? axis.scale().tickFormat(1000) : d3_identity;
+        }
         return format;
     }
 
@@ -2828,12 +2843,19 @@
             }
             else
                 plugin = name;
+            if (!isFunction(plugin.options)) plugin.options = PluginOptions;
             plugins.push(plugin);
         };
         register.plugins = plugins;
         return register;
     }
 
+    function PluginOptions (o) {
+        if (o === true) o = {show: true};
+        else if (!o) o = {show: false};
+        else if (o.show === undefined) o.show = true;
+        return o;
+    }
 
     function _paperSize (element, p) {
         var width, height;
@@ -3240,6 +3262,8 @@
                 d3.canvas.clear(back.getContext('2d'));
             if (over)
                 d3.canvas.clear(over.getContext('2d'));
+            if (p.fill)
+                paper.element().style('background', p.fill);
             paper.each(function () {
                 this.render();
             });
@@ -4295,6 +4319,9 @@
     g.createviz('chart', {
         margin: {top: 30, right: 30, bottom: 30, left: 30},
         chartTypes: ['map', 'pie', 'bar', 'line', 'point', 'custom'],
+        xaxis: true,
+        yaxis: true,
+        yaxis2: true,
         serie: {
             x: function (d) {return d[0];},
             y: function (d) {return d[1];}
@@ -4305,7 +4332,6 @@
 
         var series = [],
             allranges = {},
-            clean = true,
             drawing;
 
         chart.numSeries = function () {
@@ -4346,16 +4372,10 @@
             drawing = true;
 
             if (opts.type !== paper.type()) {
-                clean = true;
                 paper = chart.paper(true);
                 chart.each(function (serie) {
                     serie.clear();
                 });
-            }
-
-            if (clean) {
-                clean = false;
-                if (opts.fill) paper.group({margin: 0}).fill(opts.fill);
             }
 
             chart.each(function (serie) {
@@ -5724,9 +5744,11 @@
         lineWidth: 1,
         textRotate: 0,
         textAnchor: null,
+        color: '#444',
+        colorOpacity: 1,
         //minTickSize: undefined,
         min: null,
-        max: null,
+        max: null
     };
 
     // Axis functionalities for groups
@@ -5818,6 +5840,7 @@
                     scale = group.ordinalScale(axis, ranges[i]);
                 } else {
                     o.auto = isNull(o.min) || isNull(o.max);
+                    if (o.scale === 'time') scale = axis.scale(d3.time.scale()).scale();
                     scale.range(ranges[i]);
                 }
 
@@ -5828,9 +5851,14 @@
                       .tickPadding(tickPadding)
                       .orient(o.position);
 
+                //if (!o.tickFormat && o.scale === 'time') o.tickFormat = '%Y-%m-%d';
+
                 if (o.tickFormat) {
                     var f = o.tickFormat;
-                    if (isString(f)) f = d3.format(f);
+                    if (isString(f)) {
+                        if (o.scale === 'time') f = d3.time.format(f);
+                        else f = d3.format(f);
+                    }
                     axis.tickFormat(f);
                 }
             });
@@ -5845,7 +5873,8 @@
             var x =0,
                 y = 0,
                 ax = group.element().select('.' + xy),
-                opts = this.options();
+                opts = this.options(),
+                font = opts.font;
             if (opts.show === false) {
                 ax.remove();
                 return;
@@ -5863,7 +5892,7 @@
                  .attr('stroke-opacity', this.colorOpacity)
                  .attr('stroke-width', this.lineWidth)
                  .attr('fill', 'none');
-            if (opts.size === 0)
+            if (!font)
                 ax.selectAll('text').remove();
             else {
                 var text = ax.selectAll('text');
@@ -5875,7 +5904,7 @@
                     text.attr('dx', opts.dx);
                 if (opts.dy)
                     text.attr('dy', opts.dy);
-                svg_font(text, opts);
+                svg_font(text, font);
             }
             return ax;
         });
@@ -5884,24 +5913,27 @@
 
     g.canvas.axis = function (group, axis, xy) {
         var d = canvasMixin(drawing(group)),
-            opts, ctx;
+            ctx;
 
         d.render = function () {
-            ctx = d.context();
-            opts = d.options();
-            if (opts.show === false) return d;
-
             var x = 0,
                 y = 0,
-                size = opts.size;
+                ctx = d.context(),
+                opts = d.options(),
+                font = opts.font;
+
+            if (!opts.show) return d;
 
             ctx.save();
             group.transform(ctx);
 
             // size of font
-            opts.size = group.scale(group.dim(size)) + 'px';
-            ctx.font = fontString(opts);
-            opts.size = size;
+            if (font) {
+                var size = font.size;
+                font.size = group.scale(group.dim(size)) + 'px';
+                ctx.font = fontString(font);
+                font.size = size;
+            }
 
             ctx.strokeStyle = d3.canvas.rgba(d.color, d.colorOpacity);
             ctx.fillStyle = d.color;

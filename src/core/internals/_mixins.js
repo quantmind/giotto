@@ -112,8 +112,16 @@
             }
             else
                 plugin = name;
+            if (!isFunction(plugin.options)) plugin.options = PluginOptions;
             plugins.push(plugin);
         };
         register.plugins = plugins;
         return register;
+    }
+
+    function PluginOptions (o) {
+        if (o === true) o = {show: true};
+        else if (!o) o = {show: false};
+        else if (o.show === undefined) o.show = true;
+        return o;
     }
