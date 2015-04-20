@@ -75,12 +75,20 @@ module.exports = function (grunt) {
         str2js: {
             NS: { 'src/text/text.js': ['src/text/giotto.min.css']}
         },
+        bowerRequirejs: {
+            target: {
+                rjsConfig: 'vendor/require-config.js'
+            },
+            options: {
+                baseUrl: './'
+            }
+        },
         concat: concats,
         uglify: uglify_libs(),
         jshint: jshint_libs(),
         jasmine: {
             test: {
-                src : 'dist/giotto.min.js',
+                src : 'dist/giotto.js',
                 options : {
                     specs : 'src/tests/*.js',
                     template: 'src/tests/test.tpl.html'
@@ -137,11 +145,12 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-contrib-jasmine');
     grunt.loadNpmTasks('grunt-coveralls');
+    grunt.loadNpmTasks('grunt-bower-requirejs');
     //
     grunt.registerTask('gruntfile', 'jshint Gruntfile.js',
             ['jshint:gruntfile']);
     grunt.registerTask('build', 'Compile and lint all libraries',
-            ['gruntfile', 'str2js', 'concat', 'jshint', 'uglify']);
+            ['gruntfile', 'str2js', 'bowerRequirejs', 'concat', 'jshint', 'uglify']);
     grunt.registerTask('coverage', 'Test coverage using Jasmine and Istanbul',
             ['jasmine:coverage']);
     grunt.registerTask('all', 'Compile lint and test all libraries',

@@ -24,7 +24,7 @@ EXTENSIONS = ['lux.extensions.base',
               'lux.extensions.code',
               'giottoweb.giotto']
 HTML_LINKS = ['giottoweb/giottoweb.css']
-REQUIREJS = ['.giottoweb/giottoweb.js']
+SCRIPTS = ['giottoweb/giottoweb']
 
 HTML_META = [{'http-equiv': 'X-UA-Compatible',
               'content': 'IE=edge'},
@@ -39,6 +39,9 @@ LINKS = {'AngularJS': 'https://angularjs.org/',
 
 OAUTH_PROVIDERS = {'google': {'analytics': {'id': 'UA-54439804-4'}},
                    'twitter': {'site': '@quantmind'}}
+
+bind = ':9060'
+workers = 0
 
 
 from os import path
@@ -82,10 +85,10 @@ class Extension(lux.Extension):
                                dir='giottoweb/content/site',
                                meta=meta_default)
         dist = MediaBuilder(media_url+'giotto', 'dist', lux=False)
+        vendor = MediaBuilder(media_url+'vendor', 'vendor', lux=False)
         data = MediaBuilder('data', 'giottoweb/content/data', lux=False)
-        return [dist, data, examples]
+        return [dist, vendor, data, examples]
 
     def on_html_document(self, app, request, doc):
         doc.head.scripts.paths['d3-geo-projection'] = 'giottoweb/d3-geo-projection/d3.geo.projection'
         doc.head.embedded_js.append('var gexamples = {}, giottoQueue = [];\n')
-

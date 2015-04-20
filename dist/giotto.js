@@ -1,6 +1,6 @@
-//      GiottoJS - v0.1.0
+//      GiottoJS - v0.2.0
 
-//      Compiled 2015-04-17.
+//      Compiled 2015-04-20.
 //      Copyright (c) 2015 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -28,7 +28,7 @@
 }(function(d3, root) {
     //"use strict";
     var giotto = {
-            version: "0.1.0",
+            version: "0.2.0",
             d3: d3,
             math: {},
             svg: {},
@@ -8514,14 +8514,15 @@
     g.constants.groupEvents.push('zoom');
 
     g.chart.plugin('zoom', {
-        x: true,
-        y: true,
+        x: false,
+        y: false,
         scaleExtent: [1, 10]
     },
 
     function (chart) {
         var zooming = false;
 
+        // Return true whan the chart is performing a zoom operation
         chart.zooming = function () {
             return zooming;
         };
@@ -8534,7 +8535,7 @@
                     .on('zoom', function () {
                         zooming = true;
                         chart.each(function (serie) {
-                            zoomGroup(serie.group());
+                            zoomGroup(zoom, serie.group(), opts);
                         });
                         zooming = false;
                     });
@@ -8547,24 +8548,19 @@
 
         chart.on('tick.zoom', function () {
             var zoom = chart.options().zoom;
-
-            //if (zoom.x || zoom.y)
-            //    chart.enableZoom();
+            if (zoom.x || zoom.y)
+                chart.enableZoom();
         });
 
-        function zoomGroup (group) {
-            if (scalex) {
-                var x1 = scalex.invert(opts.margin.left),
-                    x2 = scalex.invert(opts.size[0] - opts.margin.right);
-                grid.xaxis().scale().domain([x1, x2]);
+        // Perform zoom for one group
+        function zoomGroup (zoom, group, opts) {
+            if (opts.x) {
+                zoom.x(group.xaxis().scale());
             }
-            if (scaley) {
-                var y1 = scalex.invert(opts.margin.top),
-                    y2 = scalex.invert(opts.size[1] - opts.margin.bottom);
-                grid.yaxis().scale().domain([y1, y2]);
+            if (opts.y) {
+                zoom.y(group.yaxis().scale());
             }
-            paper.render();
-
+            group.render();
         }
 
         function __() {
@@ -8598,7 +8594,7 @@
     });
 
 var NS = NS || {};
-NS["src/text/giotto.min.css"] = '@charset "UTF-8";.sunburst text{z-index:9999}.sunburst path{stroke:#fff;fill-rule:evenodd}.axis,.d3-slider-axis line{fill:none;shape-rendering:crispEdges}.line{fill:none}.d3-tip:after{line-height:1;font-size:16px;position:absolute;display:inline;width:100%;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}.d3-tip.n:after{top:100%;text-align:center;left:0;content:"\25BC";margin:-2px 0 0}.d3-tip.e:after{top:50%;left:-8px;content:"\25C0";margin:-4px 0 0}.d3-tip.s:after{top:-8px;text-align:center;left:0;content:"\25B2";margin:0 0 2px}.d3-tip.w:after{top:50%;left:100%;content:"\25B6";margin:-4px 0 0 -1px}.d3-slider{z-index:2;font-size:1.1em;position:relative;font-family:Verdana,Arial,sans-serif;margin:20px;border:1px solid}.d3-slider-horizontal{height:.8em}.d3-slider-horizontal.d3-slider-axis{margin-bottom:30px}.d3-slider-range{position:absolute;left:0;right:0;height:.8em}.d3-slider-range-vertical{top:0;position:absolute;left:0;right:0}.d3-slider-range-vertical.d3-slider-axis{margin-right:30px}.d3-slider-vertical{height:100px;width:.8em}.d3-slider-handle{z-index:3;position:absolute;height:1.2em;width:1.2em;-webkit-border-radius:4px;-moz-border-radius:4px;border-radius:4px;border:1px solid}.d3-slider-horizontal .d3-slider-handle{top:-.25em;margin-left:-.6em}.d3-slider-axis{z-index:1;position:relative}.d3-slider-axis-bottom{top:.8em}.d3-slider-axis-right{left:.8em}.d3-slider-axis path{fill:none;stroke-width:0}.d3-slider-axis text{font-size:11px}.d3-slider-vertical .d3-slider-handle{margin-left:0;margin-bottom:-.6em;left:-.25em}';
+NS["src/text/giotto.min.css"] = '@charset "UTF-8";.sunburst text{z-index:9999}.sunburst path{stroke:#fff;fill-rule:evenodd}.axis,.d3-slider-axis line{shape-rendering:crispEdges;fill:none}.line{fill:none}.d3-tip:after{font-size:16px;line-height:1;display:inline;position:absolute;width:100%;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}.d3-tip.n:after{content:"\\25BC";margin:-2px 0 0;top:100%;text-align:center;left:0}.d3-tip.e:after{content:"\\25C0";margin:-4px 0 0;top:50%;left:-8px}.d3-tip.s:after{content:"\\25B2";margin:0 0 2px;top:-8px;text-align:center;left:0}.d3-tip.w:after{content:"\\25B6";margin:-4px 0 0 -1px;top:50%;left:100%}.d3-slider{z-index:2;margin:20px;font-size:1.1em;position:relative;font-family:Verdana,Arial,sans-serif;border:1px solid}.d3-slider-horizontal{height:.8em}.d3-slider-horizontal.d3-slider-axis{margin-bottom:30px}.d3-slider-range{left:0;height:.8em;position:absolute;right:0}.d3-slider-range-vertical{left:0;top:0;position:absolute;right:0}.d3-slider-range-vertical.d3-slider-axis{margin-right:30px}.d3-slider-vertical{height:100px;width:.8em}.d3-slider-handle{z-index:3;position:absolute;height:1.2em;width:1.2em;-webkit-border-radius:4px;-moz-border-radius:4px;border-radius:4px;border:1px solid}.d3-slider-horizontal .d3-slider-handle{top:-.25em;margin-left:-.6em}.d3-slider-axis{z-index:1;position:relative}.d3-slider-axis-bottom{top:.8em}.d3-slider-axis-right{left:.8em}.d3-slider-axis path{stroke-width:0;fill:none}.d3-slider-axis text{font-size:11px}.d3-slider-vertical .d3-slider-handle{left:-.25em;margin-bottom:-.6em;margin-left:0}';
 
     // load Css unless blocked
     if (root.giottostyle !== false) {

@@ -7,7 +7,7 @@
         "name": "Luca Sbardella",
         "email": "luca.sbardella@gmail.com"
     },
-    "version": "0.1.0",
+    "version": "0.2.0",
     "repository": {
         "type": "git",
         "url": "https://github.com/quantmind/giotto"
@@ -34,7 +34,8 @@
         "grunt-template-jasmine-istanbul": "",
         "grunt-coveralls": "",
         "grunt-contrib-jasmine": "",
-        "grunt-string-to-js": ""
+        "grunt-string-to-js": "",
+        "grunt-bower-requirejs": ""
     },
     "scripts": {
         "test": "grunt jasmine && grunt coveralls"

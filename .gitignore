@@ -1,4 +1,7 @@
+# javascript
 node_modules
+vendor
+
 .project
 .pydevproject
 .grunt

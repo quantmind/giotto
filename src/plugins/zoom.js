@@ -3,14 +3,15 @@
     g.constants.groupEvents.push('zoom');
 
     g.chart.plugin('zoom', {
-        x: true,
-        y: true,
+        x: false,
+        y: false,
         scaleExtent: [1, 10]
     },
 
     function (chart) {
         var zooming = false;
 
+        // Return true whan the chart is performing a zoom operation
         chart.zooming = function () {
             return zooming;
         };
@@ -23,7 +24,7 @@
                     .on('zoom', function () {
                         zooming = true;
                         chart.each(function (serie) {
-                            zoomGroup(serie.group());
+                            zoomGroup(zoom, serie.group(), opts);
                         });
                         zooming = false;
                     });
@@ -36,24 +37,19 @@
 
         chart.on('tick.zoom', function () {
             var zoom = chart.options().zoom;
-
-            //if (zoom.x || zoom.y)
-            //    chart.enableZoom();
+            if (zoom.x || zoom.y)
+                chart.enableZoom();
         });
 
-        function zoomGroup (group) {
-            if (scalex) {
-                var x1 = scalex.invert(opts.margin.left),
-                    x2 = scalex.invert(opts.size[0] - opts.margin.right);
-                grid.xaxis().scale().domain([x1, x2]);
+        // Perform zoom for one group
+        function zoomGroup (zoom, group, opts) {
+            if (opts.x) {
+                zoom.x(group.xaxis().scale());
             }
-            if (scaley) {
-                var y1 = scalex.invert(opts.margin.top),
-                    y2 = scalex.invert(opts.size[1] - opts.margin.bottom);
-                grid.yaxis().scale().domain([y1, y2]);
+            if (opts.y) {
+                zoom.y(group.yaxis().scale());
             }
-            paper.render();
-
+            group.render();
         }
 
         function __() {

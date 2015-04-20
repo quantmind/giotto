@@ -1,0 +1,48 @@
+{
+  "name": "giotto",
+  "version": "0.2.0",
+  "homepage": "https://github.com/quantmind/giotto",
+  "description": "GiottoJS - Visualization Library",
+  "main": "dist/giotto.js",
+  "moduleType": [
+    "amd"
+  ],
+  "authors": [
+    "Luca Sbardella"
+  ],
+  "license": "BSD",
+  "ignore": [
+    ".DS_Store",
+    ".coveralls.yml",
+    ".git",
+    ".gitignore",
+    ".project",
+    ".pydevproject",
+    ".travis.yml",
+    "files.json",
+    "Gruntfile.js",
+    "manage.py",
+    "package.json",
+    "*.log",
+    "coverage",
+    "examples",
+    "giottoweb",
+    "node_modules",
+    "src",
+    "vendor"
+  ],
+  "dependencies": {
+    "d3": "git@github.com:mbostock/d3.git"
+  },
+  "devDependencies": {
+    "fontawesome": "",
+    "requirejs": "",
+    "angular": "",
+    "angular-strap": "",
+    "angular-ui-router": "",
+    "angular-mocks": "",
+    "d3-geo-projection": "",
+    "topojson": "",
+    "highlight": "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.5/highlight.min.js"
+  }
+}

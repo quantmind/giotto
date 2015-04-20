@@ -1,6 +1,0 @@
-{
-    "name": "giottoweb",
-    "dependencies": {
-        "d3-geo-projection": ""
-    }
-}

@@ -30,7 +30,7 @@
         },
 
         // Custom entry for diplaying the year and the total ammount of debt
-        customkkkk: {
+        custom: {
             show: function () {
                 // display the year and total debt
                 var group = this.group(),
@@ -93,7 +93,7 @@
                 return true;
             }
 
-            //animate();
+            animate();
 
             chart.scope().$on('formFieldChange', function (e, form, field) {
                 if (field === 'type') {

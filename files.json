@@ -21,12 +21,20 @@
                 "src/text/*.js",
                 "src/css.js",
                 "src/integration/*.js",
-                "src/text/*.js",
                 "src/close.js"],
         "dest": "dist/giotto.js"
     },
+    "require": {
+        "src": ["vendor/requirejs/require.js",
+                "src/cfg.js",
+                "vendor/require-config.js"],
+        "dest": "vendor/require.js"
+    },
     "giottoweb": {
-        "src": ["src/giottoweb/open.js",
+        "src": ["vendor/requirejs/require.js",
+                "src/cfg.js",
+                "vendor/require-config.js",
+                "src/giottoweb/open.js",
                 "src/giottoweb/features.js",
                 "src/giottoweb/colorbrewer.js",
                 "src/giottoweb/close.js"],
