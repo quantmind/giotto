@@ -32,7 +32,7 @@ grunt jasmine
 
 To build giotto web you need to install lux, a python package for web applications:
 
-    pip install lux
+    pip install -U -r requirements.txt
 
 To build the static web site:
 

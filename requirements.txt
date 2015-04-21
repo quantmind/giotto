@@ -1,0 +1,1 @@
+-e git+https://github.com/quantmind/lux.git#egg=lux
