@@ -67,7 +67,7 @@
     }
 
     // Default shims
-    function defaultShims () {
+    function defaultShim () {
         return {
             angular: {
                 exports: "angular"
@@ -156,7 +156,7 @@
     lux.config = function (cfg) {
         if(!cfg.baseUrl)
             cfg.baseUrl = baseUrl();
-        cfg.shim = extend(defaultShims(), cfg.shim);
+        cfg.shim = extend(defaultShim(), cfg.shim);
         cfg.paths = newPaths(cfg);
         require.config(cfg);
     };

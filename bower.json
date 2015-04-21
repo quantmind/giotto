@@ -32,7 +32,7 @@
     "vendor"
   ],
   "dependencies": {
-    "d3": "git@github.com:mbostock/d3.git"
+    "d3": ""
   },
   "devDependencies": {
     "requirejs": "",
