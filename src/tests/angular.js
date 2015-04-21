@@ -3,16 +3,11 @@
         var g = d3.giotto,
             _ = g._;
 
-        it('angular module', function (done) {
+        it('angular module', function () {
 
-            g.require(['angular'], function (angular) {
+            var mod = g.angular.module(angular).addAll().module();
 
-                var mod = g.angular.module(angular).addAll().module();
-
-                expect(mod.name).toBe('giotto');
-
-                done();
-            });
+            expect(mod.name).toBe('giotto');
 
         });
 

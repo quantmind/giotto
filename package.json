@@ -24,7 +24,7 @@
             "type": "BSD"
         }
     ],
-    "homepage": "http://quantmind.github.io/giotto/",
+    "homepage": "http://giottojs.org",
     "devDependencies": {
         "grunt": "",
         "grunt-contrib-uglify": "",
@@ -35,6 +35,7 @@
         "grunt-coveralls": "",
         "grunt-contrib-jasmine": "",
         "grunt-string-to-js": "",
+        "grunt-contrib-copy": "",
         "grunt-bower-requirejs": ""
     },
     "scripts": {

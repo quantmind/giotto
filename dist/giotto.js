@@ -1,10 +1,10 @@
 //      GiottoJS - v0.2.0
 
-//      Compiled 2015-04-20.
+//      Compiled 2015-04-21.
 //      Copyright (c) 2015 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
-//      http://quantmind.github.io/giotto/
+//      http://giottojs.org
 //
 (function (factory) {
     var root;

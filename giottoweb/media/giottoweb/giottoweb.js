@@ -2083,24 +2083,31 @@ var requirejs, require, define;
 }(this));
 
 //
-//
-(function () {
+(function (root) {
+    "use strict";
+
+    if (!root.lux)
+        root.lux = {};
 
     // The original require
-    var require_config = require.config,
-        root = this,
-        protocol = root.location ? (root.location.protocol === 'file:' ? 'https:' : '') : '',
+    var protocol = root.location ? (root.location.protocol === 'file:' ? 'https:' : '') : '',
         end = '.js',
-        processed = false,
-        context = root.lux ? root.lux.context : {},
-        ostring = Object.prototype.toString;
+        ostring = Object.prototype.toString,
+        lux = root.lux;
+
 
     function isArray(it) {
         return ostring.call(it) === '[object Array]';
     }
 
     function minify () {
-        return context.MINIFIED_MEDIA;
+        if (root.lux.context)
+            return lux.context.MINIFIED_MEDIA;
+    }
+
+    function baseUrl () {
+        if (root.lux.context)
+            return lux.context.MEDIA_URL;
     }
 
     function extend (o1, o2) {
@@ -2111,6 +2118,36 @@ var requirejs, require, define;
             }
         }
         return o1;
+    }
+
+    function defaultPaths () {
+        return {
+            "lux": "lux/lux",
+            "angular": "//ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular",
+            "angular-animate": "//ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-animate",
+            "angular-mocks": "//ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-mocks.js",
+            "angular-strap": "//cdnjs.cloudflare.com/ajax/libs/angular-strap/2.2.1/angular-strap",
+            "angular-ui-router": "//cdnjs.cloudflare.com/ajax/libs/angular-ui-router/0.2.13/angular-ui-router",
+            "angular-ui-grid": "http://ui-grid.info/release/ui-grid-unstable",
+            "angular-pusher": "//cdn.jsdelivr.net/angular.pusher/latest/pusher-angular.min.js",
+            "pusher": "//js.pusher.com/2.2/pusher",
+            "codemirror": "//cdnjs.cloudflare.com/ajax/libs/codemirror/3.21.0/codemirror",
+            "crossfilter": "//cdnjs.cloudflare.com/ajax/libs/crossfilter/1.3.11/crossfilter",
+            "d3": "//cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3",
+            "google-analytics": "//www.google-analytics.com/analytics.js",
+            "gridster": "//cdnjs.cloudflare.com/ajax/libs/jquery.gridster/0.5.6/jquery.gridster",
+            "holder": "//cdnjs.cloudflare.com/ajax/libs/holder/2.3.1/holder",
+            "highlight": "//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.3/highlight.min.js",
+            "katex": "//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.1.0/katex.min.js",
+            "leaflet": "http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js",
+            "lodash": "//cdnjs.cloudflare.com/ajax/libs/lodash.js/2.4.1/lodash",
+            "marked": "//cdnjs.cloudflare.com/ajax/libs/marked/0.3.2/marked",
+            "mathjax": "//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML",
+            "restangular": "//cdnjs.cloudflare.com/ajax/libs/restangular/1.4.0/restangular",
+            "sockjs": "//cdnjs.cloudflare.com/ajax/libs/sockjs-client/0.3.4/sockjs.min.js",
+            "stats": "//cdnjs.cloudflare.com/ajax/libs/stats.js/r11/Stats",
+            "topojson": "//cdnjs.cloudflare.com/ajax/libs/topojson/1.6.19/topojson"
+        };
     }
 
     // Default shims
@@ -2148,7 +2185,7 @@ var requirejs, require, define;
         var all = {},
             min = minify() ? '.min' : '',
             prefix = root.local_require_prefix,
-            paths = cfg.paths || {};
+            paths = extend(defaultPaths(), cfg.paths);
 
         for(var name in paths) {
             if(paths.hasOwnProperty(name)) {
@@ -2200,22 +2237,18 @@ var requirejs, require, define;
     }
 
     // require.config override
-    require.config = function (cfg) {
-        if (!processed) {
-            processed = true;
-            if(!cfg.baseUrl && context.MEDIA_URL)
-                cfg.baseUrl = context.MEDIA_URL;
-            cfg.shim = extend(defaultShims(), cfg.shim);
-            cfg.paths = newPaths(cfg);
-            if (!cfg.paths.lux)
-                cfg.paths.lux = "lux/lux";
-        }
-        require_config.call(this, cfg);
+    lux.config = function (cfg) {
+        if(!cfg.baseUrl)
+            cfg.baseUrl = baseUrl();
+        cfg.shim = extend(defaultShims(), cfg.shim);
+        cfg.paths = newPaths(cfg);
+        require.config(cfg);
     };
 
-    root.newRequire = function () {
+    lux.require = function () {
         if (arguments.length && isArray(arguments[0]) && minify()) {
-            var deps = arguments[0];
+            var deps = arguments[0],
+                cfg = require.config();
 
             deps.forEach(function (dep, i) {
                 if (dep.substring(dep.length-3) !== end)
@@ -2223,37 +2256,36 @@ var requirejs, require, define;
                 deps[i] = dep;
             });
         }
-        return require.apply(this, arguments);
+        return require.apply(root, arguments);
     };
 
-}());
+    lux.define = function () {
+        if (arguments.length && isArray(arguments[1]) && minify()) {
+            var deps = arguments[1],
+                cfg = require.config();
 
-require.config({
-  shim: {
+            deps.forEach(function (dep, i) {
+                if (dep.substring(dep.length-3) !== end)
+                    dep += min;
+                deps[i] = dep;
+            });
+        }
+        return define.apply(root, arguments);
+    };
 
-  },
-  paths: {
-    angular: "vendor/angular/angular",
-    "angular-mocks": "vendor/angular-mocks/angular-mocks",
-    "angular-strap": "vendor/angular-strap/dist/angular-strap",
-    "angular-strap.tpl": "vendor/angular-strap/dist/angular-strap.tpl",
-    "angular-ui-router": "vendor/angular-ui-router/release/angular-ui-router",
-    d3: "vendor/d3/d3",
-    "d3-geo-projection": "vendor/d3-geo-projection/d3.geo.projection",
-    fontawesome: "vendor/fontawesome/fonts/*",
-    highlight: "vendor/highlight/index",
-    requirejs: "vendor/requirejs/require",
-    topojson: "vendor/topojson/topojson"
-  },
-  packages: [
+}(this));
 
-  ]
+lux.config({
+    paths: {
+      "d3-geo-projection": "vendor/d3-geo-projection/d3.geo.projection"
+    }
 });
 
 //
 //  Script for giotto website
 //  =============================
-newRequire(['lux', 'giotto/giotto', 'd3-geo-projection', 'angular-ui-router', 'angular-strap'], function (lux, d3) {
+lux.require(['lux', 'giotto/giotto', 'd3-geo-projection', 'angular-ui-router', 'angular-strap'], function (lux, d3) {
+    "use strict";
 
     var url = lux.context.url,
         sitemap = function () {
@@ -2306,7 +2338,7 @@ newRequire(['lux', 'giotto/giotto', 'd3-geo-projection', 'angular-ui-router', 'a
         }
     });
     //
-    var examples = this.examples = {},
+    var examples = window.examples = {},
         g = d3.giotto;
 
     var height = 200;
@@ -2754,9 +2786,9 @@ newRequire(['lux', 'giotto/giotto', 'd3-geo-projection', 'angular-ui-router', 'a
     lux.bootstrap('giottoExamples', ['lux.nav', 'giotto']);
 
     // Process giottoQueue
-    if (this.giottoQueue) {
-        var queue = this.giottoQueue;
-        this.giottoQueue = [];
+    if (window.giottoQueue) {
+        var queue = window.giottoQueue;
+        window.giottoQueue = [];
         queue.forEach(function (callback) {
             callback();
         });

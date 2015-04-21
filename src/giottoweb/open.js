@@ -1,7 +1,8 @@
 //
 //  Script for giotto website
 //  =============================
-newRequire(['lux', 'giotto/giotto', 'd3-geo-projection', 'angular-ui-router', 'angular-strap'], function (lux, d3) {
+lux.require(['lux', 'giotto/giotto', 'd3-geo-projection', 'angular-ui-router', 'angular-strap'], function (lux, d3) {
+    "use strict";
 
     var url = lux.context.url,
         sitemap = function () {
@@ -54,5 +55,5 @@ newRequire(['lux', 'giotto/giotto', 'd3-geo-projection', 'angular-ui-router', 'a
         }
     });
     //
-    var examples = this.examples = {},
+    var examples = window.examples = {},
         g = d3.giotto;

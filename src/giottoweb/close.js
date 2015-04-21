@@ -4,9 +4,9 @@
     lux.bootstrap('giottoExamples', ['lux.nav', 'giotto']);
 
     // Process giottoQueue
-    if (this.giottoQueue) {
-        var queue = this.giottoQueue;
-        this.giottoQueue = [];
+    if (window.giottoQueue) {
+        var queue = window.giottoQueue;
+        window.giottoQueue = [];
         queue.forEach(function (callback) {
             callback();
         });

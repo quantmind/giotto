@@ -72,6 +72,15 @@ module.exports = function (grunt) {
     // Initialise Grunt with all tasks defined above
     grunt.initConfig({
         pkg: grunt.file.readJSON('package.json'),
+        copy: {
+            lux: {
+                expand: true,
+                src: ['../lux/lux/media/lux/cfg.js'],
+                dest: 'src/giottoweb',
+                flatten: true,
+                filter: 'isFile'
+            }
+        },
         str2js: {
             NS: { 'src/text/text.js': ['src/text/giotto.min.css']}
         },
@@ -88,14 +97,17 @@ module.exports = function (grunt) {
         jshint: jshint_libs(),
         jasmine: {
             test: {
-                src : 'dist/giotto.js',
+                src : ['dist/giotto.js'],
                 options : {
                     specs : 'src/tests/*.js',
-                    template: 'src/tests/test.tpl.html'
+                    template: 'src/tests/test.tpl.html',
+                    templateOptions: {
+                        deps: ['dist/giotto.js', 'angular', 'angular-mocks']
+                    }
                 }
             },
             coverage: {
-                src : 'dist/giotto.js',
+                src : ['dist/giotto.js'],
                 options : {
                     specs : 'src/tests/*.js',
                     template: require('grunt-template-jasmine-istanbul'),
@@ -120,7 +132,7 @@ module.exports = function (grunt) {
                         ],
                         template: 'src/tests/test.tpl.html',
                         templateOptions: {
-                            deps: ['dist/giotto.js']
+                            deps: ['dist/giotto.js', 'angular', 'angular-mocks']
                         }
                     },
                 }
@@ -145,12 +157,13 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-contrib-jasmine');
     grunt.loadNpmTasks('grunt-coveralls');
+    grunt.loadNpmTasks('grunt-contrib-copy');
     grunt.loadNpmTasks('grunt-bower-requirejs');
     //
     grunt.registerTask('gruntfile', 'jshint Gruntfile.js',
             ['jshint:gruntfile']);
     grunt.registerTask('build', 'Compile and lint all libraries',
-            ['gruntfile', 'str2js', 'bowerRequirejs', 'concat', 'jshint', 'uglify']);
+            ['gruntfile', 'copy', 'str2js', 'bowerRequirejs', 'concat', 'jshint', 'uglify']);
     grunt.registerTask('coverage', 'Test coverage using Jasmine and Istanbul',
             ['jasmine:coverage']);
     grunt.registerTask('all', 'Compile lint and test all libraries',
