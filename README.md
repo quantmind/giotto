@@ -20,7 +20,7 @@ npm install -g bower
 To install dependencies for the build, inside the distribution directory issue:
 ```
 npm install
-brew install
+bower install
 ```
 Compilation, tests with grunt:
 ```
