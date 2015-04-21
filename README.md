@@ -8,6 +8,25 @@ http://giottojs.org
 <img src="https://travis-ci.org/quantmind/giotto.svg?branch=master" alt="giotto CI"></a>
 [![Coverage Status](https://img.shields.io/coveralls/quantmind/giotto.svg)](https://coveralls.io/r/quantmind/giotto?branch=master)
 
+# Giotto Library
+
+To build and test the library, you need to install [node](https://nodejs.org/), [gruntjs](http://gruntjs.com/) and
+[bower](http://bower.io/):
+```
+npm install -g grunt-cli
+npm install -g bower
+```
+
+To install dependencies for the build, inside the distribution directory issue:
+```
+npm install
+brew install
+```
+Compilation, tests with grunt:
+```
+grunt build
+grunt jasmine
+```
 
 # Giotto Web
 
