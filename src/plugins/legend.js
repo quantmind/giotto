@@ -95,7 +95,7 @@
 
             if (position.substring(0, 6) === 'bottom') {
                 position = position.substring(7);
-                y = group.innerHeight() - height;
+                y = group.height() - 2*height;
             } else if (position.substring(0, 3) === 'top') {
                 position = position.substring(4);
                 y = 0;
