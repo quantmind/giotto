@@ -6,6 +6,7 @@
 
         opts = g.options(opts).pluginOptions(plugins || g.paper.plugins);
 
+        // unique identifier for this object
         d.uid = function () {
             return uid;
         };
@@ -42,7 +43,7 @@
         return d;
     }
 
-        // Mixin for visualization classes and visualization collection
+    // Mixin for visualization classes and visualization collection
     function vizMixin (d, plugins) {
         var loading_data = false,
             data;

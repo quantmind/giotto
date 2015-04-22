@@ -1,10 +1,15 @@
-
+    //
+    //	Giotto Options
+    //	========================
+    //
+    //	Constructor of options for Giotto components
     g.options = function (opts) {
-        opts || (opts = {});
-        if (!isFunction(opts.pluginOptions))
-            return initOptions({}, {}).extend(g.defaults.paper).extend(opts);
-        else
-            return opts;
+        // If this is not an option object create it
+        if (!opts || !isFunction(opts.pluginOptions)) {
+            opts = extend({}, g.defaults.paper, opts);
+            opts = initOptions(opts, {});
+        }
+        return opts;
     };
 
     g.options.processors = {
@@ -26,8 +31,12 @@
         return extend(opts, value);
     }
 
+    // Initialise options
     function initOptions (opts, pluginOptions) {
 
+        // 	Extend public values of an option object with an object
+        //	and return this options object.
+        // 	A public value does not start with an underscore
         opts.extend = function (o) {
             var popts, opn;
 

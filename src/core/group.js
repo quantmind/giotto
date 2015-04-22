@@ -1,4 +1,13 @@
-
+	//
+	// 	group
+	//	==================
+	//
+	//	A group is a container of a group of svg or canvas drawings.
+	//	This function is never called directly, instead it is invoked by
+	//	the ``paper.group()`` method.
+	//		- paper: the paper creating this group
+	//		- element: HTML element owning the new group
+	//		- p: group parameters
     g.group = function (paper, element, p, _) {
         var drawings = [],
             factor = 1,
@@ -13,6 +22,7 @@
         element.__group__ = group;
         p = group.options();
 
+        // group type - svg or canvas
         group.type = function () {
             return type;
         };

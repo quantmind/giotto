@@ -1,31 +1,30 @@
     //
     // Create a new paper for drawing stuff
     g.paper = function (element, p) {
-        // Setup
-        if (isObject(element)) {
-            p = element;
-            element = null;
-        }
-        if (element && isFunction(element.node))
-            element = element.node();
-        if (!element)
-            element = document.createElement('div');
 
-        p = _paperSize(element, p);
-
-        var events = d3.dispatch.apply(null, extendArray(['change', 'active', 'activeout'], g.constants.pointEvents)),
+        var events = d3.dispatch.apply(null,
+                extendArray(['change', 'active', 'activeout'], g.constants.pointEvents)),
+            // Create the paper using giottoMixin
             paper = giottoMixin(d3.rebind({}, events, 'on'), p),
             tasks = [],
             resizing = false;
+
+        p = _paperSize(element, paper.options());
+
+        var type = p.type;
+
+        element = p.__paper__;
 
         paper.event = function (name) {
             return events[name] || noop;
         };
 
         // Create a new group for this paper
+        //	- opts: optional object with options for the new group
         paper.group = function (opts) {
             // Inject plugins
             opts = p.copy(opts);
+            // Create the group
             var group = g.group[opts.type](paper, opts),
                 plugins = g.paper.plugins;
 
@@ -174,6 +173,7 @@
         // Access the canvas background
         paper.canvasBackground = function (build, clear) {
             var canvas = paper.canvas();
+
             if (canvas.size()) {
                 var gr = canvas.select('.giotto-background'),
                     node = gr.node();
@@ -260,7 +260,6 @@
             return p.type === 'svg' ? paper.imageSVG() : paper.imagePNG();
         };
 
-        var type = p.type;
 
         // paper type
         paper.type = function () {

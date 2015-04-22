@@ -1,6 +1,17 @@
-
+    //
+    // Utility function to calculate paper dimensions and initialise the
+    // paper options
     function _paperSize (element, p) {
         var width, height;
+
+        if (isObject(element)) {
+            p = element;
+            element = null;
+        }
+        if (element && isFunction(element.node))
+            element = element.node();
+        if (!element)
+            element = document.createElement('div');
 
         if (p) {
             if (p.__paper__ === element) return p;
