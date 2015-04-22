@@ -35,8 +35,7 @@
         "grunt-coveralls": "",
         "grunt-contrib-jasmine": "",
         "grunt-string-to-js": "",
-        "grunt-contrib-copy": "",
-        "grunt-bower-requirejs": ""
+        "grunt-contrib-copy": ""
     },
     "scripts": {
         "test": "grunt jasmine && grunt coveralls"

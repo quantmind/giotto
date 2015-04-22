@@ -1,6 +1,6 @@
 //      GiottoJS - v0.2.0
 
-//      Compiled 2015-04-21.
+//      Compiled 2015-04-22.
 //      Copyright (c) 2015 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -40,17 +40,6 @@
 
     d3.giotto = giotto;
     d3.canvas = {};
-
-    // Warps RequireJs call so it can be used in conjunction with
-    //  require-config.js
-    //
-    //  http://quantmind.github.io/require-config-js/
-    g.require = function (deps, callback) {
-        if (root.rcfg && root.rcfg.min)
-            deps = root.rcfg.min(deps);
-        require(deps, callback);
-        return g;
-    };
 
     // D3 internal functions used by GiottoJS, mainly by the canvas module
     // These are copied from d3.js
@@ -8682,10 +8671,10 @@ NS["src/text/giotto.min.css"] = '@charset "UTF-8";.sunburst text{z-index:9999}.s
 
                             link: function (scope, element, attrs) {
                                 var options = getOptions(attrs),
-                                    require = options.require;
-                                if (require) {
-                                    if (!g._.isArray(require)) require = [require];
-                                    g.require(require, function (opts) {
+                                    deps = options.require;
+                                if (deps) {
+                                    if (!g._.isArray(deps)) deps = [deps];
+                                    require(deps, function (opts) {
                                         extend(options, opts);
                                         scope.giottoCollection.options(options).scope(scope).start();
                                     });
@@ -8699,7 +8688,7 @@ NS["src/text/giotto.min.css"] = '@charset "UTF-8";.sunburst text{z-index:9999}.s
                         return {
                             link: function (scope, element, attrs) {
                                 var mode = attrs.mode ? +attrs.mode : 1;
-                                g.require(['stats'], function () {
+                                require(['stats'], function () {
                                     var stats = new Stats();
                                     stats.setMode(mode);
                                     scope.stats = stats;
@@ -8755,10 +8744,10 @@ NS["src/text/giotto.min.css"] = '@charset "UTF-8";.sunburst text{z-index:9999}.s
                         var viz = element.data(name);
                         if (!viz) {
                             var options = getOptions(attrs),
-                                require = options.require;
-                            if (require) {
-                                if (!g._.isArray(require)) require = [require];
-                                g.require(require, function (opts) {
+                                deps = options.require;
+                            if (deps) {
+                                if (!g._.isArray(deps)) deps = [deps];
+                                require(deps, function (opts) {
                                     extend(options, opts);
                                     startViz(scope, element, options, injected_arguments);
                                 });
@@ -8793,16 +8782,18 @@ NS["src/text/giotto.min.css"] = '@charset "UTF-8";.sunburst text{z-index:9999}.s
         tolerance: 1.1
     };
 
-    g.crossfilter = function (data, opts, callback) {
-        if (arguments.length === 2 && isFunction(opts)) {
-            callback = opts;
-            opts = {};
-        }
-        opts = extend({}, g.defaults.crossfilter, opts);
+    //
+    //  Add Crossfilter integration
+    //  params opts
+    //      - data: multidimensional data
+    //      - callback: Optional callback to invoke once the crossfilter is loaded
+    g.crossfilter = function (opts) {
+        var cf = extend({}, g.defaults.crossfilter, opts);
 
-        var cf = {
-            dims: {}
-        };
+        var data = opts.data,
+            callback = opts.callback;
+
+        cf.dims = {};
 
         // Add a new dimension to the crossfilter
         cf.dimension = function (name, callback) {
@@ -8881,11 +8872,12 @@ NS["src/text/giotto.min.css"] = '@charset "UTF-8";.sunburst text{z-index:9999}.s
             if (!g.crossfilter.lib)
                 throw Error('Could not find crossfilter library');
 
-            data = g.crossfilter.lib(data);
+            // convert data to crossfilter data
+            cf.data = g.crossfilter.lib(data);
 
-            if (g._.isArray(options.dimensions))
-                options.dimensions.forEach(function (o) {
-                    cf.addDimension(o);
+            if (g._.isArray(opts.dimensions))
+                opts.dimensions.forEach(function (o) {
+                    cf.dimension(o);
                 });
 
             if (callback) callback(cf);
@@ -8893,7 +8885,7 @@ NS["src/text/giotto.min.css"] = '@charset "UTF-8";.sunburst text{z-index:9999}.s
 
         if (g.crossfilter.lib === undefined)
             if (typeof crossfilter === 'undefined') {
-                g.require(['crossfilter'], function (crossfilter) {
+                require(['crossfilter'], function (crossfilter) {
                     g.crossfilter.lib = crossfilter || null;
                     build();
                 });
@@ -8906,9 +8898,6 @@ NS["src/text/giotto.min.css"] = '@charset "UTF-8";.sunburst text{z-index:9999}.s
         build();
         return cf;
     };
-
-    g.crossfilter.tolerance = 1.1;
-
 
 
     return d3;

@@ -2,16 +2,18 @@
         tolerance: 1.1
     };
 
-    g.crossfilter = function (data, opts, callback) {
-        if (arguments.length === 2 && isFunction(opts)) {
-            callback = opts;
-            opts = {};
-        }
-        opts = extend({}, g.defaults.crossfilter, opts);
+    //
+    //  Add Crossfilter integration
+    //  params opts
+    //      - data: multidimensional data
+    //      - callback: Optional callback to invoke once the crossfilter is loaded
+    g.crossfilter = function (opts) {
+        var cf = extend({}, g.defaults.crossfilter, opts);
 
-        var cf = {
-            dims: {}
-        };
+        var data = opts.data,
+            callback = opts.callback;
+
+        cf.dims = {};
 
         // Add a new dimension to the crossfilter
         cf.dimension = function (name, callback) {
@@ -90,11 +92,12 @@
             if (!g.crossfilter.lib)
                 throw Error('Could not find crossfilter library');
 
-            data = g.crossfilter.lib(data);
+            // convert data to crossfilter data
+            cf.data = g.crossfilter.lib(data);
 
-            if (g._.isArray(options.dimensions))
-                options.dimensions.forEach(function (o) {
-                    cf.addDimension(o);
+            if (g._.isArray(opts.dimensions))
+                opts.dimensions.forEach(function (o) {
+                    cf.dimension(o);
                 });
 
             if (callback) callback(cf);
@@ -102,7 +105,7 @@
 
         if (g.crossfilter.lib === undefined)
             if (typeof crossfilter === 'undefined') {
-                g.require(['crossfilter'], function (crossfilter) {
+                require(['crossfilter'], function (crossfilter) {
                     g.crossfilter.lib = crossfilter || null;
                     build();
                 });
@@ -115,6 +118,3 @@
         build();
         return cf;
     };
-
-    g.crossfilter.tolerance = 1.1;
-

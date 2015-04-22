@@ -36,9 +36,6 @@
   },
   "devDependencies": {
     "requirejs": "",
-    "angular": "",
-    "crossfilter": "",
-    "angular-mocks": "",
     "d3-geo-projection": ""
   }
 }
