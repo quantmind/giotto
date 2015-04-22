@@ -16,11 +16,10 @@
             var sunb = g.viz.sunburst({
                     margin: {top: 30},
                     src: src
-                }),
-                paper = sunb.paper();
+                });
 
-            expect(paper.options().margin.top).toBe(30);
-            expect(paper.options().margin.left).toBe(20);
+            expect(sunb.options().margin.top).toBe(30);
+            expect(sunb.options().margin.left).toBe(20);
             expect(sunb.options().src).toBe(src);
             expect(sunb.options().resize).toBe(true);
         });

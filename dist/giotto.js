@@ -2977,23 +2977,26 @@
         return opts;
     };
 
+    //  Processors for special option entries
     g.options.processors = {
         //
         colors: function (_, value) {
             if (isFunction (value)) value = value(d3);
             return value;
         },
+
         font: extendOption,
+
         transition: extendOption,
+
         margin: function (opts, value) {
-            if (!isObject(value)) value = {left: value, right: value, top: value, bottom: value};
-            return value;
+            if (!isObject(value)) return {left: value, right: value, top: value, bottom: value};
+            return extendOption(opts, value);
         }
     };
 
     function extendOption (opts, value) {
-        opts || (opts = {});
-        return extend(opts, value);
+        return extend({}, opts, value);
     }
 
     // Initialise options
@@ -3067,7 +3070,11 @@
         }
     }
 
-
+    //
+    //  Gradient
+    //  =============
+    //
+    //  Manage gradient information for both svg and canvas
     g.gradient = function () {
         var colors = [{
                 color: '#000',
@@ -4197,9 +4204,15 @@
             return extendArray([], g.paper.plugins, g.vizplugins, plugins);
         },
 
-        vizType = function (element) {
+        // The vizualization constructor
+        vizType = function (element, p) {
 
-            var viz = vizMixin({}, _plugins()).options(vizType.defaults),
+            if (isObject(element)) {
+                p = element;
+                element = null;
+            }
+
+            var viz = vizMixin({}, _plugins()).options(vizType.defaults).options(p),
                 events = d3.dispatch.apply(d3, g.constants.vizevents),
                 alpha = 0,
                 paper;
@@ -8716,6 +8729,7 @@ NS["src/text/giotto.min.css"] = '@charset "UTF-8";.sunburst text{z-index:9999}.s
                         };
                     })
 
+                    // Directive to privide frame stats
                     .directive('jstats', function () {
                         return {
                             link: function (scope, element, attrs) {
@@ -8742,6 +8756,7 @@ NS["src/text/giotto.min.css"] = '@charset "UTF-8";.sunburst text{z-index:9999}.s
 
             injects = injects ? injects.slice() : [];
 
+            // Create directive from Viz name if not provided
             if (!name) {
                 name = vizType.vizName();
                 name = mod.name.toLowerCase() + name.substring(0,1).toUpperCase() + name.substring(1);

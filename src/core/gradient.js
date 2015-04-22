@@ -1,4 +1,8 @@
-
+    //
+    //  Gradient
+    //  =============
+    //
+    //  Manage gradient information for both svg and canvas
     g.gradient = function () {
         var colors = [{
                 color: '#000',

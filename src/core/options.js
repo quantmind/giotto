@@ -12,23 +12,26 @@
         return opts;
     };
 
+    //  Processors for special option entries
     g.options.processors = {
         //
         colors: function (_, value) {
             if (isFunction (value)) value = value(d3);
             return value;
         },
+
         font: extendOption,
+
         transition: extendOption,
+
         margin: function (opts, value) {
-            if (!isObject(value)) value = {left: value, right: value, top: value, bottom: value};
-            return value;
+            if (!isObject(value)) return {left: value, right: value, top: value, bottom: value};
+            return extendOption(opts, value);
         }
     };
 
     function extendOption (opts, value) {
-        opts || (opts = {});
-        return extend(opts, value);
+        return extend({}, opts, value);
     }
 
     // Initialise options

@@ -90,6 +90,7 @@
                         };
                     })
 
+                    // Directive to privide frame stats
                     .directive('jstats', function () {
                         return {
                             link: function (scope, element, attrs) {
@@ -116,6 +117,7 @@
 
             injects = injects ? injects.slice() : [];
 
+            // Create directive from Viz name if not provided
             if (!name) {
                 name = vizType.vizName();
                 name = mod.name.toLowerCase() + name.substring(0,1).toUpperCase() + name.substring(1);

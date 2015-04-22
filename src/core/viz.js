@@ -24,9 +24,15 @@
             return extendArray([], g.paper.plugins, g.vizplugins, plugins);
         },
 
-        vizType = function (element) {
+        // The vizualization constructor
+        vizType = function (element, p) {
 
-            var viz = vizMixin({}, _plugins()).options(vizType.defaults),
+            if (isObject(element)) {
+                p = element;
+                element = null;
+            }
+
+            var viz = vizMixin({}, _plugins()).options(vizType.defaults).options(p),
                 events = d3.dispatch.apply(d3, g.constants.vizevents),
                 alpha = 0,
                 paper;
