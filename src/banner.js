@@ -40,14 +40,3 @@
 
     d3.giotto = giotto;
     d3.canvas = {};
-
-    // Warps RequireJs call so it can be used in conjunction with
-    //  require-config.js
-    //
-    //  http://quantmind.github.io/require-config-js/
-    g.require = function (deps, callback) {
-        if (root.rcfg && root.rcfg.min)
-            deps = root.rcfg.min(deps);
-        require(deps, callback);
-        return g;
-    };

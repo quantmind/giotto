@@ -1,8 +1,8 @@
 @charset "UTF-8";
 /*
 ------------------------------------------------------------------
-Created by lux in 0.25 seconds
-Date: 2015-04-21 11:15:11
+Created by lux in 0.08 seconds
+Date: 2015-04-21 14:53:48
 
 http://quantmind.github.io/lux/
 ------------------------------------------------------------------ */
@@ -12,8 +12,8 @@ body {
     line-height: 1.5;
     font-style: normal;
     font-size: 16px;
-    color: rgba(0, 0, 0, 0.8);
     background: #fff;
+    color: rgba(0, 0, 0, 0.8);
     font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
     min-height: 101%;
     height: 101%;
@@ -33,11 +33,11 @@ body {
 }
 
 .lazyContainer > .content {
-    width: 100%;
     top: 0;
     left: 0;
-    min-height: 100%;
     position: absolute;
+    width: 100%;
+    min-height: 100%;
 }
 
 .navbar {
@@ -53,8 +53,8 @@ body {
 }
 
 .navbar2-wrapper {
-    width: 100%;
     min-height: 100%;
+    width: 100%;
 }
 
 .navbar2-wrapper > .navbar {
@@ -62,8 +62,8 @@ body {
 }
 
 .navbar2-page {
-    padding: 15px 15px 0;
     background: #fff;
+    padding: 15px 15px 0;
 }
 
 @media all and (min-width:768px) {
@@ -78,10 +78,10 @@ body {
 }
 @media all and (min-width:768px) {
     .sidebar {
-        position: absolute;
         margin-top: 51px;
-        z-index: 1;
+        position: absolute;
         width: 200px;
+        z-index: 1;
     }
 
 }
@@ -112,21 +112,21 @@ form {
 }
 
 .katex-outer {
-    margin-bottom: 10px;
-    margin-left: auto;
-    margin-right: auto;
     display: block;
     margin-bottom: 10px;
-    margin-left: auto;
     margin-right: auto;
+    margin-left: auto;
     display: block;
+    margin-bottom: 10px;
+    margin-right: auto;
+    margin-left: auto;
 }
 
 code.hljs.inline {
-    padding: 2px 4px;
     display: inline;
     padding: 2px 4px;
     display: inline;
+    padding: 2px 4px;
 }
 
 dl dd {
@@ -147,18 +147,18 @@ dl.function > dt > tt.descname {
 
 dl.class dt tt.descname,
 dl.function dt tt.descname {
-    color: rgba(0, 0, 0, 0.8);
     font-weight: bold;
     color: rgba(0, 0, 0, 0.8);
     font-weight: bold;
+    color: rgba(0, 0, 0, 0.8);
 }
 
 dl.class dt,
 dl.function dt {
-    color: #888;
     font-weight: normal;
     color: #888;
     font-weight: normal;
+    color: #888;
 }
 
 [ng\:cloak],
@@ -183,8 +183,8 @@ dl.function dt {
 }
 
 .media-list > .media > a {
-    text-decoration: none;
     color: #808080;
+    text-decoration: none;
 }
 
 .media-list > .media > a .post-body {
@@ -192,15 +192,15 @@ dl.function dt {
 }
 
 .media-list > .media > a h3 {
-    color: #333;
     font-weight: normal;
+    color: #333;
 }
 
 .post-image {
+    float: left;
     max-height: 140px;
     width: 140px;
     height: auto;
-    float: left;
 }
 
 .post-image-xs {
@@ -221,8 +221,8 @@ dt:hover > a.headerlink {
 
 a.headerlink {
     visibility: hidden;
-    color: #eee;
     text-decoration: none;
+    color: #eee;
     padding: 0 4px;
 }
 
@@ -235,8 +235,8 @@ a.headerlink:hover {
 }
 
 div.viewcode-block:target {
-    margin: -1px -10px;
     padding: 0 10px;
+    margin: -1px -10px;
 }
 
 table.docutils.field-list th {
@@ -253,12 +253,12 @@ table.docutils.field-list th {
 }
 
 .page-header.index-header {
-    background: #333;
-    margin: 0;
-    width: 101%;
-    color: #fff;
-    height: 101%;
     min-height: 100%;
+    background: #333;
+    height: 101%;
+    width: 101%;
+    margin: 0;
+    color: #fff;
 }
 
 html,
@@ -273,10 +273,10 @@ html,
 }
 
 #footer {
-    color: #b3b3b3;
-    min-height: 300px;
     background: #333;
+    color: #b3b3b3;
     padding: 30px 0 40px;
+    min-height: 300px;
 }
 
 #lux-logo {
@@ -294,9 +294,9 @@ html,
 }
 
 .trianglify-box {
+    background: rgba(255, 255, 255, 0.6);
     max-width: 400px;
     padding: 20px;
-    background: rgba(255, 255, 255, 0.6);
     -webkit-border-radius: 5px;
        -moz-border-radius: 5px;
             border-radius: 5px;
@@ -306,9 +306,9 @@ html,
 }
 
 .features article {
+    float: left;
     width: 33.33%;
     padding: 30px;
-    float: left;
 }
 
 .features article:before {
@@ -330,8 +330,8 @@ html,
 }
 @media all and (max-width:600px) {
     .features article {
-        width: auto;
         float: none;
+        width: auto;
     }
 
 }
@@ -353,9 +353,9 @@ html,
 }
 
 .error-message-container {
+    background: rgba(0, 0, 0, 0.4);
     height: 100%;
     padding: 40px 120px;
-    background: rgba(0, 0, 0, 0.4);
     -webkit-box-sizing: border-box;
        -moz-box-sizing: border-box;
             box-sizing: border-box;

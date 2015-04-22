@@ -77,10 +77,10 @@
 
                             link: function (scope, element, attrs) {
                                 var options = getOptions(attrs),
-                                    require = options.require;
-                                if (require) {
-                                    if (!g._.isArray(require)) require = [require];
-                                    g.require(require, function (opts) {
+                                    deps = options.require;
+                                if (deps) {
+                                    if (!g._.isArray(deps)) deps = [deps];
+                                    require(deps, function (opts) {
                                         extend(options, opts);
                                         scope.giottoCollection.options(options).scope(scope).start();
                                     });
@@ -94,7 +94,7 @@
                         return {
                             link: function (scope, element, attrs) {
                                 var mode = attrs.mode ? +attrs.mode : 1;
-                                g.require(['stats'], function () {
+                                require(['stats'], function () {
                                     var stats = new Stats();
                                     stats.setMode(mode);
                                     scope.stats = stats;
@@ -150,10 +150,10 @@
                         var viz = element.data(name);
                         if (!viz) {
                             var options = getOptions(attrs),
-                                require = options.require;
-                            if (require) {
-                                if (!g._.isArray(require)) require = [require];
-                                g.require(require, function (opts) {
+                                deps = options.require;
+                            if (deps) {
+                                if (!g._.isArray(deps)) deps = [deps];
+                                require(deps, function (opts) {
                                     extend(options, opts);
                                     startViz(scope, element, options, injected_arguments);
                                 });
