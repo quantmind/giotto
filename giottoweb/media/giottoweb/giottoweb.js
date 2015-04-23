@@ -2122,7 +2122,6 @@ var requirejs, require, define;
 
     function defaultPaths () {
         return {
-            "lux": "lux/lux",
             "angular": "//ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular",
             "angular-animate": "//ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-animate",
             "angular-mocks": "//ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-mocks.js",
@@ -2149,6 +2148,7 @@ var requirejs, require, define;
             "topojson": "//cdnjs.cloudflare.com/ajax/libs/topojson/1.6.19/topojson"
         };
     }
+
 
     // Default shims
     function defaultShim () {
@@ -2238,8 +2238,10 @@ var requirejs, require, define;
 
     // require.config override
     lux.config = function (cfg) {
-        if(!cfg.baseUrl)
-            cfg.baseUrl = baseUrl();
+        if(!cfg.baseUrl) {
+            var url = baseUrl();
+            if (url !== undefined) cfg.baseUrl = url;
+        }
         cfg.shim = extend(defaultShim(), cfg.shim);
         cfg.paths = newPaths(cfg);
         require.config(cfg);
@@ -2285,7 +2287,7 @@ lux.config({
 //
 //  Script for giotto website
 //  =============================
-lux.require(['lux', 'giotto/giotto', 'd3-geo-projection', 'angular-ui-router', 'angular-strap'], function (lux, d3) {
+lux.require(['lux/lux', 'giotto/giotto', 'd3-geo-projection', 'angular-ui-router', 'angular-strap'], function (lux, d3) {
     "use strict";
 
     var url = lux.context.url,

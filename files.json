@@ -16,6 +16,7 @@
                 "src/core/svg.js",
                 "src/core/canvas.js",
                 "src/core/viz.js",
+                "src/chart/*.js",
                 "src/viz/*.js",
                 "src/plugins/*.js",
                 "src/text/*.js",
