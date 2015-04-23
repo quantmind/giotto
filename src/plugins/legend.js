@@ -130,10 +130,17 @@
                 lineData = [[[0, 0], [d.symbolLength, 0]]],
                 line = d3.svg.line(),
                 symbol = d3.svg.symbol(),
-                drag = d3.behavior.drag().on("drag", dragMove),
+                drag = d3.behavior.drag()
+                            .on("drag", dragMove)
+                            .on('dragstart', dragStart),
                 x = 0,
                 y = 0,
                 t;
+
+            function dragStart(d) {
+                d3.select('.legend-box').attr('cursor', 'move');
+                d3.select('.legend').attr('cursor', 'move');
+            }
 
             function dragMove(d) {
                 var x = d3.event.x - 3*opts.legend.symbolLength,
