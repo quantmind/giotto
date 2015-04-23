@@ -39,6 +39,7 @@
 
         legend: {
             show: true,
+            draggable: true,
             position: 'bottom',
             margin: 0
         },

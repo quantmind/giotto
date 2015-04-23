@@ -4,6 +4,7 @@
     //  Add legend functionality to Charts
     g.viz.chart.plugin('legend', {
         show: false,
+        draggable: false,
         margin: 50,
         position: 'top-right',
         padding: 5,
@@ -35,6 +36,16 @@
 
             return group;
         };
+
+        function move(){
+            this.parentNode.appendChild(this);
+            var dragTarget = d3.select(this);
+            console.info('siema');
+            dragTarget.style({
+                left: d3.event.dx + parseInt(dragTarget.style("left")) + "px",
+                top: d3.event.dy + parseInt(dragTarget.style("top")) + "px"
+            });
+        }
 
         chart.on('tick.legend', function () {
             if (!opts) {
@@ -95,7 +106,7 @@
 
             if (position.substring(0, 6) === 'bottom') {
                 position = position.substring(7);
-                y = group.height() - 2*height;
+                y = group.height() - 1.7*height;
             } else if (position.substring(0, 3) === 'top') {
                 position = position.substring(4);
                 y = 0;
@@ -129,12 +140,26 @@
                 lineData = [[[0, 0], [d.symbolLength, 0]]],
                 line = d3.svg.line(),
                 symbol = d3.svg.symbol(),
+                drag = d3.behavior.drag().on("drag", dragMove),
                 x = 0,
                 y = 0,
                 t;
 
+            function dragMove(d) {
+                var x = d3.event.x - 3*opts.legend.symbolLength,
+                    y = d3.event.y;
+
+                d3.select('.legend-box').attr("transform", "translate(" + x + "," + y + ")");
+                d3.select('.legend').attr("transform", "translate(" + x + "," + y + ")");
+            }
+
             box.enter().append('rect').classed('legend-box', true);
             element.enter().append('g').classed('legend', true);
+
+            if (d.draggable) {
+                box.call(drag);
+                element.call(drag);
+            }
 
             var items = element.selectAll('.legend-item').data(labels),
                 node = element.node();
