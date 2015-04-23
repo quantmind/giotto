@@ -25,12 +25,15 @@
             // Inject plugins
             opts = p.copy(opts);
             // Create the group
-            var group = g.group[opts.type](paper, opts),
-                plugins = g.paper.plugins;
+            var group = g.group[opts.type](paper, opts);
 
             group.element().classed(p.giotto, true);
-            for (var i=0; i < plugins.length; ++i)
-                plugins[i](group, opts);
+
+            // apply plugins
+            g.paper.pluginArray.forEach(function (plugin) {
+                plugin(group);
+            });
+
             return group;
         };
 
@@ -324,5 +327,5 @@
         return paper;
     };
 
-    g.paper.plugins = [];
-    g.paper.plugin = registerPlugin(g.paper.plugins);
+    // Function to register plugin for papers
+    registerPlugin(g.paper);

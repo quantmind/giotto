@@ -4,10 +4,11 @@
             _ = g._;
 
         it("Check defaults", function() {
-            var defaults = g.defaults.paper.brush;
-            expect(_.isObject(defaults)).toBe(true);
-            expect(defaults.axis).toBe(null);
-            expect(defaults.fillOpacity).toBe(0.125);
+            var brush = g.paper.plugins.brush;
+            expect(_.isFunction(brush)).toBe(true);
+            expect(_.isObject(brush.defaults)).toBe(true);
+            expect(brush.defaults.axis).toBe('x');
+            expect(brush.defaults.fillOpacity).toBe(0.125);
         });
 
         it("Check basic properties", function () {
@@ -18,7 +19,7 @@
             var brush = group.addBrush();
                 options = brush.options();
 
-            expect(options.axis).toBe(null);
+            expect(options.axis).toBe('x');
         });
 
         it("Test extent", function () {

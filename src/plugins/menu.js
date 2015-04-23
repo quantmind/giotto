@@ -110,33 +110,35 @@
     g.contextmenu = g.contextMenu();
 
 
-    g.vizplugin(function (viz) {
+    g.viz.plugin('menu', {},
 
-        viz.contextmenu = function (menu) {
-            var opts = viz.options();
-            menu.append('ul')
-                .attr('class', 'dropdown-menu')
-                .attr('role', 'menu')
-                .selectAll('li')
-                .data(opts.contextmenu)
-                .enter()
-                .append('li')
-                .append('a')
-                .attr('role', 'menuitem')
-                .text(function (d) {return isFunction(d.label) ? d.label() : d.label;})
-                .attr('href', '#')
-                .on('click', function (d) {
-                    if (d.callback) d.callback(viz);
-                });
-        };
+        function (viz) {
 
-        viz.on('tick.menu', function () {
-            var opts = viz.options();
-            if (opts.contextmenu)
-                g.contextmenu(viz.element(), function (menu) {
-                    return viz.contextmenu(menu);
-                });
-            else
-                g.contextmenu(viz.element());
+            viz.contextmenu = function (menu) {
+                var opts = viz.options();
+                menu.append('ul')
+                    .attr('class', 'dropdown-menu')
+                    .attr('role', 'menu')
+                    .selectAll('li')
+                    .data(opts.contextmenu)
+                    .enter()
+                    .append('li')
+                    .append('a')
+                    .attr('role', 'menuitem')
+                    .text(function (d) {return isFunction(d.label) ? d.label() : d.label;})
+                    .attr('href', '#')
+                    .on('click', function (d) {
+                        if (d.callback) d.callback(viz);
+                    });
+            };
+
+            viz.on('tick.menu', function () {
+                var opts = viz.options();
+                if (opts.contextmenu)
+                    g.contextmenu(viz.element(), function (menu) {
+                        return viz.contextmenu(menu);
+                    });
+                else
+                    g.contextmenu(viz.element());
+            });
         });
-    });

@@ -129,53 +129,55 @@
     });
 
     //  Add brush functionality to charts
-    g.viz.chart.plugin(function (chart) {
-        var brush, brushopts;
+    g.viz.chart.plugin('brushchart', {},
 
-        // Show grid
-        chart.addBrush = function () {
+        function (chart) {
+            var brush, brushopts;
 
-            brush = chart.options().brush;
+            // Show grid
+            chart.addBrush = function () {
 
-            var start = brush.start,
-                move = brush.move,
-                end = brush.end;
+                brush = chart.options().brush;
 
-            brush.start = function () {
-                if (start) start(chart);
-            };
+                var start = brush.start,
+                    move = brush.move,
+                    end = brush.end;
 
-            brush.move = function () {
-                //
-                // loop through series
-                chart.each(function (serie) {
-                    var group = chart.axisGroup(serie),
-                        brush = group ? group.brush() : null;
+                brush.start = function () {
+                    if (start) start(chart);
+                };
 
-                    if (!brush) return;
+                brush.move = function () {
+                    //
+                    // loop through series
+                    chart.each(function (serie) {
+                        var group = chart.axisGroup(serie),
+                            brush = group ? group.brush() : null;
 
-                    if (serie.point)
-                        brush.selectDraw(serie.point);
-                    if (serie.bar)
-                        brush.selectDraw(serie.bar);
+                        if (!brush) return;
+
+                        if (serie.point)
+                            brush.selectDraw(serie.point);
+                        if (serie.bar)
+                            brush.selectDraw(serie.bar);
+                    });
+                    if (move) move(chart);
+                };
+
+                brush.end = function () {
+                    if (end) end(chart);
+                };
+
+                chart.paper().each('.reference', function () {
+                    this.addBrush(brushopts).render();
                 });
-                if (move) move(chart);
+                return chart;
             };
 
-            brush.end = function () {
-                if (end) end(chart);
-            };
-
-            chart.paper().each('.reference', function () {
-                this.addBrush(brushopts).render();
+            chart.on('tick.brush', function () {
+                if (chart.options().brush.show)
+                    chart.addBrush();
             });
-            return chart;
-        };
 
-        chart.on('tick.brush', function () {
-            if (chart.options().brush.show)
-                chart.addBrush();
         });
-
-    });
 

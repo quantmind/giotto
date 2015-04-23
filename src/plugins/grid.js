@@ -1,5 +1,5 @@
     //
-    //  Add grid functionality
+    //  Add grid functionality to groups in a paper
     g.paper.plugin('grid', {
             color: '#333',
             colorOpacity: 0.3,
@@ -13,6 +13,10 @@
         function (group) {
             var paper = group.paper(),
                 grid, gopts;
+
+            group.grid = function () {
+                return grid;
+            };
 
             // Show the grid
             group.showGrid = function () {
@@ -104,33 +108,35 @@
 
     //
     //  Add grid functionality to charts
-    g.viz.chart.plugin(function (chart) {
+    g.viz.chart.plugin('gridchart', {},
 
-        // Show grid
-        chart.showGrid = function () {
-            chart.paper().each('.reference', function () {
-                this.showGrid();
+        function (chart) {
+
+            // Show grid
+            chart.showGrid = function () {
+                chart.paper().each('.reference', function () {
+                    this.showGrid();
+                });
+                return chart;
+            };
+
+            // Hide grid
+            chart.hideGrid = function () {
+                chart.paper().each('.reference', function () {
+                    this.hideGrid();
+                });
+                return chart;
+            };
+
+            chart.on('tick.grid', function () {
+                var grid = chart.options().grid;
+
+                if (grid.show)
+                    chart.showGrid();
+                else
+                    chart.hideGrid();
             });
-            return chart;
-        };
-
-        // Hide grid
-        chart.hideGrid = function () {
-            chart.paper().each('.reference', function () {
-                this.hideGrid();
-            });
-            return chart;
-        };
-
-        chart.on('tick.grid', function () {
-            var grid = chart.options().grid;
-
-            if (grid.show)
-                chart.showGrid();
-            else
-                chart.hideGrid();
         });
-    });
 
     function notick () {return '';}
 

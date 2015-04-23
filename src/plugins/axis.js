@@ -17,11 +17,11 @@
 
     function (opts) {
         // Inherit axis properties
-        var register = registerPlugin([]);
-        register('xaxis', axisOptions(extend({position: 'bottom'}, axisDefaults), opts.xaxis), function (){});
-        register('yaxis', axisOptions(extend({position: 'left'}, axisDefaults),  opts.yaxis), function (){});
-        register('yaxis2', axisOptions(extend({position: 'right'}, axisDefaults),  opts.yaxis2), function (){});
-        opts.pluginOptions(register.plugins);
+        var o = registerPlugin({});
+        o.plugin('xaxis', axisOptions(extend({position: 'bottom'}, axisDefaults), opts.xaxis), function (){});
+        o.plugin('yaxis', axisOptions(extend({position: 'left'}, axisDefaults),  opts.yaxis), function (){});
+        o.plugin('yaxis2', axisOptions(extend({position: 'right'}, axisDefaults),  opts.yaxis2), function (){});
+        opts.pluginOptions(o.pluginArray);
 
         function axisOptions (o, value) {
             extend(o, value);
@@ -30,14 +30,14 @@
         }
     },
 
-    function (group, opts) {
+    function (group) {
         var type = group.type(),
             d3v = d3[type],
             xaxis = d3v.axis(),
             yaxis = d3v.axis();
 
-        xaxis.options = function () {return opts.xaxis;};
-        yaxis.options = function () {return opts.yaxis;};
+        xaxis.options = function () {return group.options().xaxis;};
+        yaxis.options = function () {return group.options().yaxis;};
 
         group.xaxis = function () {
             return xaxis;
@@ -49,11 +49,11 @@
 
         // Draw X axis
         group.drawXaxis = function () {
-            return group.add(g[type].axis(group, xaxis, 'x-axis')).options(opts.xaxis);
+            return group.add(g[type].axis(group, xaxis, 'x-axis')).options(xaxis.options());
         };
 
         group.drawYaxis = function () {
-            return group.add(g[type].axis(group, yaxis, 'y-axis')).options(opts.yaxis);
+            return group.add(g[type].axis(group, yaxis, 'y-axis')).options(yaxis.options());
         };
 
         group.scalex = function (x) {

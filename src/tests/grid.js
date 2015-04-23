@@ -4,27 +4,28 @@
             _ = g._;
 
         it("Check defaults", function() {
-            var defaults = g.defaults.paper.grid;
-            expect(_.isObject(defaults)).toBe(true);
-            expect(_.isString(defaults.color)).toBe(true);
-            expect(_.isString(defaults.zoomx)).toBe(false);
-            expect(_.isString(defaults.zoomy)).toBe(false);
+            var grid = g.paper.plugins.grid;
+            expect(_.isFunction(grid)).toBe(true);
+
+            expect(_.isObject(grid.defaults)).toBe(true);
+            expect(_.isString(grid.defaults.color)).toBe(true);
+            expect(grid.defaults.colorOpacity).toBe(0.3);
+            expect(grid.defaults.xaxis).toBe(true);
+            expect(grid.defaults.yaxis).toBe(true);
         });
 
-        it("Check basic properties", function () {
+        it("Check group showGrid", function () {
             var p = g.paper(),
-                group = p.group(),
-                grid = group.showGrid();
+                group = p.group();
 
-            expect(grid.type()).toBe('svg');
+            expect(group.showGrid()).toBe(group);
+
+            expect(group.type()).toBe('svg');
+
+            var grid = group.grid();
+
             expect(_.isFunction(grid.xaxis())).toBe(true);
             expect(_.isFunction(grid.xaxis())).toBe(true);
         });
 
-        it("Check zoom defaults", function() {
-            var defaults = g.defaults.paper.grid;
-            expect(defaults.zoomx).toBe(false);
-            expect(defaults.zoomx).toBe(false);
-            expect(defaults.scaleExtent.length).toBe(2);
-        });
     });

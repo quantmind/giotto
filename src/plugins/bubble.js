@@ -5,13 +5,13 @@
         friction: 0.9
     },
 
-    function (group, opts) {
+    function (group) {
 
         // Add force visualization to the group
         group.bubble = function (data, opts) {
             opts || (opts = {});
             chartFormats(group, opts);
-            copyMissing(p.bubble, opts);
+            opts = copyMissing(group.options().bubble, opts);
 
             return group.add(g[type].bubble)
                         .dataConstructor(bubble_costructor)

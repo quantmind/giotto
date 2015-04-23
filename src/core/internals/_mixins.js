@@ -4,7 +4,7 @@
     function giottoMixin (d, opts, plugins) {
         var uid = ++_idCounter;
 
-        opts = g.options(opts).pluginOptions(plugins || g.paper.plugins);
+        opts = g.options(opts).pluginOptions(plugins || g.paper.pluginArray);
 
         // unique identifier for this object
         d.uid = function () {
@@ -105,20 +105,23 @@
     }
 
     // Create a function for registering plugins
-    function registerPlugin (plugins) {
+    function registerPlugin (main) {
+        main.plugins = {};
+        main.pluginArray = [];
 
-        var register = function (name, defaults, plugin) {
-            if (arguments.length === 3) {
-                plugin.defaults = defaults;
-                plugin.pluginName = name;
-            }
-            else
-                plugin = name;
+        // Register a plugin
+        //  - name: plugin name
+        //  - defaults: defaults parameters for a named plugin
+        //  - plugin: plugin object
+        main.plugin = function (name, defaults, plugin) {
+            plugin.defaults = defaults;
+            plugin.pluginName = name;
+            main.plugins[name] = plugin;
             if (!isFunction(plugin.options)) plugin.options = PluginOptions;
-            plugins.push(plugin);
+            main.pluginArray.push(plugin);
         };
-        register.plugins = plugins;
-        return register;
+
+        return main;
     }
 
     function PluginOptions (o) {

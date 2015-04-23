@@ -15,14 +15,14 @@
         transition: extend({}, g.defaults.transition)
     },
 
-    function (group, p) {
+    function (group) {
         var type = group.type();
 
         // Draw points in the group
         group.points = function (data, opts) {
             opts || (opts = {});
             chartFormats(group, opts);
-            chartColor(group.paper(), copyMissing(p.point, opts));
+            chartColor(group.paper(), copyMissing(group.options().point, opts));
 
             return group.add(g[type].points)
                 .pointOptions(pointOptions)

@@ -118,10 +118,7 @@
             injects = injects ? injects.slice() : [];
 
             // Create directive from Viz name if not provided
-            if (!name) {
-                name = vizType.vizName();
-                name = mod.name.toLowerCase() + name.substring(0,1).toUpperCase() + name.substring(1);
-            }
+            name = mod.name.toLowerCase() + name.substring(0,1).toUpperCase() + name.substring(1);
 
             function startViz(scope, element, options, injected) {
                 var collection = scope.giottoCollection;
@@ -177,7 +174,9 @@
             g.log.info('Adding giotto visualization directives');
 
             angular.forEach(g.viz, function (vizType) {
-                g.angular.directive(vizType, null, injects);
+                var name = vizType.vizName ? vizType.vizName() : null;
+                if (name)
+                    g.angular.directive(vizType, name, injects);
             });
 
             return ag;

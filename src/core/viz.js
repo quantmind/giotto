@@ -1,10 +1,9 @@
     //
+    // Namespace for all visualizations
     g.viz = {};
-    // Plugins for all visualization classes
-    g.vizplugins = [];
     //
-    g.vizplugin = registerPlugin(g.vizplugins);
-
+    // Plugins for all visualization classes
+    registerPlugin(g.viz);
     //
     // Factory of Giotto visualization factories
     //  name: name of the visualization constructor, the constructor is
@@ -18,12 +17,6 @@
         // The visualization factory
         var
 
-        plugins = [],
-
-        _plugins = function () {
-            return extendArray([], g.paper.plugins, g.vizplugins, plugins);
-        },
-
         // The vizualization constructor
         vizType = function (element, p) {
 
@@ -32,7 +25,9 @@
                 element = null;
             }
 
-            var viz = vizMixin({}, _plugins()).options(vizType.defaults).options(p),
+            var vizPlugins = extendArray([], g.viz.pluginArray, vizType.pluginArray),
+                allPlugins = extendArray([], g.paper.pluginArray, vizPlugins),
+                viz = vizMixin({}, allPlugins).options(vizType.defaults).options(p),
                 events = d3.dispatch.apply(d3, g.constants.vizevents),
                 alpha = 0,
                 paper;
@@ -125,13 +120,10 @@
             if (constructor)
                 constructor(viz);
 
-            // Inject plugins for all visualizations
-            for (i=0; i < g.vizplugins.length; ++i)
-                g.vizplugins[i](viz);
-
-            // Inject visualization plugins
-            for (var i=0; i < plugins.length; ++i)
-                plugins[i](viz);
+            // Inject plugins
+            vizPlugins.forEach(function (plugin) {
+                plugin(viz);
+            });
 
             return viz;
         };
@@ -144,7 +136,7 @@
             return name;
         };
 
-        vizType.plugin = registerPlugin(plugins);
+        registerPlugin(vizType);
 
         return vizType;
     };

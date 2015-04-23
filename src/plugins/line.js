@@ -8,14 +8,14 @@
         active: {}
     },
 
-    function (group, p) {
+    function (group) {
         var type = group.type();
 
         // Draw a path or an area
         group.path = function (data, opts) {
             opts || (opts = {});
             chartFormats(group, opts);
-            chartColor(group.paper(), copyMissing(p.line, opts));
+            chartColor(group.paper(), copyMissing(group.options().line, opts));
 
             return group.add(g[type].path(group))
                         .pointOptions(pointOptions)

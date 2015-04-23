@@ -34,7 +34,7 @@
         }
     },
 
-    function (group, p) {
+    function (group) {
         var type = group.type(),
             arc = d3[type].arc()
                             .innerRadius(function (d) {return d.innerRadius;})
@@ -44,7 +44,7 @@
         group.pie = function (data, opts) {
             opts || (opts = {});
             chartFormats(group, opts);
-            copyMissing(p.pie, opts);
+            copyMissing(group.options().pie, opts);
 
             var draw = group.add(function () {
 

@@ -1,6 +1,6 @@
 //      GiottoJS - v0.2.0
 
-//      Compiled 2015-04-22.
+//      Compiled 2015-04-23.
 //      Copyright (c) 2015 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -2724,7 +2724,7 @@
     function giottoMixin (d, opts, plugins) {
         var uid = ++_idCounter;
 
-        opts = g.options(opts).pluginOptions(plugins || g.paper.plugins);
+        opts = g.options(opts).pluginOptions(plugins || g.paper.pluginArray);
 
         // unique identifier for this object
         d.uid = function () {
@@ -2825,20 +2825,23 @@
     }
 
     // Create a function for registering plugins
-    function registerPlugin (plugins) {
+    function registerPlugin (main) {
+        main.plugins = {};
+        main.pluginArray = [];
 
-        var register = function (name, defaults, plugin) {
-            if (arguments.length === 3) {
-                plugin.defaults = defaults;
-                plugin.pluginName = name;
-            }
-            else
-                plugin = name;
+        // Register a plugin
+        //  - name: plugin name
+        //  - defaults: defaults parameters for a named plugin
+        //  - plugin: plugin object
+        main.plugin = function (name, defaults, plugin) {
+            plugin.defaults = defaults;
+            plugin.pluginName = name;
+            main.plugins[name] = plugin;
             if (!isFunction(plugin.options)) plugin.options = PluginOptions;
-            plugins.push(plugin);
+            main.pluginArray.push(plugin);
         };
-        register.plugins = plugins;
-        return register;
+
+        return main;
     }
 
     function PluginOptions (o) {
@@ -3222,12 +3225,15 @@
             // Inject plugins
             opts = p.copy(opts);
             // Create the group
-            var group = g.group[opts.type](paper, opts),
-                plugins = g.paper.plugins;
+            var group = g.group[opts.type](paper, opts);
 
             group.element().classed(p.giotto, true);
-            for (var i=0; i < plugins.length; ++i)
-                plugins[i](group, opts);
+
+            // apply plugins
+            g.paper.pluginArray.forEach(function (plugin) {
+                plugin(group);
+            });
+
             return group;
         };
 
@@ -3521,8 +3527,8 @@
         return paper;
     };
 
-    g.paper.plugins = [];
-    g.paper.plugin = registerPlugin(g.paper.plugins);
+    // Function to register plugin for papers
+    registerPlugin(g.paper);
 
 	//
 	// 	group
@@ -4179,12 +4185,11 @@
     }
 
     //
+    // Namespace for all visualizations
     g.viz = {};
-    // Plugins for all visualization classes
-    g.vizplugins = [];
     //
-    g.vizplugin = registerPlugin(g.vizplugins);
-
+    // Plugins for all visualization classes
+    registerPlugin(g.viz);
     //
     // Factory of Giotto visualization factories
     //  name: name of the visualization constructor, the constructor is
@@ -4198,12 +4203,6 @@
         // The visualization factory
         var
 
-        plugins = [],
-
-        _plugins = function () {
-            return extendArray([], g.paper.plugins, g.vizplugins, plugins);
-        },
-
         // The vizualization constructor
         vizType = function (element, p) {
 
@@ -4212,7 +4211,9 @@
                 element = null;
             }
 
-            var viz = vizMixin({}, _plugins()).options(vizType.defaults).options(p),
+            var vizPlugins = extendArray([], g.viz.pluginArray, vizType.pluginArray),
+                allPlugins = extendArray([], g.paper.pluginArray, vizPlugins),
+                viz = vizMixin({}, allPlugins).options(vizType.defaults).options(p),
                 events = d3.dispatch.apply(d3, g.constants.vizevents),
                 alpha = 0,
                 paper;
@@ -4305,13 +4306,10 @@
             if (constructor)
                 constructor(viz);
 
-            // Inject plugins for all visualizations
-            for (i=0; i < g.vizplugins.length; ++i)
-                g.vizplugins[i](viz);
-
-            // Inject visualization plugins
-            for (var i=0; i < plugins.length; ++i)
-                plugins[i](viz);
+            // Inject plugins
+            vizPlugins.forEach(function (plugin) {
+                plugin(viz);
+            });
 
             return viz;
         };
@@ -4324,7 +4322,7 @@
             return name;
         };
 
-        vizType.plugin = registerPlugin(plugins);
+        registerPlugin(vizType);
 
         return vizType;
     };
@@ -5791,11 +5789,11 @@
 
     function (opts) {
         // Inherit axis properties
-        var register = registerPlugin([]);
-        register('xaxis', axisOptions(extend({position: 'bottom'}, axisDefaults), opts.xaxis), function (){});
-        register('yaxis', axisOptions(extend({position: 'left'}, axisDefaults),  opts.yaxis), function (){});
-        register('yaxis2', axisOptions(extend({position: 'right'}, axisDefaults),  opts.yaxis2), function (){});
-        opts.pluginOptions(register.plugins);
+        var o = registerPlugin({});
+        o.plugin('xaxis', axisOptions(extend({position: 'bottom'}, axisDefaults), opts.xaxis), function (){});
+        o.plugin('yaxis', axisOptions(extend({position: 'left'}, axisDefaults),  opts.yaxis), function (){});
+        o.plugin('yaxis2', axisOptions(extend({position: 'right'}, axisDefaults),  opts.yaxis2), function (){});
+        opts.pluginOptions(o.pluginArray);
 
         function axisOptions (o, value) {
             extend(o, value);
@@ -5804,14 +5802,14 @@
         }
     },
 
-    function (group, opts) {
+    function (group) {
         var type = group.type(),
             d3v = d3[type],
             xaxis = d3v.axis(),
             yaxis = d3v.axis();
 
-        xaxis.options = function () {return opts.xaxis;};
-        yaxis.options = function () {return opts.yaxis;};
+        xaxis.options = function () {return group.options().xaxis;};
+        yaxis.options = function () {return group.options().yaxis;};
 
         group.xaxis = function () {
             return xaxis;
@@ -5823,11 +5821,11 @@
 
         // Draw X axis
         group.drawXaxis = function () {
-            return group.add(g[type].axis(group, xaxis, 'x-axis')).options(opts.xaxis);
+            return group.add(g[type].axis(group, xaxis, 'x-axis')).options(xaxis.options());
         };
 
         group.drawYaxis = function () {
-            return group.add(g[type].axis(group, yaxis, 'y-axis')).options(opts.yaxis);
+            return group.add(g[type].axis(group, yaxis, 'y-axis')).options(yaxis.options());
         };
 
         group.scalex = function (x) {
@@ -6005,13 +6003,13 @@
         }
     },
 
-    function (group, p) {
+    function (group) {
         var type = group.type();
 
         group.barchart = function (data, opts) {
             opts || (opts = {});
             chartFormats(group, opts);
-            chartColor(group.paper(), copyMissing(p.bar, opts));
+            chartColor(group.paper(), copyMissing(group.options().bar, opts));
 
             return group.add(g[type].barchart)
                 .pointOptions(extendArray(['size'], drawingOptions))
@@ -6317,55 +6315,57 @@
     });
 
     //  Add brush functionality to charts
-    g.viz.chart.plugin(function (chart) {
-        var brush, brushopts;
+    g.viz.chart.plugin('brushchart', {},
 
-        // Show grid
-        chart.addBrush = function () {
+        function (chart) {
+            var brush, brushopts;
 
-            brush = chart.options().brush;
+            // Show grid
+            chart.addBrush = function () {
 
-            var start = brush.start,
-                move = brush.move,
-                end = brush.end;
+                brush = chart.options().brush;
 
-            brush.start = function () {
-                if (start) start(chart);
-            };
+                var start = brush.start,
+                    move = brush.move,
+                    end = brush.end;
 
-            brush.move = function () {
-                //
-                // loop through series
-                chart.each(function (serie) {
-                    var group = chart.axisGroup(serie),
-                        brush = group ? group.brush() : null;
+                brush.start = function () {
+                    if (start) start(chart);
+                };
 
-                    if (!brush) return;
+                brush.move = function () {
+                    //
+                    // loop through series
+                    chart.each(function (serie) {
+                        var group = chart.axisGroup(serie),
+                            brush = group ? group.brush() : null;
 
-                    if (serie.point)
-                        brush.selectDraw(serie.point);
-                    if (serie.bar)
-                        brush.selectDraw(serie.bar);
+                        if (!brush) return;
+
+                        if (serie.point)
+                            brush.selectDraw(serie.point);
+                        if (serie.bar)
+                            brush.selectDraw(serie.bar);
+                    });
+                    if (move) move(chart);
+                };
+
+                brush.end = function () {
+                    if (end) end(chart);
+                };
+
+                chart.paper().each('.reference', function () {
+                    this.addBrush(brushopts).render();
                 });
-                if (move) move(chart);
+                return chart;
             };
 
-            brush.end = function () {
-                if (end) end(chart);
-            };
-
-            chart.paper().each('.reference', function () {
-                this.addBrush(brushopts).render();
+            chart.on('tick.brush', function () {
+                if (chart.options().brush.show)
+                    chart.addBrush();
             });
-            return chart;
-        };
 
-        chart.on('tick.brush', function () {
-            if (chart.options().brush.show)
-                chart.addBrush();
         });
-
-    });
 
 
 
@@ -6375,13 +6375,13 @@
         friction: 0.9
     },
 
-    function (group, opts) {
+    function (group) {
 
         // Add force visualization to the group
         group.bubble = function (data, opts) {
             opts || (opts = {});
             chartFormats(group, opts);
-            copyMissing(p.bubble, opts);
+            opts = copyMissing(group.options().bubble, opts);
 
             return group.add(g[type].bubble)
                         .dataConstructor(bubble_costructor)
@@ -6406,70 +6406,76 @@
         elem.enter().append('g').attr('id', thiss.uid());
 
     };
+    //
+    //  Fill plugin
+    //  ================
+    //
+    //  A plugin which add the ``setBackground`` function to a group
+    g.paper.plugin('fill', {},
 
-    g.paper.plugin(function (group) {
+        function (group) {
 
-        var type = group.type();
+            var type = group.type();
 
-        group.fill = function (opts) {
-            if (!isObject(opts)) opts = {fill: opts};
+            group.fill = function (opts) {
+                if (!isObject(opts)) opts = {fill: opts};
 
-            return group.add(type === 'svg' ? FillSvg : FillCanvas)
-                        .options(opts);
-        };
-
-        if (type === 'svg')
-            group.setBackground = function (b, o) {
-                if (!o) return;
-
-                if (isObject(b)) {
-                    if (b.fillOpacity !== undefined)
-                        o.attr('fill-opacity', b.fillOpacity);
-                    b = b.fill;
-                }
-                if (isString(b))
-                    o.attr('fill', b);
-                else if(isFunction(b))
-                    b(o);
-                return group;
-            };
-        else
-            group.setBackground = function (b, context) {
-                var fill = b;
-                context = context || group.context();
-                if (isObject(fill)) fill = fill.fill;
-
-                if (isFunction(fill))
-                    fill(group.element());
-                else if (isObject(b))
-                    context.fillStyle = d3.canvas.rgba(b.fill, b.fillOpacity);
-                else if (isString(b))
-                    context.fillStyle = b;
-                return group;
+                return group.add(type === 'svg' ? FillSvg : FillCanvas)
+                            .options(opts);
             };
 
-        function FillSvg () {
-            var rect = group.element().selectAll('rect').data([true]),
-                fill = this.fill;
-            rect.enter().append('rect').attr('x', 0).attr('y', 0);
-            rect.attr('width', group.innerWidth()).attr('height', group.innerWidth());
-            group.setBackground(this, rect);
-        }
+            if (type === 'svg')
+                group.setBackground = function (b, o) {
+                    if (!o) return;
 
-        function FillCanvas () {
-            var ctx = group.context(),
-                width = group.innerWidth(),
-                height = group.innerHeight();
-            ctx.beginPath();
-            ctx.rect(0, 0, width, height);
-            if (isFunction(this.fill))
-                this.fill.x1(0).y1(0).x2(width).y2(height);
-            group.setBackground(this);
-        }
-    });
+                    if (isObject(b)) {
+                        if (b.fillOpacity !== undefined)
+                            o.attr('fill-opacity', b.fillOpacity);
+                        b = b.fill;
+                    }
+                    if (isString(b))
+                        o.attr('fill', b);
+                    else if(isFunction(b))
+                        b(o);
+                    return group;
+                };
+            else
+                group.setBackground = function (b, context) {
+                    var fill = b;
+                    context = context || group.context();
+                    if (isObject(fill)) fill = fill.fill;
+
+                    if (isFunction(fill))
+                        fill(group.element());
+                    else if (isObject(b))
+                        context.fillStyle = d3.canvas.rgba(b.fill, b.fillOpacity);
+                    else if (isString(b))
+                        context.fillStyle = b;
+                    return group;
+                };
+
+            function FillSvg () {
+                var rect = group.element().selectAll('rect').data([true]),
+                    fill = this.fill;
+                rect.enter().append('rect').attr('x', 0).attr('y', 0);
+                rect.attr('width', group.innerWidth()).attr('height', group.innerWidth());
+                group.setBackground(this, rect);
+            }
+
+            function FillCanvas () {
+                var ctx = group.context(),
+                    width = group.innerWidth(),
+                    height = group.innerHeight();
+                ctx.beginPath();
+                ctx.rect(0, 0, width, height);
+                if (isFunction(this.fill))
+                    this.fill.x1(0).y1(0).x2(width).y2(height);
+                group.setBackground(this);
+            }
+        });
 
     //
-    //  Add grid functionality
+    //  Add grid functionality to groups in a paper
     g.paper.plugin('grid', {
             color: '#333',
             colorOpacity: 0.3,
@@ -6483,6 +6489,10 @@
         function (group) {
             var paper = group.paper(),
                 grid, gopts;
+
+            group.grid = function () {
+                return grid;
+            };
 
             // Show the grid
             group.showGrid = function () {
@@ -6574,33 +6584,35 @@
 
     //
     //  Add grid functionality to charts
-    g.viz.chart.plugin(function (chart) {
+    g.viz.chart.plugin('gridchart', {},
 
-        // Show grid
-        chart.showGrid = function () {
-            chart.paper().each('.reference', function () {
-                this.showGrid();
+        function (chart) {
+
+            // Show grid
+            chart.showGrid = function () {
+                chart.paper().each('.reference', function () {
+                    this.showGrid();
+                });
+                return chart;
+            };
+
+            // Hide grid
+            chart.hideGrid = function () {
+                chart.paper().each('.reference', function () {
+                    this.hideGrid();
+                });
+                return chart;
+            };
+
+            chart.on('tick.grid', function () {
+                var grid = chart.options().grid;
+
+                if (grid.show)
+                    chart.showGrid();
+                else
+                    chart.hideGrid();
             });
-            return chart;
-        };
-
-        // Hide grid
-        chart.hideGrid = function () {
-            chart.paper().each('.reference', function () {
-                this.hideGrid();
-            });
-            return chart;
-        };
-
-        chart.on('tick.grid', function () {
-            var grid = chart.options().grid;
-
-            if (grid.show)
-                chart.showGrid();
-            else
-                chart.hideGrid();
         });
-    });
 
     function notick () {return '';}
 
@@ -6958,14 +6970,14 @@
         active: {}
     },
 
-    function (group, p) {
+    function (group) {
         var type = group.type();
 
         // Draw a path or an area
         group.path = function (data, opts) {
             opts || (opts = {});
             chartFormats(group, opts);
-            chartColor(group.paper(), copyMissing(p.line, opts));
+            chartColor(group.paper(), copyMissing(group.options().line, opts));
 
             return group.add(g[type].path(group))
                         .pointOptions(pointOptions)
@@ -7621,36 +7633,38 @@
     g.contextmenu = g.contextMenu();
 
 
-    g.vizplugin(function (viz) {
+    g.viz.plugin('menu', {},
 
-        viz.contextmenu = function (menu) {
-            var opts = viz.options();
-            menu.append('ul')
-                .attr('class', 'dropdown-menu')
-                .attr('role', 'menu')
-                .selectAll('li')
-                .data(opts.contextmenu)
-                .enter()
-                .append('li')
-                .append('a')
-                .attr('role', 'menuitem')
-                .text(function (d) {return isFunction(d.label) ? d.label() : d.label;})
-                .attr('href', '#')
-                .on('click', function (d) {
-                    if (d.callback) d.callback(viz);
-                });
-        };
+        function (viz) {
 
-        viz.on('tick.menu', function () {
-            var opts = viz.options();
-            if (opts.contextmenu)
-                g.contextmenu(viz.element(), function (menu) {
-                    return viz.contextmenu(menu);
-                });
-            else
-                g.contextmenu(viz.element());
+            viz.contextmenu = function (menu) {
+                var opts = viz.options();
+                menu.append('ul')
+                    .attr('class', 'dropdown-menu')
+                    .attr('role', 'menu')
+                    .selectAll('li')
+                    .data(opts.contextmenu)
+                    .enter()
+                    .append('li')
+                    .append('a')
+                    .attr('role', 'menuitem')
+                    .text(function (d) {return isFunction(d.label) ? d.label() : d.label;})
+                    .attr('href', '#')
+                    .on('click', function (d) {
+                        if (d.callback) d.callback(viz);
+                    });
+            };
+
+            viz.on('tick.menu', function () {
+                var opts = viz.options();
+                if (opts.contextmenu)
+                    g.contextmenu(viz.element(), function (menu) {
+                        return viz.contextmenu(menu);
+                    });
+                else
+                    g.contextmenu(viz.element());
+            });
         });
-    });
 
 
     // Add pie charts to giotto groups
@@ -7688,7 +7702,7 @@
         }
     },
 
-    function (group, p) {
+    function (group) {
         var type = group.type(),
             arc = d3[type].arc()
                             .innerRadius(function (d) {return d.innerRadius;})
@@ -7698,7 +7712,7 @@
         group.pie = function (data, opts) {
             opts || (opts = {});
             chartFormats(group, opts);
-            copyMissing(p.pie, opts);
+            copyMissing(group.options().pie, opts);
 
             var draw = group.add(function () {
 
@@ -8030,14 +8044,14 @@
         transition: extend({}, g.defaults.transition)
     },
 
-    function (group, p) {
+    function (group) {
         var type = group.type();
 
         // Draw points in the group
         group.points = function (data, opts) {
             opts || (opts = {});
             chartFormats(group, opts);
-            chartColor(group.paper(), copyMissing(p.point, opts));
+            chartColor(group.paper(), copyMissing(group.options().point, opts));
 
             return group.add(g[type].points)
                 .pointOptions(pointOptions)
@@ -8757,10 +8771,7 @@ NS["src/text/giotto.min.css"] = '@charset "UTF-8";.sunburst text{z-index:9999}.s
             injects = injects ? injects.slice() : [];
 
             // Create directive from Viz name if not provided
-            if (!name) {
-                name = vizType.vizName();
-                name = mod.name.toLowerCase() + name.substring(0,1).toUpperCase() + name.substring(1);
-            }
+            name = mod.name.toLowerCase() + name.substring(0,1).toUpperCase() + name.substring(1);
 
             function startViz(scope, element, options, injected) {
                 var collection = scope.giottoCollection;
@@ -8816,7 +8827,9 @@ NS["src/text/giotto.min.css"] = '@charset "UTF-8";.sunburst text{z-index:9999}.s
             g.log.info('Adding giotto visualization directives');
 
             angular.forEach(g.viz, function (vizType) {
-                g.angular.directive(vizType, null, injects);
+                var name = vizType.vizName ? vizType.vizName() : null;
+                if (name)
+                    g.angular.directive(vizType, name, injects);
             });
 
             return ag;
