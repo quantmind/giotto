@@ -2,7 +2,9 @@
     describe("Trianglify", function() {
         var g = d3.giotto;
 
-        it("Check basic properties", function() {
+        function _it() {}
+
+        _it("Check basic properties", function() {
             var t = g.viz.trianglify();
 
             expect(t.alpha()).toBe(0);
@@ -13,7 +15,7 @@
             expect(t.options().y_gradient).toBe(null);
         });
 
-        it("Build simple", function(done) {
+        _it("Build simple", function(done) {
             var t = g.viz.trianglify();
 
             t.start().on('end.test', function (e) {

@@ -5678,15 +5678,14 @@
     //  Requires trianglify library loaded or an entry ``trianglify`` in your
     //  require config.
     g.createviz('trianglify', {
-        bleed: 100,
         fillOpacity: 1,
         strokeOpacity: 1,
-        noiseIntensity: 0,
-        gradient: null,
-        cellsize: 100,
-        cellpadding: 0,
-        x_gradient: null,
-        y_gradient: null
+        variance: 0.75,
+        seed: null,
+        cell_size: 80,
+        color: null,
+        x_color: null,
+        y_color: null
     }, function (tri) {
 
         var t;
@@ -5722,14 +5721,10 @@
 
         function build () {
             var opts = tri.options(),
-                cellsize = +opts.cellsize,
-                cellpadding = +opts.cellpadding,
-                fillOpacity = +opts.fillOpacity,
-                strokeOpacity = +opts.strokeOpacity,
-                noiseIntensity = +opts.noiseIntensity,
-                gradient = tri.gradient(opts.gradient),
-                x_gradient = tri.gradient(opts.x_gradient) || gradient,
-                y_gradient = tri.gradient(opts.y_gradient) || gradient,
+                cell_size = +opts.cell_size,
+                color = tri.gradient(opts.color),
+                x_color = tri.gradient(opts.x_gradient) || color,
+                y_color = tri.gradient(opts.y_gradient) || color,
                 paper = tri.paper(),
                 element = paper.element(),
                 size = paper.size();
@@ -5742,22 +5737,17 @@
                     var url = pattern.dataUrl;
                     return url.substring(4,url.length-1);
                 };
-                t = new tri.Trianglify();
             }
 
             var topts = t.opts;
-            topts.fillOpacity = Math.min(1, Math.max(fillOpacity, 0));
-            topts.strokeOpacity = Math.min(1, Math.max(strokeOpacity, 0));
-            topts.noiseIntensity = Math.min(1, Math.max(noiseIntensity, 0));
-            if (x_gradient)
-                topts.x_gradient = x_gradient;
+            if (x_color)
+                topts.x_color = x_color;
             if (y_gradient)
-                topts.y_gradient = y_gradient;
-            if (cellsize > 0) {
-                topts.cell_size = cellsize;
-                topts.bleed = +opts.bleed;
+                topts.y_color = y_color;
+            if (cell_size > 0) {
+                topts.cell_size = cell_size;
             }
-            var pattern = t.generate(size[0], size[1]),
+            var pattern = tri.Trianglify(topts),
                 telement = element.select('.trianglify-background');
             if (!telement.node()) {
                 var parentNode = element.node(),
