@@ -37,16 +37,6 @@
             return group;
         };
 
-        function move(){
-            this.parentNode.appendChild(this);
-            var dragTarget = d3.select(this);
-            console.info('siema');
-            dragTarget.style({
-                left: d3.event.dx + parseInt(dragTarget.style("left")) + "px",
-                top: d3.event.dy + parseInt(dragTarget.style("top")) + "px"
-            });
-        }
-
         chart.on('tick.legend', function () {
             if (!opts) {
                 opts = chart.options();
