@@ -124,7 +124,7 @@ module.exports = function (grunt) {
                         ],
                         template: 'src/tests/test.tpl.html',
                         templateOptions: {
-                            deps: ['dist/giotto.js', 'angular', 'angular-mocks']
+                            deps: ['dist/giotto.js', 'angular', 'angular-mocks', 'trianglify']
                         }
                     },
                 }

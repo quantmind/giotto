@@ -5671,7 +5671,12 @@
         }
     });
 
-
+    //
+    //  Trianglify visualization
+    //  ===========================
+    //
+    //  Requires trianglify library loaded or an entry ``trianglify`` in your
+    //  require config.
     g.createviz('trianglify', {
         bleed: 100,
         fillOpacity: 1,
@@ -5683,6 +5688,7 @@
         x_gradient: null,
         y_gradient: null
     }, function (tri) {
+
         var t;
 
         tri.gradient = function (value) {
@@ -5702,7 +5708,7 @@
             // Load data if not already available
             tri.stop();
             if (tri.Trianglify === undefined && typeof Trianglify === 'undefined') {
-                g.require(['trianglify'], function (Trianglify) {
+                require(['trianglify'], function (Trianglify) {
                     tri.Trianglify = Trianglify || null;
                     tri.resume();
                 });
@@ -5736,19 +5742,20 @@
                     var url = pattern.dataUrl;
                     return url.substring(4,url.length-1);
                 };
-                t = new Trianglify();
+                t = new tri.Trianglify();
             }
 
-            t.options.fillOpacity = Math.min(1, Math.max(fillOpacity, 0));
-            t.options.strokeOpacity = Math.min(1, Math.max(strokeOpacity, 0));
-            t.options.noiseIntensity = Math.min(1, Math.max(noiseIntensity, 0));
+            var topts = t.opts;
+            topts.fillOpacity = Math.min(1, Math.max(fillOpacity, 0));
+            topts.strokeOpacity = Math.min(1, Math.max(strokeOpacity, 0));
+            topts.noiseIntensity = Math.min(1, Math.max(noiseIntensity, 0));
             if (x_gradient)
-                t.options.x_gradient = x_gradient;
+                topts.x_gradient = x_gradient;
             if (y_gradient)
-                t.options.y_gradient = y_gradient;
+                topts.y_gradient = y_gradient;
             if (cellsize > 0) {
-                t.options.cellsize = cellsize;
-                t.options.bleed = +opts.bleed;
+                topts.cell_size = cellsize;
+                topts.bleed = +opts.bleed;
             }
             var pattern = t.generate(size[0], size[1]),
                 telement = element.select('.trianglify-background');

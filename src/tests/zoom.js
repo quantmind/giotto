@@ -4,7 +4,7 @@
             _ = g._;
 
         it("Check zoom defaults", function() {
-            var zoom = g.paper.plugins.zoom;
+            var zoom = g.chart.plugins.zoom;
 
             expect(_.isFunction(zoom)).toBe(true);
             expect(_.isObject(zoom.defaults)).toBe(true);
