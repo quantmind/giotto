@@ -34,9 +34,11 @@
     var startTests = window.onload;
     window.onload = null;
 
-    require(['<%= [].concat(options.deps).join("', '") %>'], function() {
-        require(['<%= [].concat(scripts.specs,scripts.reporters).join("','") %>'], function(){
-            startTests();
+    require(['<%= [].concat(scripts.src).join("', '") %>'], function() {
+        require(['<%= [].concat(options.deps).join("', '") %>'], function() {
+            require(['<%= [].concat(scripts.specs,scripts.reporters).join("','") %>'], function(){
+                startTests();
+            });
         });
     });
   </script>

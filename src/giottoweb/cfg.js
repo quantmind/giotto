@@ -38,6 +38,7 @@
 
     function defaultPaths () {
         return {
+            "lux": "lux/lux",
             "angular": "//ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular",
             "angular-animate": "//ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-animate",
             "angular-mocks": "//ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-mocks.js",
@@ -64,7 +65,6 @@
             "topojson": "//cdnjs.cloudflare.com/ajax/libs/topojson/1.6.19/topojson"
         };
     }
-
 
     // Default shims
     function defaultShim () {
@@ -154,10 +154,8 @@
 
     // require.config override
     lux.config = function (cfg) {
-        if(!cfg.baseUrl) {
-            var url = baseUrl();
-            if (url !== undefined) cfg.baseUrl = url;
-        }
+        if(!cfg.baseUrl)
+            cfg.baseUrl = baseUrl();
         cfg.shim = extend(defaultShim(), cfg.shim);
         cfg.paths = newPaths(cfg);
         require.config(cfg);

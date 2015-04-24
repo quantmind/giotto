@@ -2,11 +2,10 @@
 /*global config:true, task:true, process:true*/
 module.exports = function (grunt) {
   "use strict";
+
     // Project configuration.
-    var docco_output = '../docs/lux/html/docco',
-        //docco_output = 'docs/build/html/docco',
-        // All libraries
-        libs = grunt.file.readJSON('files.json'),
+    var libs = grunt.file.readJSON('files.json'),
+        //docco_output = '../docs/lux/html/docco',
         concats = {};
     //
     function for_each(obj, callback) {
@@ -89,12 +88,12 @@ module.exports = function (grunt) {
         jshint: jshint_libs(),
         jasmine: {
             test: {
-                src : ['dist/giotto.js'],
+                src : ['dist/giotto.min.js'],
                 options : {
                     specs : 'src/tests/*.js',
                     template: 'src/tests/test.tpl.html',
                     templateOptions: {
-                        deps: ['dist/giotto.js', 'angular', 'angular-mocks']
+                        deps: ['angular', 'angular-mocks']
                     }
                 }
             },
@@ -124,7 +123,7 @@ module.exports = function (grunt) {
                         ],
                         template: 'src/tests/test.tpl.html',
                         templateOptions: {
-                            deps: ['dist/giotto.js', 'angular', 'angular-mocks', 'trianglify']
+                            deps: ['angular', 'angular-mocks', 'trianglify']
                         }
                     },
                 }
