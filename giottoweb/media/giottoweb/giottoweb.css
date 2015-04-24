@@ -1,27 +1,27 @@
 @charset "UTF-8";
 /*
 ------------------------------------------------------------------
-Created by lux in 0.09 seconds
-Date: 2015-04-23 17:42:31
+Created by lux in 0.1 seconds
+Date: 2015-04-24 08:06:23
 
 http://quantmind.github.io/lux/
 ------------------------------------------------------------------ */
 
 .hljs-comment,.hljs-title{color:#8e908c}.hljs-variable,.hljs-attribute,.hljs-tag,.hljs-regexp,.ruby .hljs-constant,.xml .hljs-tag .hljs-title,.xml .hljs-pi,.xml .hljs-doctype,.html .hljs-doctype,.css .hljs-id,.css .hljs-class,.css .hljs-pseudo{color:#c82829}.hljs-number,.hljs-preprocessor,.hljs-pragma,.hljs-built_in,.hljs-literal,.hljs-params,.hljs-constant{color:#f5871f}.ruby .hljs-class .hljs-title,.css .hljs-rules .hljs-attribute{color:#eab700}.hljs-string,.hljs-value,.hljs-inheritance,.hljs-header,.ruby .hljs-symbol,.xml .hljs-cdata{color:#718c00}.css .hljs-hexcolor{color:#3e999f}.hljs-function,.python .hljs-decorator,.python .hljs-title,.ruby .hljs-function .hljs-title,.ruby .hljs-title .hljs-keyword,.perl .hljs-sub,.javascript .hljs-title,.coffeescript .hljs-title{color:#4271ae}.hljs-keyword,.javascript .hljs-function{color:#8959a8}.hljs{display:block;overflow-x:auto;background:white;color:#4d4d4c;padding:0.5em;-webkit-text-size-adjust:none}.coffeescript .javascript,.javascript .xml,.tex .hljs-formula,.xml .javascript,.xml .vbscript,.xml .css,.xml .hljs-cdata{opacity:0.5}
 body {
-    font-style: normal;
-    color: rgba(0, 0, 0, 0.8);
     font-size: 16px;
-    background: #fff;
     font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
     line-height: 1.5;
-    min-height: 101%;
+    background: #fff;
+    color: rgba(0, 0, 0, 0.8);
+    font-style: normal;
     height: 101%;
+    min-height: 101%;
 }
 
 .fullpage {
-    min-height: 100%;
     height: 100%;
+    min-height: 100%;
 }
 
 .push-bottom {
@@ -35,8 +35,8 @@ body {
 .lazyContainer > .content {
     width: 100%;
     top: 0;
-    position: absolute;
     min-height: 100%;
+    position: absolute;
     left: 0;
 }
 
@@ -62,8 +62,8 @@ body {
 }
 
 .navbar2-page {
-    padding: 15px 15px 0;
     background: #fff;
+    padding: 15px 15px 0;
 }
 
 @media all and (min-width:768px) {
@@ -78,10 +78,10 @@ body {
 }
 @media all and (min-width:768px) {
     .sidebar {
-        margin-top: 51px;
-        position: absolute;
-        width: 200px;
         z-index: 1;
+        position: absolute;
+        margin-top: 51px;
+        width: 200px;
     }
 
 }
@@ -123,10 +123,10 @@ form {
 }
 
 code.hljs.inline {
-    padding: 2px 4px;
     display: inline;
     padding: 2px 4px;
     display: inline;
+    padding: 2px 4px;
 }
 
 dl dd {
@@ -197,16 +197,16 @@ dl.function dt {
 }
 
 .post-image {
-    max-height: 140px;
-    width: 140px;
-    height: auto;
     float: left;
+    width: 140px;
+    max-height: 140px;
+    height: auto;
 }
 
 .post-image-xs {
+    max-width: 90%;
     max-height: 150px;
     width: auto;
-    max-width: 90%;
 }
 
 h1:hover > a.headerlink,
@@ -220,8 +220,8 @@ dt:hover > a.headerlink {
 }
 
 a.headerlink {
-    color: #eee;
     text-decoration: none;
+    color: #eee;
     visibility: hidden;
     padding: 0 4px;
 }
@@ -235,8 +235,8 @@ a.headerlink:hover {
 }
 
 div.viewcode-block:target {
-    padding: 0 10px;
     margin: -1px -10px;
+    padding: 0 10px;
 }
 
 table.docutils.field-list th {
@@ -253,18 +253,18 @@ table.docutils.field-list th {
 }
 
 .page-header.index-header {
-    width: 101%;
+    background: #333;
+    height: 101%;
     margin: 0;
     color: #fff;
-    background: #333;
+    width: 101%;
     min-height: 100%;
-    height: 101%;
 }
 
 html,
 .fullpage {
-    min-height: 101%;
     height: 101%;
+    min-height: 101%;
 }
 
 #page-main {
@@ -273,10 +273,10 @@ html,
 }
 
 #footer {
-    padding: 30px 0 40px;
+    background: #333;
     color: #b3b3b3;
     min-height: 300px;
-    background: #333;
+    padding: 30px 0 40px;
 }
 
 #lux-logo {
@@ -294,9 +294,9 @@ html,
 }
 
 .trianglify-box {
-    padding: 20px;
-    max-width: 400px;
     background: rgba(255, 255, 255, 0.6);
+    max-width: 400px;
+    padding: 20px;
     -webkit-border-radius: 5px;
        -moz-border-radius: 5px;
             border-radius: 5px;
@@ -306,9 +306,9 @@ html,
 }
 
 .features article {
+    float: left;
     width: 33.33%;
     padding: 30px;
-    float: left;
 }
 
 .features article:before {
@@ -330,8 +330,8 @@ html,
 }
 @media all and (max-width:600px) {
     .features article {
-        width: auto;
         float: none;
+        width: auto;
     }
 
 }
@@ -353,9 +353,9 @@ html,
 }
 
 .error-message-container {
-    padding: 40px 120px;
-    height: 100%;
     background: rgba(0, 0, 0, 0.4);
+    height: 100%;
+    padding: 40px 120px;
     -webkit-box-sizing: border-box;
        -moz-box-sizing: border-box;
             box-sizing: border-box;
@@ -371,8 +371,8 @@ html,
     }
 
     .error-message-container {
-        padding: 40px 0;
         text-align: center;
+        padding: 40px 0;
     }
 
 }
