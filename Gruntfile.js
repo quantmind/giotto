@@ -88,7 +88,7 @@ module.exports = function (grunt) {
         jshint: jshint_libs(),
         jasmine: {
             test: {
-                src : ['dist/giotto.min.js'],
+                src : ['dist/giotto.js'],
                 options : {
                     specs : 'src/tests/*.js',
                     template: 'src/tests/test.tpl.html',

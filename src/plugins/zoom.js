@@ -1,5 +1,7 @@
     //
     //  Add zoom functionality to charts
+
+    // Add zoom to the events triggered by a group
     g.constants.groupEvents.push('zoom');
 
     g.chart.plugin('zoom', {
@@ -9,6 +11,7 @@
     },
 
     function (chart) {
+        // internal flag indicating if chart is zooming
         var zooming = false;
 
         // Return true whan the chart is performing a zoom operation
@@ -17,10 +20,11 @@
         };
 
         // Enable zoom on the chart
+        // only when either zoom.x or zoom.y are enabled
         chart.enableZoom = function () {
+
             var opts = chart.options().zoom,
                 zoom = d3.behavior.zoom()
-                    .scaleExtent(opts.scaleExtent)
                     .on('zoom', function () {
                         zooming = true;
                         chart.each(function (serie) {
@@ -32,6 +36,8 @@
             if (opts.scaleExtent)
                 zoom.scaleExtent(opts.scaleExtent);
 
+            // Apply the zoom behavior to the chart container
+            // This means each single group should handle the event separately
             zoom(chart.element());
         };
 
@@ -40,6 +46,9 @@
             if (zoom.x || zoom.y)
                 chart.enableZoom();
         });
+
+        // INTERNALS
+
 
         // Perform zoom for one group
         function zoomGroup (zoom, group, opts) {

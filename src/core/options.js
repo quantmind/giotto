@@ -3,11 +3,13 @@
     //	========================
     //
     //	Constructor of options for Giotto components
-    g.options = function (opts) {
+    g.options = function (opts, plugins) {
         // If this is not an option object create it
         if (!opts || !isFunction(opts.pluginOptions)) {
             opts = extend({}, g.defaults.paper, opts);
-            opts = initOptions(opts, {});
+            opts = initOptions(opts, {}).pluginOptions(plugins || g.paper.pluginArray);
+        } else if (plugins) {
+            opts.pluginOptions(plugins);
         }
         return opts;
     };

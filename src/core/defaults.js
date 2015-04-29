@@ -54,6 +54,10 @@
         HEIGHT: 300,
         vizevents: ['data', 'change', 'start', 'tick', 'end'],
         pointEvents: ["mouseenter", "mousemove", "touchstart", "touchmove", "mouseleave", "mouseout"],
+        //
+        // Events a giotto group can fire, added by pluigins
         groupEvents: [],
+        //
+        // leaflet url
         leaflet: 'http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css'
     };

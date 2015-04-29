@@ -1,6 +1,6 @@
 //      GiottoJS - v0.2.0
 
-//      Compiled 2015-04-24.
+//      Compiled 2015-04-29.
 //      Copyright (c) 2015 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -2724,7 +2724,7 @@
     function giottoMixin (d, opts, plugins) {
         var uid = ++_idCounter;
 
-        opts = g.options(opts).pluginOptions(plugins || g.paper.pluginArray);
+        opts = g.options(opts, plugins);
 
         // unique identifier for this object
         d.uid = function () {
@@ -2962,7 +2962,11 @@
         HEIGHT: 300,
         vizevents: ['data', 'change', 'start', 'tick', 'end'],
         pointEvents: ["mouseenter", "mousemove", "touchstart", "touchmove", "mouseleave", "mouseout"],
+        //
+        // Events a giotto group can fire, added by pluigins
         groupEvents: [],
+        //
+        // leaflet url
         leaflet: 'http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css'
     };
 
@@ -2971,11 +2975,13 @@
     //	========================
     //
     //	Constructor of options for Giotto components
-    g.options = function (opts) {
+    g.options = function (opts, plugins) {
         // If this is not an option object create it
         if (!opts || !isFunction(opts.pluginOptions)) {
             opts = extend({}, g.defaults.paper, opts);
-            opts = initOptions(opts, {});
+            opts = initOptions(opts, {}).pluginOptions(plugins || g.paper.pluginArray);
+        } else if (plugins) {
+            opts.pluginOptions(plugins);
         }
         return opts;
     };
@@ -6482,7 +6488,10 @@
         });
 
     //
-    //  Add grid functionality to groups in a paper
+    //  Add grid functionality to a group
+    //  =====================================
+    //
+    //  In theory each group can have its own grid
     g.paper.plugin('grid', {
             color: '#333',
             colorOpacity: 0.3,
@@ -6497,6 +6506,8 @@
             var paper = group.paper(),
                 grid, gopts;
 
+            // Return the grid associated with the group
+            // Can return nothing (no grid available)
             group.grid = function () {
                 return grid;
             };
@@ -6518,6 +6529,7 @@
                             show: gopts.grid.yaxis
                         }, gopts.grid);
                     }
+                    // Create the grid group
                     gopts.before = '*';
                     grid = paper.group(gopts);
                     grid.element().classed('grid', true);
@@ -8588,6 +8600,8 @@
 
     //
     //  Add zoom functionality to charts
+
+    // Add zoom to the events triggered by a group
     g.constants.groupEvents.push('zoom');
 
     g.chart.plugin('zoom', {
@@ -8597,6 +8611,7 @@
     },
 
     function (chart) {
+        // internal flag indicating if chart is zooming
         var zooming = false;
 
         // Return true whan the chart is performing a zoom operation
@@ -8605,10 +8620,11 @@
         };
 
         // Enable zoom on the chart
+        // only when either zoom.x or zoom.y are enabled
         chart.enableZoom = function () {
+
             var opts = chart.options().zoom,
                 zoom = d3.behavior.zoom()
-                    .scaleExtent(opts.scaleExtent)
                     .on('zoom', function () {
                         zooming = true;
                         chart.each(function (serie) {
@@ -8620,6 +8636,8 @@
             if (opts.scaleExtent)
                 zoom.scaleExtent(opts.scaleExtent);
 
+            // Apply the zoom behavior to the chart container
+            // This means each single group should handle the event separately
             zoom(chart.element());
         };
 
@@ -8628,6 +8646,9 @@
             if (zoom.x || zoom.y)
                 chart.enableZoom();
         });
+
+        // INTERNALS
+
 
         // Perform zoom for one group
         function zoomGroup (zoom, group, opts) {
@@ -8671,7 +8692,7 @@
     });
 
 var NS = NS || {};
-NS["src/text/giotto.min.css"] = '@charset "UTF-8";.sunburst text{z-index:9999}.sunburst path{fill-rule:evenodd;stroke:#fff}.axis,.d3-slider-axis line{fill:none;shape-rendering:crispEdges}.line{fill:none}.d3-tip:after{position:absolute;width:100%;line-height:1;display:inline;font-size:16px;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}.d3-tip.n:after{text-align:center;content:"\\25BC";left:0;margin:-2px 0 0;top:100%}.d3-tip.e:after{content:"\\25C0";left:-8px;margin:-4px 0 0;top:50%}.d3-tip.s:after{text-align:center;content:"\\25B2";left:0;margin:0 0 2px;top:-8px}.d3-tip.w:after{content:"\\25B6";left:100%;margin:-4px 0 0 -1px;top:50%}.d3-slider{position:relative;z-index:2;font-family:Verdana,Arial,sans-serif;font-size:1.1em;margin:20px;border:1px solid}.d3-slider-horizontal{height:.8em}.d3-slider-horizontal.d3-slider-axis{margin-bottom:30px}.d3-slider-range{position:absolute;right:0;height:.8em;left:0}.d3-slider-range-vertical{position:absolute;right:0;left:0;top:0}.d3-slider-range-vertical.d3-slider-axis{margin-right:30px}.d3-slider-vertical{width:.8em;height:100px}.d3-slider-handle{position:absolute;width:1.2em;height:1.2em;z-index:3;-webkit-border-radius:4px;-moz-border-radius:4px;border-radius:4px;border:1px solid}.d3-slider-horizontal .d3-slider-handle{margin-left:-.6em;top:-.25em}.d3-slider-axis{position:relative;z-index:1}.d3-slider-axis-bottom{top:.8em}.d3-slider-axis-right{left:.8em}.d3-slider-axis path{fill:none;stroke-width:0}.d3-slider-axis text{font-size:11px}.d3-slider-vertical .d3-slider-handle{margin-bottom:-.6em;margin-left:0;left:-.25em}';
+NS["src/text/giotto.min.css"] = '@charset "UTF-8";.sunburst text{z-index:9999}.sunburst path{fill-rule:evenodd;stroke:#fff}.axis,.d3-slider-axis line{fill:none;shape-rendering:crispEdges}.line{fill:none}.d3-tip:after{line-height:1;position:absolute;display:inline;width:100%;font-size:16px;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}.d3-tip.n:after{top:100%;margin:-2px 0 0;left:0;content:"\\25BC";text-align:center}.d3-tip.e:after{top:50%;margin:-4px 0 0;left:-8px;content:"\\25C0"}.d3-tip.s:after{top:-8px;margin:0 0 2px;left:0;content:"\\25B2";text-align:center}.d3-tip.w:after{top:50%;margin:-4px 0 0 -1px;left:100%;content:"\\25B6"}.d3-slider{font-family:Verdana,Arial,sans-serif;margin:20px;position:relative;z-index:2;font-size:1.1em;border:1px solid}.d3-slider-horizontal{height:.8em}.d3-slider-horizontal.d3-slider-axis{margin-bottom:30px}.d3-slider-range{right:0;position:absolute;height:.8em;left:0}.d3-slider-range-vertical{top:0;right:0;position:absolute;left:0}.d3-slider-range-vertical.d3-slider-axis{margin-right:30px}.d3-slider-vertical{height:100px;width:.8em}.d3-slider-handle{z-index:3;position:absolute;height:1.2em;width:1.2em;-webkit-border-radius:4px;-moz-border-radius:4px;border-radius:4px;border:1px solid}.d3-slider-horizontal .d3-slider-handle{top:-.25em;margin-left:-.6em}.d3-slider-axis{z-index:1;position:relative}.d3-slider-axis-bottom{top:.8em}.d3-slider-axis-right{left:.8em}.d3-slider-axis path{fill:none;stroke-width:0}.d3-slider-axis text{font-size:11px}.d3-slider-vertical .d3-slider-handle{margin-bottom:-.6em;left:-.25em;margin-left:0}';
 
     // load Css unless blocked
     if (root.giottostyle !== false) {

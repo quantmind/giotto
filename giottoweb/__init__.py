@@ -11,7 +11,6 @@ STATIC_LOCATION = '../docs/giotto'
 CONTEXT_LOCATION = 'giottoweb/content/context'
 FAVICON = 'giottoweb/favicon.ico'
 MEDIA_URL = '/media/'
-ANGULAR_UI_ROUTER = True
 STATIC_API = 'ng'
 MINIFIED_MEDIA = True
 EXTENSIONS = ['lux.extensions.base',
@@ -23,7 +22,10 @@ EXTENSIONS = ['lux.extensions.base',
               'lux.extensions.oauth',
               'lux.extensions.code',
               'giottoweb.giotto']
-HTML_LINKS = ['giottoweb/giottoweb.css']
+HTML_LINKS = ['giottoweb/bootstrap.min.css',
+              'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/'
+              '4.3.0/css/font-awesome.min.css',
+              'giottoweb/giottoweb.css']
 SCRIPTS = ['giottoweb/giottoweb']
 
 HTML_META = [{'http-equiv': 'X-UA-Compatible',

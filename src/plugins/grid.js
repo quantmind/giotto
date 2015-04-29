@@ -1,5 +1,8 @@
     //
-    //  Add grid functionality to groups in a paper
+    //  Add grid functionality to a group
+    //  =====================================
+    //
+    //  In theory each group can have its own grid
     g.paper.plugin('grid', {
             color: '#333',
             colorOpacity: 0.3,
@@ -14,6 +17,8 @@
             var paper = group.paper(),
                 grid, gopts;
 
+            // Return the grid associated with the group
+            // Can return nothing (no grid available)
             group.grid = function () {
                 return grid;
             };
@@ -35,6 +40,7 @@
                             show: gopts.grid.yaxis
                         }, gopts.grid);
                     }
+                    // Create the grid group
                     gopts.before = '*';
                     grid = paper.group(gopts);
                     grid.element().classed('grid', true);

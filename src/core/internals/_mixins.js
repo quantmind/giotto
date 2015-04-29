@@ -4,7 +4,7 @@
     function giottoMixin (d, opts, plugins) {
         var uid = ++_idCounter;
 
-        opts = g.options(opts).pluginOptions(plugins || g.paper.pluginArray);
+        opts = g.options(opts, plugins);
 
         // unique identifier for this object
         d.uid = function () {

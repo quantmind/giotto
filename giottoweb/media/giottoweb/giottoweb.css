@@ -1,20 +1,17 @@
 @charset "UTF-8";
 /*
 ------------------------------------------------------------------
-Created by lux in 0.1 seconds
-Date: 2015-04-24 08:06:23
+Created by lux in 0.06 seconds
+Date: 2015-04-29 07:46:09
 
 http://quantmind.github.io/lux/
 ------------------------------------------------------------------ */
 
 .hljs-comment,.hljs-title{color:#8e908c}.hljs-variable,.hljs-attribute,.hljs-tag,.hljs-regexp,.ruby .hljs-constant,.xml .hljs-tag .hljs-title,.xml .hljs-pi,.xml .hljs-doctype,.html .hljs-doctype,.css .hljs-id,.css .hljs-class,.css .hljs-pseudo{color:#c82829}.hljs-number,.hljs-preprocessor,.hljs-pragma,.hljs-built_in,.hljs-literal,.hljs-params,.hljs-constant{color:#f5871f}.ruby .hljs-class .hljs-title,.css .hljs-rules .hljs-attribute{color:#eab700}.hljs-string,.hljs-value,.hljs-inheritance,.hljs-header,.ruby .hljs-symbol,.xml .hljs-cdata{color:#718c00}.css .hljs-hexcolor{color:#3e999f}.hljs-function,.python .hljs-decorator,.python .hljs-title,.ruby .hljs-function .hljs-title,.ruby .hljs-title .hljs-keyword,.perl .hljs-sub,.javascript .hljs-title,.coffeescript .hljs-title{color:#4271ae}.hljs-keyword,.javascript .hljs-function{color:#8959a8}.hljs{display:block;overflow-x:auto;background:white;color:#4d4d4c;padding:0.5em;-webkit-text-size-adjust:none}.coffeescript .javascript,.javascript .xml,.tex .hljs-formula,.xml .javascript,.xml .vbscript,.xml .css,.xml .hljs-cdata{opacity:0.5}
 body {
-    font-size: 16px;
-    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
-    line-height: 1.5;
     background: #fff;
+    line-height: 1.5;
     color: rgba(0, 0, 0, 0.8);
-    font-style: normal;
     height: 101%;
     min-height: 101%;
 }
@@ -33,10 +30,10 @@ body {
 }
 
 .lazyContainer > .content {
+    position: absolute;
     width: 100%;
     top: 0;
     min-height: 100%;
-    position: absolute;
     left: 0;
 }
 
@@ -78,10 +75,10 @@ body {
 }
 @media all and (min-width:768px) {
     .sidebar {
-        z-index: 1;
-        position: absolute;
         margin-top: 51px;
+        position: absolute;
         width: 200px;
+        z-index: 1;
     }
 
 }
@@ -101,25 +98,20 @@ p.form-error {
     display: none;
 }
 
-.form-group .error-block,
-form {
-    font-size: 14px;
-}
-
 .form-group.has-error .help-block.active,
 .form-error span {
     display: block;
 }
 
 .katex-outer {
-    margin-right: auto;
-    margin-bottom: 10px;
-    margin-left: auto;
     display: block;
     margin-right: auto;
-    margin-bottom: 10px;
     margin-left: auto;
+    margin-bottom: 10px;
     display: block;
+    margin-right: auto;
+    margin-left: auto;
+    margin-bottom: 10px;
 }
 
 code.hljs.inline {
@@ -183,8 +175,8 @@ dl.function dt {
 }
 
 .media-list > .media > a {
-    text-decoration: none;
     color: #808080;
+    text-decoration: none;
 }
 
 .media-list > .media > a .post-body {
@@ -197,16 +189,16 @@ dl.function dt {
 }
 
 .post-image {
-    float: left;
-    width: 140px;
-    max-height: 140px;
     height: auto;
+    width: 140px;
+    float: left;
+    max-height: 140px;
 }
 
 .post-image-xs {
+    width: auto;
     max-width: 90%;
     max-height: 150px;
-    width: auto;
 }
 
 h1:hover > a.headerlink,
@@ -220,10 +212,10 @@ dt:hover > a.headerlink {
 }
 
 a.headerlink {
-    text-decoration: none;
+    padding: 0 4px;
     color: #eee;
     visibility: hidden;
-    padding: 0 4px;
+    text-decoration: none;
 }
 
 a.headerlink:hover {
@@ -253,18 +245,22 @@ table.docutils.field-list th {
 }
 
 .page-header.index-header {
-    background: #333;
     height: 101%;
-    margin: 0;
+    background: #333;
     color: #fff;
-    width: 101%;
     min-height: 100%;
+    width: 101%;
+    margin: 0;
 }
 
 html,
 .fullpage {
     height: 101%;
     min-height: 101%;
+}
+
+form {
+    font-size: 14px;
 }
 
 #page-main {
@@ -295,8 +291,8 @@ html,
 
 .trianglify-box {
     background: rgba(255, 255, 255, 0.6);
-    max-width: 400px;
     padding: 20px;
+    max-width: 400px;
     -webkit-border-radius: 5px;
        -moz-border-radius: 5px;
             border-radius: 5px;
@@ -306,19 +302,19 @@ html,
 }
 
 .features article {
-    float: left;
     width: 33.33%;
     padding: 30px;
+    float: left;
 }
 
 .features article:before {
-    content: " ";
     display: table;
+    content: " ";
 }
 
 .features article:after {
-    content: " ";
     display: table;
+    content: " ";
     clear: both;
 }
 
@@ -330,8 +326,8 @@ html,
 }
 @media all and (max-width:600px) {
     .features article {
-        float: none;
         width: auto;
+        float: none;
     }
 
 }
@@ -348,13 +344,13 @@ html,
 
 #page-error a,
 #page-error a:hover {
-    text-decoration: underline;
     color: #fff;
+    text-decoration: underline;
 }
 
 .error-message-container {
-    background: rgba(0, 0, 0, 0.4);
     height: 100%;
+    background: rgba(0, 0, 0, 0.4);
     padding: 40px 120px;
     -webkit-box-sizing: border-box;
        -moz-box-sizing: border-box;
