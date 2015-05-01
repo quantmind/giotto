@@ -58,34 +58,6 @@
             return [group.width(), group.height()];
         };
 
-        group.innerWidth = function () {
-            return factor*(p.size[0] - p.margin.left - p.margin.right);
-        };
-
-        group.innerHeight = function () {
-            return factor*(p.size[1] - p.margin.top - p.margin.bottom);
-        };
-
-        group.aspectRatio = function () {
-            return group.innerHeight()/group.innerWidth();
-        };
-
-        group.marginLeft = function () {
-            return factor*p.margin.left;
-        };
-
-        group.marginRight = function () {
-            return factor*p.margin.right;
-        };
-
-        group.marginTop = function () {
-            return factor*p.margin.top;
-        };
-
-        group.marginBottom = function () {
-            return factor*p.margin.bottom;
-        };
-
         group.add = function (draw) {
             if (isFunction(draw)) draw = drawing(group, draw);
             drawings.push(draw);

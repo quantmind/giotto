@@ -1,133 +1,146 @@
-    var axisDefaults = {
-        tickSize: '6px',
-        outerTickSize: '6px',
-        tickPadding: '3px',
-        lineWidth: 1,
-        textRotate: 0,
-        textAnchor: null,
-        color: '#444',
-        colorOpacity: 1,
-        //minTickSize: undefined,
-        min: null,
-        max: null
-    };
 
     // Axis functionalities for groups
-    g.paper.plugin('axis',
+    g.paper.plugin('axis', {
 
-    function (opts) {
-        // Inherit axis properties
-        var o = registerPlugin({});
-        o.plugin('xaxis', axisOptions(extend({position: 'bottom'}, axisDefaults), opts.xaxis), function (){});
-        o.plugin('yaxis', axisOptions(extend({position: 'left'}, axisDefaults),  opts.yaxis), function (){});
-        o.plugin('yaxis2', axisOptions(extend({position: 'right'}, axisDefaults),  opts.yaxis2), function (){});
-        opts.pluginOptions(o.pluginArray);
+        defaults: {
+            tickSize: '6px',
+            outerTickSize: '6px',
+            tickPadding: '3px',
+            lineWidth: 1,
+            textRotate: 0,
+            textAnchor: null,
+            color: '#444',
+            colorOpacity: 1,
+            //minTickSize: undefined,
+            min: null,
+            max: null
+        },
 
-        function axisOptions (o, value) {
-            extend(o, value);
-            o.font = extend({}, o.font, opts.font);
-            return o;
-        }
-    },
+        init: function (group) {
+            var type = group.type(),
+                d3v = d3[type],
+                xaxis = d3v.axis(),
+                yaxis = d3v.axis();
 
-    function (group) {
-        var type = group.type(),
-            d3v = d3[type],
-            xaxis = d3v.axis(),
-            yaxis = d3v.axis();
+            xaxis.options = function () {return group.options().xaxis;};
+            yaxis.options = function () {return group.options().yaxis;};
 
-        xaxis.options = function () {return group.options().xaxis;};
-        yaxis.options = function () {return group.options().yaxis;};
+            group.xaxis = function () {
+                return xaxis;
+            };
 
-        group.xaxis = function () {
-            return xaxis;
-        };
+            group.yaxis = function () {
+                return yaxis;
+            };
 
-        group.yaxis = function () {
-            return yaxis;
-        };
+            // Draw X axis
+            group.drawXaxis = function () {
+                return group.add(g[type].axis(group, xaxis, 'x-axis')).options(xaxis.options());
+            };
 
-        // Draw X axis
-        group.drawXaxis = function () {
-            return group.add(g[type].axis(group, xaxis, 'x-axis')).options(xaxis.options());
-        };
+            group.drawYaxis = function () {
+                return group.add(g[type].axis(group, yaxis, 'y-axis')).options(yaxis.options());
+            };
 
-        group.drawYaxis = function () {
-            return group.add(g[type].axis(group, yaxis, 'y-axis')).options(yaxis.options());
-        };
+            group.scalex = function (x) {
+                return xaxis.scale()(x);
+            };
 
-        group.scalex = function (x) {
-            return xaxis.scale()(x);
-        };
+            group.scaley = function (y) {
+                return yaxis.scale()(y);
+            };
 
-        group.scaley = function (y) {
-            return yaxis.scale()(y);
-        };
+            // x coordinate in the input domain
+            group.x = function (u) {
+                var d = xaxis.scale().domain();
+                return u*(d[d.length-1] - d[0]) + d[0];
+            };
 
-                // x coordinate in the input domain
-        group.x = function (u) {
-            var d = xaxis.scale().domain();
-            return u*(d[d.length-1] - d[0]) + d[0];
-        };
+            // y coordinate in the input domain
+            group.y = function (u) {
+                var d = yaxis.scale().domain();
+                return u*(d[d.length-1] - d[0]) + d[0];
+            };
 
-        // y coordinate in the input domain
-        group.y = function (u) {
-            var d = yaxis.scale().domain();
-            return u*(d[d.length-1] - d[0]) + d[0];
-        };
+            group.ordinalScale = function (axis, range) {
+                var scale = axis.scale(),
+                    o = axis.options();
+                o.auto = false,
+                o.scale = 'ordinal';
+                if (!scale.rangeBand) {
+                    range = range || scale.range();
+                    scale = axis.scale(d3.scale.ordinal()).scale();
+                } else
+                    range = range || scale.rangeExtent();
+                return scale.rangeRoundBands(range, 0.2);
+            };
 
-        group.ordinalScale = function (axis, range) {
-            var scale = axis.scale(),
-                o = axis.options();
-            o.auto = false,
-            o.scale = 'ordinal';
-            if (!scale.rangeBand) {
-                range = range || scale.range();
-                scale = axis.scale(d3.scale.ordinal()).scale();
-            } else
-                range = range || scale.rangeExtent();
-            return scale.rangeRoundBands(range, 0.2);
-        };
+            group.resetAxis = function () {
+                var ranges = [[0, group.innerWidth()], [group.innerHeight(), 0]];
+                group.scale().range(ranges[0]);
 
-        group.resetAxis = function () {
-            var ranges = [[0, group.innerWidth()], [group.innerHeight(), 0]];
-            group.scale().range(ranges[0]);
+                [xaxis, yaxis].forEach(function (axis, i) {
+                    var o = axis.options(),
+                        scale = axis.scale();
 
-            [xaxis, yaxis].forEach(function (axis, i) {
-                var o = axis.options(),
-                    scale = axis.scale();
-
-                if (o.scale === 'ordinal') {
-                    scale = group.ordinalScale(axis, ranges[i]);
-                } else {
-                    o.auto = isNull(o.min) || isNull(o.max);
-                    if (o.scale === 'time') scale = axis.scale(d3.time.scale()).scale();
-                    scale.range(ranges[i]);
-                }
-
-                var innerTickSize = group.scale(group.dim(o.tickSize)),
-                    outerTickSize = group.scale(group.dim(o.outerTickSize)),
-                    tickPadding = group.scale(group.dim(o.tickPadding));
-                axis.tickSize(innerTickSize, outerTickSize)
-                      .tickPadding(tickPadding)
-                      .orient(o.position);
-
-                //if (!o.tickFormat && o.scale === 'time') o.tickFormat = '%Y-%m-%d';
-
-                if (o.tickFormat) {
-                    var f = o.tickFormat;
-                    if (isString(f)) {
-                        if (o.scale === 'time') f = d3.time.format(f);
-                        else f = d3.format(f);
+                    if (o.scale === 'ordinal') {
+                        scale = group.ordinalScale(axis, ranges[i]);
+                    } else {
+                        o.auto = isNull(o.min) || isNull(o.max);
+                        if (o.scale === 'time') scale = axis.scale(d3.time.scale()).scale();
+                        scale.range(ranges[i]);
                     }
-                    axis.tickFormat(f);
-                }
-            });
-            return group;
-        };
 
-        group.resetAxis();
+                    var innerTickSize = group.scale(group.dim(o.tickSize)),
+                        outerTickSize = group.scale(group.dim(o.outerTickSize)),
+                        tickPadding = group.scale(group.dim(o.tickPadding));
+                    axis.tickSize(innerTickSize, outerTickSize)
+                          .tickPadding(tickPadding)
+                          .orient(o.position);
+
+                    //if (!o.tickFormat && o.scale === 'time') o.tickFormat = '%Y-%m-%d';
+
+                    if (o.tickFormat) {
+                        var f = o.tickFormat;
+                        if (isString(f)) {
+                            if (o.scale === 'time') f = d3.time.format(f);
+                            else f = d3.format(f);
+                        }
+                        axis.tickFormat(f);
+                    }
+                });
+                return group;
+            };
+
+            group.resetAxis();
+        },
+
+        options: function (opts) {
+            //
+            // Create three new plugins
+            var o = registerPlugin({});
+
+            o.plugin('xaxis', {
+                defaults: extend({position: 'bottom'}, this.defaults, opts.axis),
+                options: axisOptions
+            });
+            o.plugin('yaxis', {
+                defaults: extend({position: 'left'}, this.defaults, opts.axis),
+                options: axisOptions
+            });
+            o.plugin('yaxis2', {
+                defaults: extend({position: 'right'}, this.defaults, opts.axis),
+                options: axisOptions
+            });
+
+            opts.pluginOptions(o.pluginArray);
+
+            function axisOptions (opts) {
+                this.optionsShow(opts, ['font']);
+            }
+        }
     });
+
 
     g.svg.axis = function (group, axis, xy) {
         return drawing(group, function () {

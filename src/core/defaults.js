@@ -3,34 +3,12 @@
 
     g.defaults = {};
 
-    g.defaults.transition = {
-        duration: 0,
-        ease: 'easeInOutCubic'
-    };
-
-    g.defaults.font = {
-        color: '#444',
-        size: '11px',
-        weight: 'normal',
-        lineHeight: 13,
-        style: "normal",
-        family: "sans-serif",
-        variant: "small-caps"
-    };
-
     g.defaults.paper = {
         type: 'svg',
         resizeDelay: 200,
         resize: true,
         interact: true,
-        margin: {top: 20, right: 20, bottom: 20, left: 20},
-        colors: d3.scale.category10().range(),
-        darkerColor: 0,
-        brighterColor: 0,
-        colorIndex: 0,
-        css: null,
-        transition : g.defaults.transition,
-        font: g.defaults.font
+        css: null
     };
 
     g.defaults.viz = extend({

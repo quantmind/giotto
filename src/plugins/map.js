@@ -70,43 +70,50 @@
 
     // Map charts and animations
     g.paper.plugin('map', {
-        scale: 1,
-        color: '#333',
-        missingFill: '#d9d9d9',
-        fill: 'none',
-        fillOpacity: 1,
-        colorOpacity: 1,
-        lineWidth: 0.5,
-        projection: null,
-        features: null,
-        dataScale: 'log',
-        active: {
-            fill: 'darker'
-        },
-        formatX: d3_identity,
-        tooltip: {
-            template: function (d) {
-                return "<p><strong>" + d.x + "</strong> " + d.y + "</p>";
+
+        defaults: {
+            scale: 1,
+            color: '#333',
+            missingFill: '#d9d9d9',
+            fill: 'none',
+            fillOpacity: 1,
+            colorOpacity: 1,
+            lineWidth: 0.5,
+            projection: null,
+            features: null,
+            dataScale: 'log',
+            active: {
+                fill: 'darker'
+            },
+            formatX: d3_identity,
+            tooltip: {
+                template: function (d) {
+                    return "<p><strong>" + d.x + "</strong> " + d.y + "</p>";
+                }
             }
+        },
+
+        options: function (opts) {
+            this.optionsShow(opts, ['active', 'tooltip']);
+        },
+
+        init: function (group) {
+
+            group.map = function (data, opts) {
+                var type = group.type(),
+                    features,
+                    path;
+
+                opts || (opts = {});
+                copyMissing(group.options().map, opts);
+                group.element().classed('geo', true);
+
+                var map = group.add(mapdraw(group, g[type].mapdraw))
+                               .options(opts)
+                               .data(data);
+                return map;
+            };
         }
-    },
-
-    function (group, p) {
-
-        group.map = function (data, opts) {
-            var type = group.type(),
-                features,
-                path;
-
-            opts || (opts = {});
-            copyMissing(p.map, opts);
-            group.element().classed('geo', true);
-
-            var map = group.add(mapdraw(group, g[type].mapdraw))
-                           .options(opts)
-                           .data(data);
-            return map;
-        };
     });
 
     function mapdraw (group, renderer) {

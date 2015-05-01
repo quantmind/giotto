@@ -2,85 +2,92 @@
     // Add pie charts to giotto groups
 
     g.paper.plugin('pie', {
-        lineWidth: 1,
-        // pad angle in degrees
-        padAngle: 0,
-        cornerRadius: 0,
-        fillOpacity: 0.7,
-        colorOpacity: 1,
-        innerRadius: 0,
-        startAngle: 0,
-        formatX: d3_identity,
-        formatPercent: ',.2%',
-        active: {
-            fill: 'darker',
-            color: 'brighter',
-            //innerRadius: 100%,
-            //outerRadius: 105%,
-            fillOpacity: 1
-        },
-        tooltip: {
-            template: function (d) {
-                return "<p><strong>" + d.x + "</strong> " + d.y + "</p>";
+
+        defaults: {
+            lineWidth: 1,
+            // pad angle in degrees
+            padAngle: 0,
+            cornerRadius: 0,
+            fillOpacity: 0.7,
+            colorOpacity: 1,
+            innerRadius: 0,
+            startAngle: 0,
+            formatX: d3_identity,
+            formatPercent: ',.2%',
+            active: {
+                fill: 'darker',
+                color: 'brighter',
+                //innerRadius: 100%,
+                //outerRadius: 105%,
+                fillOpacity: 1
+            },
+            tooltip: {
+                template: function (d) {
+                    return "<p><strong>" + d.x + "</strong> " + d.y + "</p>";
+                }
+            },
+            labels: {
+                show: true,
+                position: 'ouside',
+                outerRadius: 1.05,
+                color: '#333',
+                colorOpacity: 0.5,
+                lineWidth: 1
             }
         },
-        labels: {
-            show: true,
-            position: 'ouside',
-            outerRadius: 1.05,
-            color: '#333',
-            colorOpacity: 0.5,
-            lineWidth: 1
+
+        options: function (opts) {
+            this.optionsShow(opts, ['active', 'tooltip', 'labels']);
+        },
+
+        init: function (group) {
+            var type = group.type(),
+                arc = d3[type].arc()
+                                .innerRadius(function (d) {return d.innerRadius;})
+                                .outerRadius(function (d) {return d.outerRadius;});
+
+            // add a pie chart drawing to the group
+            group.pie = function (data, opts) {
+                opts || (opts = {});
+                chartFormats(group, opts);
+                copyMissing(group.options().pie, opts);
+
+                var draw = group.add(function () {
+
+                    var width = group.innerWidth(),
+                        height = group.innerHeight(),
+                        opts = this.options(),
+                        outerRadius = 0.5*Math.min(width, height),
+                        innerRadius = opts.innerRadius*outerRadius,
+                        cornerRadius = group.scale(group.dim(opts.cornerRadius)),
+                        value = this.y(),
+                        data = this.data(),
+                        pie = d3.layout.pie().value(function (d) {return value(d.data);})
+                                             .padAngle(d3_radians*opts.padAngle)
+                                             .startAngle(d3_radians*opts.startAngle)(data),
+                        d, dd;
+
+                    this.arc = arc.cornerRadius(cornerRadius);
+
+                    // recalculate pie angles
+                    for (var i=0; i<pie.length; ++i) {
+                        d = pie[i];
+                        dd = d.data;
+                        dd.set('innerRadius', innerRadius);
+                        dd.set('outerRadius', outerRadius);
+                        delete d.data;
+                        data[i] = extend(dd, d);
+                    }
+
+                    return g[type].pie(this, width, height);
+                });
+
+                return draw.pointOptions(extendArray(['innerRadius', 'outerRadius'], drawingOptions))
+                            .dataConstructor(pie_costructor)
+                            .options(opts)
+                            .data(data);
+            };
         }
-    },
-
-    function (group) {
-        var type = group.type(),
-            arc = d3[type].arc()
-                            .innerRadius(function (d) {return d.innerRadius;})
-                            .outerRadius(function (d) {return d.outerRadius;});
-
-        // add a pie chart drawing to the group
-        group.pie = function (data, opts) {
-            opts || (opts = {});
-            chartFormats(group, opts);
-            copyMissing(group.options().pie, opts);
-
-            var draw = group.add(function () {
-
-                var width = group.innerWidth(),
-                    height = group.innerHeight(),
-                    opts = this.options(),
-                    outerRadius = 0.5*Math.min(width, height),
-                    innerRadius = opts.innerRadius*outerRadius,
-                    cornerRadius = group.scale(group.dim(opts.cornerRadius)),
-                    value = this.y(),
-                    data = this.data(),
-                    pie = d3.layout.pie().value(function (d) {return value(d.data);})
-                                         .padAngle(d3_radians*opts.padAngle)
-                                         .startAngle(d3_radians*opts.startAngle)(data),
-                    d, dd;
-
-                this.arc = arc.cornerRadius(cornerRadius);
-
-                // recalculate pie angles
-                for (var i=0; i<pie.length; ++i) {
-                    d = pie[i];
-                    dd = d.data;
-                    dd.set('innerRadius', innerRadius);
-                    dd.set('outerRadius', outerRadius);
-                    delete d.data;
-                    data[i] = extend(dd, d);
-                }
-
-                return g[type].pie(this, width, height);
-            });
-
-            return draw.pointOptions(extendArray(['innerRadius', 'outerRadius'], drawingOptions))
-                        .dataConstructor(pie_costructor)
-                        .options(opts)
-                        .data(data);
-        };
     });
 
     var pie_costructor = function (rawdata) {

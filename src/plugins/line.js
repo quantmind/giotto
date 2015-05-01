@@ -1,28 +1,35 @@
     // Line chart
     g.paper.plugin('line', {
-        interpolate: 'cardinal',
-        colorOpacity: 1,
-        fillOpacity: 0.4,
-        lineWidth: 2,
-        fill: 'color',
-        active: {}
-    },
 
-    function (group) {
-        var type = group.type();
+        defaults: {
+            interpolate: 'cardinal',
+            colorOpacity: 1,
+            fillOpacity: 0.4,
+            lineWidth: 2,
+            fill: 'color',
+            active: {}
+        },
 
-        // Draw a path or an area
-        group.path = function (data, opts) {
-            opts || (opts = {});
-            chartFormats(group, opts);
-            chartColor(group.paper(), copyMissing(group.options().line, opts));
+        options: function (opts) {
+            this.optionsShow(opts, ['active', 'tooltip']);
+        },
 
-            return group.add(g[type].path(group))
-                        .pointOptions(pointOptions)
-                        .size(point_size)
-                        .data(data)
-                        .options(opts);
-        };
+        init: function (group) {
+            var type = group.type();
+
+            // Draw a path or an area
+            group.path = function (data, opts) {
+                opts || (opts = {});
+                chartFormats(group, opts);
+                chartColor(group.paper(), copyMissing(group.options().line, opts));
+
+                return group.add(g[type].path(group))
+                            .pointOptions(pointOptions)
+                            .size(point_size)
+                            .data(data)
+                            .options(opts);
+            };
+        }
     });
 
     g.svg.path = function (group) {

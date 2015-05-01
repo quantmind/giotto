@@ -2,24 +2,32 @@
     //
     //  Tooltip functionality for SVG paper
     g.paper.plugin('tooltip', {
-        className: 'd3-tip',
-        fill: '#deebf7',
-        fillOpacity: 0.8,
-        color: '#222',
-        padding: '8px',
-        radius: '3px',
-        offset: [20, 20],
-        template: function (d) {
-            return "<p><span style='color:"+d.c+"'>" + d.l + "</span>  <strong>" + d.x + ": </strong><span>" + d.y + "</span></p>";
-        },
-        font: {
-            size: '14px'
-        }
-    },
+        index: 1,
 
-    function (group) {
-        var paper = group.paper();
-        if (!paper.showTooltip) activateTooltip(paper);
+        defaults: {
+            className: 'd3-tip',
+            fill: '#deebf7',
+            fillOpacity: 0.8,
+            color: '#222',
+            padding: '8px',
+            radius: '3px',
+            offset: [20, 20],
+            template: function (d) {
+                return "<p><span style='color:"+d.c+"'>" + d.l + "</span>  <strong>" + d.x + ": </strong><span>" + d.y + "</span></p>";
+            },
+            font: {
+                size: '14px'
+            }
+        },
+
+        options: function (opts) {
+            this.optionsShow(opts, ['font', 'template']);
+        },
+
+        init: function (group) {
+            var paper = group.paper();
+            if (!paper.showTooltip) activateTooltip(paper);
+        }
     });
 
 

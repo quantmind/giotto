@@ -1,36 +1,43 @@
     // Scapper point chart
     g.paper.plugin('point', {
-        symbol: 'circle',
-        size: '8px',
-        fill: true,
-        fillOpacity: 1,
-        colorOpacity: 1,
-        lineWidth: 2,
-        active: {
-            fill: 'darker',
-            color: 'brighter',
-            // Multiplier for size, set to 100% for no change
-            size: '150%'
+
+        defaults: {
+            symbol: 'circle',
+            size: '8px',
+            fill: true,
+            fillOpacity: 1,
+            colorOpacity: 1,
+            lineWidth: 2,
+            active: {
+                fill: 'darker',
+                color: 'brighter',
+                // Multiplier for size, set to 100% for no change
+                size: '150%'
+            },
+            transition: extend({}, g.defaults.transition)
         },
-        transition: extend({}, g.defaults.transition)
-    },
 
-    function (group) {
-        var type = group.type();
+        options: function (opts) {
+            this.optionsShow(opts, ['active', 'tooltip']);
+        },
 
-        // Draw points in the group
-        group.points = function (data, opts) {
-            opts || (opts = {});
-            chartFormats(group, opts);
-            chartColor(group.paper(), copyMissing(group.options().point, opts));
+        init: function (group) {
+            var type = group.type();
 
-            return group.add(g[type].points)
-                .pointOptions(pointOptions)
-                .size(point_size)
-                .options(opts)
-                .dataConstructor(point_costructor)
-                .data(data);
-        };
+            // Draw points in the group
+            group.points = function (data, opts) {
+                opts || (opts = {});
+                chartFormats(group, opts);
+                chartColor(group.paper(), copyMissing(group.options().point, opts));
+
+                return group.add(g[type].points)
+                    .pointOptions(pointOptions)
+                    .size(point_size)
+                    .options(opts)
+                    .dataConstructor(point_costructor)
+                    .data(data);
+            };
+        }
     });
 
 

@@ -1,10 +1,9 @@
 
     g.createviz('chart', {
-        margin: {top: 30, right: 30, bottom: 30, left: 30},
+        margin: 30,
         chartTypes: ['map', 'pie', 'bar', 'line', 'point', 'custom'],
         xaxis: true,
         yaxis: true,
-        yaxis2: true,
         serie: {
             x: function (d) {return d[0];},
             y: function (d) {return d[1];}

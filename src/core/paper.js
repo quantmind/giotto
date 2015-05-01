@@ -31,7 +31,7 @@
 
             // apply plugins
             g.paper.pluginArray.forEach(function (plugin) {
-                plugin(group);
+                plugin.init(group);
             });
 
             return group;

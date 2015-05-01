@@ -2,7 +2,7 @@
 /*
 ------------------------------------------------------------------
 Created by lux in 0.0 seconds
-Date: 2015-04-29 07:46:09
+Date: 2015-05-01 08:40:20
 
 http://quantmind.github.io/lux/
 ------------------------------------------------------------------ */
@@ -12,14 +12,14 @@ http://quantmind.github.io/lux/
 }
 
 .sunburst path {
-    fill-rule: evenodd;
     stroke: #fff;
+    fill-rule: evenodd;
 }
 
 .axis,
 .d3-slider-axis line {
-    shape-rendering: crispEdges;
     fill: none;
+    shape-rendering: crispEdges;
 }
 
 .line {
@@ -28,51 +28,51 @@ http://quantmind.github.io/lux/
 
 .d3-tip:after {
     position: absolute;
-    display: inline;
-    font-size: 16px;
-    line-height: 1;
     width: 100%;
+    line-height: 1;
+    font-size: 16px;
+    display: inline;
     -webkit-box-sizing: border-box;
        -moz-box-sizing: border-box;
             box-sizing: border-box;
 }
 
 .d3-tip.n:after {
-    margin: -2px 0 0 0;
-    text-align: center;
-    top: 100%;
-    left: 0;
     content: "\\25BC";
+    left: 0;
+    top: 100%;
+    text-align: center;
+    margin: -2px 0 0 0;
 }
 
 .d3-tip.e:after {
-    margin: -4px 0 0 0;
-    top: 50%;
-    left: -8px;
     content: "\\25C0";
+    left: -8px;
+    top: 50%;
+    margin: -4px 0 0 0;
 }
 
 .d3-tip.s:after {
-    margin: 0 0 2px 0;
-    text-align: center;
-    top: -8px;
-    left: 0;
     content: "\\25B2";
+    left: 0;
+    top: -8px;
+    text-align: center;
+    margin: 0 0 2px 0;
 }
 
 .d3-tip.w:after {
-    margin: -4px 0 0 -1px;
-    top: 50%;
-    left: 100%;
     content: "\\25B6";
+    left: 100%;
+    top: 50%;
+    margin: -4px 0 0 -1px;
 }
 
 .d3-slider {
-    margin: 20px;
-    position: relative;
-    font-size: 1.1em;
-    font-family: Verdana,Arial,sans-serif;
     z-index: 2;
+    position: relative;
+    font-family: Verdana,Arial,sans-serif;
+    font-size: 1.1em;
+    margin: 20px;
     border: 1px solid;
 }
 
@@ -85,17 +85,17 @@ http://quantmind.github.io/lux/
 }
 
 .d3-slider-range {
-    position: absolute;
-    height: 0.8em;
     left: 0;
+    height: 0.8em;
     right: 0;
+    position: absolute;
 }
 
 .d3-slider-range-vertical {
-    position: absolute;
-    top: 0;
     left: 0;
+    top: 0;
     right: 0;
+    position: absolute;
 }
 
 .d3-slider-range-vertical.d3-slider-axis {
@@ -108,9 +108,9 @@ http://quantmind.github.io/lux/
 }
 
 .d3-slider-handle {
-    position: absolute;
-    width: 1.2em;
     height: 1.2em;
+    width: 1.2em;
+    position: absolute;
     z-index: 3;
     -webkit-border-radius: 4px;
        -moz-border-radius: 4px;
@@ -137,8 +137,8 @@ http://quantmind.github.io/lux/
 }
 
 .d3-slider-axis path {
-    stroke-width: 0;
     fill: none;
+    stroke-width: 0;
 }
 
 .d3-slider-axis text {
@@ -147,6 +147,6 @@ http://quantmind.github.io/lux/
 
 .d3-slider-vertical .d3-slider-handle {
     left: -0.25em;
-    margin-bottom: -0.6em;
     margin-left: 0;
+    margin-bottom: -0.6em;
 }

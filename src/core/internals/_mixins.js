@@ -22,24 +22,6 @@
             return d;
         };
 
-        // pick a color
-        d.pickColor = function (index) {
-            if (arguments.length === 0)
-                index = opts.colorIndex++;
-            var dk = 0, bk = 0;
-            while (index >= opts.colors.length) {
-                index -= opts.colors.length;
-                dk += opts.darkerColor;
-                bk += opts.brighterColor;
-            }
-            var c = opts.colors[index];
-            if (dk)
-                c = d3.rgb(c).darker(dk).toString();
-            else if (bk)
-                c = d3.rgb(c).brighter(bk).toString();
-            return c;
-        };
-
         return d;
     }
 
@@ -102,31 +84,4 @@
         };
 
         return d;
-    }
-
-    // Create a function for registering plugins
-    function registerPlugin (main) {
-        main.plugins = {};
-        main.pluginArray = [];
-
-        // Register a plugin
-        //  - name: plugin name
-        //  - defaults: defaults parameters for a named plugin
-        //  - plugin: plugin object
-        main.plugin = function (name, defaults, plugin) {
-            plugin.defaults = defaults;
-            plugin.pluginName = name;
-            main.plugins[name] = plugin;
-            if (!isFunction(plugin.options)) plugin.options = PluginOptions;
-            main.pluginArray.push(plugin);
-        };
-
-        return main;
-    }
-
-    function PluginOptions (o) {
-        if (o === true) o = {show: true};
-        else if (!o) o = {show: false};
-        else if (o.show === undefined) o.show = true;
-        return o;
     }

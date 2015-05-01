@@ -122,7 +122,7 @@
 
             // Inject plugins
             vizPlugins.forEach(function (plugin) {
-                plugin(viz);
+                plugin.init(viz);
             });
 
             return viz;

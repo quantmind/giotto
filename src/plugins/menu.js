@@ -110,9 +110,9 @@
     g.contextmenu = g.contextMenu();
 
 
-    g.viz.plugin('menu', {},
+    g.viz.plugin('menu', {
 
-        function (viz) {
+        init: function (viz) {
 
             viz.contextmenu = function (menu) {
                 var opts = viz.options();
@@ -141,4 +141,5 @@
                 else
                     g.contextmenu(viz.element());
             });
-        });
+        }
+    });

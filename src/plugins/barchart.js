@@ -1,34 +1,44 @@
-    // Bar charts
+    //  Bar charts
+    //  ==============
+    //
+    //  Bar charts to a group
     g.paper.plugin('bar', {
-        width: 'auto',
-        color: null,
-        fill: true,
-        fillOpacity: 1,
-        colorOpacity: 1,
-        lineWidth: 1,
-        // Radius in pixels of rounded corners. Set to 0 for no rounded corners
-        radius: 4,
-        active: {
-            fill: 'darker',
-            color: 'brighter'
+
+        defaults: {
+            width: 'auto',
+            color: null,
+            fill: true,
+            fillOpacity: 1,
+            colorOpacity: 1,
+            lineWidth: 1,
+            // Radius in pixels of rounded corners. Set to 0 for no rounded corners
+            radius: 4,
+            active: {
+                fill: 'darker',
+                color: 'brighter'
+            }
+        },
+
+        init: function (group) {
+            var type = group.type();
+
+            group.barchart = function (data, opts) {
+                opts || (opts = {});
+                chartFormats(group, opts);
+                chartColor(group.paper(), copyMissing(group.options().bar, opts));
+
+                return group.add(g[type].barchart)
+                    .pointOptions(extendArray(['size'], drawingOptions))
+                    .size(bar_size)
+                    .options(opts)
+                    .dataConstructor(bar_costructor)
+                    .data(data);
+            };
+        },
+
+        options: function (opts) {
+            this.optionsShow(opts, ['active', 'tooltip']);
         }
-    },
-
-    function (group) {
-        var type = group.type();
-
-        group.barchart = function (data, opts) {
-            opts || (opts = {});
-            chartFormats(group, opts);
-            chartColor(group.paper(), copyMissing(group.options().bar, opts));
-
-            return group.add(g[type].barchart)
-                .pointOptions(extendArray(['size'], drawingOptions))
-                .size(bar_size)
-                .options(opts)
-                .dataConstructor(bar_costructor)
-                .data(data);
-        };
     });
 
 

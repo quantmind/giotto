@@ -3,9 +3,9 @@
     //  ================
     //
     //  A plugin which add the ``setBackground`` function to a group
-    g.paper.plugin('fill', {},
+    g.paper.plugin('fill', {
 
-        function (group) {
+        init: function (group) {
 
             var type = group.type();
 
@@ -64,4 +64,5 @@
                     this.fill.x1(0).y1(0).x2(width).y2(height);
                 group.setBackground(this);
             }
-        });
+        }
+    });

@@ -4,6 +4,8 @@
     //
     //  In theory each group can have its own grid
     g.paper.plugin('grid', {
+
+        default: {
             color: '#333',
             colorOpacity: 0.3,
             fill: 'none',
@@ -13,7 +15,7 @@
             yaxis: true
         },
 
-        function (group) {
+        init: function (group) {
             var paper = group.paper(),
                 grid, gopts;
 
@@ -110,7 +112,8 @@
                     grid.yaxis().scale().domain([y1, y2]);
                 }
             }
-        });
+        }
+    });
 
     //
     //  Add grid functionality to charts

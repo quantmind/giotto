@@ -1,22 +1,25 @@
 
     g.paper.plugin('bubble', {
-        force: false,
-        theta: 0.8,
-        friction: 0.9
-    },
 
-    function (group) {
+        defaults: {
+            force: false,
+            theta: 0.8,
+            friction: 0.9
+        },
 
-        // Add force visualization to the group
-        group.bubble = function (data, opts) {
-            opts || (opts = {});
-            chartFormats(group, opts);
-            opts = copyMissing(group.options().bubble, opts);
+        init: function (group) {
 
-            return group.add(g[type].bubble)
-                        .dataConstructor(bubble_costructor)
-                        .options(opts);
-        };
+            // Add force visualization to the group
+            group.bubble = function (data, opts) {
+                opts || (opts = {});
+                chartFormats(group, opts);
+                opts = copyMissing(group.options().bubble, opts);
+
+                return group.add(g[type].bubble)
+                            .dataConstructor(bubble_costructor)
+                            .options(opts);
+            };
+        }
     });
 
     var bubble_costructor = function (rawdata) {
