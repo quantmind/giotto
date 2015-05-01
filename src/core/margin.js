@@ -54,7 +54,9 @@
 
         options: function (opts) {
             var margin = opts.margin;
-            if (isObject(margin)) opts.margin = extend({}, this.defaults, margin);
-            else if (margin !== undefined) opts.margin = {left: value, right: value, top: value, bottom: value};
+            if (margin === undefined || isObject(margin))
+                opts.margin = extend({}, this.defaults, margin);
+            else
+                opts.margin = {left: value, right: value, top: value, bottom: value};
         }
     });

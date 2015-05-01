@@ -117,7 +117,7 @@
             factor = group.factor(),
             target = group.paper().element().node();
 
-        dd.fill = dd.fill || draw.paper().pickColor();
+        dd.fill = dd.fill || draw.group().pickColor();
         dd.color = dd.color || d3.rgb(dd.fill).darker().toString();
 
         d = drawingData(draw, data, d);

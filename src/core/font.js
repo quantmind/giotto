@@ -5,7 +5,6 @@
     //  Add fonts to a giotto group
     //
     g.paper.plugin('font', {
-        index: 0,
 
         defaults: {
             color: '#444',

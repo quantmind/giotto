@@ -45,7 +45,7 @@
             if (o && chartTypes[type].scaled) {
                 // pick a default color if one is not given
                 if (!color)
-                    color = chartColor(chart, o);
+                    color = chart.drawColor(o);
                 if (!o.color)
                     o.color = color;
                 scaled = true;

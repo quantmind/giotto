@@ -28,7 +28,7 @@
             group.points = function (data, opts) {
                 opts || (opts = {});
                 chartFormats(group, opts);
-                chartColor(group.paper(), copyMissing(group.options().point, opts));
+                group.drawColor(copyMissing(group.options().point, opts));
 
                 return group.add(g[type].points)
                     .pointOptions(pointOptions)

@@ -25,7 +25,7 @@
             group.barchart = function (data, opts) {
                 opts || (opts = {});
                 chartFormats(group, opts);
-                chartColor(group.paper(), copyMissing(group.options().bar, opts));
+                group.drawColor(copyMissing(group.options().bar, opts));
 
                 return group.add(g[type].barchart)
                     .pointOptions(extendArray(['size'], drawingOptions))

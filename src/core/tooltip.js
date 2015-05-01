@@ -1,8 +1,7 @@
     var tooltip;
     //
-    //  Tooltip functionality for SVG paper
+    //  Tooltip functionality
     g.paper.plugin('tooltip', {
-        index: 1,
 
         defaults: {
             className: 'd3-tip',

@@ -21,7 +21,7 @@
             group.path = function (data, opts) {
                 opts || (opts = {});
                 chartFormats(group, opts);
-                chartColor(group.paper(), copyMissing(group.options().line, opts));
+                group.drawColor(copyMissing(group.options().line, opts));
 
                 return group.add(g[type].path(group))
                             .pointOptions(pointOptions)

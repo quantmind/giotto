@@ -141,7 +141,7 @@
                     .style("fill", function(d) {
                         var name = (d.children ? d : d.parent).name;
                         if (!namecolors[name])
-                            namecolors[name] = paper.pickColor();
+                            namecolors[name] = group.pickColor();
                         return namecolors[name];
                     });
 

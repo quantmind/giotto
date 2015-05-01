@@ -2681,29 +2681,6 @@
         }
     }
 
-    var fillSpecials = [true, 'none', 'color'];
-
-    function chartColor(paper, opts) {
-        if (!opts.color)
-            if (opts.fill && fillSpecials.indexOf(opts.fill) === -1)
-                opts.color = d3.rgb(opts.fill).darker().toString();
-            else
-                opts.color = paper.pickColor();
-
-        if (opts.fill === true)
-            opts.fill = d3.rgb(opts.color).brighter().toString();
-        else if (opts.fill === 'color')
-            opts.fill = opts.color;
-
-        return opts.color;
-    }
-
-    function pickColor (d) {
-        if (d.fill && fillSpecials.indexOf(opts.fill) === -1)
-            return d.fill;
-        else
-            return d.color;
-    }
 
     function chartFormats (group, opts, m) {
         if (!opts.formatX) opts.formatX = formatter(group.xaxis());
@@ -4280,6 +4257,462 @@
         return viz;
     }
 
+    //
+    //  Font
+    //  ===============
+    //
+    //  Add fonts to a giotto group
+    //
+    g.paper.plugin('font', {
+
+        defaults: {
+            color: '#444',
+            size: '11px',
+            weight: 'normal',
+            lineHeight: 13,
+            style: "normal",
+            family: "sans-serif",
+            variant: "small-caps"
+        }
+    });
+
+    //
+    //  Margin plugin
+    //  ================
+    //
+    //
+    //  Margin
+    //  ===========
+    //
+    //  Add margins to a giotto group
+    //
+    g.paper.plugin('margin', {
+
+        defaults: {
+            top: 20,
+            right: 20,
+            bottom: 20,
+            left: 20
+        },
+
+        init: function (group) {
+
+            var p = group.options(),
+                factor = group.factor();
+
+            group.innerWidth = function () {
+                return factor*(p.size[0] - p.margin.left - p.margin.right);
+            };
+
+            group.innerHeight = function () {
+                return factor*(p.size[1] - p.margin.top - p.margin.bottom);
+            };
+
+            group.aspectRatio = function () {
+                return group.innerHeight()/group.innerWidth();
+            };
+
+            group.marginLeft = function () {
+                return factor*p.margin.left;
+            };
+
+            group.marginRight = function () {
+                return factor*p.margin.right;
+            };
+
+            group.marginTop = function () {
+                return factor*p.margin.top;
+            };
+
+            group.marginBottom = function () {
+                return factor*p.margin.bottom;
+            };
+
+        },
+
+        options: function (opts) {
+            var margin = opts.margin;
+            if (margin === undefined || isObject(margin))
+                opts.margin = extend({}, this.defaults, margin);
+            else
+                opts.margin = {left: value, right: value, top: value, bottom: value};
+        }
+    });
+
+    var tooltip;
+    //
+    //  Tooltip functionality
+    g.paper.plugin('tooltip', {
+
+        defaults: {
+            className: 'd3-tip',
+            fill: '#deebf7',
+            fillOpacity: 0.8,
+            color: '#222',
+            padding: '8px',
+            radius: '3px',
+            offset: [20, 20],
+            template: function (d) {
+                return "<p><span style='color:"+d.c+"'>" + d.l + "</span>  <strong>" + d.x + ": </strong><span>" + d.y + "</span></p>";
+            },
+            font: {
+                size: '14px'
+            }
+        },
+
+        options: function (opts) {
+            this.optionsShow(opts, ['font', 'template']);
+        },
+
+        init: function (group) {
+            var paper = group.paper();
+            if (!paper.showTooltip) activateTooltip(paper);
+        }
+    });
+
+
+    function activateTooltip (paper) {
+        var opts = paper.options(),
+            tooltip;
+
+        paper.showTooltip = function () {
+            if (!tooltip) tooltip = gitto_tip(opts).offset(opts.tooltip.offset);
+            show();
+            return paper;
+        };
+
+        paper.hideTooltip = function () {
+            if (tooltip) tooltip.hide();
+            return paper;
+        };
+
+        paper.removeTooltip = function () {
+            if (tooltip) tooltip.hide();
+            opts.tooltip.show = false;
+            tooltip = null;
+            return paper;
+        };
+
+        paper.on('active.tooltip', function () {
+            if (tooltip) {
+                tooltip.active = this;
+                show();
+            }
+        }).on('activeout.tooltip', function () {
+            if (tooltip) {
+                tooltip.active.splice(0);
+                tooltip.hide();
+            }
+        });
+
+        paper.task(function () {
+            if (opts.tooltip.show) show();
+        });
+
+        if (opts.tooltip.show) paper.showTooltip();
+
+        function show () {
+            var active = tooltip.active;
+            if (!active.length) return tooltip.hide();
+
+            var bbox = getBbox(active[0]),
+                direction = bbox.tooltip || 'n';
+            if (active.length > 1) {
+                direction = 'e';
+                for (var i=1; i<active.length; ++i) {
+                    var bbox2 = getBbox(active[i]);
+                    bbox[direction].y += bbox2[direction].y;
+                }
+                bbox[direction].y /= active.length;
+            }
+            tooltip.bbox(bbox).direction(direction).show();
+        }
+
+        function getBbox (node) {
+            if (isFunction(node.bbox)) return node.bbox();
+            else return getScreenBBox(node);
+        }
+    }
+
+
+    function gitto_tip (options) {
+        var opts = options.tooltip,
+            font = extend({}, options.font, opts.font),
+            tip = g.tip();
+
+        tip.active = [];
+
+        tip.attr('class', opts.className)
+           .style({
+                background: opts.fill,
+                opacity: opts.fillOpacity,
+                color: opts.color,
+                padding: opts.padding,
+                'border-radius': opts.radius,
+                font: fontString(font)
+            });
+
+        if (opts.className === 'd3-tip' && tooltipCss) {
+            tooltipCss['d3-tip:after'].color = opts.fill;
+            addCss('', tooltipCss);
+            tooltipCss = null;
+        }
+
+        tip.html(function () {
+            var html = '',
+                data, draw, template;
+
+            for (var i=0; i<tip.active.length; ++i) {
+                data = tip.active[i];
+                if (!data.draw) data = d3.select(data).datum();
+                draw = data.draw();
+                template = tooltip_template(draw);
+
+                html += template({
+                    c: data.color,
+                    l: draw.label() || 'serie',
+                    x: draw.formatX(draw.x()(data.data)),
+                    y: draw.formatY(draw.y()(data.data))
+                });
+            }
+            return html;
+        });
+
+        return tip;
+
+        function tooltip_template (draw) {
+            var o = draw.options();
+            return o.tooltip ? o.tooltip.template || opts.template : opts.template;
+        }
+    }
+
+    //
+    // Returns a tip handle
+    g.tip = function () {
+
+        var direction = d3_tip_direction,
+            offset = [0, 0],
+            html = d3_tip_html,
+            node = initNode(),
+            tip = {},
+            bbox;
+
+        document.body.appendChild(node);
+
+        // Public - show the tooltip on the screen
+        //
+        // Returns a tip
+        tip.show = function () {
+            var content = html.call(tip),
+                dir = direction.call(tip),
+                nodel = d3.select(node),
+                i = directions.length,
+                coords,
+                scrollTop = document.documentElement.scrollTop || document.body.scrollTop,
+                scrollLeft = document.documentElement.scrollLeft || document.body.scrollLeft;
+
+            nodel.html(content)
+                .style({
+                opacity: 1,
+                'pointer-events': 'all'
+            });
+
+            while (i--)
+                nodel.classed(directions[i], false);
+
+            coords = direction_callbacks.get(dir).apply(this);
+            nodel.classed(dir, true).style({
+                top: coords.top + scrollTop + 'px',
+                left: coords.left + scrollLeft + 'px'
+            });
+            return tip;
+        };
+
+        // Public - hide the tooltip
+        //
+        // Returns a tip
+        tip.hide = function() {
+            d3.select(node).style({
+                opacity: 0,
+                'pointer-events': 'none'
+            });
+            return tip;
+        };
+
+        // Public: Proxy attr calls to the d3 tip container.  Sets or gets attribute value.
+        //
+        // n - name of the attribute
+        // v - value of the attribute
+        //
+        // Returns tip or attribute value
+        tip.attr = function(n, v) {
+            if (arguments.length < 2 && typeof n === 'string') {
+                return d3.select(node).attr(n);
+            } else {
+                var args = Array.prototype.slice.call(arguments);
+                d3.selection.prototype.attr.apply(d3.select(node), args);
+            }
+            return tip;
+        };
+
+        // Public: Proxy style calls to the d3 tip container.  Sets or gets a style value.
+        //
+        // n - name of the property
+        // v - value of the property
+        //
+        // Returns tip or style property value
+        tip.style = function(n, v) {
+            if (arguments.length < 2 && typeof n === 'string') {
+                return d3.select(node).style(n);
+            } else {
+                var args = Array.prototype.slice.call(arguments);
+                d3.selection.prototype.style.apply(d3.select(node), args);
+            }
+            return tip;
+        };
+
+        tip.bbox = function (x) {
+            if (!arguments.length) return bbox;
+            bbox = x;
+            return tip;
+        };
+
+        // Public: Set or get the direction of the tooltip
+        //
+        // v - One of n(north), s(south), e(east), or w(west), nw(northwest),
+        //     sw(southwest), ne(northeast) or se(southeast)
+        //
+        // Returns tip or direction
+        tip.direction = function (v) {
+            if (!arguments.length) return direction;
+            direction = v === null ? v : d3.functor(v);
+            return tip;
+        };
+
+        // Public: Sets or gets the offset of the tip
+        //
+        // v - Array of [x, y] offset
+        //
+        tip.offset = function (v) {
+            if (!arguments.length) return offset;
+            offset = v;
+            return tip;
+        };
+
+        // Public: sets or gets the html value of the tooltip
+        //
+        // v - String value of the tip
+        //
+        // Returns html value or tip
+        tip.html = function (v) {
+            if (!arguments.length) return html;
+            html = v === null ? v : d3.functor(v);
+            return tip;
+        };
+
+        function d3_tip_direction () {
+            return 'n';
+        }
+
+        function d3_tip_html() {
+            return ' ';
+        }
+
+        var direction_callbacks = d3.map({
+            n: direction_n,
+            s: direction_s,
+            e: direction_e,
+            w: direction_w,
+            nw: direction_nw,
+            ne: direction_ne,
+            sw: direction_sw,
+            se: direction_se,
+            c: direction_c
+        }),
+
+        directions = direction_callbacks.keys();
+
+        function direction_n () {
+            return {
+                top: bbox.n.y - node.offsetHeight - offset[1],
+                left: bbox.n.x - node.offsetWidth / 2
+            };
+        }
+
+        function direction_s () {
+            return {
+                top: bbox.s.y + offset[1],
+                left: bbox.s.x - node.offsetWidth / 2
+            };
+        }
+
+        function direction_e () {
+            return {
+                top: bbox.e.y - node.offsetHeight / 2,
+                left: bbox.e.x + offset[0]
+            };
+        }
+
+        function direction_w () {
+            return {
+                top: bbox.w.y - node.offsetHeight / 2,
+                left: bbox.w.x - node.offsetWidth - offset[0]
+            };
+        }
+
+        function direction_nw () {
+            return {
+                top: bbox.nw.y - node.offsetHeight - offset[1],
+                left: bbox.nw.x - node.offsetWidth - offset[0]
+            };
+        }
+
+        function direction_ne () {
+            return {
+                top: bbox.ne.y - node.offsetHeight - offset[1],
+                left: bbox.ne.x + offset[0]
+            };
+        }
+
+        function direction_sw () {
+            return {
+                top: bbox.sw.y + offset[1],
+                left: bbox.sw.x - node.offsetWidth - offset[0]
+            };
+        }
+
+        function direction_se () {
+            return {
+                top: bbox.se.y + offset[1],
+                left: bbox.e.x + offset[0]
+            };
+        }
+
+        function direction_c () {
+            return {
+                top: bbox.c.y + offset[1],
+                left: bbox.c.x + offset[0]
+            };
+        }
+
+        function initNode() {
+            var node = d3.select(document.createElement('div'));
+            node.style({
+                position: 'absolute',
+                top: 0,
+                opacity: 0,
+                'pointer-events': 'none',
+                'box-sizing': 'border-box'
+            });
+            return node.node();
+        }
+
+        return tip;
+    };
+
+
+    var tooltipCss = {'d3-tip:after': {}};
+
 
     g.createviz('chart', {
         margin: 30,
@@ -4466,7 +4899,7 @@
             if (o && chartTypes[type].scaled) {
                 // pick a default color if one is not given
                 if (!color)
-                    color = chartColor(chart, o);
+                    color = chart.drawColor(o);
                 if (!o.color)
                     o.color = color;
                 scaled = true;
@@ -5427,7 +5860,7 @@
                     .style("fill", function(d) {
                         var name = (d.children ? d : d.parent).name;
                         if (!namecolors[name])
-                            namecolors[name] = paper.pickColor();
+                            namecolors[name] = group.pickColor();
                         return namecolors[name];
                     });
 
@@ -5965,7 +6398,7 @@
             group.barchart = function (data, opts) {
                 opts || (opts = {});
                 chartFormats(group, opts);
-                chartColor(group.paper(), copyMissing(group.options().bar, opts));
+                group.drawColor(copyMissing(group.options().bar, opts));
 
                 return group.add(g[type].barchart)
                     .pointOptions(extendArray(['size'], drawingOptions))
@@ -6145,6 +6578,7 @@
             return r;
         }
     };
+
     //
     //  Add brush functionality to svg paper
     g.paper.plugin('brush', {
@@ -6380,7 +6814,9 @@
     //
     //  Add margins to a giotto group
     //
-    g.paper.plugin('colors', {
+    var fillSpecials = [true, 'none', 'color'],
+
+        colorPlugin = {
 
         defaults: {
             scale: d3.scale.category10().range(),
@@ -6389,24 +6825,42 @@
             colorIndex: 0
         },
 
-        init: function () {
+        init: function (self) {
+            var opts = self.options().colors;
 
             // pick a color
-            d.pickColor = function (index) {
+            self.pickColor = function (index) {
                 if (arguments.length === 0)
                     index = opts.colorIndex++;
                 var dk = 0, bk = 0;
-                while (index >= opts.colors.length) {
-                    index -= opts.colors.length;
+                while (index >= opts.scale.length) {
+                    index -= opts.scale.length;
                     dk += opts.darkerColor;
                     bk += opts.brighterColor;
                 }
-                var c = opts.colors[index];
+                var c = opts.scale[index];
                 if (dk)
                     c = d3.rgb(c).darker(dk).toString();
                 else if (bk)
                     c = d3.rgb(c).brighter(bk).toString();
                 return c;
+            };
+
+            //
+            // Select a suitable color for a draw element
+            self.drawColor = function (opts) {
+                if (!opts.color)
+                    if (opts.fill && fillSpecials.indexOf(opts.fill) === -1)
+                        opts.color = d3.rgb(opts.fill).darker().toString();
+                    else
+                        opts.color = self.pickColor();
+
+                if (opts.fill === true)
+                    opts.fill = d3.rgb(opts.color).brighter().toString();
+                else if (opts.fill === 'color')
+                    opts.fill = opts.color;
+
+                return opts.color;
             };
         },
 
@@ -6416,7 +6870,11 @@
             opts.colors = colors;
         }
 
-    });
+    };
+
+    g.paper.plugin('colors', colorPlugin);
+    g.viz.plugin('colors', colorPlugin);
+
     //
     //  Fill plugin
     //  ================
@@ -6486,25 +6944,6 @@
         }
     });
 
-    //
-    //  Font
-    //  ===============
-    //
-    //  Add fonts to a giotto group
-    //
-    g.paper.plugin('font', {
-        index: 0,
-
-        defaults: {
-            color: '#444',
-            size: '11px',
-            weight: 'normal',
-            lineHeight: 13,
-            style: "normal",
-            family: "sans-serif",
-            variant: "small-caps"
-        }
-    });
     //
     //  Add grid functionality to a group
     //  =====================================
@@ -7011,7 +7450,7 @@
             group.path = function (data, opts) {
                 opts || (opts = {});
                 chartFormats(group, opts);
-                chartColor(group.paper(), copyMissing(group.options().line, opts));
+                group.drawColor(copyMissing(group.options().line, opts));
 
                 return group.add(g[type].path(group))
                             .pointOptions(pointOptions)
@@ -7563,66 +8002,6 @@
         return feature;
     };
 
-    //
-    //  Margin plugin
-    //  ================
-    //
-    //
-    //  Margin
-    //  ===========
-    //
-    //  Add margins to a giotto group
-    //
-    g.paper.plugin('margin', {
-
-        defaults: {
-            top: 20,
-            right: 20,
-            bottom: 20,
-            left: 20
-        },
-
-        init: function (group) {
-
-            var p = group.options(),
-                factor = group.factor();
-
-            group.innerWidth = function () {
-                return factor*(p.size[0] - p.margin.left - p.margin.right);
-            };
-
-            group.innerHeight = function () {
-                return factor*(p.size[1] - p.margin.top - p.margin.bottom);
-            };
-
-            group.aspectRatio = function () {
-                return group.innerHeight()/group.innerWidth();
-            };
-
-            group.marginLeft = function () {
-                return factor*p.margin.left;
-            };
-
-            group.marginRight = function () {
-                return factor*p.margin.right;
-            };
-
-            group.marginTop = function () {
-                return factor*p.margin.top;
-            };
-
-            group.marginBottom = function () {
-                return factor*p.margin.bottom;
-            };
-
-        },
-
-        options: function (opts) {
-            var margin = opts.margin;
-            if (isObject(margin)) opts.margin = extend({}, this.defaults, margin);
-            else if (margin !== undefined) opts.margin = {left: value, right: value, top: value, bottom: value};
-        }
-    });
 
     g.contextMenu = function () {
         var element = null,
@@ -7888,7 +8267,7 @@
             factor = group.factor(),
             target = group.paper().element().node();
 
-        dd.fill = dd.fill || draw.paper().pickColor();
+        dd.fill = dd.fill || draw.group().pickColor();
         dd.color = dd.color || d3.rgb(dd.fill).darker().toString();
 
         d = drawingData(draw, data, d);
@@ -8167,7 +8546,7 @@
             group.points = function (data, opts) {
                 opts || (opts = {});
                 chartFormats(group, opts);
-                chartColor(group.paper(), copyMissing(group.options().point, opts));
+                group.drawColor(copyMissing(group.options().point, opts));
 
                 return group.add(g[type].points)
                     .pointOptions(pointOptions)
@@ -8306,381 +8685,6 @@
             return r;
         }
     };
-
-    var tooltip;
-    //
-    //  Tooltip functionality for SVG paper
-    g.paper.plugin('tooltip', {
-        index: 1,
-
-        defaults: {
-            className: 'd3-tip',
-            fill: '#deebf7',
-            fillOpacity: 0.8,
-            color: '#222',
-            padding: '8px',
-            radius: '3px',
-            offset: [20, 20],
-            template: function (d) {
-                return "<p><span style='color:"+d.c+"'>" + d.l + "</span>  <strong>" + d.x + ": </strong><span>" + d.y + "</span></p>";
-            },
-            font: {
-                size: '14px'
-            }
-        },
-
-        options: function (opts) {
-            this.optionsShow(opts, ['font', 'template']);
-        },
-
-        init: function (group) {
-            var paper = group.paper();
-            if (!paper.showTooltip) activateTooltip(paper);
-        }
-    });
-
-
-    function activateTooltip (paper) {
-        var opts = paper.options(),
-            tooltip;
-
-        paper.showTooltip = function () {
-            if (!tooltip) tooltip = gitto_tip(opts).offset(opts.tooltip.offset);
-            show();
-            return paper;
-        };
-
-        paper.hideTooltip = function () {
-            if (tooltip) tooltip.hide();
-            return paper;
-        };
-
-        paper.removeTooltip = function () {
-            if (tooltip) tooltip.hide();
-            opts.tooltip.show = false;
-            tooltip = null;
-            return paper;
-        };
-
-        paper.on('active.tooltip', function () {
-            if (tooltip) {
-                tooltip.active = this;
-                show();
-            }
-        }).on('activeout.tooltip', function () {
-            if (tooltip) {
-                tooltip.active.splice(0);
-                tooltip.hide();
-            }
-        });
-
-        paper.task(function () {
-            if (opts.tooltip.show) show();
-        });
-
-        if (opts.tooltip.show) paper.showTooltip();
-
-        function show () {
-            var active = tooltip.active;
-            if (!active.length) return tooltip.hide();
-
-            var bbox = getBbox(active[0]),
-                direction = bbox.tooltip || 'n';
-            if (active.length > 1) {
-                direction = 'e';
-                for (var i=1; i<active.length; ++i) {
-                    var bbox2 = getBbox(active[i]);
-                    bbox[direction].y += bbox2[direction].y;
-                }
-                bbox[direction].y /= active.length;
-            }
-            tooltip.bbox(bbox).direction(direction).show();
-        }
-
-        function getBbox (node) {
-            if (isFunction(node.bbox)) return node.bbox();
-            else return getScreenBBox(node);
-        }
-    }
-
-
-    function gitto_tip (options) {
-        var opts = options.tooltip,
-            font = extend({}, options.font, opts.font),
-            tip = g.tip();
-
-        tip.active = [];
-
-        tip.attr('class', opts.className)
-           .style({
-                background: opts.fill,
-                opacity: opts.fillOpacity,
-                color: opts.color,
-                padding: opts.padding,
-                'border-radius': opts.radius,
-                font: fontString(font)
-            });
-
-        if (opts.className === 'd3-tip' && tooltipCss) {
-            tooltipCss['d3-tip:after'].color = opts.fill;
-            addCss('', tooltipCss);
-            tooltipCss = null;
-        }
-
-        tip.html(function () {
-            var html = '',
-                data, draw, template;
-
-            for (var i=0; i<tip.active.length; ++i) {
-                data = tip.active[i];
-                if (!data.draw) data = d3.select(data).datum();
-                draw = data.draw();
-                template = tooltip_template(draw);
-
-                html += template({
-                    c: data.color,
-                    l: draw.label() || 'serie',
-                    x: draw.formatX(draw.x()(data.data)),
-                    y: draw.formatY(draw.y()(data.data))
-                });
-            }
-            return html;
-        });
-
-        return tip;
-
-        function tooltip_template (draw) {
-            var o = draw.options();
-            return o.tooltip ? o.tooltip.template || opts.template : opts.template;
-        }
-    }
-
-    //
-    // Returns a tip handle
-    g.tip = function () {
-
-        var direction = d3_tip_direction,
-            offset = [0, 0],
-            html = d3_tip_html,
-            node = initNode(),
-            tip = {},
-            bbox;
-
-        document.body.appendChild(node);
-
-        // Public - show the tooltip on the screen
-        //
-        // Returns a tip
-        tip.show = function () {
-            var content = html.call(tip),
-                dir = direction.call(tip),
-                nodel = d3.select(node),
-                i = directions.length,
-                coords,
-                scrollTop = document.documentElement.scrollTop || document.body.scrollTop,
-                scrollLeft = document.documentElement.scrollLeft || document.body.scrollLeft;
-
-            nodel.html(content)
-                .style({
-                opacity: 1,
-                'pointer-events': 'all'
-            });
-
-            while (i--)
-                nodel.classed(directions[i], false);
-
-            coords = direction_callbacks.get(dir).apply(this);
-            nodel.classed(dir, true).style({
-                top: coords.top + scrollTop + 'px',
-                left: coords.left + scrollLeft + 'px'
-            });
-            return tip;
-        };
-
-        // Public - hide the tooltip
-        //
-        // Returns a tip
-        tip.hide = function() {
-            d3.select(node).style({
-                opacity: 0,
-                'pointer-events': 'none'
-            });
-            return tip;
-        };
-
-        // Public: Proxy attr calls to the d3 tip container.  Sets or gets attribute value.
-        //
-        // n - name of the attribute
-        // v - value of the attribute
-        //
-        // Returns tip or attribute value
-        tip.attr = function(n, v) {
-            if (arguments.length < 2 && typeof n === 'string') {
-                return d3.select(node).attr(n);
-            } else {
-                var args = Array.prototype.slice.call(arguments);
-                d3.selection.prototype.attr.apply(d3.select(node), args);
-            }
-            return tip;
-        };
-
-        // Public: Proxy style calls to the d3 tip container.  Sets or gets a style value.
-        //
-        // n - name of the property
-        // v - value of the property
-        //
-        // Returns tip or style property value
-        tip.style = function(n, v) {
-            if (arguments.length < 2 && typeof n === 'string') {
-                return d3.select(node).style(n);
-            } else {
-                var args = Array.prototype.slice.call(arguments);
-                d3.selection.prototype.style.apply(d3.select(node), args);
-            }
-            return tip;
-        };
-
-        tip.bbox = function (x) {
-            if (!arguments.length) return bbox;
-            bbox = x;
-            return tip;
-        };
-
-        // Public: Set or get the direction of the tooltip
-        //
-        // v - One of n(north), s(south), e(east), or w(west), nw(northwest),
-        //     sw(southwest), ne(northeast) or se(southeast)
-        //
-        // Returns tip or direction
-        tip.direction = function (v) {
-            if (!arguments.length) return direction;
-            direction = v === null ? v : d3.functor(v);
-            return tip;
-        };
-
-        // Public: Sets or gets the offset of the tip
-        //
-        // v - Array of [x, y] offset
-        //
-        tip.offset = function (v) {
-            if (!arguments.length) return offset;
-            offset = v;
-            return tip;
-        };
-
-        // Public: sets or gets the html value of the tooltip
-        //
-        // v - String value of the tip
-        //
-        // Returns html value or tip
-        tip.html = function (v) {
-            if (!arguments.length) return html;
-            html = v === null ? v : d3.functor(v);
-            return tip;
-        };
-
-        function d3_tip_direction () {
-            return 'n';
-        }
-
-        function d3_tip_html() {
-            return ' ';
-        }
-
-        var direction_callbacks = d3.map({
-            n: direction_n,
-            s: direction_s,
-            e: direction_e,
-            w: direction_w,
-            nw: direction_nw,
-            ne: direction_ne,
-            sw: direction_sw,
-            se: direction_se,
-            c: direction_c
-        }),
-
-        directions = direction_callbacks.keys();
-
-        function direction_n () {
-            return {
-                top: bbox.n.y - node.offsetHeight - offset[1],
-                left: bbox.n.x - node.offsetWidth / 2
-            };
-        }
-
-        function direction_s () {
-            return {
-                top: bbox.s.y + offset[1],
-                left: bbox.s.x - node.offsetWidth / 2
-            };
-        }
-
-        function direction_e () {
-            return {
-                top: bbox.e.y - node.offsetHeight / 2,
-                left: bbox.e.x + offset[0]
-            };
-        }
-
-        function direction_w () {
-            return {
-                top: bbox.w.y - node.offsetHeight / 2,
-                left: bbox.w.x - node.offsetWidth - offset[0]
-            };
-        }
-
-        function direction_nw () {
-            return {
-                top: bbox.nw.y - node.offsetHeight - offset[1],
-                left: bbox.nw.x - node.offsetWidth - offset[0]
-            };
-        }
-
-        function direction_ne () {
-            return {
-                top: bbox.ne.y - node.offsetHeight - offset[1],
-                left: bbox.ne.x + offset[0]
-            };
-        }
-
-        function direction_sw () {
-            return {
-                top: bbox.sw.y + offset[1],
-                left: bbox.sw.x - node.offsetWidth - offset[0]
-            };
-        }
-
-        function direction_se () {
-            return {
-                top: bbox.se.y + offset[1],
-                left: bbox.e.x + offset[0]
-            };
-        }
-
-        function direction_c () {
-            return {
-                top: bbox.c.y + offset[1],
-                left: bbox.c.x + offset[0]
-            };
-        }
-
-        function initNode() {
-            var node = d3.select(document.createElement('div'));
-            node.style({
-                position: 'absolute',
-                top: 0,
-                opacity: 0,
-                'pointer-events': 'none',
-                'box-sizing': 'border-box'
-            });
-            return node.node();
-        }
-
-        return tip;
-    };
-
-
-    var tooltipCss = {'d3-tip:after': {}};
 
     //
     //  Transitions
