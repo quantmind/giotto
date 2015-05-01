@@ -126,7 +126,7 @@
                 for (var i=0; i<injected.length; ++i)
                     options[injects[i]] = injected[i];
 
-                var viz = ag.mixin(vizType(element[0])).options(options).scope(scope);
+                var viz = ag.mixin(vizType(element[0], options)).scope(scope);
                 element.data(name, viz);
 
                 if (collection) {

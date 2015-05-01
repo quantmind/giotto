@@ -2723,13 +2723,14 @@
     }
 
     // Mixin for visualization classes and visualization collection
-    function vizMixin (d, plugins) {
+    function vizMixin (d, opts, plugins) {
         var loading_data = false,
             data;
 
-        giottoMixin(d, {}, plugins).load = function (callback) {
-            var opts = d.options(),
-                _ = opts.data;
+        giottoMixin(d, opts, plugins).load = function (callback) {
+            opts = d.options();
+
+            var _ = opts.data;
             delete opts.data;
 
             if (_) {
@@ -2765,7 +2766,7 @@
         // Set new data for the visualization
         d.data = function (_, callback) {
             if (!arguments.length) return data;
-            var opts = d.options();
+            opts = d.options();
 
             if (opts.processData)
                 _ = opts.processData.call(d, _);
@@ -4122,7 +4123,7 @@
 
             var vizPlugins = extendArray([], g.viz.pluginArray, vizType.pluginArray),
                 allPlugins = extendArray([], g.paper.pluginArray, vizPlugins),
-                viz = vizMixin({}, allPlugins).options(vizType.defaults).options(p),
+                viz = vizMixin({}, vizType.defaults, allPlugins).options(p),
                 events = d3.dispatch.apply(d3, g.constants.vizevents),
                 alpha = 0,
                 paper;
@@ -4335,7 +4336,7 @@
             if (margin === undefined || isObject(margin))
                 opts.margin = extend({}, this.defaults, margin);
             else
-                opts.margin = {left: value, right: value, top: value, bottom: value};
+                opts.margin = {left: margin, right: margin, top: margin, bottom: margin};
         }
     });
 
@@ -4353,7 +4354,8 @@
             radius: '3px',
             offset: [20, 20],
             template: function (d) {
-                return "<p><span style='color:"+d.c+"'>" + d.l + "</span>  <strong>" + d.x + ": </strong><span>" + d.y + "</span></p>";
+                return "<p><span style='color:"+d.c+"'>" + d.l + "</span>  <strong>" +
+                        d.x + ": </strong><span>" + d.y + "</span></p>";
             },
             font: {
                 size: '14px'
@@ -4361,7 +4363,7 @@
         },
 
         options: function (opts) {
-            this.optionsShow(opts, ['font', 'template']);
+            this.optionsShow(opts, ['font']);
         },
 
         init: function (group) {
@@ -8933,7 +8935,7 @@ NS["src/text/giotto.min.css"] = '@charset "UTF-8";.sunburst text{z-index:9999}.s
                 for (var i=0; i<injected.length; ++i)
                     options[injects[i]] = injected[i];
 
-                var viz = ag.mixin(vizType(element[0])).options(options).scope(scope);
+                var viz = ag.mixin(vizType(element[0], options)).scope(scope);
                 element.data(name, viz);
 
                 if (collection) {

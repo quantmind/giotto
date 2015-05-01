@@ -26,13 +26,14 @@
     }
 
     // Mixin for visualization classes and visualization collection
-    function vizMixin (d, plugins) {
+    function vizMixin (d, opts, plugins) {
         var loading_data = false,
             data;
 
-        giottoMixin(d, {}, plugins).load = function (callback) {
-            var opts = d.options(),
-                _ = opts.data;
+        giottoMixin(d, opts, plugins).load = function (callback) {
+            opts = d.options();
+
+            var _ = opts.data;
             delete opts.data;
 
             if (_) {
@@ -68,7 +69,7 @@
         // Set new data for the visualization
         d.data = function (_, callback) {
             if (!arguments.length) return data;
-            var opts = d.options();
+            opts = d.options();
 
             if (opts.processData)
                 _ = opts.processData.call(d, _);

@@ -27,7 +27,7 @@
 
             var vizPlugins = extendArray([], g.viz.pluginArray, vizType.pluginArray),
                 allPlugins = extendArray([], g.paper.pluginArray, vizPlugins),
-                viz = vizMixin({}, allPlugins).options(vizType.defaults).options(p),
+                viz = vizMixin({}, vizType.defaults, allPlugins).options(p),
                 events = d3.dispatch.apply(d3, g.constants.vizevents),
                 alpha = 0,
                 paper;

@@ -1,17 +1,17 @@
 @charset "UTF-8";
 /*
 ------------------------------------------------------------------
-Created by lux in 0.09 seconds
-Date: 2015-05-01 12:29:11
+Created by lux in 0.1 seconds
+Date: 2015-05-01 13:11:19
 
 http://quantmind.github.io/lux/
 ------------------------------------------------------------------ */
 
 .hljs-comment,.hljs-title{color:#8e908c}.hljs-variable,.hljs-attribute,.hljs-tag,.hljs-regexp,.ruby .hljs-constant,.xml .hljs-tag .hljs-title,.xml .hljs-pi,.xml .hljs-doctype,.html .hljs-doctype,.css .hljs-id,.css .hljs-class,.css .hljs-pseudo{color:#c82829}.hljs-number,.hljs-preprocessor,.hljs-pragma,.hljs-built_in,.hljs-literal,.hljs-params,.hljs-constant{color:#f5871f}.ruby .hljs-class .hljs-title,.css .hljs-rules .hljs-attribute{color:#eab700}.hljs-string,.hljs-value,.hljs-inheritance,.hljs-header,.ruby .hljs-symbol,.xml .hljs-cdata{color:#718c00}.css .hljs-hexcolor{color:#3e999f}.hljs-function,.python .hljs-decorator,.python .hljs-title,.ruby .hljs-function .hljs-title,.ruby .hljs-title .hljs-keyword,.perl .hljs-sub,.javascript .hljs-title,.coffeescript .hljs-title{color:#4271ae}.hljs-keyword,.javascript .hljs-function{color:#8959a8}.hljs{display:block;overflow-x:auto;background:white;color:#4d4d4c;padding:0.5em;-webkit-text-size-adjust:none}.coffeescript .javascript,.javascript .xml,.tex .hljs-formula,.xml .javascript,.xml .vbscript,.xml .css,.xml .hljs-cdata{opacity:0.5}
 body {
-    background: #fff;
     color: rgba(0, 0, 0, 0.8);
     line-height: 1.5;
+    background: #fff;
     height: 101%;
     min-height: 101%;
 }
@@ -77,8 +77,8 @@ body {
     .sidebar {
         position: absolute;
         width: 200px;
-        margin-top: 51px;
         z-index: 1;
+        margin-top: 51px;
     }
 
 }
@@ -106,19 +106,19 @@ p.form-error {
 .katex-outer {
     margin-bottom: 10px;
     margin-left: auto;
-    display: block;
     margin-right: auto;
+    display: block;
     margin-bottom: 10px;
     margin-left: auto;
-    display: block;
     margin-right: auto;
+    display: block;
 }
 
 code.hljs.inline {
-    padding: 2px 4px;
     display: inline;
     padding: 2px 4px;
     display: inline;
+    padding: 2px 4px;
 }
 
 dl dd {
@@ -175,8 +175,8 @@ dl.function dt {
 }
 
 .media-list > .media > a {
-    color: #808080;
     text-decoration: none;
+    color: #808080;
 }
 
 .media-list > .media > a .post-body {
@@ -189,16 +189,16 @@ dl.function dt {
 }
 
 .post-image {
-    width: 140px;
     max-height: 140px;
     height: auto;
+    width: 140px;
     float: left;
 }
 
 .post-image-xs {
+    max-height: 150px;
     max-width: 90%;
     width: auto;
-    max-height: 150px;
 }
 
 h1:hover > a.headerlink,
@@ -212,10 +212,10 @@ dt:hover > a.headerlink {
 }
 
 a.headerlink {
-    padding: 0 4px;
     text-decoration: none;
     color: #eee;
     visibility: hidden;
+    padding: 0 4px;
 }
 
 a.headerlink:hover {
@@ -246,11 +246,11 @@ table.docutils.field-list th {
 
 .page-header.index-header {
     height: 101%;
-    background: #333;
-    min-height: 100%;
+    color: #fff;
     width: 101%;
     margin: 0;
-    color: #fff;
+    background: #333;
+    min-height: 100%;
 }
 
 html,
@@ -269,10 +269,10 @@ form {
 }
 
 #footer {
-    padding: 30px 0 40px;
-    background: #333;
-    min-height: 300px;
     color: #b3b3b3;
+    background: #333;
+    padding: 30px 0 40px;
+    min-height: 300px;
 }
 
 #lux-logo {
@@ -302,9 +302,9 @@ form {
 }
 
 .features article {
+    padding: 30px;
     width: 33.33%;
     float: left;
-    padding: 30px;
 }
 
 .features article:before {
@@ -367,8 +367,8 @@ form {
     }
 
     .error-message-container {
-        padding: 40px 0;
         text-align: center;
+        padding: 40px 0;
     }
 
 }

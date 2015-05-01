@@ -12,7 +12,8 @@
             radius: '3px',
             offset: [20, 20],
             template: function (d) {
-                return "<p><span style='color:"+d.c+"'>" + d.l + "</span>  <strong>" + d.x + ": </strong><span>" + d.y + "</span></p>";
+                return "<p><span style='color:"+d.c+"'>" + d.l + "</span>  <strong>" +
+                        d.x + ": </strong><span>" + d.y + "</span></p>";
             },
             font: {
                 size: '14px'
@@ -20,7 +21,7 @@
         },
 
         options: function (opts) {
-            this.optionsShow(opts, ['font', 'template']);
+            this.optionsShow(opts, ['font']);
         },
 
         init: function (group) {
