@@ -41,8 +41,14 @@
     d3.giotto = giotto;
     d3.canvas = {};
 
-    // D3 internal functions used by GiottoJS, mainly by the canvas module
-    // These are copied from d3.js
+    //  D3 internal functions
+    //  =======================================================================
+    //
+    //  Used by GiottoJS, mainly by the canvas module
+    //  These are copied from d3.js
+
+    //  Copyright (c) 2010-2015, Michael Bostock
+    //  All rights reserved.
 
     function d3_identity(d) {
         return d;
@@ -277,6 +283,10 @@
       ["n", "s"],
       []
     ];
+
+    //  END of D3 internal functions
+    //  =======================================================================
+
 
 
     // Convert an array of array obtained from reading a CSV file into an array of objects
