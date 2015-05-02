@@ -6,7 +6,7 @@
         function chart(opts) {
             opts || (opts = {});
             opts.type = type;
-            return g.viz.chart().options(opts);
+            return g.viz.chart(opts);
         }
 
         it ('No paper', function () {
@@ -16,7 +16,7 @@
             expect(paper).toBe(undefined);
         });
 
-        it('Test auto axis', function (done) {
+        it('Test auto axis', function () {
             var c = chart(),
                 p = c.paper();
 
@@ -24,16 +24,15 @@
             c.addSerie([[1, 1], [2, 3], [3, 0], [4, -5]]);
             expect(c.numSeries()).toBe(1);
 
-            c.resume().on('tick.test', function () {
-                c.each(function (serie) {
-                    var group = serie.group();
-                    expect(group.paper()).toBe(p);
-                    expect(group.xaxis().scale().domain()[0]).toBe(1);
-                    expect(group.xaxis().scale().domain()[1]).toBe(4);
-                    expect(group.yaxis().scale().domain()[0]).toBe(-5);
-                    expect(group.yaxis().scale().domain()[1]).toBe(3);
-                });
-                done();
+            c.render().each(function (serie) {
+                var group = serie.group();
+                expect(group.paper()).toBe(p);
+                expect(group.xaxis().scale().domain()[0]).toBe(1);
+                expect(group.xaxis().scale().domain()[1]).toBe(4);
+                expect(group.xaxis().options().show).toBe(true);
+                expect(group.yaxis().scale().domain()[0]).toBe(-5);
+                expect(group.yaxis().scale().domain()[1]).toBe(3);
+                expect(group.yaxis().options().show).toBe(true);
             });
         });
 

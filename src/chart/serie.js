@@ -5,7 +5,6 @@
 
         if (!data) return;
 
-
         var opts = chart.options(),
             allranges = chart.allranges(),
             serie = extend({}, opts.serie),
@@ -31,7 +30,7 @@
             }
             if (o || (opts[type] && opts[type].show)) {
                 serie[type] = extend({}, opts[type], o);
-                show = true;
+                serie[type].show = show = true;
             }
         });
 
@@ -72,6 +71,7 @@
             if (!isObject(serie.yaxis)) serie.yaxis = opts.yaxis;
         }
 
+        // The group of this serie
         serie.group = function () {
             return group;
         };
@@ -147,7 +147,7 @@
                     }
                 });
 
-                group = chart.paper().classGroup(slugify(serie.label), extend({}, serie));
+                group = chart.paper().classGroup(slugify(serie.label), serie);
 
                 // Is this the reference serie for its axisgroup?
                 if (serie.reference)

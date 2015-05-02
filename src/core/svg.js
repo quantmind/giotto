@@ -7,8 +7,6 @@
             _ = {};
 
         delete p.before;
-        // translate the group element by the required margins
-        elem.attr("transform", "translate(" + p.margin.left + "," + p.margin.top + ")");
 
         _.resize = function (group) {
             if (p.resize) {
@@ -19,7 +17,13 @@
             }
         };
 
-        var group = g.group(paper, elem.node(), p, _);
+        var group = g.group(paper, elem.node(), p, _),
+            render = group.render;
+
+        group.render = function () {
+            group.element().attr("transform", "translate(" + group.marginLeft() + "," + group.marginTop() + ")");
+            return render();
+        };
 
         group.clear = function () {
             group.element().selectAll('*').remove();

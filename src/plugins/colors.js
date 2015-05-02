@@ -58,8 +58,11 @@
             var colors = extend({}, this.defaults, opts.colors);
             if (isFunction (colors.scale)) colors.scale = colors.scale(d3);
             opts.colors = colors;
-        }
+        },
 
+        clear: function (opts) {
+            opts.colorIndex = 0;
+        }
     };
 
     g.paper.plugin('colors', colorPlugin);

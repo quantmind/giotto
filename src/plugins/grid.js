@@ -34,17 +34,19 @@
                 if (!grid) {
                     // First time here, setup grid options for y and x coordinates
                     if (!gopts) {
-                        gopts = extend({}, group.options());
-                        gopts.xaxis = extend({
-                            position: 'top',
-                            size: 0,
-                            show: gopts.grid.xaxis
-                        }, gopts.grid);
-                        gopts.yaxis = extend({
-                            position: 'left',
-                            size: 0,
-                            show: gopts.grid.yaxis
-                        }, gopts.grid);
+                        var opts = group.options();
+                        gopts = opts.copy({
+                            xaxis: extend({
+                                position: 'top',
+                                size: 0,
+                                show: opts.grid.xaxis
+                            }, opts.grid),
+                            yaxis: extend({
+                                position: 'left',
+                                size: 0,
+                                show: opts.grid.yaxis
+                            }, opts.grid)
+                        });
                     }
                     // Create the grid group
                     gopts.before = '*';

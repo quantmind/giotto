@@ -13,8 +13,7 @@
                 ['Rest of World', 63776]];
 
     gexamples.giottologo1 = {
-        width: 500,
-        height: 500,
+        height: '100%',
 
         // Some defaults for all pies
         pie: {
@@ -26,8 +25,7 @@
         },
 
         data: function () {
-            var width = 500,
-                dangle = 10,
+            var dangle = 10,
                 margin = 0.05,
                 angle = 0,
                 inner = 0.9,
@@ -49,17 +47,13 @@
                         startAngle: angle,
                         innerRadius: inner
                     },
-                    margin: m(0.5*margin*width)
+                    margin: 50*margin + '%'
                 });
                 angle += dangle;
                 margin = 1 - (1-margin)*(inner - innerpad);
                 innerpad += dinnerpad;
             }
             return series;
-
-            function m (n) {
-                return {left: n, right: n, top: n, bottom: n};
-            }
         },
 
         // Callback for angular directive

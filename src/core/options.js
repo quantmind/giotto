@@ -35,6 +35,7 @@
     g.options = function (opts, plugins) {
         // If this is not an option object create it
         if (!opts || !isFunction(opts.pluginOptions)) {
+
             var o = extend({}, g.defaults.paper);
                 options = {};
             forEach(opts, function (value, name) {
@@ -43,6 +44,7 @@
             });
             opts = initOptions(o, {}).pluginOptions(plugins || g.paper.pluginArray).extend(options);
         } else if (plugins) {
+            // Otherwise extend it with plugins given
             opts.pluginOptions(plugins);
         }
         return opts;
@@ -81,8 +83,10 @@
         },
 
         extend: function (opts, value) {
-            extend(opts, value);
-        }
+            opts[this.name] = extend({}, opts[this.name], value);
+        },
+
+        clear: function (opts) {}
     };
 
     // Initialise options
@@ -100,7 +104,7 @@
                 if (!isPrivateAttribute(name)) {
                     plugin = pluginOptions[name];
                     if (plugin)
-                        plugin.extend(opts[name], value);
+                        plugin.extend(opts, value);
                     else
                         opts[name] = value;
                 }
@@ -135,6 +139,12 @@
                 return o;
             else
                 return initOptions(extend({}, opts), extend({}, pluginOptions)).extend(o);
+        };
+
+        opts.clear = function () {
+            forEach(pluginOptions, function (plugin) {
+                plugin.clear(opts[plugin.name]);
+            });
         };
 
         return opts;

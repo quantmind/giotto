@@ -55,9 +55,8 @@
         };
 
         group.transform = function (ctx) {
-            var factor = group.factor();
             ctx.setTransform(1, 0, 0, 1, 0, 0);
-            ctx.translate(factor*p.margin.left, factor*p.margin.top);
+            ctx.translate(group.marginLeft(), group.marginTop());
             return group;
         };
 

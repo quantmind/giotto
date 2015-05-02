@@ -8,7 +8,7 @@ author: Luca Sbardella
 <div class="container">
 <div class="row">
 <div class="col-sm-10">
-<div data-options="gexamples.giottologo1" style="max-width: 500px; min-height: 500px" class="center-block" giotto-chart></div>
+<div data-options="gexamples.giottologo1" style="max-width: 700px" class="center-block" giotto-chart></div>
 </div>
 <div class="col-sm-2">
 $html_type_form

@@ -2928,6 +2928,7 @@
     g.options = function (opts, plugins) {
         // If this is not an option object create it
         if (!opts || !isFunction(opts.pluginOptions)) {
+
             var o = extend({}, g.defaults.paper);
                 options = {};
             forEach(opts, function (value, name) {
@@ -2936,6 +2937,7 @@
             });
             opts = initOptions(o, {}).pluginOptions(plugins || g.paper.pluginArray).extend(options);
         } else if (plugins) {
+            // Otherwise extend it with plugins given
             opts.pluginOptions(plugins);
         }
         return opts;
@@ -2974,8 +2976,10 @@
         },
 
         extend: function (opts, value) {
-            extend(opts, value);
-        }
+            opts[this.name] = extend({}, opts[this.name], value);
+        },
+
+        clear: function (opts) {}
     };
 
     // Initialise options
@@ -2993,7 +2997,7 @@
                 if (!isPrivateAttribute(name)) {
                     plugin = pluginOptions[name];
                     if (plugin)
-                        plugin.extend(opts[name], value);
+                        plugin.extend(opts, value);
                     else
                         opts[name] = value;
                 }
@@ -3028,6 +3032,12 @@
                 return o;
             else
                 return initOptions(extend({}, opts), extend({}, pluginOptions)).extend(o);
+        };
+
+        opts.clear = function () {
+            forEach(pluginOptions, function (plugin) {
+                plugin.clear(opts[plugin.name]);
+            });
         };
 
         return opts;
@@ -3950,8 +3960,6 @@
             _ = {};
 
         delete p.before;
-        // translate the group element by the required margins
-        elem.attr("transform", "translate(" + p.margin.left + "," + p.margin.top + ")");
 
         _.resize = function (group) {
             if (p.resize) {
@@ -3962,7 +3970,13 @@
             }
         };
 
-        var group = g.group(paper, elem.node(), p, _);
+        var group = g.group(paper, elem.node(), p, _),
+            render = group.render;
+
+        group.render = function () {
+            group.element().attr("transform", "translate(" + group.marginLeft() + "," + group.marginTop() + ")");
+            return render();
+        };
 
         group.clear = function () {
             group.element().selectAll('*').remove();
@@ -4059,9 +4073,8 @@
         };
 
         group.transform = function (ctx) {
-            var factor = group.factor();
             ctx.setTransform(1, 0, 0, 1, 0, 0);
-            ctx.translate(factor*p.margin.left, factor*p.margin.top);
+            ctx.translate(group.marginLeft(), group.marginTop());
             return group;
         };
 
@@ -4165,8 +4178,10 @@
 
             viz.paper = function (createNew) {
                 if (createNew || paper === undefined) {
-                    if (paper)
+                    if (paper) {
                         paper.clear();
+                        viz.options().clear();
+                    }
                     paper = viz.createPaper();
                 }
                 return paper;
@@ -4323,34 +4338,39 @@
             var p = group.options(),
                 factor = group.factor();
 
+            group.marginLeft = function () {
+                return factor*pc(p.margin.left, p.size[0]);
+            };
+
+            group.marginRight = function () {
+                return factor*pc(p.margin.right, p.size[0]);
+            };
+
+            group.marginTop = function () {
+                return factor*pc(p.margin.top, p.size[1]);
+            };
+
+            group.marginBottom = function () {
+                return factor*pc(p.margin.bottom, p.size[1]);
+            };
+
             group.innerWidth = function () {
-                return factor*(p.size[0] - p.margin.left - p.margin.right);
+                return factor*p.size[0] - group.marginLeft() - group.marginRight();
             };
 
             group.innerHeight = function () {
-                return factor*(p.size[1] - p.margin.top - p.margin.bottom);
+                return factor*p.size[1] - group.marginTop() - group.marginBottom();
             };
 
             group.aspectRatio = function () {
                 return group.innerHeight()/group.innerWidth();
             };
 
-            group.marginLeft = function () {
-                return factor*p.margin.left;
-            };
-
-            group.marginRight = function () {
-                return factor*p.margin.right;
-            };
-
-            group.marginTop = function () {
-                return factor*p.margin.top;
-            };
-
-            group.marginBottom = function () {
-                return factor*p.margin.bottom;
-            };
-
+            function pc (margin, size) {
+                if (typeof(margin) === "string" && margin.indexOf('%') === margin.length-1)
+                    margin = d3.round(0.01*parseFloat(margin)*size);
+                return margin;
+            }
         },
 
         options: function (opts) {
@@ -4363,14 +4383,16 @@
         extend: function (opts, value) {
             if (value === undefined)
                 return;
-            else if (isObject(value))
-                extend(opts, value);
-            else {
-                opts.left = value;
-                opts.right = value;
-                opts.top = value;
-                opts.bottom = value;
-            }
+            if (!isObject(value))
+                value = {
+                    left: value,
+                    right: value,
+                    top: value,
+                    bottom: value
+                };
+            else
+                value = extend({}, opts[this.name], value);
+            opts[this.name] = value;
         }
     });
 
@@ -4753,8 +4775,12 @@
     g.createviz('chart', {
         margin: 30,
         chartTypes: ['map', 'pie', 'bar', 'line', 'point', 'custom'],
-        xaxis: true,
-        yaxis: true,
+        xaxis: {
+            show: true
+        },
+        yaxis: {
+            show: true
+        },
         serie: {
             x: function (d) {return d[0];},
             y: function (d) {return d[1];}
@@ -4895,7 +4921,6 @@
 
         if (!data) return;
 
-
         var opts = chart.options(),
             allranges = chart.allranges(),
             serie = extend({}, opts.serie),
@@ -4921,7 +4946,7 @@
             }
             if (o || (opts[type] && opts[type].show)) {
                 serie[type] = extend({}, opts[type], o);
-                show = true;
+                serie[type].show = show = true;
             }
         });
 
@@ -4962,6 +4987,7 @@
             if (!isObject(serie.yaxis)) serie.yaxis = opts.yaxis;
         }
 
+        // The group of this serie
         serie.group = function () {
             return group;
         };
@@ -5037,7 +5063,7 @@
                     }
                 });
 
-                group = chart.paper().classGroup(slugify(serie.label), extend({}, serie));
+                group = chart.paper().classGroup(slugify(serie.label), serie);
 
                 // Is this the reference serie for its axisgroup?
                 if (serie.reference)
@@ -6904,8 +6930,11 @@
             var colors = extend({}, this.defaults, opts.colors);
             if (isFunction (colors.scale)) colors.scale = colors.scale(d3);
             opts.colors = colors;
-        }
+        },
 
+        clear: function (opts) {
+            opts.colorIndex = 0;
+        }
     };
 
     g.paper.plugin('colors', colorPlugin);
@@ -7016,17 +7045,19 @@
                 if (!grid) {
                     // First time here, setup grid options for y and x coordinates
                     if (!gopts) {
-                        gopts = extend({}, group.options());
-                        gopts.xaxis = extend({
-                            position: 'top',
-                            size: 0,
-                            show: gopts.grid.xaxis
-                        }, gopts.grid);
-                        gopts.yaxis = extend({
-                            position: 'left',
-                            size: 0,
-                            show: gopts.grid.yaxis
-                        }, gopts.grid);
+                        var opts = group.options();
+                        gopts = opts.copy({
+                            xaxis: extend({
+                                position: 'top',
+                                size: 0,
+                                show: opts.grid.xaxis
+                            }, opts.grid),
+                            yaxis: extend({
+                                position: 'left',
+                                size: 0,
+                                show: opts.grid.yaxis
+                            }, opts.grid)
+                        });
                     }
                     // Create the grid group
                     gopts.before = '*';

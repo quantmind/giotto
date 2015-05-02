@@ -22,34 +22,39 @@
             var p = group.options(),
                 factor = group.factor();
 
+            group.marginLeft = function () {
+                return factor*pc(p.margin.left, p.size[0]);
+            };
+
+            group.marginRight = function () {
+                return factor*pc(p.margin.right, p.size[0]);
+            };
+
+            group.marginTop = function () {
+                return factor*pc(p.margin.top, p.size[1]);
+            };
+
+            group.marginBottom = function () {
+                return factor*pc(p.margin.bottom, p.size[1]);
+            };
+
             group.innerWidth = function () {
-                return factor*(p.size[0] - p.margin.left - p.margin.right);
+                return factor*p.size[0] - group.marginLeft() - group.marginRight();
             };
 
             group.innerHeight = function () {
-                return factor*(p.size[1] - p.margin.top - p.margin.bottom);
+                return factor*p.size[1] - group.marginTop() - group.marginBottom();
             };
 
             group.aspectRatio = function () {
                 return group.innerHeight()/group.innerWidth();
             };
 
-            group.marginLeft = function () {
-                return factor*p.margin.left;
-            };
-
-            group.marginRight = function () {
-                return factor*p.margin.right;
-            };
-
-            group.marginTop = function () {
-                return factor*p.margin.top;
-            };
-
-            group.marginBottom = function () {
-                return factor*p.margin.bottom;
-            };
-
+            function pc (margin, size) {
+                if (typeof(margin) === "string" && margin.indexOf('%') === margin.length-1)
+                    margin = d3.round(0.01*parseFloat(margin)*size);
+                return margin;
+            }
         },
 
         options: function (opts) {
@@ -62,13 +67,15 @@
         extend: function (opts, value) {
             if (value === undefined)
                 return;
-            else if (isObject(value))
-                extend(opts, value);
-            else {
-                opts.left = value;
-                opts.right = value;
-                opts.top = value;
-                opts.bottom = value;
-            }
+            if (!isObject(value))
+                value = {
+                    left: value,
+                    right: value,
+                    top: value,
+                    bottom: value
+                };
+            else
+                value = extend({}, opts[this.name], value);
+            opts[this.name] = value;
         }
     });

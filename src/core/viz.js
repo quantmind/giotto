@@ -47,8 +47,10 @@
 
             viz.paper = function (createNew) {
                 if (createNew || paper === undefined) {
-                    if (paper)
+                    if (paper) {
                         paper.clear();
+                        viz.options().clear();
+                    }
                     paper = viz.createPaper();
                 }
                 return paper;
