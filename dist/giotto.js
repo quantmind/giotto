@@ -1,7 +1,10 @@
 //      GiottoJS - v0.2.0
-
+//
 //      Compiled 2015-05-02.
-//      Copyright (c) 2015 - Luca Sbardella
+//
+//      Copyright (c) 2014 - 2015 - Luca Sbardella
+//      All rights reserved.
+//
 //      Licensed BSD.
 //      For all details and documentation:
 //      http://giottojs.org
@@ -4368,7 +4371,7 @@
 
             function pc (margin, size) {
                 if (typeof(margin) === "string" && margin.indexOf('%') === margin.length-1)
-                    margin = d3.round(0.01*parseFloat(margin)*size);
+                    margin = d3.round(0.01*parseFloat(margin)*size, 2);
                 return margin;
             }
         },
