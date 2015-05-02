@@ -54,9 +54,21 @@
 
         options: function (opts) {
             var margin = opts.margin;
-            if (margin === undefined || isObject(margin))
-                opts.margin = extend({}, this.defaults, margin);
-            else
-                opts.margin = {left: margin, right: margin, top: margin, bottom: margin};
+            opts.margin = extend({}, this.defaults);
+            this.extend(opts.margin, margin);
+        },
+
+        // Allow to specify margin as a scalar value
+        extend: function (opts, value) {
+            if (value === undefined)
+                return;
+            else if (isObject(value))
+                extend(opts, value);
+            else {
+                opts.left = value;
+                opts.right = value;
+                opts.top = value;
+                opts.bottom = value;
+            }
         }
     });

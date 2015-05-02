@@ -1,6 +1,6 @@
 //      GiottoJS - v0.2.0
 
-//      Compiled 2015-05-01.
+//      Compiled 2015-05-02.
 //      Copyright (c) 2015 - Luca Sbardella
 //      Licensed BSD.
 //      For all details and documentation:
@@ -2918,14 +2918,22 @@
     g.options = function (opts, plugins) {
         // If this is not an option object create it
         if (!opts || !isFunction(opts.pluginOptions)) {
-            opts = extend({}, g.defaults.paper, opts);
-            opts = initOptions(opts, {}).pluginOptions(plugins || g.paper.plugins);
+            var o = extend({}, g.defaults.paper);
+                options = {};
+            forEach(opts, function (value, name) {
+                if (isPrivateAttribute(name)) o[name] = value;
+                else options[name] = value;
+            });
+            opts = initOptions(o, {}).pluginOptions(plugins || g.paper.pluginArray).extend(options);
         } else if (plugins) {
             opts.pluginOptions(plugins);
         }
         return opts;
     };
 
+    function isPrivateAttribute (name) {
+        return name.substring(0, 1) === '_';
+    }
     //
     //  Plugin base object
     //
@@ -2972,7 +2980,7 @@
             // Loop through object values
             forEach(o, function (value, name) {
                 // only extend non private values
-                if (name.substring(0, 1) !== '_') {
+                if (!isPrivateAttribute(name)) {
                     plugin = pluginOptions[name];
                     if (plugin)
                         plugin.extend(opts[name], value);
@@ -3003,9 +3011,13 @@
             return opts;
         };
 
+        // Copy this options object and return a new options object
+        // with the same values apart from the one specified in ``o``.
         opts.copy = function (o) {
-            if (o && isFunction(o.pluginOptions)) return o;
-            else return initOptions(extend({}, opts), extend({}, pluginOptions));
+            if (o && isFunction(o.pluginOptions))
+                return o;
+            else
+                return initOptions(extend({}, opts), extend({}, pluginOptions)).extend(o);
         };
 
         return opts;
@@ -4333,10 +4345,22 @@
 
         options: function (opts) {
             var margin = opts.margin;
-            if (margin === undefined || isObject(margin))
-                opts.margin = extend({}, this.defaults, margin);
-            else
-                opts.margin = {left: margin, right: margin, top: margin, bottom: margin};
+            opts.margin = extend({}, this.defaults);
+            this.extend(opts.margin, margin);
+        },
+
+        // Allow to specify margin as a scalar value
+        extend: function (opts, value) {
+            if (value === undefined)
+                return;
+            else if (isObject(value))
+                extend(opts, value);
+            else {
+                opts.left = value;
+                opts.right = value;
+                opts.top = value;
+                opts.bottom = value;
+            }
         }
     });
 
@@ -6953,7 +6977,7 @@
     //  In theory each group can have its own grid
     g.paper.plugin('grid', {
 
-        default: {
+        defaults: {
             color: '#333',
             colorOpacity: 0.3,
             fill: 'none',
@@ -6961,6 +6985,10 @@
             lineWidth: 0.5,
             xaxis: true,
             yaxis: true
+        },
+
+        options: function (opts) {
+            this.optionsShow(opts);
         },
 
         init: function (group) {
@@ -7065,9 +7093,9 @@
 
     //
     //  Add grid functionality to charts
-    g.viz.chart.plugin('gridchart', {},
+    g.viz.chart.plugin('gridchart', {
 
-        function (chart) {
+        init: function (chart) {
 
             // Show grid
             chart.showGrid = function () {
@@ -7093,7 +7121,8 @@
                 else
                     chart.hideGrid();
             });
-        });
+        }
+    });
 
     function notick () {return '';}
 

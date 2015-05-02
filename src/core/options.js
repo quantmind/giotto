@@ -35,14 +35,22 @@
     g.options = function (opts, plugins) {
         // If this is not an option object create it
         if (!opts || !isFunction(opts.pluginOptions)) {
-            opts = extend({}, g.defaults.paper, opts);
-            opts = initOptions(opts, {}).pluginOptions(plugins || g.paper.plugins);
+            var o = extend({}, g.defaults.paper);
+                options = {};
+            forEach(opts, function (value, name) {
+                if (isPrivateAttribute(name)) o[name] = value;
+                else options[name] = value;
+            });
+            opts = initOptions(o, {}).pluginOptions(plugins || g.paper.pluginArray).extend(options);
         } else if (plugins) {
             opts.pluginOptions(plugins);
         }
         return opts;
     };
 
+    function isPrivateAttribute (name) {
+        return name.substring(0, 1) === '_';
+    }
     //
     //  Plugin base object
     //
@@ -89,7 +97,7 @@
             // Loop through object values
             forEach(o, function (value, name) {
                 // only extend non private values
-                if (name.substring(0, 1) !== '_') {
+                if (!isPrivateAttribute(name)) {
                     plugin = pluginOptions[name];
                     if (plugin)
                         plugin.extend(opts[name], value);
@@ -120,9 +128,13 @@
             return opts;
         };
 
+        // Copy this options object and return a new options object
+        // with the same values apart from the one specified in ``o``.
         opts.copy = function (o) {
-            if (o && isFunction(o.pluginOptions)) return o;
-            else return initOptions(extend({}, opts), extend({}, pluginOptions));
+            if (o && isFunction(o.pluginOptions))
+                return o;
+            else
+                return initOptions(extend({}, opts), extend({}, pluginOptions)).extend(o);
         };
 
         return opts;

@@ -4,8 +4,7 @@
         min_height: 250,
 
         grid: {
-            fill: '#fff',
-            fillOpacity: 1
+            show: true
         },
 
         line: {

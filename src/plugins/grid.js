@@ -5,7 +5,7 @@
     //  In theory each group can have its own grid
     g.paper.plugin('grid', {
 
-        default: {
+        defaults: {
             color: '#333',
             colorOpacity: 0.3,
             fill: 'none',
@@ -13,6 +13,10 @@
             lineWidth: 0.5,
             xaxis: true,
             yaxis: true
+        },
+
+        options: function (opts) {
+            this.optionsShow(opts);
         },
 
         init: function (group) {
@@ -117,9 +121,9 @@
 
     //
     //  Add grid functionality to charts
-    g.viz.chart.plugin('gridchart', {},
+    g.viz.chart.plugin('gridchart', {
 
-        function (chart) {
+        init: function (chart) {
 
             // Show grid
             chart.showGrid = function () {
@@ -145,7 +149,8 @@
                 else
                     chart.hideGrid();
             });
-        });
+        }
+    });
 
     function notick () {return '';}
 

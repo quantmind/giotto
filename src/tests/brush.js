@@ -5,7 +5,7 @@
 
         it("Check defaults", function() {
             var brush = g.paper.plugins.brush;
-            expect(_.isFunction(brush)).toBe(true);
+            expect(_.isObject(brush)).toBe(true);
             expect(_.isObject(brush.defaults)).toBe(true);
             expect(brush.defaults.axis).toBe('x');
             expect(brush.defaults.fillOpacity).toBe(0.125);

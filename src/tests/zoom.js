@@ -6,7 +6,7 @@
         it("Check zoom defaults", function() {
             var zoom = g.chart.plugins.zoom;
 
-            expect(_.isFunction(zoom)).toBe(true);
+            expect(_.isObject(zoom)).toBe(true);
             expect(_.isObject(zoom.defaults)).toBe(true);
 
             expect(zoom.defaults.x).toBe(false);

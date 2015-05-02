@@ -5,7 +5,7 @@
 
         it("Check defaults", function() {
             var grid = g.paper.plugins.grid;
-            expect(_.isFunction(grid)).toBe(true);
+            expect(_.isObject(grid)).toBe(true);
 
             expect(_.isObject(grid.defaults)).toBe(true);
             expect(_.isString(grid.defaults.color)).toBe(true);
