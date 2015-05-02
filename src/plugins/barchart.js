@@ -3,6 +3,7 @@
     //
     //  Bar charts to a group
     g.paper.plugin('bar', {
+        deep: ['active', 'tooltip'],
 
         defaults: {
             width: 'auto',
@@ -34,10 +35,6 @@
                     .dataConstructor(bar_costructor)
                     .data(data);
             };
-        },
-
-        options: function (opts) {
-            this.optionsShow(opts, ['active', 'tooltip']);
         }
     });
 

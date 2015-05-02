@@ -13,7 +13,7 @@
         it("Check axis options defaults", function () {
             var opts = g.options();
 
-            expect(opts.axis).toBe(undefined);
+            expect(_.isObject(opts.axis)).toBe(true);
             expect(_.isObject(opts.xaxis)).toBe(true);
             expect(_.isObject(opts.yaxis)).toBe(true);
 

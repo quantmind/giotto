@@ -1,4 +1,5 @@
-
+    //
+    //  Manage active elements in a paper
     function activeEvents (paper) {
 
         var activeElements = [],
@@ -40,6 +41,7 @@
             });
 
             if (activeOut.length) {
+                g.log.debug('deactivating elements');
                 activeOut.forEach(function (a) {
                     index = activeElements.indexOf(a);
                     if (index > -1) activeElements.splice(index, 1);

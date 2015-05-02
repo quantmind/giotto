@@ -2,6 +2,7 @@
     //
     //  Tooltip functionality
     g.paper.plugin('tooltip', {
+        deep: ['font'],
 
         defaults: {
             className: 'd3-tip',
@@ -18,10 +19,6 @@
             font: {
                 size: '14px'
             }
-        },
-
-        options: function (opts) {
-            this.optionsShow(opts, ['font']);
         },
 
         init: function (group) {

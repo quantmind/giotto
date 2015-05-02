@@ -53,6 +53,7 @@
     function isPrivateAttribute (name) {
         return name.substring(0, 1) === '_';
     }
+
     //
     //  Plugin base object
     //
@@ -60,30 +61,15 @@
         init: function () {},
         defaults: {},
 
-        options: function (opts, deep) {
-            var name = this.name,
-                defaults = this.defaults;
-            opts[name] = extend({}, defaults, opts[name]);
-            forEach(deep, function (key) {
-                opts[name][key] = extend({}, opts[key], defaults[key], opts[name][key]);
-            });
-        },
-
-        optionsShow: function (opts, deep) {
-            var name = this.name,
-                defaults = this.defaults,
-                o = opts[name];
-            if (o === true) o = {show: true};
-            else if (!o) o = {show: false};
-            else if (o.show === undefined) o.show = true;
-            opts[name] = extend({}, this.defaults, o);
-            forEach(deep, function (key) {
-                opts[name][key] = extend({}, opts[key], defaults[key], opts[name][key]);
-            });
-        },
-
         extend: function (opts, value) {
-            opts[this.name] = extend({}, opts[this.name], value);
+            var name = this.name,
+                defaults = opts[name],
+                values = extend({}, defaults, value);
+            // deep copies
+            forEach(this.deep, function (key) {
+                values[key] = extend({}, opts[key], defaults[key], values[key]);
+            });
+            opts[name] = values;
         },
 
         clear: function (opts) {}
@@ -125,7 +111,9 @@
                 forEach(plugins, function (plugin) {
                     if (pluginOptions[plugin.name] === undefined) {
                         pluginOptions[plugin.name] = plugin;
-                        plugin.options(opts);
+                        var value = opts[plugin.name];
+                        opts[plugin.name] = plugin.defaults;
+                        plugin.extend(opts, value);
                     }
                 });
             }

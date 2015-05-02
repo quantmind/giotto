@@ -3,6 +3,7 @@
     //
     //  Add legend functionality to Charts
     g.viz.chart.plugin('legend', {
+        deep: ['font'],
 
         defaults: {
             show: false,

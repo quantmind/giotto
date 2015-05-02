@@ -10,11 +10,12 @@
             serie = extend({}, opts.serie),
             group, color, show, scaled;
 
-        if (!g.data.isData(data)) {
+        // If data is an object, extend the serie with it
+        // and data is obtained from the serie data attribute
+        if (isObject(data)) {
             extend(serie, data);
             data = serie.data;
             delete serie.data;
-            if (!data) return;
         }
 
         serie.index = chart.numSeries();
@@ -30,7 +31,10 @@
             }
             if (o || (opts[type] && opts[type].show)) {
                 serie[type] = extend({}, opts[type], o);
-                serie[type].show = show = true;
+                show = true;
+                // Could be a function
+                if (!serie[type].show)
+                    serie[type].show = true;
             }
         });
 

@@ -3,6 +3,7 @@
     g.paper.plugin('axis', {
 
         defaults: {
+            show: false,
             tickSize: '6px',
             outerTickSize: '6px',
             tickPadding: '3px',
@@ -115,29 +116,26 @@
             group.resetAxis();
         },
 
-        options: function (opts) {
+        extend: function (opts, value) {
             //
             // Create three new plugins
-            var o = registerPlugin({});
+            var axis = opts.axis,
+                o = registerPlugin({});
 
             o.plugin('xaxis', {
-                defaults: extend({position: 'bottom'}, this.defaults, opts.axis),
-                options: axisOptions
+                deep: ['font'],
+                defaults: extend({position: 'bottom'}, opts.axis, value)
             });
             o.plugin('yaxis', {
-                defaults: extend({position: 'left'}, this.defaults, opts.axis),
-                options: axisOptions
+                deep: ['font'],
+                defaults: extend({position: 'left'}, opts.axis, value)
             });
             o.plugin('yaxis2', {
-                defaults: extend({position: 'right'}, this.defaults, opts.axis),
-                options: axisOptions
+                deep: ['font'],
+                defaults: extend({position: 'right'}, opts.axis, value)
             });
 
             opts.pluginOptions(o.pluginArray);
-
-            function axisOptions (opts) {
-                this.optionsShow(opts, ['font']);
-            }
         }
     });
 

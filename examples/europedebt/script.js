@@ -2,13 +2,16 @@
     gexamples.europedebt = {
         height: '60%',
 
-        colors: function () {
-            return d3.colorbrewer.YlOrBr[9].slice().reverse();
+        colors: {
+            scale: function (d3) {
+                return d3.colorbrewer.YlOrBr[9].slice().reverse();
+            }
         },
 
         tooltip: true,
 
         pie: {
+            show: true,
             labels: {
                 position: 'outside'
             },

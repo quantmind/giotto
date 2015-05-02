@@ -1,5 +1,6 @@
     // Line chart
     g.paper.plugin('line', {
+        deep: ['active', 'tooltip'],
 
         defaults: {
             interpolate: 'cardinal',
@@ -8,10 +9,6 @@
             lineWidth: 2,
             fill: 'color',
             active: {}
-        },
-
-        options: function (opts) {
-            this.optionsShow(opts, ['active', 'tooltip']);
         },
 
         init: function (group) {

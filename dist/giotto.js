@@ -2570,7 +2570,8 @@
 
         return transition;
     };
-
+    //
+    //  Manage active elements in a paper
     function activeEvents (paper) {
 
         var activeElements = [],
@@ -2612,6 +2613,7 @@
             });
 
             if (activeOut.length) {
+                g.log.debug('deactivating elements');
                 activeOut.forEach(function (a) {
                     index = activeElements.indexOf(a);
                     if (index > -1) activeElements.splice(index, 1);
@@ -2949,6 +2951,7 @@
     function isPrivateAttribute (name) {
         return name.substring(0, 1) === '_';
     }
+
     //
     //  Plugin base object
     //
@@ -2956,30 +2959,15 @@
         init: function () {},
         defaults: {},
 
-        options: function (opts, deep) {
-            var name = this.name,
-                defaults = this.defaults;
-            opts[name] = extend({}, defaults, opts[name]);
-            forEach(deep, function (key) {
-                opts[name][key] = extend({}, opts[key], defaults[key], opts[name][key]);
-            });
-        },
-
-        optionsShow: function (opts, deep) {
-            var name = this.name,
-                defaults = this.defaults,
-                o = opts[name];
-            if (o === true) o = {show: true};
-            else if (!o) o = {show: false};
-            else if (o.show === undefined) o.show = true;
-            opts[name] = extend({}, this.defaults, o);
-            forEach(deep, function (key) {
-                opts[name][key] = extend({}, opts[key], defaults[key], opts[name][key]);
-            });
-        },
-
         extend: function (opts, value) {
-            opts[this.name] = extend({}, opts[this.name], value);
+            var name = this.name,
+                defaults = opts[name],
+                values = extend({}, defaults, value);
+            // deep copies
+            forEach(this.deep, function (key) {
+                values[key] = extend({}, opts[key], defaults[key], values[key]);
+            });
+            opts[name] = values;
         },
 
         clear: function (opts) {}
@@ -3021,7 +3009,9 @@
                 forEach(plugins, function (plugin) {
                     if (pluginOptions[plugin.name] === undefined) {
                         pluginOptions[plugin.name] = plugin;
-                        plugin.options(opts);
+                        var value = opts[plugin.name];
+                        opts[plugin.name] = plugin.defaults;
+                        plugin.extend(opts, value);
                     }
                 });
             }
@@ -4371,7 +4361,7 @@
 
             function pc (margin, size) {
                 if (typeof(margin) === "string" && margin.indexOf('%') === margin.length-1)
-                    margin = d3.round(0.01*parseFloat(margin)*size, 2);
+                    margin = d3.round(0.01*parseFloat(margin)*size, 5);
                 return margin;
             }
         },
@@ -4403,6 +4393,7 @@
     //
     //  Tooltip functionality
     g.paper.plugin('tooltip', {
+        deep: ['font'],
 
         defaults: {
             className: 'd3-tip',
@@ -4419,10 +4410,6 @@
             font: {
                 size: '14px'
             }
-        },
-
-        options: function (opts) {
-            this.optionsShow(opts, ['font']);
         },
 
         init: function (group) {
@@ -4929,11 +4916,12 @@
             serie = extend({}, opts.serie),
             group, color, show, scaled;
 
-        if (!g.data.isData(data)) {
+        // If data is an object, extend the serie with it
+        // and data is obtained from the serie data attribute
+        if (isObject(data)) {
             extend(serie, data);
             data = serie.data;
             delete serie.data;
-            if (!data) return;
         }
 
         serie.index = chart.numSeries();
@@ -4949,7 +4937,10 @@
             }
             if (o || (opts[type] && opts[type].show)) {
                 serie[type] = extend({}, opts[type], o);
-                serie[type].show = show = true;
+                show = true;
+                // Could be a function
+                if (!serie[type].show)
+                    serie[type].show = true;
             }
         });
 
@@ -6211,6 +6202,7 @@
     g.paper.plugin('axis', {
 
         defaults: {
+            show: false,
             tickSize: '6px',
             outerTickSize: '6px',
             tickPadding: '3px',
@@ -6323,29 +6315,26 @@
             group.resetAxis();
         },
 
-        options: function (opts) {
+        extend: function (opts, value) {
             //
             // Create three new plugins
-            var o = registerPlugin({});
+            var axis = opts.axis,
+                o = registerPlugin({});
 
             o.plugin('xaxis', {
-                defaults: extend({position: 'bottom'}, this.defaults, opts.axis),
-                options: axisOptions
+                deep: ['font'],
+                defaults: extend({position: 'bottom'}, opts.axis, value)
             });
             o.plugin('yaxis', {
-                defaults: extend({position: 'left'}, this.defaults, opts.axis),
-                options: axisOptions
+                deep: ['font'],
+                defaults: extend({position: 'left'}, opts.axis, value)
             });
             o.plugin('yaxis2', {
-                defaults: extend({position: 'right'}, this.defaults, opts.axis),
-                options: axisOptions
+                deep: ['font'],
+                defaults: extend({position: 'right'}, opts.axis, value)
             });
 
             opts.pluginOptions(o.pluginArray);
-
-            function axisOptions (opts) {
-                this.optionsShow(opts, ['font']);
-            }
         }
     });
 
@@ -6441,6 +6430,7 @@
     //
     //  Bar charts to a group
     g.paper.plugin('bar', {
+        deep: ['active', 'tooltip'],
 
         defaults: {
             width: 'auto',
@@ -6472,10 +6462,6 @@
                     .dataConstructor(bar_costructor)
                     .data(data);
             };
-        },
-
-        options: function (opts) {
-            this.optionsShow(opts, ['active', 'tooltip']);
         }
     });
 
@@ -6883,62 +6869,66 @@
 
         colorPlugin = {
 
-        defaults: {
-            scale: d3.scale.category10().range(),
-            darkerColor: 0,
-            brighterColor: 0,
-            colorIndex: 0
-        },
+            defaults: {
+                scale: d3.scale.category10().range(),
+                darkerColor: 0,
+                brighterColor: 0,
+                colorIndex: 0
+            },
 
-        init: function (self) {
-            var opts = self.options().colors;
+            init: function (self) {
+                var opts = self.options().colors;
 
-            // pick a color
-            self.pickColor = function (index) {
-                if (arguments.length === 0)
-                    index = opts.colorIndex++;
-                var dk = 0, bk = 0;
-                while (index >= opts.scale.length) {
-                    index -= opts.scale.length;
-                    dk += opts.darkerColor;
-                    bk += opts.brighterColor;
-                }
-                var c = opts.scale[index];
-                if (dk)
-                    c = d3.rgb(c).darker(dk).toString();
-                else if (bk)
-                    c = d3.rgb(c).brighter(bk).toString();
-                return c;
-            };
+                // pick a color
+                self.pickColor = function (index) {
+                    if (arguments.length === 0)
+                        index = opts.colorIndex++;
+                    var dk = 0, bk = 0;
+                    while (index >= opts.scale.length) {
+                        index -= opts.scale.length;
+                        dk += opts.darkerColor;
+                        bk += opts.brighterColor;
+                    }
+                    var c = opts.scale[index];
+                    if (dk)
+                        c = d3.rgb(c).darker(dk).toString();
+                    else if (bk)
+                        c = d3.rgb(c).brighter(bk).toString();
+                    return c;
+                };
 
-            //
-            // Select a suitable color for a draw element
-            self.drawColor = function (opts) {
-                if (!opts.color)
-                    if (opts.fill && fillSpecials.indexOf(opts.fill) === -1)
-                        opts.color = d3.rgb(opts.fill).darker().toString();
-                    else
-                        opts.color = self.pickColor();
+                //
+                // Select a suitable color for a draw element
+                self.drawColor = function (opts) {
+                    if (!opts.color)
+                        if (opts.fill && fillSpecials.indexOf(opts.fill) === -1)
+                            opts.color = d3.rgb(opts.fill).darker().toString();
+                        else
+                            opts.color = self.pickColor();
 
-                if (opts.fill === true)
-                    opts.fill = d3.rgb(opts.color).brighter().toString();
-                else if (opts.fill === 'color')
-                    opts.fill = opts.color;
+                    if (opts.fill === true)
+                        opts.fill = d3.rgb(opts.color).brighter().toString();
+                    else if (opts.fill === 'color')
+                        opts.fill = opts.color;
 
-                return opts.color;
-            };
-        },
+                    return opts.color;
+                };
+            },
 
-        options: function (opts) {
-            var colors = extend({}, this.defaults, opts.colors);
-            if (isFunction (colors.scale)) colors.scale = colors.scale(d3);
-            opts.colors = colors;
-        },
+            options: function (opts) {
+                opts.colors = extend({}, this.defaults, opts.colors);
+                if (isFunction (opts.colors.scale)) opts.colors.scale = opts.colors.scale(d3);
+            },
 
-        clear: function (opts) {
-            opts.colorIndex = 0;
-        }
-    };
+            extend: function (opts, value) {
+                opts.colors = extend({}, opts.colors, value);
+                if (isFunction (opts.colors.scale)) opts.colors.scale = opts.colors.scale(d3);
+            },
+
+            clear: function (opts) {
+                opts.colorIndex = 0;
+            }
+        };
 
     g.paper.plugin('colors', colorPlugin);
     g.viz.plugin('colors', colorPlugin);
@@ -7176,6 +7166,7 @@
     //
     //  Add legend functionality to Charts
     g.viz.chart.plugin('legend', {
+        deep: ['font'],
 
         defaults: {
             show: false,
@@ -7504,6 +7495,7 @@
 
     // Line chart
     g.paper.plugin('line', {
+        deep: ['active', 'tooltip'],
 
         defaults: {
             interpolate: 'cardinal',
@@ -7512,10 +7504,6 @@
             lineWidth: 2,
             fill: 'color',
             active: {}
-        },
-
-        options: function (opts) {
-            this.optionsShow(opts, ['active', 'tooltip']);
         },
 
         init: function (group) {
@@ -7851,6 +7839,7 @@
 
     // Map charts and animations
     g.paper.plugin('map', {
+        deep: ['active', 'tooltip'],
 
         defaults: {
             scale: 1,
@@ -7872,10 +7861,6 @@
                     return "<p><strong>" + d.x + "</strong> " + d.y + "</p>";
                 }
             }
-        },
-
-        options: function (opts) {
-            this.optionsShow(opts, ['active', 'tooltip']);
         },
 
         init: function (group) {
@@ -8227,6 +8212,7 @@
     // Add pie charts to giotto groups
 
     g.paper.plugin('pie', {
+        deep: ['active', 'tooltip', 'labels'],
 
         defaults: {
             lineWidth: 1,
@@ -8259,10 +8245,6 @@
                 colorOpacity: 0.5,
                 lineWidth: 1
             }
-        },
-
-        options: function (opts) {
-            this.optionsShow(opts, ['active', 'tooltip', 'labels']);
         },
 
         init: function (group) {
@@ -8593,6 +8575,7 @@
 
     // Scapper point chart
     g.paper.plugin('point', {
+        deep: ['active', 'tooltip'],
 
         defaults: {
             symbol: 'circle',
@@ -8608,10 +8591,6 @@
                 size: '150%'
             },
             transition: extend({}, g.defaults.transition)
-        },
-
-        options: function (opts) {
-            this.optionsShow(opts, ['active', 'tooltip']);
         },
 
         init: function (group) {

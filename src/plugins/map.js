@@ -70,6 +70,7 @@
 
     // Map charts and animations
     g.paper.plugin('map', {
+        deep: ['active', 'tooltip'],
 
         defaults: {
             scale: 1,
@@ -91,10 +92,6 @@
                     return "<p><strong>" + d.x + "</strong> " + d.y + "</p>";
                 }
             }
-        },
-
-        options: function (opts) {
-            this.optionsShow(opts, ['active', 'tooltip']);
         },
 
         init: function (group) {

@@ -1,5 +1,6 @@
     // Scapper point chart
     g.paper.plugin('point', {
+        deep: ['active', 'tooltip'],
 
         defaults: {
             symbol: 'circle',
@@ -15,10 +16,6 @@
                 size: '150%'
             },
             transition: extend({}, g.defaults.transition)
-        },
-
-        options: function (opts) {
-            this.optionsShow(opts, ['active', 'tooltip']);
         },
 
         init: function (group) {
