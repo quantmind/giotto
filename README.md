@@ -1,6 +1,10 @@
 # Giotto JS
 
-D3 base visualization library.
+<a href="http://giottojs.org">
+<img src="http://giottojs.org/media/giottoweb/giotto.svg" width="200px" alt="GiottoJS">
+</a>
+
+D3 based visualization library.
 
 http://giottojs.org
 
