@@ -2,7 +2,7 @@
     // Add pie charts to giotto groups
 
     g.paper.plugin('pie', {
-        deep: ['active', 'tooltip', 'labels'],
+        deep: ['active', 'tooltip', 'labels', 'transition'],
 
         defaults: {
             lineWidth: 1,

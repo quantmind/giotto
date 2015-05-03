@@ -22,6 +22,7 @@
             return paper;
         };
 
+        //  Add an active element
         paper.activeIn = function (d) {
             if (activeIn.indexOf(d) === -1) activeIn.push(d);
             var index = activeOut.indexOf(d);
@@ -70,8 +71,15 @@
                 if (isCanvas(a)) a.highLight().render();
             });
 
-            if (activeIn.splice(0).length)
-                paper.event('active').call(activeElements.slice());
+            //  clear activeIn array and if elements were available fire the
+            //  ``active`` event on the paper
+            if (activeIn.splice(0).length) {
+                try {
+                    paper.event('active').call(activeElements.slice());
+                } catch (e) {
+                    g.log.error('Exception while firing active event on giotto paper.\n' + e.stack);
+                }
+            }
         });
 
 

@@ -10,9 +10,9 @@
             serie = extend({}, opts.serie),
             group, color, show, scaled;
 
-        // If data is an object, extend the serie with it
+        // If data does not have the forEach function, extend the serie with it
         // and data is obtained from the serie data attribute
-        if (isObject(data)) {
+        if (!isFunction(data.forEach)) {
             extend(serie, data);
             data = serie.data;
             delete serie.data;

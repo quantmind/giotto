@@ -2,7 +2,7 @@
     //
     //  Tooltip functionality
     g.paper.plugin('tooltip', {
-        deep: ['font'],
+        deep: ['font', 'transition'],
 
         defaults: {
             className: 'd3-tip',
@@ -62,9 +62,9 @@
             }
         });
 
-        paper.task(function () {
-            if (opts.tooltip.show) show();
-        });
+        //paper.task(function () {
+        //    if (opts.tooltip.show) show();
+        //});
 
         if (opts.tooltip.show) paper.showTooltip();
 

@@ -9,7 +9,9 @@
             y: function (d) {return d.value;}
         },
 
-        grid: true,
+        grid: {
+            show: true
+        },
 
         line: {
             area: true,

@@ -1,10 +1,9 @@
     //
-    //  Transitions
+    //  Transition
     //  ===============
     //
-    //  Add margins to a giotto group
-    //
-    g.paper.plugin('transitions', {
+    //  Transitions values for all plugins needing one
+    g.paper.plugin('transition', {
 
         defaults: {
             duration: 0,

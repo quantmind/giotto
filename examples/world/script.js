@@ -16,6 +16,7 @@
             container.scope().year = 2013;
         },
 
+        // Initialise slider
         slider: {
             axis: true,
             min: 1960,
@@ -35,15 +36,19 @@
 
         // World map
         world: {
-            //type: 'canvas',
             tooltip: {
                 show: true
             },
-            colors: function (d3) {return d3.colorbrewer.YlGnBu[9];},
+            colors: {
+                scale: function (d3) {return d3.colorbrewer.YlGnBu[9];}
+            },
             margin: 0,
             height: '60%',
             zoom: true,
-            grid: true,
+            grid: {
+                show: true
+            },
+            // Listen for yearchange event
             onInit: function (chart) {
                 var scope = chart.scope();
                 scope.$on('yearchange', function (e, value) {
@@ -69,7 +74,7 @@
                 },
                 // load features
                 features: function (callback) {
-                    d3.giotto.require(['topojson'], function (topojson) {
+                    require(['topojson'], function (topojson) {
                         d3.json('/data/world-110m.json', function (topology) {
                             var countries = topojson.feature(topology, topology.objects.countries);
 
@@ -91,8 +96,8 @@
             processData: function (multi) {
                 return [[]];
             },
-            onInit: function (timeserie) {
-                var map = chart.scope().container.map;
+            onInit: function (chart) {
+                //var map = chart.scope().container.map;
             }
         }
     };

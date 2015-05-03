@@ -90,7 +90,7 @@ module.exports = function (grunt) {
             test: {
                 src : ['dist/giotto.js'],
                 options : {
-                    specs : 'src/tests/*.js',
+                    specs : 'src/tests/**/*.js',
                     template: 'src/tests/test.tpl.html',
                     templateOptions: {
                         deps: ['angular', 'angular-mocks']
@@ -100,7 +100,7 @@ module.exports = function (grunt) {
             coverage: {
                 src : ['dist/giotto.js'],
                 options : {
-                    specs : 'src/tests/*.js',
+                    specs : 'src/tests/**/*.js',
                     template: require('grunt-template-jasmine-istanbul'),
                     templateOptions: {
                         coverage: 'coverage/coverage.json',

@@ -54,11 +54,6 @@
                 };
             },
 
-            options: function (opts) {
-                opts.colors = extend({}, this.defaults, opts.colors);
-                if (isFunction (opts.colors.scale)) opts.colors.scale = opts.colors.scale(d3);
-            },
-
             extend: function (opts, value) {
                 opts.colors = extend({}, opts.colors, value);
                 if (isFunction (opts.colors.scale)) opts.colors.scale = opts.colors.scale(d3);

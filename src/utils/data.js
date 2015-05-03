@@ -13,9 +13,15 @@
         return rows;
     };
 
+    //
+    //  Multivariate data
+    //  =====================
+    //
+    //  Handle multivariate data
     g.data.multi = function (data) {
         var multi = {};
 
+        // Build a serie frm this multivariate data
         multi.serie = function () {
             var serie = {},
                 x, y;
@@ -51,8 +57,6 @@
                     return [];
             };
 
-            serie.isData = d3_true;
-
             return serie;
         };
 
@@ -61,8 +65,6 @@
             if (!isFunction(values)) values = label_functor(values);
             return d3.map(data.map(values), key);
         };
-
-        multi.isData = d3_true;
 
         function label_functor (label) {
             return function (d) {

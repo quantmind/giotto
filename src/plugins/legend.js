@@ -25,11 +25,6 @@
             }
         },
 
-        options: function (opts) {
-            opts.legend = extend({}, this.defaults, opts.legend);
-            opts.legend.font = extend({}, opts.font, opts.legend.font);
-        },
-
         init: function (chart) {
             var opts;
 
@@ -48,7 +43,7 @@
             chart.on('tick.legend', function () {
                 if (!opts) {
                     opts = chart.options();
-                    opts.contextmenu.push({
+                    opts.menu.items.push({
                         label: function () {
                             if (chart.paper().select('.chart-legend'))
                                 return 'Hide legend';

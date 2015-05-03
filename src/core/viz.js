@@ -132,7 +132,7 @@
 
         g.viz[name] = vizType;
 
-        vizType.defaults = extend({}, g.defaults.viz, defaults);
+        vizType.defaults = defaults;
 
         vizType.vizName = function () {
             return name;

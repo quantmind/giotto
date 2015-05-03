@@ -1,4 +1,8 @@
-
+    //
+    //  Giotto Context Menu
+    //
+    //  Returns a function which can be used to bind the context menu to
+    //  a node element.
     g.contextMenu = function () {
         var element = null,
             menuElement = null,
@@ -6,9 +10,9 @@
             disabled = false,
             events = d3.dispatch('open', 'close');
 
-        function menu (element, callback) {
+        function menu (target, callback) {
             init();
-            element
+            target
                 .on('keyup.gmenu', handleKeyUpEvent)
                 .on('click.gmenu', handleClickEvent)
                 .on('contextmenu.gmenu', handleContextMenu(callback));
@@ -110,33 +114,40 @@
     g.contextmenu = g.contextMenu();
 
 
+    //
+    //  Context Menu Plugin for Visualization
+    //  ==========================================
+    //
+    //  * layout create the html layout
+    //  * itms is a list of options to display
     g.viz.plugin('menu', {
 
-        init: function (viz) {
-
-            viz.contextmenu = function (menu) {
-                var opts = viz.options();
+        defaults: {
+            layout: function (viz, menu, items) {
                 menu.append('ul')
-                    .attr('class', 'dropdown-menu')
-                    .attr('role', 'menu')
+                    .attr({'class': 'dropdown-menu',
+                           'role': 'menu'})
                     .selectAll('li')
-                    .data(opts.contextmenu)
+                    .data(items)
                     .enter()
-                    .append('li')
-                    .append('a')
-                    .attr('role', 'menuitem')
+                    .append('li').attr('role', 'presentation')
+                    .append('a').attr('role', 'menuitem').attr('href', '#')
                     .text(function (d) {return isFunction(d.label) ? d.label() : d.label;})
-                    .attr('href', '#')
                     .on('click', function (d) {
                         if (d.callback) d.callback(viz);
                     });
-            };
+            },
+            items: null
+        },
+
+        init: function (viz) {
 
             viz.on('tick.menu', function () {
                 var opts = viz.options();
-                if (opts.contextmenu)
+                if (opts.menu.items)
                     g.contextmenu(viz.element(), function (menu) {
-                        return viz.contextmenu(menu);
+                        menu.select('*').remove();
+                        return opts.menu.layout(viz, menu, opts.menu.items);
                     });
                 else
                     g.contextmenu(viz.element());

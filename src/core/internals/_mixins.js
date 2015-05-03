@@ -22,6 +22,10 @@
             return d;
         };
 
+        d.toString = function () {
+            return 'giotto (' + uid + ')';
+        };
+
         return d;
     }
 

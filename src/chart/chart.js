@@ -123,6 +123,8 @@
             addSeries(data);
         });
 
+        g.chartContextMenu(chart);
+
         function addSeries (newseries) {
             // Loop through series and add them to the chart series collection
             // No drawing nor rendering involved

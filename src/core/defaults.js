@@ -11,21 +11,6 @@
         css: null
     };
 
-    g.defaults.viz = extend({
-        //
-        // Optional callback after initialisation
-        onInit: null,
-
-        // Rightclick menu
-        contextmenu: [{
-            label: 'Open Image',
-            callback: function (chart) {
-                window.open(chart.image());
-            }
-        }]
-
-    });
-
     g.constants = {
         DEFAULT_VIZ_GROUP: 'default_viz_group',
         WIDTH: 400,

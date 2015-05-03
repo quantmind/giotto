@@ -1,6 +1,6 @@
     // Line chart
     g.paper.plugin('line', {
-        deep: ['active', 'tooltip'],
+        deep: ['active', 'tooltip', 'transition'],
 
         defaults: {
             interpolate: 'cardinal',

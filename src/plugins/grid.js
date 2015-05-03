@@ -6,6 +6,7 @@
     g.paper.plugin('grid', {
 
         defaults: {
+            show: false,
             color: '#333',
             colorOpacity: 0.3,
             fill: 'none',
@@ -13,10 +14,6 @@
             lineWidth: 0.5,
             xaxis: true,
             yaxis: true
-        },
-
-        options: function (opts) {
-            this.optionsShow(opts);
         },
 
         init: function (group) {

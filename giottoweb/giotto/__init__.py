@@ -4,6 +4,9 @@ import lux
 from lux.extensions.ui import *
 
 
+THEMES = ('default', 'primary')
+
+
 class Extension(lux.Extension):
     pass
 
@@ -81,6 +84,10 @@ def slider(all):
     d3.slider.margin = 20
     d3.slider.axismargin = d3.slider.margin + 10
 
+    d3.slider.default.background_start = '#eee'
+    d3.slider.default.background_end = '#ddd'
+    d3.slider.default.border_color = '#aaa'
+
     css('.d3-slider',
         Border(width=px(1), style='solid'),
         margin=px(d3.slider.margin),
@@ -149,3 +156,13 @@ def slider(all):
         left=em(-.25),
         margin_left=0,
         margin_bottom=em(-.6))
+
+    # Themes
+    for theme in THEMES:
+        t = d3.slider[theme]
+
+        css('.d3-slider-%s' % theme,
+            Border(color=t.border_color),
+            css(' .d3-slider-handle',
+                Gradient('v', t.background_start, t.background_end),
+                Border(color=t.border_color)))

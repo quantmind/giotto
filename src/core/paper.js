@@ -79,6 +79,12 @@
             return paper;
         };
 
+        //  Remove tha paper.
+        //  Nothing left after this operation
+        paper.remove = function () {
+            paper.element().remove();
+        };
+
         paper.render = function () {
             var back = paper.canvasBackground().node(),
                 over = paper.canvasOverlay().node(),
@@ -290,6 +296,7 @@
             return selection;
         };
         //
+        //  Add a new periodic task to the paper
         paper.task = function (callback) {
             tasks.push(callback);
         };

@@ -3,7 +3,7 @@
     //
     //  Bar charts to a group
     g.paper.plugin('bar', {
-        deep: ['active', 'tooltip'],
+        deep: ['active', 'tooltip', 'transition'],
 
         defaults: {
             width: 'auto',

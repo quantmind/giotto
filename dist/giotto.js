@@ -1,6 +1,6 @@
 //      GiottoJS - v0.2.0
 //
-//      Compiled 2015-05-02.
+//      Compiled 2015-05-03.
 //
 //      Copyright (c) 2014 - 2015 - Luca Sbardella
 //      All rights reserved.
@@ -306,9 +306,15 @@
         return rows;
     };
 
+    //
+    //  Multivariate data
+    //  =====================
+    //
+    //  Handle multivariate data
     g.data.multi = function (data) {
         var multi = {};
 
+        // Build a serie frm this multivariate data
         multi.serie = function () {
             var serie = {},
                 x, y;
@@ -344,8 +350,6 @@
                     return [];
             };
 
-            serie.isData = d3_true;
-
             return serie;
         };
 
@@ -354,8 +358,6 @@
             if (!isFunction(values)) values = label_functor(values);
             return d3.map(data.map(values), key);
         };
-
-        multi.isData = d3_true;
 
         function label_functor (label) {
             return function (d) {
@@ -2594,6 +2596,7 @@
             return paper;
         };
 
+        //  Add an active element
         paper.activeIn = function (d) {
             if (activeIn.indexOf(d) === -1) activeIn.push(d);
             var index = activeOut.indexOf(d);
@@ -2642,8 +2645,15 @@
                 if (isCanvas(a)) a.highLight().render();
             });
 
-            if (activeIn.splice(0).length)
-                paper.event('active').call(activeElements.slice());
+            //  clear activeIn array and if elements were available fire the
+            //  ``active`` event on the paper
+            if (activeIn.splice(0).length) {
+                try {
+                    paper.event('active').call(activeElements.slice());
+                } catch (e) {
+                    g.log.error('Exception while firing active event on giotto paper.\n' + e.stack);
+                }
+            }
         });
 
 
@@ -2732,6 +2742,10 @@
             if (!arguments.length) return opts;
             opts.extend(_);
             return d;
+        };
+
+        d.toString = function () {
+            return 'giotto (' + uid + ')';
         };
 
         return d;
@@ -2866,21 +2880,6 @@
         interact: true,
         css: null
     };
-
-    g.defaults.viz = extend({
-        //
-        // Optional callback after initialisation
-        onInit: null,
-
-        // Rightclick menu
-        contextmenu: [{
-            label: 'Open Image',
-            callback: function (chart) {
-                window.open(chart.image());
-            }
-        }]
-
-    });
 
     g.constants = {
         DEFAULT_VIZ_GROUP: 'default_viz_group',
@@ -3242,6 +3241,12 @@
             return paper;
         };
 
+        //  Remove tha paper.
+        //  Nothing left after this operation
+        paper.remove = function () {
+            paper.element().remove();
+        };
+
         paper.render = function () {
             var back = paper.canvasBackground().node(),
                 over = paper.canvasOverlay().node(),
@@ -3453,6 +3458,7 @@
             return selection;
         };
         //
+        //  Add a new periodic task to the paper
         paper.task = function (callback) {
             tasks.push(callback);
         };
@@ -4256,7 +4262,7 @@
 
         g.viz[name] = vizType;
 
-        vizType.defaults = extend({}, g.defaults.viz, defaults);
+        vizType.defaults = defaults;
 
         vizType.vizName = function () {
             return name;
@@ -4389,11 +4395,23 @@
         }
     });
 
+    //
+    //  Transition
+    //  ===============
+    //
+    //  Transitions values for all plugins needing one
+    g.paper.plugin('transition', {
+
+        defaults: {
+            duration: 0,
+            ease: 'easeInOutCubic'
+        }
+    });
     var tooltip;
     //
     //  Tooltip functionality
     g.paper.plugin('tooltip', {
-        deep: ['font'],
+        deep: ['font', 'transition'],
 
         defaults: {
             className: 'd3-tip',
@@ -4453,9 +4471,9 @@
             }
         });
 
-        paper.task(function () {
-            if (opts.tooltip.show) show();
-        });
+        //paper.task(function () {
+        //    if (opts.tooltip.show) show();
+        //});
 
         if (opts.tooltip.show) paper.showTooltip();
 
@@ -4886,6 +4904,8 @@
             addSeries(data);
         });
 
+        g.chartContextMenu(chart);
+
         function addSeries (newseries) {
             // Loop through series and add them to the chart series collection
             // No drawing nor rendering involved
@@ -4904,6 +4924,34 @@
 
     g.chart = g.viz.chart;
 
+
+    g.chartContextMenu = function (chart) {
+
+        var menu = [];
+        chart.options().menu.items = menu;
+
+        menu.push({
+            label: 'Open Image',
+            callback: function (chart) {
+                    window.open(chart.image());
+            }
+        },
+        {
+            label: function () {
+                if (chart.paper().type() === 'svg')
+                    return 'Redraw as Canvas';
+                else
+                    return 'Redraw as SVG';
+            },
+            callback: function () {
+                var type = 'svg';
+                if (chart.paper().type() === 'svg')
+                    type = 'canvas';
+                chart.options().type = type;
+                chart.resume();
+            }
+        });
+    };
     //
     //	Create a serie for a chart
     //
@@ -4916,9 +4964,9 @@
             serie = extend({}, opts.serie),
             group, color, show, scaled;
 
-        // If data is an object, extend the serie with it
+        // If data does not have the forEach function, extend the serie with it
         // and data is obtained from the serie data attribute
-        if (isObject(data)) {
+        if (!isFunction(data.forEach)) {
             extend(serie, data);
             data = serie.data;
             delete serie.data;
@@ -6430,7 +6478,7 @@
     //
     //  Bar charts to a group
     g.paper.plugin('bar', {
-        deep: ['active', 'tooltip'],
+        deep: ['active', 'tooltip', 'transition'],
 
         defaults: {
             width: 'auto',
@@ -6915,11 +6963,6 @@
                 };
             },
 
-            options: function (opts) {
-                opts.colors = extend({}, this.defaults, opts.colors);
-                if (isFunction (opts.colors.scale)) opts.colors.scale = opts.colors.scale(d3);
-            },
-
             extend: function (opts, value) {
                 opts.colors = extend({}, opts.colors, value);
                 if (isFunction (opts.colors.scale)) opts.colors.scale = opts.colors.scale(d3);
@@ -7010,6 +7053,7 @@
     g.paper.plugin('grid', {
 
         defaults: {
+            show: false,
             color: '#333',
             colorOpacity: 0.3,
             fill: 'none',
@@ -7017,10 +7061,6 @@
             lineWidth: 0.5,
             xaxis: true,
             yaxis: true
-        },
-
-        options: function (opts) {
-            this.optionsShow(opts);
         },
 
         init: function (group) {
@@ -7188,11 +7228,6 @@
             }
         },
 
-        options: function (opts) {
-            opts.legend = extend({}, this.defaults, opts.legend);
-            opts.legend.font = extend({}, opts.font, opts.legend.font);
-        },
-
         init: function (chart) {
             var opts;
 
@@ -7211,7 +7246,7 @@
             chart.on('tick.legend', function () {
                 if (!opts) {
                     opts = chart.options();
-                    opts.contextmenu.push({
+                    opts.menu.items.push({
                         label: function () {
                             if (chart.paper().select('.chart-legend'))
                                 return 'Hide legend';
@@ -7495,7 +7530,7 @@
 
     // Line chart
     g.paper.plugin('line', {
-        deep: ['active', 'tooltip'],
+        deep: ['active', 'tooltip', 'transition'],
 
         defaults: {
             interpolate: 'cardinal',
@@ -7769,6 +7804,7 @@
 
 
     g.data.geo = function (features) {
+
         var value = function (d) {return d.value;},
             label = function (d) {return d.label;},
             minval=Infinity,
@@ -7837,9 +7873,14 @@
         return geo;
     };
 
-    // Map charts and animations
+    //
+    //  Mapping
+    //  =====================
+    //
+    //  Map charts and animations
+    //
     g.paper.plugin('map', {
-        deep: ['active', 'tooltip'],
+        deep: ['active', 'tooltip', 'transition'],
 
         defaults: {
             scale: 1,
@@ -7882,6 +7923,8 @@
         }
     });
 
+    //
+    //  Map drawing constructor
     function mapdraw (group, renderer) {
         var path = d3.geo.path(),
             feature = g[group.type()].feature,
@@ -7889,6 +7932,7 @@
             dataFeatures,
             features;
 
+        // Return the path constructor
         draw.path = function () {
 
             var opts = draw.options(),
@@ -7917,6 +7961,7 @@
             return path.projection(projection);
         };
 
+        // Set get/map topographic features
         draw.features = function (_) {
             if (!arguments.length) return features;
             features = _;
@@ -7939,14 +7984,17 @@
 
         function buildDataFeatures () {
             var mapdata = [],
-                opts = draw.options();
+                opts = draw.options(),
+                colors = group.options().colors.scale;
+
             features.forEach(function (d) {
                 if (isFunction(d) && isFunction(d.data)) {
                     var fdata = d.data(draw.data())([]),
                         scale = d.scale(),
                         color = d3.scale.quantize()
                                     .domain(scale.range())
-                                    .range(group.options().colors);
+                                    .range(colors);
+
                     fdata.forEach(function (d) {
                         if (d.data)
                             d.fill = color(scale(d.data[1]));
@@ -8015,6 +8063,8 @@
         });
     };
 
+    //  An svg feature in the map
+    //  Similar to a point in a point chart or a bar in a bar chart
     g.svg.feature = function (draw, data, feature) {
         var group = draw.group();
         feature = drawingData(draw, data, feature);
@@ -8062,7 +8112,11 @@
         return feature;
     };
 
-
+    //
+    //  Giotto Context Menu
+    //
+    //  Returns a function which can be used to bind the context menu to
+    //  a node element.
     g.contextMenu = function () {
         var element = null,
             menuElement = null,
@@ -8070,9 +8124,9 @@
             disabled = false,
             events = d3.dispatch('open', 'close');
 
-        function menu (element, callback) {
+        function menu (target, callback) {
             init();
-            element
+            target
                 .on('keyup.gmenu', handleKeyUpEvent)
                 .on('click.gmenu', handleClickEvent)
                 .on('contextmenu.gmenu', handleContextMenu(callback));
@@ -8174,33 +8228,40 @@
     g.contextmenu = g.contextMenu();
 
 
+    //
+    //  Context Menu Plugin for Visualization
+    //  ==========================================
+    //
+    //  * layout create the html layout
+    //  * itms is a list of options to display
     g.viz.plugin('menu', {
 
-        init: function (viz) {
-
-            viz.contextmenu = function (menu) {
-                var opts = viz.options();
+        defaults: {
+            layout: function (viz, menu, items) {
                 menu.append('ul')
-                    .attr('class', 'dropdown-menu')
-                    .attr('role', 'menu')
+                    .attr({'class': 'dropdown-menu',
+                           'role': 'menu'})
                     .selectAll('li')
-                    .data(opts.contextmenu)
+                    .data(items)
                     .enter()
-                    .append('li')
-                    .append('a')
-                    .attr('role', 'menuitem')
+                    .append('li').attr('role', 'presentation')
+                    .append('a').attr('role', 'menuitem').attr('href', '#')
                     .text(function (d) {return isFunction(d.label) ? d.label() : d.label;})
-                    .attr('href', '#')
                     .on('click', function (d) {
                         if (d.callback) d.callback(viz);
                     });
-            };
+            },
+            items: null
+        },
+
+        init: function (viz) {
 
             viz.on('tick.menu', function () {
                 var opts = viz.options();
-                if (opts.contextmenu)
+                if (opts.menu.items)
                     g.contextmenu(viz.element(), function (menu) {
-                        return viz.contextmenu(menu);
+                        menu.select('*').remove();
+                        return opts.menu.layout(viz, menu, opts.menu.items);
                     });
                 else
                     g.contextmenu(viz.element());
@@ -8212,7 +8273,7 @@
     // Add pie charts to giotto groups
 
     g.paper.plugin('pie', {
-        deep: ['active', 'tooltip', 'labels'],
+        deep: ['active', 'tooltip', 'labels', 'transition'],
 
         defaults: {
             lineWidth: 1,
@@ -8575,7 +8636,7 @@
 
     // Scapper point chart
     g.paper.plugin('point', {
-        deep: ['active', 'tooltip'],
+        deep: ['active', 'tooltip', 'transition'],
 
         defaults: {
             symbol: 'circle',
@@ -8741,19 +8802,6 @@
     };
 
     //
-    //  Transitions
-    //  ===============
-    //
-    //  Add margins to a giotto group
-    //
-    g.paper.plugin('transitions', {
-
-        defaults: {
-            duration: 0,
-            ease: 'easeInOutCubic'
-        }
-    });
-    //
     //  Add zoom functionality to charts
 
     // Add zoom to the events triggered by a group
@@ -8850,7 +8898,7 @@
     });
 
 var NS = NS || {};
-NS["src/text/giotto.min.css"] = '@charset "UTF-8";.sunburst text{z-index:9999}.sunburst path{fill-rule:evenodd;stroke:#fff}.axis,.d3-slider-axis line{fill:none;shape-rendering:crispEdges}.line{fill:none}.d3-tip:after{line-height:1;position:absolute;display:inline;width:100%;font-size:16px;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}.d3-tip.n:after{top:100%;margin:-2px 0 0;left:0;content:"\\25BC";text-align:center}.d3-tip.e:after{top:50%;margin:-4px 0 0;left:-8px;content:"\\25C0"}.d3-tip.s:after{top:-8px;margin:0 0 2px;left:0;content:"\\25B2";text-align:center}.d3-tip.w:after{top:50%;margin:-4px 0 0 -1px;left:100%;content:"\\25B6"}.d3-slider{font-family:Verdana,Arial,sans-serif;margin:20px;position:relative;z-index:2;font-size:1.1em;border:1px solid}.d3-slider-horizontal{height:.8em}.d3-slider-horizontal.d3-slider-axis{margin-bottom:30px}.d3-slider-range{right:0;position:absolute;height:.8em;left:0}.d3-slider-range-vertical{top:0;right:0;position:absolute;left:0}.d3-slider-range-vertical.d3-slider-axis{margin-right:30px}.d3-slider-vertical{height:100px;width:.8em}.d3-slider-handle{z-index:3;position:absolute;height:1.2em;width:1.2em;-webkit-border-radius:4px;-moz-border-radius:4px;border-radius:4px;border:1px solid}.d3-slider-horizontal .d3-slider-handle{top:-.25em;margin-left:-.6em}.d3-slider-axis{z-index:1;position:relative}.d3-slider-axis-bottom{top:.8em}.d3-slider-axis-right{left:.8em}.d3-slider-axis path{fill:none;stroke-width:0}.d3-slider-axis text{font-size:11px}.d3-slider-vertical .d3-slider-handle{margin-bottom:-.6em;left:-.25em;margin-left:0}';
+NS["src/text/giotto.min.css"] = '@charset "UTF-8";.sunburst text{z-index:9999}.sunburst path{stroke:#fff;fill-rule:evenodd}.axis,.d3-slider-axis line{shape-rendering:crispEdges;fill:none}.line{fill:none}.d3-tip:after{line-height:1;width:100%;font-size:16px;position:absolute;display:inline;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}.d3-tip.n:after{margin:-2px 0 0;top:100%;content:"\\25BC";left:0;text-align:center}.d3-tip.e:after{margin:-4px 0 0;top:50%;content:"\\25C0";left:-8px}.d3-tip.s:after{margin:0 0 2px;top:-8px;content:"\\25B2";left:0;text-align:center}.d3-tip.w:after{margin:-4px 0 0 -1px;top:50%;content:"\\25B6";left:100%}.d3-slider{margin:20px;font-family:Verdana,Arial,sans-serif;font-size:1.1em;position:relative;z-index:2;border:1px solid}.d3-slider-horizontal{height:.8em}.d3-slider-horizontal.d3-slider-axis{margin-bottom:30px}.d3-slider-range{right:0;left:0;position:absolute;height:.8em}.d3-slider-range-vertical{right:0;top:0;left:0;position:absolute}.d3-slider-range-vertical.d3-slider-axis{margin-right:30px}.d3-slider-vertical{width:.8em;height:100px}.d3-slider-handle{width:1.2em;height:1.2em;position:absolute;z-index:3;-webkit-border-radius:4px;-moz-border-radius:4px;border-radius:4px;border:1px solid}.d3-slider-horizontal .d3-slider-handle{top:-.25em;margin-left:-.6em}.d3-slider-axis{z-index:1;position:relative}.d3-slider-axis-bottom{top:.8em}.d3-slider-axis-right{left:.8em}.d3-slider-axis path{fill:none;stroke-width:0}.d3-slider-axis text{font-size:11px}.d3-slider-vertical .d3-slider-handle{margin-bottom:-.6em;margin-left:0;left:-.25em}.d3-slider-default{border-color:#aaa}.d3-slider-default .d3-slider-handle{background-color:#ddd;background-image:-moz-linear-gradient(top,#eee,#ddd);background-image:-ms-linear-gradient(top,#eee,#ddd);background-image:-webkit-gradient(linear,0 0,0 100%,from(#eee),to(#ddd));background-image:-webkit-linear-gradient(top,#eee,#ddd);background-image:-o-linear-gradient(top,#eee,#ddd);background-image:linear-gradient(top,#eee,#ddd);background-repeat:repeat-x;filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#eee\', endColorstr=\'#ddd\', GradientType=0);border-color:#aaa}';
 
     // load Css unless blocked
     if (root.giottostyle !== false) {
@@ -9168,6 +9216,10 @@ NS["src/text/giotto.min.css"] = '@charset "UTF-8";.sunburst text{z-index:9999}.s
     };
 
 
+    //
+    //  Leaflet Integration
+    //  =============================
+    //
     g.geo.leaflet = function (element, opts) {
 
         if (typeof L === 'undefined') {

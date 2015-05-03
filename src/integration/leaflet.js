@@ -1,4 +1,8 @@
 
+    //
+    //  Leaflet Integration
+    //  =============================
+    //
     g.geo.leaflet = function (element, opts) {
 
         if (typeof L === 'undefined') {

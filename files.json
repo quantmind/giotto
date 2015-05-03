@@ -18,6 +18,7 @@
                 "src/core/viz.js",
                 "src/core/font.js",
                 "src/core/margin.js",
+                "src/core/transition.js",
                 "src/core/tooltip.js",
                 "src/chart/*.js",
                 "src/viz/*.js",

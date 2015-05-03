@@ -1,5 +1,6 @@
 
     g.data.geo = function (features) {
+
         var value = function (d) {return d.value;},
             label = function (d) {return d.label;},
             minval=Infinity,
@@ -68,9 +69,14 @@
         return geo;
     };
 
-    // Map charts and animations
+    //
+    //  Mapping
+    //  =====================
+    //
+    //  Map charts and animations
+    //
     g.paper.plugin('map', {
-        deep: ['active', 'tooltip'],
+        deep: ['active', 'tooltip', 'transition'],
 
         defaults: {
             scale: 1,
@@ -113,6 +119,8 @@
         }
     });
 
+    //
+    //  Map drawing constructor
     function mapdraw (group, renderer) {
         var path = d3.geo.path(),
             feature = g[group.type()].feature,
@@ -120,6 +128,7 @@
             dataFeatures,
             features;
 
+        // Return the path constructor
         draw.path = function () {
 
             var opts = draw.options(),
@@ -148,6 +157,7 @@
             return path.projection(projection);
         };
 
+        // Set get/map topographic features
         draw.features = function (_) {
             if (!arguments.length) return features;
             features = _;
@@ -170,14 +180,17 @@
 
         function buildDataFeatures () {
             var mapdata = [],
-                opts = draw.options();
+                opts = draw.options(),
+                colors = group.options().colors.scale;
+
             features.forEach(function (d) {
                 if (isFunction(d) && isFunction(d.data)) {
                     var fdata = d.data(draw.data())([]),
                         scale = d.scale(),
                         color = d3.scale.quantize()
                                     .domain(scale.range())
-                                    .range(group.options().colors);
+                                    .range(colors);
+
                     fdata.forEach(function (d) {
                         if (d.data)
                             d.fill = color(scale(d.data[1]));
@@ -246,6 +259,8 @@
         });
     };
 
+    //  An svg feature in the map
+    //  Similar to a point in a point chart or a bar in a bar chart
     g.svg.feature = function (draw, data, feature) {
         var group = draw.group();
         feature = drawingData(draw, data, feature);
