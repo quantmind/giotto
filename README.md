@@ -34,7 +34,7 @@ grunt jasmine
 
 # Giotto Web
 
-To build giotto web you need to install lux, a python package for web applications:
+To build giotto web you need to install [lux](http://quantmind.github.io/lux/), a python package for web applications:
 
     pip3 install -U -r requirements.txt
 
@@ -42,9 +42,9 @@ To build the static web site:
 
     python3 manage.py build_static
 
-To build the static web during for development:
+To build the static web site during for development:
 
-    python3 manage.py build_static --relative-url
+    python3 manage.py build_static --relative-url --nominify
 
 To run the developemnt server:
 
