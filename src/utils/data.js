@@ -1,3 +1,4 @@
+    /** @module data */
 
     // Convert an array of array obtained from reading a CSV file into an array of objects
     g.data.fromcsv = function (data) {
@@ -13,69 +14,98 @@
         return rows;
     };
 
-    //
-    //  Multivariate data
-    //  =====================
-    //
-    //  Handle multivariate data
-    g.data.multi = function (data) {
-        var multi = {};
+    g.data.serie = function () {
+        var serie = {},
+            data,
+            x, y, label;
 
-        // Build a serie frm this multivariate data
-        multi.serie = function () {
-            var serie = {},
-                x, y;
-
-            serie.x = function (_) {
-                if (!arguments.length) return x;
-                if (!isFunction(_)) _ = label_functor(_);
-                x = _;
-                return serie;
-            };
-
-            serie.y = function (_) {
-                if (!arguments.length) return y;
-                if (!isFunction(_)) _ = label_functor(_);
-                y = _;
-                return serie;
-            };
-
-            serie.forEach = function (callback) {
-                if (data)
-                    data.forEach(function (d) {
-                        callback([x(d), y(d)]);
-                    });
-                return serie;
-            };
-
-            serie.all = function () {
-                if (data)
-                    return data.map(function (d) {
-                        return [x(d), y(d)];
-                    });
-                else
-                    return [];
-            };
-
+        serie.x = function (_) {
+            if (!arguments.length) return x;
+            if (!isFunction(_)) _ = label_functor(_);
+            x = _;
             return serie;
         };
 
-        multi.map = function (key, values) {
-            if (!isFunction(key)) key = label_functor(key);
-            if (!isFunction(values)) values = label_functor(values);
-            return d3.map(data.map(values), key);
+        serie.y = function (_) {
+            if (!arguments.length) return y;
+            if (!isFunction(_)) _ = label_functor(_);
+            y = _;
+            return serie;
         };
 
-        function label_functor (label) {
-            return function (d) {
-                return d[label];
-            };
-        }
+        serie.label = function (_) {
+            if (!arguments.length) return label;
+            if (_ && !isFunction(_)) _ = label_functor(_);
+            label = _;
+            return serie;
+        };
+
+        //  Set/get data associated with this serie
+        serie.data = function (_) {
+            if (!arguments.length) return data;
+            data = _;
+            return serie;
+        };
+
+        serie.forEach = function (callback) {
+            if (data)
+                data.forEach(function (d) {
+                    callback([x(d), y(d)]);
+                });
+            return serie;
+        };
+
+        //  Get a value at key
+        //  the data must implement the get function
+        serie.get = function (key) {
+            if (data && isFunction(data.get))
+                return data.get(key);
+        };
+
+        return serie;
+    };
+
+    //
+    //  Build a multivariate data handler
+    //
+    //  data is an array of objects (records)
+    g.data.multi = function (data) {
+        var multi = g.data.serie(),
+            label,
+            keys;
+
+        multi.key = function (key) {
+            if (key && !isFunction(key)) key = label_functor(key);
+            keys = null;
+            if (key && data) {
+                keys = {};
+                data.forEach(function (data) {
+                    keys[key(data)] = data;
+                });
+            }
+            return multi;
+        };
+
+        // retrieve a record by key
+        multi.get = function (key) {
+            if (keys)
+                return keys[key];
+        };
+
+        multi.serie = function () {
+            return g.data.serie()
+                         .data(multi)
+                         .label(label)
+                         .x(x || label)
+                         .y(y);
+        };
 
         return multi;
     };
 
-    g.data.isData = function (data) {
-        if (isObject(data) && g.data.isData(data.data)) return false;
-        return data ? true : false;
-    };
+
+    function label_functor (label) {
+        return function (d) {
+            return d[label];
+        };
+    }

@@ -39,7 +39,6 @@
 
         legend: {
             show: true,
-            draggable: true,
             position: 'bottom',
             margin: 0
         },
@@ -49,39 +48,40 @@
             y: function (d) {return d[2013];}
         },
 
-        // Data pre-processor
-        processData: function (data) {
-            var jd = {}, all = [], name, c, value;
-            data.forEach(function (d) {
-                name = d.GEO[0].toUpperCase() + d.GEO.slice(1).toLowerCase();
-                c = jd[name];
-                if (!c) jd[name] = c = {country: name};
-                value = +d.Value;
-                if (isNaN(value))
-                    value = 0;
-                c[+d.TIME] = 0.01*value;
-            });
-            d3.giotto._.forEach(jd, function (value) {
-                all.push(value);
-            });
-            return [{
-                label: 'tertiary education',
-                legend: [{
-                    label: 'Eurozone',
-                    fill: eucolor,
-                    color: d3.rgb(eucolor).darker()
-                },
-                {
-                    label: 'Non Eurozone',
-                    fill: noneucolor,
-                    color: d3.rgb(noneucolor).darker()
-                }],
-                data: all.sort(function (a, b) {return d3.descending(a[2013], b[2013]);})
-            }];
-        },
-
-        onInit: function (chart, opts) {
-            opts.loader = d3.dsv(';', 'text/csv');
+        data: {
+            loader: function () {
+                return d3.dsv(';', 'text/csv');
+            },
+            // Data pre-processor
+            process: function (data) {
+                var jd = {}, all = [], name, c, value;
+                data.forEach(function (d) {
+                    name = d.GEO[0].toUpperCase() + d.GEO.slice(1).toLowerCase();
+                    c = jd[name];
+                    if (!c) jd[name] = c = {country: name};
+                    value = +d.Value;
+                    if (isNaN(value))
+                        value = 0;
+                    c[+d.TIME] = 0.01*value;
+                });
+                d3.giotto._.forEach(jd, function (value) {
+                    all.push(value);
+                });
+                return [{
+                    label: 'tertiary education',
+                    legend: [{
+                        label: 'Eurozone',
+                        fill: eucolor,
+                        color: d3.rgb(eucolor).darker()
+                    },
+                    {
+                        label: 'Non Eurozone',
+                        fill: noneucolor,
+                        color: d3.rgb(noneucolor).darker()
+                    }],
+                    data: all.sort(function (a, b) {return d3.descending(a[2013], b[2013]);})
+                }];
+            }
         },
 
         // Callback for angular directive

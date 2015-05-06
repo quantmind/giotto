@@ -7,7 +7,7 @@ image: $site_url/examples/education.png
 <div class="container-fluid">
   <div class="row">
     <div class="col-sm-10">
-      <div data-options='gexamples.education' data-src="$site_url/data/edat_lfse_07_1_Data.csv" style='width: 100%' giotto-chart></div>
+      <div data-options='gexamples.education' data-data="$site_url/data/edat_lfse_07_1_Data.csv" style='width: 100%' giotto-chart></div>
       <p class="text-right small">2013 Data for both female and male population, source: <a href="http://ec.europa.eu/eurostat" target="self">Eurostat</a></p>
     </div>
     <div class="col-sm-2 small">

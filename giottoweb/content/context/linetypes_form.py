@@ -9,12 +9,14 @@ symbols = ('circle', 'cross', 'diamond', 'square', 'triangle-down',
 
 class LineTypeForm(forms.Form):
     '''Form for the Trianglify page'''
-    type = forms.ChoiceField(options=('svg', 'canvas'))
     interpolate = forms.ChoiceField(options=lines)
     symbol = forms.ChoiceField(options=symbols)
 
     layout = forms.Layout(showLabels=False)
 
 
+Layout = forms.Layout(LineTypeForm, showLabels=False)
+
+
 def template():
-    return LineTypeForm().layout.as_form()
+    return Layout().as_form()

@@ -1,6 +1,9 @@
 title: World Population
 author: Luca Sbardella
 
+Adding data-driven charts on mapps is easy. It requires at least one additional
+parameter to be passed to the configuration object, the geometric features
+to use in the chart.
 
 <div class="container">
     <div class="row" data-options='gexamples.world' giotto-collection>

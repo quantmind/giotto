@@ -7,7 +7,7 @@
 
         defaults: {
             show: false,
-            draggable: false,
+            draggable: true,
             margin: 50,
             position: 'top-right',
             padding: 5,

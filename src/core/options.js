@@ -61,10 +61,12 @@
         init: function () {},
         defaults: {},
 
+        // Extend the plugin options
         extend: function (opts, value) {
             var name = this.name,
                 defaults = opts[name],
-                values = extend({}, defaults, value);
+                values = extend({}, defaults, value === true ? {show: true} : value);
+
             // deep copies
             forEach(this.deep, function (key) {
                 values[key] = extend({}, opts[key], defaults[key], values[key]);

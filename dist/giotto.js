@@ -1,6 +1,6 @@
 //      GiottoJS - v0.2.0
 //
-//      Compiled 2015-05-03.
+//      Compiled 2015-05-06.
 //
 //      Copyright (c) 2014 - 2015 - Luca Sbardella
 //      All rights reserved.
@@ -291,6 +291,7 @@
     //  =======================================================================
 
 
+    /** @module data */
 
     // Convert an array of array obtained from reading a CSV file into an array of objects
     g.data.fromcsv = function (data) {
@@ -306,73 +307,101 @@
         return rows;
     };
 
-    //
-    //  Multivariate data
-    //  =====================
-    //
-    //  Handle multivariate data
-    g.data.multi = function (data) {
-        var multi = {};
+    g.data.serie = function () {
+        var serie = {},
+            data,
+            x, y, label;
 
-        // Build a serie frm this multivariate data
-        multi.serie = function () {
-            var serie = {},
-                x, y;
-
-            serie.x = function (_) {
-                if (!arguments.length) return x;
-                if (!isFunction(_)) _ = label_functor(_);
-                x = _;
-                return serie;
-            };
-
-            serie.y = function (_) {
-                if (!arguments.length) return y;
-                if (!isFunction(_)) _ = label_functor(_);
-                y = _;
-                return serie;
-            };
-
-            serie.forEach = function (callback) {
-                if (data)
-                    data.forEach(function (d) {
-                        callback([x(d), y(d)]);
-                    });
-                return serie;
-            };
-
-            serie.all = function () {
-                if (data)
-                    return data.map(function (d) {
-                        return [x(d), y(d)];
-                    });
-                else
-                    return [];
-            };
-
+        serie.x = function (_) {
+            if (!arguments.length) return x;
+            if (!isFunction(_)) _ = label_functor(_);
+            x = _;
             return serie;
         };
 
-        multi.map = function (key, values) {
-            if (!isFunction(key)) key = label_functor(key);
-            if (!isFunction(values)) values = label_functor(values);
-            return d3.map(data.map(values), key);
+        serie.y = function (_) {
+            if (!arguments.length) return y;
+            if (!isFunction(_)) _ = label_functor(_);
+            y = _;
+            return serie;
         };
 
-        function label_functor (label) {
-            return function (d) {
-                return d[label];
-            };
-        }
+        serie.label = function (_) {
+            if (!arguments.length) return label;
+            if (_ && !isFunction(_)) _ = label_functor(_);
+            label = _;
+            return serie;
+        };
+
+        //  Set/get data associated with this serie
+        serie.data = function (_) {
+            if (!arguments.length) return data;
+            data = _;
+            return serie;
+        };
+
+        serie.forEach = function (callback) {
+            if (data)
+                data.forEach(function (d) {
+                    callback([x(d), y(d)]);
+                });
+            return serie;
+        };
+
+        //  Get a value at key
+        //  the data must implement the get function
+        serie.get = function (key) {
+            if (data && isFunction(data.get))
+                return data.get(key);
+        };
+
+        return serie;
+    };
+
+    //
+    //  Build a multivariate data handler
+    //
+    //  data is an array of objects (records)
+    g.data.multi = function (data) {
+        var multi = g.data.serie(),
+            label,
+            keys;
+
+        multi.key = function (key) {
+            if (key && !isFunction(key)) key = label_functor(key);
+            keys = null;
+            if (key && data) {
+                keys = {};
+                data.forEach(function (data) {
+                    keys[key(data)] = data;
+                });
+            }
+            return multi;
+        };
+
+        // retrieve a record by key
+        multi.get = function (key) {
+            if (keys)
+                return keys[key];
+        };
+
+        multi.serie = function () {
+            return g.data.serie()
+                         .data(multi)
+                         .label(label)
+                         .x(x || label)
+                         .y(y);
+        };
 
         return multi;
     };
 
-    g.data.isData = function (data) {
-        if (isObject(data) && g.data.isData(data.data)) return false;
-        return data ? true : false;
-    };
 
+    function label_functor (label) {
+        return function (d) {
+            return d[label];
+        };
+    }
     function noop () {}
 
     var log = function (debug) {
@@ -2737,6 +2766,13 @@
             return noop;
         };
 
+        //  Fire an event and return the mixin
+        d.fire = function (name) {
+            var event = d.event(name);
+            event.call(d, {type: name});
+            return d;
+        };
+
         // returns the options object
         d.options = function (_) {
             if (!arguments.length) return opts;
@@ -2746,68 +2782,6 @@
 
         d.toString = function () {
             return 'giotto (' + uid + ')';
-        };
-
-        return d;
-    }
-
-    // Mixin for visualization classes and visualization collection
-    function vizMixin (d, opts, plugins) {
-        var loading_data = false,
-            data;
-
-        giottoMixin(d, opts, plugins).load = function (callback) {
-            opts = d.options();
-
-            var _ = opts.data;
-            delete opts.data;
-
-            if (_) {
-                if (isFunction(_))
-                    _ = _(d);
-                d.data(_, callback);
-            } else if (opts.src && !loading_data) {
-                loading_data = true;
-                var src = opts.src,
-                    loader = opts.loader;
-                if (!loader) {
-                    loader = d3.json;
-                    if (src.substring(src.length-4) === '.csv') loader = d3.csv;
-                }
-                g.log.info('Giotto loading data from ' + opts.src);
-
-                return loader(opts.src, function(error, xd) {
-                    loading_data = false;
-                    if (arguments.length === 1) xd = error;
-                    else if(error)
-                        return g.log.error(error);
-
-                    d.data(xd, callback);
-                });
-            } else if (callback) {
-                callback();
-            }
-
-            return d;
-        };
-
-        //
-        // Set new data for the visualization
-        d.data = function (_, callback) {
-            if (!arguments.length) return data;
-            opts = d.options();
-
-            if (opts.processData)
-                _ = opts.processData.call(d, _);
-
-            data = _;
-
-            if (callback)
-                callback();
-
-            d.event('data').call(d, {type: 'data'});
-
-            return d;
         };
 
         return d;
@@ -2958,10 +2932,12 @@
         init: function () {},
         defaults: {},
 
+        // Extend the plugin options
         extend: function (opts, value) {
             var name = this.name,
                 defaults = opts[name],
-                values = extend({}, defaults, value);
+                values = extend({}, defaults, value === true ? {show: true} : value);
+
             // deep copies
             forEach(this.deep, function (key) {
                 values[key] = extend({}, opts[key], defaults[key], values[key]);
@@ -4157,7 +4133,7 @@
 
             var vizPlugins = extendArray([], g.viz.pluginArray, vizType.pluginArray),
                 allPlugins = extendArray([], g.paper.pluginArray, vizPlugins),
-                viz = vizMixin({}, vizType.defaults, allPlugins).options(p),
+                viz = giottoMixin({}, vizType.defaults, allPlugins).options(p),
                 events = d3.dispatch.apply(d3, g.constants.vizevents),
                 alpha = 0,
                 paper;
@@ -6976,6 +6952,96 @@
     g.paper.plugin('colors', colorPlugin);
     g.viz.plugin('colors', colorPlugin);
 
+
+    g.viz.plugin('data', {
+
+        defaults: {
+            //
+            //  Data source, can be
+            //  * Remote url
+            //  * A data object/array
+            //  * A function returning a url or data
+            src: null,
+            //
+            // Default data loader
+            loader: function (src) {
+                var loader = d3.json;
+                if (src.substring(src.length-4) === '.csv') loader = d3.csv;
+                return loader;
+            }
+        },
+
+        //
+        //  Allow to specify a url instead of a data object
+        extend: function (opts, value) {
+            var name = this.name;
+            opts[name] = extend({}, opts[name], isString(value) ? {src: value} : value);
+        },
+
+        init: function (viz) {
+
+            var loading_data = false,
+                data;
+
+            //
+            // Set/Get data for the visualization
+            viz.data = function (inpdata, callback) {
+                if (!arguments.length) return data;
+                opts = viz.options().data;
+
+                if (opts.process)
+                    inpdata = opts.process.call(viz, inpdata);
+
+                data = inpdata;
+
+                if (callback) callback();
+
+                viz.fire('data');
+
+                return viz;
+            };
+
+            //
+            //  Load data for visualization
+            viz.load = function (callback) {
+                if (loading_data) return;
+
+                opts = viz.options().data;
+
+                var src = opts.src;
+
+                if (isFunction(src)) src = src();
+
+                if (isString(src)) {
+
+                    loading_data = true;
+                    g.log.info('Giotto loading data from ' + src);
+                    viz.fire('loadstart');
+
+                    return opts.loader()(src, function(error, xd) {
+
+                        loading_data = false;
+                        viz.fire('loadend');
+                        if (arguments.length === 1) xd = error;
+                        else if(error)
+                            return g.log.error(error);
+
+                        viz.data(xd, callback);
+                    });
+
+                } else if (src) {
+                    delete opts.src;
+                    viz.data(src, callback);
+
+                } else if (callback) {
+                    callback();
+                }
+
+                return viz;
+            };
+        }
+    });
+
     //
     //  Fill plugin
     //  ================
@@ -7210,7 +7276,7 @@
 
         defaults: {
             show: false,
-            draggable: false,
+            draggable: true,
             margin: 50,
             position: 'top-right',
             padding: 5,
@@ -7802,7 +7868,11 @@
         return draw;
     }
 
-
+    //
+    //  Geometric data handler
+    //  ===========================
+    //
+    //  features, array of geometric features
     g.data.geo = function (features) {
 
         var value = function (d) {return d.value;},
@@ -7810,32 +7880,35 @@
             minval=Infinity,
             maxval=-Infinity,
             scale = d3.scale.linear(),
-            data;
+            colors;
 
-        function geo (mapdata) {
-            var d, val;
-            minval=Infinity;
-            maxval=-Infinity;
+        function geo (serie, geodata, opts) {
+            minval = Infinity;
+            maxval = -Infinity;
 
             features.forEach(function (feature) {
                 feature = {object: feature};
-                d = data && data.get ? data.get(feature.object.id) : null;
+                d = serie.get(feature.object.id);
                 if (d) {
-                    val = +value(d);
+                    val = +y(d);
                     if (val === val) {
                         minval = Math.min(val, minval);
                         maxval = Math.max(val, maxval);
                         feature.data = [label(d), val];
+                        feature.fill = color(scale(val));
+                    } else {
+                        feature.active = false;
+                        feature.fill = opts.missingFill;
                     }
                 }
-                mapdata.push(feature);
+                data.push(feature);
             });
             if (scale(0) !== scale(0)) {
                 minval = Math.max(minval, 1);
                 maxval = Math.max(maxval, minval);
             }
             scale.domain([minval, maxval]);
-            return mapdata;
+            return data;
         }
 
         geo.value = function (_) {
@@ -7850,10 +7923,8 @@
             return geo;
         };
 
-        geo.data = function (_) {
-            if (!arguments.length) return data;
-            data = _;
-            return geo;
+        geo.data = function () {
+            return data;
         };
 
         geo.minvalue = function () {
@@ -7867,6 +7938,12 @@
         geo.scale = function (_) {
             if (!arguments.length) return scale;
             scale = _;
+            return geo;
+        };
+
+        geo.colors = function (cols) {
+            if (!arguments.length) return colors;
+            colors = cols;
             return geo;
         };
 
@@ -7892,7 +7969,6 @@
             lineWidth: 0.5,
             projection: null,
             features: null,
-            dataScale: 'log',
             active: {
                 fill: 'darker'
             },
@@ -7925,6 +8001,7 @@
 
     //
     //  Map drawing constructor
+    //  Used by both SVG and Canvas map renderer functions
     function mapdraw (group, renderer) {
         var path = d3.geo.path(),
             feature = g[group.type()].feature,
@@ -7983,34 +8060,35 @@
         return draw;
 
         function buildDataFeatures () {
-            var mapdata = [],
+            var geodata = [],
                 opts = draw.options(),
-                colors = group.options().colors.scale;
+                color = d3.scale.quantize().domain(scale.range()).range(color);
 
-            features.forEach(function (d) {
-                if (isFunction(d) && isFunction(d.data)) {
-                    var fdata = d.data(draw.data())([]),
-                        scale = d.scale(),
-                        color = d3.scale.quantize()
-                                    .domain(scale.range())
-                                    .range(colors);
+            features.forEach(function (geo) {
+                if (isFunction(geo)) {
+                    var color = colors;
+            if (!color) {
+                g.log.warn('colors range not specified in g.data.geo');
+                color = ['#333', '#222'];
+            }
+            var y = geodata.y(),
+                label = geodata.label() || grodata.x(),
+                d, val;
 
-                    fdata.forEach(function (d) {
-                        if (d.data)
-                            d.fill = color(scale(d.data[1]));
-                        else {
-                            d.active = false;
-                            d.fill = opts.missingFill;
-                        }
-                        mapdata.push(feature(draw, d.data, d));
+            data = [];
+            color = d3.scale.quantize().domain(scale.range()).range(color);
+                    geo(draw.data(), function () {
+
+
+
                     });
                 }
                 else {
-                    d.active = false;
-                    mapdata.push(feature(draw, null, d));
+                    geo.active = false;
+                    geodata.push(feature(draw, null, geo));
                 }
             });
-            return mapdata;
+            return geodata;
         }
     }
 
@@ -8034,13 +8112,13 @@
                 draw.features(features).render();
             });
 
-        var mapdata = draw.dataFeatures();
+        var geodata = draw.dataFeatures();
         if (opts.grid) {
-            mapdata = mapdata.slice();
-            mapdata.push(draw.graticule());
+            geodata = geodata.slice();
+            geodata.push(draw.graticule());
         }
 
-        var paths = chart.selectAll('path').data(mapdata),
+        var paths = chart.selectAll('path').data(geodata),
             path = draw.path();
 
         paths.enter().append('path');

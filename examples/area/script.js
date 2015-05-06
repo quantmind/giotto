@@ -27,8 +27,10 @@
 
         tooltip: true,
 
-        data: function () {
-            return [randomPath(300)];
+        data: {
+            src: function () {
+                return [randomPath(300)];
+            }
         },
 
         // Callback for angular directive

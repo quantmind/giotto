@@ -1,4 +1,8 @@
-
+    //
+    //  Geometric data handler
+    //  ===========================
+    //
+    //  features, array of geometric features
     g.data.geo = function (features) {
 
         var value = function (d) {return d.value;},
@@ -6,32 +10,35 @@
             minval=Infinity,
             maxval=-Infinity,
             scale = d3.scale.linear(),
-            data;
+            colors;
 
-        function geo (mapdata) {
-            var d, val;
-            minval=Infinity;
-            maxval=-Infinity;
+        function geo (serie, geodata, opts) {
+            minval = Infinity;
+            maxval = -Infinity;
 
             features.forEach(function (feature) {
                 feature = {object: feature};
-                d = data && data.get ? data.get(feature.object.id) : null;
+                d = serie.get(feature.object.id);
                 if (d) {
-                    val = +value(d);
+                    val = +y(d);
                     if (val === val) {
                         minval = Math.min(val, minval);
                         maxval = Math.max(val, maxval);
                         feature.data = [label(d), val];
+                        feature.fill = color(scale(val));
+                    } else {
+                        feature.active = false;
+                        feature.fill = opts.missingFill;
                     }
                 }
-                mapdata.push(feature);
+                data.push(feature);
             });
             if (scale(0) !== scale(0)) {
                 minval = Math.max(minval, 1);
                 maxval = Math.max(maxval, minval);
             }
             scale.domain([minval, maxval]);
-            return mapdata;
+            return data;
         }
 
         geo.value = function (_) {
@@ -46,10 +53,8 @@
             return geo;
         };
 
-        geo.data = function (_) {
-            if (!arguments.length) return data;
-            data = _;
-            return geo;
+        geo.data = function () {
+            return data;
         };
 
         geo.minvalue = function () {
@@ -63,6 +68,12 @@
         geo.scale = function (_) {
             if (!arguments.length) return scale;
             scale = _;
+            return geo;
+        };
+
+        geo.colors = function (cols) {
+            if (!arguments.length) return colors;
+            colors = cols;
             return geo;
         };
 
@@ -88,7 +99,6 @@
             lineWidth: 0.5,
             projection: null,
             features: null,
-            dataScale: 'log',
             active: {
                 fill: 'darker'
             },
@@ -121,6 +131,7 @@
 
     //
     //  Map drawing constructor
+    //  Used by both SVG and Canvas map renderer functions
     function mapdraw (group, renderer) {
         var path = d3.geo.path(),
             feature = g[group.type()].feature,
@@ -179,34 +190,35 @@
         return draw;
 
         function buildDataFeatures () {
-            var mapdata = [],
+            var geodata = [],
                 opts = draw.options(),
-                colors = group.options().colors.scale;
+                color = d3.scale.quantize().domain(scale.range()).range(color);
 
-            features.forEach(function (d) {
-                if (isFunction(d) && isFunction(d.data)) {
-                    var fdata = d.data(draw.data())([]),
-                        scale = d.scale(),
-                        color = d3.scale.quantize()
-                                    .domain(scale.range())
-                                    .range(colors);
+            features.forEach(function (geo) {
+                if (isFunction(geo)) {
+                    var color = colors;
+            if (!color) {
+                g.log.warn('colors range not specified in g.data.geo');
+                color = ['#333', '#222'];
+            }
+            var y = geodata.y(),
+                label = geodata.label() || grodata.x(),
+                d, val;
 
-                    fdata.forEach(function (d) {
-                        if (d.data)
-                            d.fill = color(scale(d.data[1]));
-                        else {
-                            d.active = false;
-                            d.fill = opts.missingFill;
-                        }
-                        mapdata.push(feature(draw, d.data, d));
+            data = [];
+            color = d3.scale.quantize().domain(scale.range()).range(color);
+                    geo(draw.data(), function () {
+
+
+
                     });
                 }
                 else {
-                    d.active = false;
-                    mapdata.push(feature(draw, null, d));
+                    geo.active = false;
+                    geodata.push(feature(draw, null, geo));
                 }
             });
-            return mapdata;
+            return geodata;
         }
     }
 
@@ -230,13 +242,13 @@
                 draw.features(features).render();
             });
 
-        var mapdata = draw.dataFeatures();
+        var geodata = draw.dataFeatures();
         if (opts.grid) {
-            mapdata = mapdata.slice();
-            mapdata.push(draw.graticule());
+            geodata = geodata.slice();
+            geodata.push(draw.graticule());
         }
 
-        var paths = chart.selectAll('path').data(mapdata),
+        var paths = chart.selectAll('path').data(geodata),
             path = draw.path();
 
         paths.enter().append('path');

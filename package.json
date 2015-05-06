@@ -27,6 +27,7 @@
     "homepage": "http://giottojs.org",
     "devDependencies": {
         "grunt": "",
+        "jsdoc": "",
         "grunt-contrib-uglify": "",
         "grunt-contrib-concat": "",
         "grunt-contrib-jshint": "",

@@ -14,14 +14,16 @@ class Trianglify(forms.Form):
     x_gradient = forms.ChoiceField(label='x gradient', required=False)
     y_gradient = forms.ChoiceField(label='y gradient', required=False)
 
-    angular = forms.AngularLayout(
-        forms.AngularFieldset(all=True),
-        forms.AngularSubmit('redraw', click="luxforms.redraw", disabled="form.$invalid"),
-        model='trianglify',
-        layout='horizontal',
-        labelSpan=6)
+
+Layout = forms.Layout(
+    Trianglify,
+    forms.Fieldset(all=True),
+    forms.Submit('redraw', click="luxforms.redraw", disabled="form.$invalid"),
+    model='trianglify',
+    layout='horizontal',
+    labelSpan=6)
 
 
 def template():
-    return Trianglify().angular.as_form()
+    return Layout().as_form()
 

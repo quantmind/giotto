@@ -5,8 +5,9 @@ class SunburstForm(forms.Form):
     '''Form for the Trianglify page'''
     scale = forms.ChoiceField(options=('sqrt', 'linear'))
 
-    layout = forms.Layout()
+
+Layout = forms.Layout(SunburstForm)
 
 
 def template():
-    return SunburstForm().layout.as_form()
+    return Layout().as_form()

@@ -2,7 +2,6 @@ from lux import forms
 
 
 class PieTypeForm(forms.Form):
-    type = forms.ChoiceField(options=('svg', 'canvas'))
     padAngle = forms.FloatField(
         default=1,
         min=0,
@@ -22,8 +21,8 @@ class PieTypeForm(forms.Form):
         label='inner radius',
         required=False)
 
-    layout = forms.Layout()
+Layout = forms.Layout(PieTypeForm)
 
 
 def template():
-    return PieTypeForm().layout.as_form()
+    return Layout().as_form()

@@ -3,11 +3,7 @@
         height: '60%',
         margin: 60,
         fill: '#000',
-        data: {
-            src: function () {
-                return quandl.url('BAVERAGE/USD.json', {rows: 365});
-            }
-        },
+        src: 'http://www.quandl.com/api/v1/datasets/BAVERAGE/USD.json?auth_token=-kdL9rjDHgBsx1VcDkrC&rows=' + 365,
         tooltip: true,
         grid: true,
         yaxis: {

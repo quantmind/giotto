@@ -6,7 +6,10 @@
         loader: function (src, callback) {
             return d3.dsv(';', 'text/csv')(src, function (error, data) {
                 if (!error) {
-                    callback(d3.giotto.data.multi(data));
+                    // Create a multivariate data object
+                    data = d3.giotto.data.multi(data);
+                    callback(data.key('Country Code')
+                                 .label('Country Name'));
                 } else
                     callback(error, data);
             });
@@ -52,27 +55,30 @@
             onInit: function (chart) {
                 var scope = chart.scope();
                 scope.$on('yearchange', function (e, value) {
-                    var data = map_data(scope.giottoCollection.data(), value);
+                    var data = scope.giottoCollection.data().serie().y(value);
                     chart.each(function (serie) {
                         serie.data(data);
                     }).resume();
                 });
             },
             processData: function (multi) {
-                return [map_data(multi, this.scope().year)];
+                return [multi.serie().y(this.scope().year)];
             },
             map: {
                 show: true,
                 scale: 0.6,
                 grid: true,
                 projection: 'kavrayskiy7',
+                yaxis: {
+                    scale: function (d3) {return d3.scale.log();}
+                },
                 active: {
                     fill: '#993404'
                 },
                 transition: {
                     duration: 500
                 },
-                // load features
+                // load geometric features
                 features: function (callback) {
                     require(['topojson'], function (topojson) {
                         d3.json('/data/world-110m.json', function (topology) {
@@ -83,7 +89,7 @@
                                 name: 'sea',
                                 fill: '#c6dbef'
                             },
-                            d3.giotto.data.geo(countries.features).scale(d3.scale.log())]);
+                            d3.giotto.data.geo(countries.features)]);
                         });
                     });
                 }
@@ -101,17 +107,3 @@
             }
         }
     };
-
-    function map_data (multi, year) {
-        return multi.map('code', function (d) {
-            var value = d[year];
-            if (value)
-                return {
-                    code: d['Country Code'],
-                    label: d['Country Name'],
-                    value: value
-                };
-            else
-                return {};
-        });
-    }
