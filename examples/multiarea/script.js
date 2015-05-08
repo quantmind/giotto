@@ -30,12 +30,12 @@
             margin: 50
         },
 
-        tooltip: {
-            show: true
-        },
+        tooltip: true,
 
-        data: function () {
-            return [randomPath(300), randomPath(300), randomPath(300)];
+        data: {
+            src: function () {
+                return [randomPath(300), randomPath(300), randomPath(300)];
+            }
         },
 
         // Callback for angular directive

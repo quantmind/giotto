@@ -22,8 +22,10 @@
             }
         },
 
-        data: function (chart) {
-            return [randomData(10, 1, 0.3)];
+        data: {
+            src: function (chart) {
+                return [randomData(10, 1, 0.3)];
+            }
         },
 
         onInit: function (chart, opts) {

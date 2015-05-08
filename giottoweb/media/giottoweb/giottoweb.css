@@ -1,8 +1,8 @@
 @charset "UTF-8";
 /*
 ------------------------------------------------------------------
-Created by lux in 0.06 seconds
-Date: 2015-05-08 08:35:55
+Created by lux in 0.37 seconds
+Date: 2015-05-08 21:56:12
 
 http://quantmind.github.io/lux/
 ------------------------------------------------------------------ */
@@ -12,13 +12,13 @@ body {
     line-height: 1.5;
     color: rgba(0, 0, 0, 0.8);
     background: #fff;
-    height: 101%;
     min-height: 101%;
+    height: 101%;
 }
 
 .fullpage {
-    height: 100%;
     min-height: 100%;
+    height: 100%;
 }
 
 .push-bottom {
@@ -30,11 +30,11 @@ body {
 }
 
 .lazyContainer > .content {
-    width: 100%;
     left: 0;
-    top: 0;
-    position: absolute;
     min-height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 0;
 }
 
 .navbar {
@@ -50,8 +50,8 @@ body {
 }
 
 .navbar2-wrapper {
-    width: 100%;
     min-height: 100%;
+    width: 100%;
 }
 
 .navbar2-wrapper > .navbar {
@@ -59,8 +59,8 @@ body {
 }
 
 .navbar2-page {
-    padding: 15px 15px 0;
     background: #fff;
+    padding: 15px 15px 0;
 }
 
 @media all and (min-width:768px) {
@@ -75,10 +75,10 @@ body {
 }
 @media all and (min-width:768px) {
     .sidebar {
+        z-index: 1;
         width: 200px;
         margin-top: 51px;
         position: absolute;
-        z-index: 1;
     }
 
 }
@@ -104,21 +104,21 @@ p.form-error {
 }
 
 .katex-outer {
-    margin-bottom: 10px;
     margin-right: auto;
-    margin-left: auto;
     display: block;
     margin-bottom: 10px;
-    margin-right: auto;
     margin-left: auto;
+    margin-right: auto;
     display: block;
+    margin-bottom: 10px;
+    margin-left: auto;
 }
 
 code.hljs.inline {
-    padding: 2px 4px;
     display: inline;
     padding: 2px 4px;
     display: inline;
+    padding: 2px 4px;
 }
 
 dl dd {
@@ -196,9 +196,9 @@ dl.function dt {
 }
 
 .post-image-xs {
+    max-width: 90%;
     width: auto;
     max-height: 150px;
-    max-width: 90%;
 }
 
 h1:hover > a.headerlink,
@@ -212,10 +212,10 @@ dt:hover > a.headerlink {
 }
 
 a.headerlink {
-    padding: 0 4px;
     color: #eee;
-    visibility: hidden;
     text-decoration: none;
+    visibility: hidden;
+    padding: 0 4px;
 }
 
 a.headerlink:hover {
@@ -227,8 +227,8 @@ a.headerlink:hover {
 }
 
 div.viewcode-block:target {
-    padding: 0 10px;
     margin: -1px -10px;
+    padding: 0 10px;
 }
 
 table.docutils.field-list th {
@@ -245,18 +245,18 @@ table.docutils.field-list th {
 }
 
 .page-header.index-header {
+    color: #fff;
+    width: 101%;
     height: 101%;
     margin: 0;
-    min-height: 100%;
-    width: 101%;
-    color: #fff;
     background: #333;
+    min-height: 100%;
 }
 
 html,
 .fullpage {
-    height: 101%;
     min-height: 101%;
+    height: 101%;
 }
 
 form {
@@ -269,10 +269,10 @@ form {
 }
 
 #footer {
-    padding: 30px 0 40px;
     color: #b3b3b3;
-    min-height: 300px;
     background: #333;
+    padding: 30px 0 40px;
+    min-height: 300px;
 }
 
 #lux-logo {
@@ -290,9 +290,9 @@ form {
 }
 
 .trianglify-box {
+    background: rgba(255, 255, 255, 0.6);
     padding: 20px;
     max-width: 400px;
-    background: rgba(255, 255, 255, 0.6);
     -webkit-border-radius: 5px;
        -moz-border-radius: 5px;
             border-radius: 5px;
@@ -302,19 +302,19 @@ form {
 }
 
 .features article {
-    padding: 30px;
     width: 33.33%;
+    padding: 30px;
     float: left;
 }
 
 .features article:before {
-    content: " ";
     display: table;
+    content: " ";
 }
 
 .features article:after {
-    content: " ";
     display: table;
+    content: " ";
     clear: both;
 }
 
@@ -349,9 +349,9 @@ form {
 }
 
 .error-message-container {
+    background: rgba(0, 0, 0, 0.4);
     padding: 40px 120px;
     height: 100%;
-    background: rgba(0, 0, 0, 0.4);
     -webkit-box-sizing: border-box;
        -moz-box-sizing: border-box;
             box-sizing: border-box;
@@ -367,8 +367,8 @@ form {
     }
 
     .error-message-container {
-        padding: 40px 0;
         text-align: center;
+        padding: 40px 0;
     }
 
 }

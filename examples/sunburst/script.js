@@ -2,7 +2,7 @@
     gexamples.sunburst1 = {
         height: '80%',
 
-        src: "https://gist.githubusercontent.com/lsbardel/f3d21f35a685a96706bf/raw",
+        data: "https://gist.githubusercontent.com/lsbardel/f3d21f35a685a96706bf/raw",
 
         addorder: true,
 

@@ -4,7 +4,6 @@ date: 2014 December 21
 author: Luca Sbardella
 image: $site_url/examples/horizontalbrush.png
 
-<div style="width: 100px" class="center-block">$html_type_form</div>
 <div data-options='gexamples.brush1' style='width: 90%; height: 200px' class="center-block" giotto-chart></div>
 
 GiottoJS extends [d3][] support for brushes to the canvas element using a similar API.

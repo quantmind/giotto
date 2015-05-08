@@ -35,7 +35,9 @@
             formatPercent: ',.1%'
         },
 
-        data: [{label: 'Wine Production 2013', data: oivdata}],
+        data: {
+            src: [{label: 'Wine Production 2013', data: oivdata}],
+        },
 
         // Callback for angular directive
         angular: function (chart, opts) {

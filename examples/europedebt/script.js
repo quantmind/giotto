@@ -91,7 +91,7 @@
                     });
                     chart.resume();
                 } else
-                    opts.data = [data];
+                    opts.data.src = [data];
                 d3.timer(animate, 4*opts.pie.transition.duration);
                 return true;
             }

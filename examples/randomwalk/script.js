@@ -24,8 +24,10 @@
             area: true
         },
 
-        data: function () {
-            return [randomPath(3000), randomPath(3000)];
+        data: {
+            src: function () {
+                return [randomPath(3000), randomPath(3000)];
+            }
         },
 
         onInitx: function (chart, opts) {

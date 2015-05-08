@@ -31,8 +31,10 @@
             color: '#000'
         },
 
-        data: function () {
-            return [randomPath(0.2, 0.3)];
+        data: {
+            src: function () {
+                return [randomPath(0.2, 0.3)];
+            }
         },
 
         // Callback for angular directive

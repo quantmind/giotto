@@ -24,36 +24,38 @@
             y: function (d) {return d.value;}
         },
 
-        data: function () {
-            var dangle = 10,
-                margin = 0.05,
-                angle = 0,
-                inner = 0.9,
-                innerpad = 0.05,
-                dinnerpad = 0.005,
-                series = [],
-                logodata = [],
-                colors = ['#005AAA', '#0091E8', '#BB7200', '#F2A605', '#F2E905'];
+        data: {
+            src: function () {
+                var dangle = 10,
+                    margin = 0.05,
+                    angle = 0,
+                    inner = 0.9,
+                    innerpad = 0.05,
+                    dinnerpad = 0.005,
+                    series = [],
+                    logodata = [],
+                    colors = ['#005AAA', '#0091E8', '#BB7200', '#F2A605', '#F2E905'];
 
-            logo.forEach(function (d, i) {
-                while (i >= colors.length) i-= colors.length;
-                logodata.push({label: d[0], value: d[1], fill: colors[i]});
-            });
-
-            while (margin < 0.97) {
-                series.push({
-                    data: logodata,
-                    pie: {
-                        startAngle: angle,
-                        innerRadius: inner
-                    },
-                    margin: 50*margin + '%'
+                logo.forEach(function (d, i) {
+                    while (i >= colors.length) i-= colors.length;
+                    logodata.push({label: d[0], value: d[1], fill: colors[i]});
                 });
-                angle += dangle;
-                margin = 1 - (1-margin)*(inner - innerpad);
-                innerpad += dinnerpad;
+
+                while (margin < 0.97) {
+                    series.push({
+                        data: logodata,
+                        pie: {
+                            startAngle: angle,
+                            innerRadius: inner
+                        },
+                        margin: 50*margin + '%'
+                    });
+                    angle += dangle;
+                    margin = 1 - (1-margin)*(inner - innerpad);
+                    innerpad += dinnerpad;
+                }
+                return series;
             }
-            return series;
         },
 
         // Callback for angular directive

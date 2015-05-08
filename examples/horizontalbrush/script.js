@@ -22,11 +22,13 @@
             fillOpacity: 0.2
         },
 
-        data: function (chart) {
-            var norm = d3.random.normal(0.5, 0.1);
-            return [d3.range(800).map(function () {
-                        return [Math.random(), norm()];
-                    })];
+        data: {
+            src: function (chart) {
+                var norm = d3.random.normal(0.5, 0.1);
+                return [d3.range(800).map(function () {
+                            return [Math.random(), norm()];
+                        })];
+            }
         },
 
         // Callback for angular directive

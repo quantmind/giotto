@@ -4,7 +4,6 @@ image: $site_url/examples/transitions.png
 date: 24 December 2014
 author: Luca Sbardella
 
-<div style="width: 100px" class="center-block">$html_type_form</div>
 <div data-options='gexamples.transition1' style='max-width: 600px' class="center-block" giotto-chart></div>
 
 Transitions are easily implemented using the ``d3.transition`` api. To enable transition on

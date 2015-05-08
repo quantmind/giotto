@@ -47,20 +47,22 @@
             type: 'canvas',
             height: '50%',
             fill: gradient2,
-            data: [
-            {
-                point: {
-                    size: '20px',
-                    fill: '#fff',
-                    color: '#222',
-                    lineWidth: 4
-                },
-                line: {
-                    lineWidth: 4,
-                    color: '#222'
-                },
-                data: [[1, 3], [2, 2], [3, 5], [4, 6], [5, 4], [6, -1], [7, 1], [8, 0]]
-            }]
+            data: {
+                src: [
+                {
+                    point: {
+                        size: '20px',
+                        fill: '#fff',
+                        color: '#222',
+                        lineWidth: 4
+                    },
+                    line: {
+                        lineWidth: 4,
+                        color: '#222'
+                    },
+                    data: [[1, 3], [2, 2], [3, 5], [4, 6], [5, 4], [6, -1], [7, 1], [8, 0]]
+                }]
+            }
         }).start();
 
     });

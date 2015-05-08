@@ -11,16 +11,18 @@
         point: {show: true},
         line: {show: true},
 
-        data: function (chart) {
-            var X = d3.range(-5, 5, 0.1);
+        data: {
+            src: function (chart) {
+                var X = d3.range(-5, 5, 0.1);
 
-            return [d3.giotto.math.xyfunction(X, function (x) {
-                        return 1/(1+Math.exp(-x));
-                    }),
-                    d3.giotto.math.xyfunction(X, function (x) {
-                        var d = 1/(1+Math.exp(-x));
-                        return d*(1 - d);
-                    })];
+                return [d3.giotto.math.xyfunction(X, function (x) {
+                            return 1/(1+Math.exp(-x));
+                        }),
+                        d3.giotto.math.xyfunction(X, function (x) {
+                            var d = 1/(1+Math.exp(-x));
+                            return d*(1 - d);
+                        })];
+            }
         },
 
         // Callback for angular directive
