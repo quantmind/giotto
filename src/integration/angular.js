@@ -76,16 +76,11 @@
                             }],
 
                             link: function (scope, element, attrs) {
-                                var options = getOptions(attrs),
-                                    deps = options.require;
-                                if (deps) {
-                                    if (!g._.isArray(deps)) deps = [deps];
-                                    require(deps, function (opts) {
-                                        extend(options, opts);
-                                        scope.giottoCollection.options(options).scope(scope).start();
-                                    });
-                                } else
-                                    scope.giottoCollection.options(options).scope(scope).start();
+                                var o = getOptions(attrs);
+                                scope.giottoCollection
+                                    .options(o.attr)
+                                    .options(o.js)
+                                    .scope(scope).start();
                             }
                         };
                     })
@@ -120,13 +115,19 @@
             // Create directive from Viz name if not provided
             name = mod.name.toLowerCase() + name.substring(0,1).toUpperCase() + name.substring(1);
 
-            function startViz(scope, element, options, injected) {
+            function startViz(scope, element, o, options, injected) {
                 var collection = scope.giottoCollection;
 
                 for (var i=0; i<injected.length; ++i)
                     options[injects[i]] = injected[i];
 
-                var viz = ag.mixin(vizType(element[0], options)).scope(scope);
+                var viz = vizType(element[0], o.attr)
+                            .options(o.js)
+                            .options(options);
+                //
+                // Add angular functions
+                viz = ag.mixin(viz).scope(scope);
+
                 element.data(name, viz);
 
                 if (collection) {
@@ -148,16 +149,15 @@
                     link: function (scope, element, attrs) {
                         var viz = element.data(name);
                         if (!viz) {
-                            var options = getOptions(attrs),
-                                deps = options.require;
+                            var o = getOptions(attrs),
+                                deps = o.js.require || o.attr.require;
                             if (deps) {
                                 if (!g._.isArray(deps)) deps = [deps];
                                 require(deps, function (opts) {
-                                    extend(options, opts);
-                                    startViz(scope, element, options, injected_arguments);
+                                    startViz(scope, element, o, opts, injected_arguments);
                                 });
                             } else
-                                startViz(scope, element, options, injected_arguments);
+                                startViz(scope, element, o, null, injected_arguments);
                         }
                     }
                 };

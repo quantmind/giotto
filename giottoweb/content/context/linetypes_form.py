@@ -12,8 +12,6 @@ class LineTypeForm(forms.Form):
     interpolate = forms.ChoiceField(options=lines)
     symbol = forms.ChoiceField(options=symbols)
 
-    layout = forms.Layout(showLabels=False)
-
 
 Layout = forms.Layout(LineTypeForm, showLabels=False)
 

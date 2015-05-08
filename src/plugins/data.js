@@ -1,4 +1,8 @@
-
+    //
+    //  Loading Data
+    //  ===================
+    //
+    //  Load data into visualizations
     g.viz.plugin('data', {
 
         defaults: {
@@ -9,12 +13,20 @@
             //  * A function returning a url or data
             src: null,
             //
-            // Default data loader
+            //  Must be a function returning the data loader.
+            //  The data loader is a function accepting a url and a callback
             loader: function (src) {
                 var loader = d3.json;
                 if (src.substring(src.length-4) === '.csv') loader = d3.csv;
                 return loader;
-            }
+            },
+            //
+            //  Optional function to pre-process data
+            //
+            //  This function accept data as the only parameter and the
+            //  visualization is the caller. It should return a new data
+            //  object.
+            process: null
         },
 
         //
@@ -33,7 +45,7 @@
             // Set/Get data for the visualization
             viz.data = function (inpdata, callback) {
                 if (!arguments.length) return data;
-                opts = viz.options().data;
+                var opts = viz.options().data;
 
                 if (opts.process)
                     inpdata = opts.process.call(viz, inpdata);
@@ -52,9 +64,8 @@
             viz.load = function (callback) {
                 if (loading_data) return;
 
-                opts = viz.options().data;
-
-                var src = opts.src;
+                var opts = viz.options().data,
+                    src = opts.src;
 
                 if (isFunction(src)) src = src();
 
@@ -64,7 +75,7 @@
                     g.log.info('Giotto loading data from ' + src);
                     viz.fire('loadstart');
 
-                    return opts.loader()(src, function(error, xd) {
+                    return opts.loader(src)(src, function(error, xd) {
 
                         loading_data = false;
                         viz.fire('loadend');
@@ -72,6 +83,7 @@
                         else if(error)
                             return g.log.error(error);
 
+                        g.log.info('Giotto got data from ' + src);
                         viz.data(xd, callback);
                     });
 

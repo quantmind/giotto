@@ -33,7 +33,7 @@
                 paper;
 
             viz.event = function (name) {
-                return events[name];
+                return events[name] || noop;
             };
 
             // Return the visualization type (a function)

@@ -1,6 +1,6 @@
 //      GiottoJS - v0.2.0
 //
-//      Compiled 2015-05-06.
+//      Compiled 2015-05-08.
 //
 //      Copyright (c) 2014 - 2015 - Luca Sbardella
 //      All rights reserved.
@@ -547,21 +547,21 @@
     },
     //
     //
-    // Obtain extra information from javascript objects
+    // Obtain information from javascript object and element attributes
     getOptions = function (attrs) {
-        var options;
+        var jsOptions;
         if (attrs && typeof attrs.options === 'string') {
-            options = getRootAttribute(attrs.options);
-            if (typeof options === 'function')
-                options = options();
+            jsOptions = getRootAttribute(attrs.options);
+            if (typeof jsOptions === 'function')
+                jsOptions = jsOptions();
         }
-        if (!options) options = {};
-        if (isObject(options))
-            forEach(attrs, function (value, name) {
-                if (name.substring(0, 1) !== '$' && name !== 'options')
-                    options[name] = value;
-            });
-        return options;
+        if (!isObject(jsOptions)) jsOptions = {};
+        var attrOptions = {};
+        forEach(attrs, function (value, name) {
+            if (name.substring(0, 1) !== '$' && name !== 'options')
+                attrOptions[name] = value;
+        });
+        return {js: jsOptions, attr: attrOptions};
     },
     //
     //
@@ -2749,44 +2749,6 @@
         return format;
     }
 
-    var _idCounter = 0;
-
-    // Base giotto mixin for paper, group and viz
-    function giottoMixin (d, opts, plugins) {
-        var uid = ++_idCounter;
-
-        opts = g.options(opts, plugins);
-
-        // unique identifier for this object
-        d.uid = function () {
-            return uid;
-        };
-
-        d.event = function (name) {
-            return noop;
-        };
-
-        //  Fire an event and return the mixin
-        d.fire = function (name) {
-            var event = d.event(name);
-            event.call(d, {type: name});
-            return d;
-        };
-
-        // returns the options object
-        d.options = function (_) {
-            if (!arguments.length) return opts;
-            opts.extend(_);
-            return d;
-        };
-
-        d.toString = function () {
-            return 'giotto (' + uid + ')';
-        };
-
-        return d;
-    }
-
     //
     // Utility function to calculate paper dimensions and initialise the
     // paper options
@@ -2869,6 +2831,43 @@
         leaflet: 'http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css'
     };
 
+    var _idCounter = 0;
+
+    // Base giotto mixin for paper, group and viz
+    function giottoMixin (d, opts, plugins) {
+        var uid = ++_idCounter;
+
+        opts = g.options(opts, plugins);
+
+        // unique identifier for this object
+        d.uid = function () {
+            return uid;
+        };
+
+        d.event = function (name) {
+            return noop;
+        };
+
+        //  Fire an event and return the mixin
+        d.fire = function (name) {
+            var event = d.event(name);
+            event.call(d, {type: name});
+            return d;
+        };
+
+        // returns the options object
+        d.options = function (_) {
+            if (!arguments.length) return opts;
+            opts.extend(_);
+            return d;
+        };
+
+        d.toString = function () {
+            return 'giotto (' + uid + ')';
+        };
+
+        return d;
+    }
     //
     //  Giotto Plugin Factory
     //  ==========================
@@ -4139,7 +4138,7 @@
                 paper;
 
             viz.event = function (name) {
-                return events[name];
+                return events[name] || noop;
             };
 
             // Return the visualization type (a function)
@@ -6952,7 +6951,11 @@
     g.paper.plugin('colors', colorPlugin);
     g.viz.plugin('colors', colorPlugin);
 
-
+    //
+    //  Loading Data
+    //  ===================
+    //
+    //  Load data into visualizations
     g.viz.plugin('data', {
 
         defaults: {
@@ -6963,12 +6966,20 @@
             //  * A function returning a url or data
             src: null,
             //
-            // Default data loader
+            //  Must be a function returning the data loader.
+            //  The data loader is a function accepting a url and a callback
             loader: function (src) {
                 var loader = d3.json;
                 if (src.substring(src.length-4) === '.csv') loader = d3.csv;
                 return loader;
-            }
+            },
+            //
+            //  Optional function to pre-process data
+            //
+            //  This function accept data as the only parameter and the
+            //  visualization is the caller. It should return a new data
+            //  object.
+            process: null
         },
 
         //
@@ -6987,7 +6998,7 @@
             // Set/Get data for the visualization
             viz.data = function (inpdata, callback) {
                 if (!arguments.length) return data;
-                opts = viz.options().data;
+                var opts = viz.options().data;
 
                 if (opts.process)
                     inpdata = opts.process.call(viz, inpdata);
@@ -7006,9 +7017,8 @@
             viz.load = function (callback) {
                 if (loading_data) return;
 
-                opts = viz.options().data;
-
-                var src = opts.src;
+                var opts = viz.options().data,
+                    src = opts.src;
 
                 if (isFunction(src)) src = src();
 
@@ -7018,7 +7028,7 @@
                     g.log.info('Giotto loading data from ' + src);
                     viz.fire('loadstart');
 
-                    return opts.loader()(src, function(error, xd) {
+                    return opts.loader(src)(src, function(error, xd) {
 
                         loading_data = false;
                         viz.fire('loadend');
@@ -7026,6 +7036,7 @@
                         else if(error)
                             return g.log.error(error);
 
+                        g.log.info('Giotto got data from ' + src);
                         viz.data(xd, callback);
                     });
 
@@ -9063,16 +9074,11 @@ NS["src/text/giotto.min.css"] = '@charset "UTF-8";.sunburst text{z-index:9999}.s
                             }],
 
                             link: function (scope, element, attrs) {
-                                var options = getOptions(attrs),
-                                    deps = options.require;
-                                if (deps) {
-                                    if (!g._.isArray(deps)) deps = [deps];
-                                    require(deps, function (opts) {
-                                        extend(options, opts);
-                                        scope.giottoCollection.options(options).scope(scope).start();
-                                    });
-                                } else
-                                    scope.giottoCollection.options(options).scope(scope).start();
+                                var o = getOptions(attrs);
+                                scope.giottoCollection
+                                    .options(o.attr)
+                                    .options(o.js)
+                                    .scope(scope).start();
                             }
                         };
                     })
@@ -9107,13 +9113,19 @@ NS["src/text/giotto.min.css"] = '@charset "UTF-8";.sunburst text{z-index:9999}.s
             // Create directive from Viz name if not provided
             name = mod.name.toLowerCase() + name.substring(0,1).toUpperCase() + name.substring(1);
 
-            function startViz(scope, element, options, injected) {
+            function startViz(scope, element, o, options, injected) {
                 var collection = scope.giottoCollection;
 
                 for (var i=0; i<injected.length; ++i)
                     options[injects[i]] = injected[i];
 
-                var viz = ag.mixin(vizType(element[0], options)).scope(scope);
+                var viz = vizType(element[0], o.attr)
+                            .options(o.js)
+                            .options(options);
+                //
+                // Add angular functions
+                viz = ag.mixin(viz).scope(scope);
+
                 element.data(name, viz);
 
                 if (collection) {
@@ -9135,16 +9147,15 @@ NS["src/text/giotto.min.css"] = '@charset "UTF-8";.sunburst text{z-index:9999}.s
                     link: function (scope, element, attrs) {
                         var viz = element.data(name);
                         if (!viz) {
-                            var options = getOptions(attrs),
-                                deps = options.require;
+                            var o = getOptions(attrs),
+                                deps = o.js.require || o.attr.require;
                             if (deps) {
                                 if (!g._.isArray(deps)) deps = [deps];
                                 require(deps, function (opts) {
-                                    extend(options, opts);
-                                    startViz(scope, element, options, injected_arguments);
+                                    startViz(scope, element, o, opts, injected_arguments);
                                 });
                             } else
-                                startViz(scope, element, options, injected_arguments);
+                                startViz(scope, element, o, null, injected_arguments);
                         }
                     }
                 };

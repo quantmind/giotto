@@ -80,21 +80,21 @@
     },
     //
     //
-    // Obtain extra information from javascript objects
+    // Obtain information from javascript object and element attributes
     getOptions = function (attrs) {
-        var options;
+        var jsOptions;
         if (attrs && typeof attrs.options === 'string') {
-            options = getRootAttribute(attrs.options);
-            if (typeof options === 'function')
-                options = options();
+            jsOptions = getRootAttribute(attrs.options);
+            if (typeof jsOptions === 'function')
+                jsOptions = jsOptions();
         }
-        if (!options) options = {};
-        if (isObject(options))
-            forEach(attrs, function (value, name) {
-                if (name.substring(0, 1) !== '$' && name !== 'options')
-                    options[name] = value;
-            });
-        return options;
+        if (!isObject(jsOptions)) jsOptions = {};
+        var attrOptions = {};
+        forEach(attrs, function (value, name) {
+            if (name.substring(0, 1) !== '$' && name !== 'options')
+                attrOptions[name] = value;
+        });
+        return {js: jsOptions, attr: attrOptions};
     },
     //
     //

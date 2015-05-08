@@ -2,7 +2,7 @@
 /*
 ------------------------------------------------------------------
 Created by lux in 0.0 seconds
-Date: 2015-05-06 08:53:34
+Date: 2015-05-08 08:35:55
 
 http://quantmind.github.io/lux/
 ------------------------------------------------------------------ */
@@ -18,8 +18,8 @@ http://quantmind.github.io/lux/
 
 .axis,
 .d3-slider-axis line {
-    fill: none;
     shape-rendering: crispEdges;
+    fill: none;
 }
 
 .line {
@@ -27,11 +27,11 @@ http://quantmind.github.io/lux/
 }
 
 .d3-tip:after {
-    display: inline;
     width: 100%;
-    position: absolute;
     font-size: 16px;
+    position: absolute;
     line-height: 1;
+    display: inline;
     -webkit-box-sizing: border-box;
        -moz-box-sizing: border-box;
             box-sizing: border-box;
@@ -39,8 +39,8 @@ http://quantmind.github.io/lux/
 
 .d3-tip.n:after {
     left: 0;
-    text-align: center;
     top: 100%;
+    text-align: center;
     content: "\\25BC";
     margin: -2px 0 0 0;
 }
@@ -54,8 +54,8 @@ http://quantmind.github.io/lux/
 
 .d3-tip.s:after {
     left: 0;
-    text-align: center;
     top: -8px;
+    text-align: center;
     content: "\\25B2";
     margin: 0 0 2px 0;
 }
@@ -68,11 +68,11 @@ http://quantmind.github.io/lux/
 }
 
 .d3-slider {
-    position: relative;
+    z-index: 2;
     font-family: Verdana,Arial,sans-serif;
     font-size: 1.1em;
     margin: 20px;
-    z-index: 2;
+    position: relative;
     border: 1px solid;
 }
 
@@ -85,16 +85,16 @@ http://quantmind.github.io/lux/
 }
 
 .d3-slider-range {
-    position: absolute;
-    left: 0;
     height: 0.8em;
+    left: 0;
+    position: absolute;
     right: 0;
 }
 
 .d3-slider-range-vertical {
-    position: absolute;
     left: 0;
     top: 0;
+    position: absolute;
     right: 0;
 }
 
@@ -108,9 +108,9 @@ http://quantmind.github.io/lux/
 }
 
 .d3-slider-handle {
-    position: absolute;
     width: 1.2em;
     height: 1.2em;
+    position: absolute;
     z-index: 3;
     -webkit-border-radius: 4px;
        -moz-border-radius: 4px;
@@ -124,8 +124,8 @@ http://quantmind.github.io/lux/
 }
 
 .d3-slider-axis {
-    position: relative;
     z-index: 1;
+    position: relative;
 }
 
 .d3-slider-axis-bottom {
@@ -146,8 +146,8 @@ http://quantmind.github.io/lux/
 }
 
 .d3-slider-vertical .d3-slider-handle {
-    left: -0.25em;
     margin-bottom: -0.6em;
+    left: -0.25em;
     margin-left: 0;
 }
 
