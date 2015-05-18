@@ -2125,8 +2125,10 @@ var requirejs, require, define;
             "angular": "//ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular",
             "angular-animate": "//ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-animate",
             "angular-mocks": "//ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-mocks.js",
+            "angular-sanitize": "//ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-sanitize",
             "angular-touch": "//cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.15/angular-touch",
             "angular-strap": "//cdnjs.cloudflare.com/ajax/libs/angular-strap/2.2.1/angular-strap",
+            "angular-strap-tpl": "//cdnjs.cloudflare.com/ajax/libs/angular-strap/2.2.1/angular-strap.tpl",
             "angular-ui-router": "//cdnjs.cloudflare.com/ajax/libs/angular-ui-router/0.2.14/angular-ui-router",
             "angular-ui-grid": "http://ui-grid.info/release/ui-grid-unstable",
             "angular-pusher": "//cdn.jsdelivr.net/angular.pusher/latest/pusher-angular.min.js",
@@ -2157,6 +2159,9 @@ var requirejs, require, define;
             angular: {
                 exports: "angular"
             },
+            "angular-strap-tpl": {
+                deps: ["angular", "angular-strap"]
+            },
             "google-analytics": {
                 exports: root.GoogleAnalyticsObject || "ga"
             },
@@ -2181,6 +2186,7 @@ var requirejs, require, define;
             }
         };
     }
+
 
     function newPaths (cfg) {
         var all = {},
@@ -2248,34 +2254,6 @@ var requirejs, require, define;
         require.config(cfg);
     };
 
-    lux.require = function () {
-        if (arguments.length && isArray(arguments[0]) && minify()) {
-            var deps = arguments[0],
-                cfg = require.config();
-
-            deps.forEach(function (dep, i) {
-                if (dep.substring(dep.length-3) !== end)
-                    dep += min;
-                deps[i] = dep;
-            });
-        }
-        return require.apply(root, arguments);
-    };
-
-    lux.define = function () {
-        if (arguments.length && isArray(arguments[1]) && minify()) {
-            var deps = arguments[1],
-                cfg = require.config();
-
-            deps.forEach(function (dep, i) {
-                if (dep.substring(dep.length-3) !== end)
-                    dep += min;
-                deps[i] = dep;
-            });
-        }
-        return define.apply(root, arguments);
-    };
-
 }(this));
 
 lux.config({
@@ -2288,7 +2266,7 @@ lux.config({
 //
 //  Script for giotto website
 //  =============================
-lux.require(['lux/lux', 'giotto/giotto', 'd3-geo-projection', 'angular-ui-router', 'angular-strap'], function (lux, d3) {
+require(['lux/lux', 'giotto/giotto', 'd3-geo-projection', 'angular-ui-router', 'angular-strap'], function (lux, d3) {
     "use strict";
 
     var url = lux.context.url,
@@ -2317,7 +2295,7 @@ lux.require(['lux/lux', 'giotto/giotto', 'd3-geo-projection', 'angular-ui-router
         navbar: {
             brand: 'GiottoJS',
             //brandImage: lux.media('giottoweb/giotto.svg'),
-            theme: 'inverse',
+            theme: 'default',
             top: true,
             fixed: true,
             target: '_self',
@@ -2345,6 +2323,58 @@ lux.require(['lux/lux', 'giotto/giotto', 'd3-geo-projection', 'angular-ui-router
     var examples = window.examples = {},
         g = d3.giotto;
 
+
+
+    function getParameterByName(name) {
+        name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+        var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+            results = regex.exec(location.search);
+        return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+    }
+
+    angular.module('giottoweb', ['lux.bs'])
+
+        .controller('GiottoExample', ['$scope', '$location', function (scope, $loction) {
+            scope.giottoThemes = [
+                {
+                    name: 'light',
+                    title: 'Light theme',
+                    url: lux.media('giottoweb/light.min.css')
+                },
+                {
+                    name: 'dark',
+                    title: 'Dark theme',
+                    url: lux.media('giottoweb/dark.min.css')
+                }
+            ];
+
+            scope.currentTheme = 'light';
+
+            scope.selectTheme = function (e, theme) {
+                if (e) e.preventDefault();
+                if (theme && theme !== scope.currentTheme) {
+                    var url = lux.media('giottoweb/' + theme + '.min.css'),
+                        link = angular.element(lux.querySelector(document, '#giotto-theme'));
+                    link.attr('href', url);
+                    scope.currentTheme = theme;
+                    scope.$broadcast('changeTheme', theme);
+                }
+            };
+
+            scope.selectTheme(null, getParameterByName('style'));
+        }]);
+
+    g.quandl = {
+
+        baseurl: 'https://www.quandl.com/api/v1/datasets/',
+
+        apikey: 'v3ebx8S9fs6aSWr473av',
+
+        url: function (url) {
+            url = g.quandl.baseurl + url + '?auth_token=' + g.quandl.apikey;
+            return url;
+        }
+    };
     var height = 200;
 
     gexamples.chartFeature = {
@@ -2787,7 +2817,7 @@ lux.require(['lux/lux', 'giotto/giotto', 'd3-geo-projection', 'angular-ui-router
 
     d3.giotto.angular.module(angular).addAll();
 
-    lux.bootstrap('giottoExamples', ['lux.nav', 'giotto']);
+    lux.bootstrap('giottoExamples', ['lux.nav', 'giotto', 'giottoweb']);
 
     // Process giottoQueue
     if (window.giottoQueue) {

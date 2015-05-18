@@ -1,5 +1,14 @@
 
     // Axis functionalities for groups
+    g.themes.light.axis = {
+        color: '#888',
+        colorOpacity: 1
+    };
+    g.themes.dark.axis = {
+        color: '#888',
+        colorOpacity: 1
+    };
+
     g.paper.plugin('axis', {
 
         defaults: {
@@ -10,11 +19,17 @@
             lineWidth: 1,
             textRotate: 0,
             textAnchor: null,
-            color: '#444',
-            colorOpacity: 1,
+            color: ctheme.axis.color,
+            colorOpacity: ctheme.axis.colorOpacity,
             //minTickSize: undefined,
             min: null,
-            max: null
+            max: null,
+            //  axis scale
+            //  can be a function or a string such as 'linear', 'log', 'time'
+            scale: 'linear',
+            font: {
+                color: ctheme.axis.color
+            }
         },
 
         init: function (group) {
@@ -23,45 +38,32 @@
                 xaxis = d3v.axis(),
                 yaxis = d3v.axis();
 
-            xaxis.options = function () {return group.options().xaxis;};
-            yaxis.options = function () {return group.options().yaxis;};
+            [xaxis, yaxis].forEach(function (axis, i) {
+                var d = i === 0 ? 'x' : 'y',
+                    name = d + 'axis';
 
-            group.xaxis = function () {
-                return xaxis;
-            };
+                axis.options = function () {
+                    return group.options()[name];
+                };
 
-            group.yaxis = function () {
-                return yaxis;
-            };
+                group[name] = function () {
+                    return axis;
+                };
 
-            // Draw X axis
-            group.drawXaxis = function () {
-                return group.add(g[type].axis(group, xaxis, 'x-axis')).options(xaxis.options());
-            };
+                axis.draw = function () {
+                    return group.add(g[type].axis(group, axis, d + '-axis')).options(axis.options());
+                };
 
-            group.drawYaxis = function () {
-                return group.add(g[type].axis(group, yaxis, 'y-axis')).options(yaxis.options());
-            };
+                group['scale'+d] = function (v) {
+                    return axis.scale()(v);
+                };
 
-            group.scalex = function (x) {
-                return xaxis.scale()(x);
-            };
-
-            group.scaley = function (y) {
-                return yaxis.scale()(y);
-            };
-
-            // x coordinate in the input domain
-            group.x = function (u) {
-                var d = xaxis.scale().domain();
-                return u*(d[d.length-1] - d[0]) + d[0];
-            };
-
-            // y coordinate in the input domain
-            group.y = function (u) {
-                var d = yaxis.scale().domain();
-                return u*(d[d.length-1] - d[0]) + d[0];
-            };
+                // coordinate in the input domain
+                group[d] = function (u) {
+                    var d = axis.scale().domain();
+                    return u*(d[d.length-1] - d[0]) + d[0];
+                };
+            });
 
             group.ordinalScale = function (axis, range) {
                 var scale = axis.scale(),
@@ -82,13 +84,22 @@
 
                 [xaxis, yaxis].forEach(function (axis, i) {
                     var o = axis.options(),
-                        scale = axis.scale();
+                        scale;
 
                     if (o.scale === 'ordinal') {
-                        scale = group.ordinalScale(axis, ranges[i]);
+                        axis.scale(group.ordinalScale(axis, ranges[i]));
                     } else {
                         o.auto = isNull(o.min) || isNull(o.max);
-                        if (o.scale === 'time') scale = axis.scale(d3.time.scale()).scale();
+                        if (isFunction(o.scale))
+                            axis.scale(o.scale);
+                        else if (o.scale === 'time')
+                            axis.scale(d3.time.scale());
+                        else if (isString(o.scale)) {
+                            var dn = d3.scale[o.scale];
+                            if (isFunction(dn))
+                                axis.scale(dn());
+                        }
+                        scale = axis.scale();
                         scale.range(ranges[i]);
                     }
 
@@ -128,11 +139,11 @@
             });
             o.plugin('yaxis', {
                 deep: ['font'],
-                defaults: extend({position: 'left'}, opts.axis, value)
+                defaults: extend({position: 'left', nice: true}, opts.axis, value)
             });
             o.plugin('yaxis2', {
                 deep: ['font'],
-                defaults: extend({position: 'right'}, opts.axis, value)
+                defaults: extend({position: 'right', nice: true}, opts.axis, value)
             });
 
             opts.pluginOptions(o.pluginArray);

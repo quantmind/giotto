@@ -5,7 +5,9 @@
     // Plugins for all visualization classes
     registerPlugin(g.viz);
     //
-    // Factory of Giotto visualization factories
+    //  Factory of Giotto visualization factories
+    //  =============================================
+    //
     //  name: name of the visualization constructor, the constructor is
     //        accessed via the giotto.viz object
     //  defaults: object of default parameters
@@ -14,8 +16,12 @@
     //  returns a functyion which create visualization of the ``name`` family
     g.createviz = function (name, defaults, constructor) {
 
+        (defaults || (defaults={}));
+
         // The visualization factory
         var
+
+        withPaper = defaults.paper === undefined ? true : defaults.paper,
 
         // The vizualization constructor
         vizType = function (element, p) {
@@ -45,76 +51,80 @@
                 return vizType.vizName();
             };
 
-            viz.paper = function (createNew) {
-                if (createNew || paper === undefined) {
-                    if (paper) {
-                        paper.clear();
-                        viz.options().clear();
-                    }
-                    paper = viz.createPaper();
-                }
-                return paper;
-            };
-
-            viz.createPaper = function () {
-                return g.paper(element, viz.options());
-            };
-
-            viz.element = function () {
-                return viz.paper().element();
-            };
-
-            viz.clear = function () {
-                viz.paper().clear();
-                return viz;
-            };
-
-            viz.alpha = function(x) {
-                if (!arguments.length) return alpha;
-
-                x = +x;
-                if (alpha) { // if we're already running
-                    if (x > 0) alpha = x; // we might keep it hot
-                    else alpha = 0; // or, next tick will dispatch "end"
-                } else if (x > 0) { // otherwise, fire it up!
-                    events.start({type: "start", alpha: alpha = x});
-                    d3.timer(viz.tick);
-                }
-
-                return viz;
-            };
-
-            viz.resume = function() {
-                return viz.alpha(0.1);
-            };
-
-            viz.stop = function() {
-                return viz.alpha(0);
-            };
-
-            viz.tick = function() {
-                // simulated annealing, basically
-                if ((alpha *= 0.99) < 0.005) {
-                    events.end({type: "end", alpha: alpha = 0});
-                    return true;
-                }
-                events.tick({type: "tick", alpha: alpha});
-            };
-
             // Starts the visualization
             viz.start = function () {
                 return onInitViz(viz).load(viz.resume);
             };
 
-            // render the visualization by invoking the render method of the paper
-            viz.render = function () {
-                paper.render();
-                return viz;
-            };
+            // Add paper functionalities
+            if (withPaper) {
 
-            viz.image = function () {
-                return paper.image();
-            };
+                viz.paper = function (createNew) {
+                    if (createNew || paper === undefined) {
+                        if (paper) {
+                            paper.clear();
+                            viz.options().clear();
+                        }
+                        paper = viz.createPaper();
+                    }
+                    return paper;
+                };
+
+                viz.createPaper = function () {
+                    return g.paper(element, viz.options());
+                };
+
+                viz.element = function () {
+                    return viz.paper().element();
+                };
+
+                viz.clear = function () {
+                    viz.paper().clear();
+                    return viz;
+                };
+
+                viz.alpha = function(x) {
+                    if (!arguments.length) return alpha;
+
+                    x = +x;
+                    if (alpha) { // if we're already running
+                        if (x > 0) alpha = x; // we might keep it hot
+                        else alpha = 0; // or, next tick will dispatch "end"
+                    } else if (x > 0) { // otherwise, fire it up!
+                        events.start({type: "start", alpha: alpha = x});
+                        d3.timer(viz.tick);
+                    }
+
+                    return viz;
+                };
+
+                viz.resume = function() {
+                    return viz.alpha(0.1);
+                };
+
+                viz.stop = function() {
+                    return viz.alpha(0);
+                };
+
+                viz.tick = function() {
+                    // simulated annealing, basically
+                    if ((alpha *= 0.99) < 0.005) {
+                        events.end({type: "end", alpha: alpha = 0});
+                        return true;
+                    }
+                    events.tick({type: "tick", alpha: alpha});
+                };
+
+                // render the visualization by invoking the render method of the paper
+                viz.render = function () {
+                    paper.render();
+                    return viz;
+                };
+
+                viz.image = function () {
+                    return paper.image();
+                };
+            }
 
             d3.rebind(viz, events, 'on');
 
@@ -129,6 +139,8 @@
 
             return viz;
         };
+
+        delete defaults.paper;
 
         g.viz[name] = vizType;
 

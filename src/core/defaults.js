@@ -24,3 +24,10 @@
         // leaflet url
         leaflet: 'http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css'
     };
+
+    g.themes = {
+        light: {},
+        dark: {}
+    };
+
+    var ctheme = g.themes[theme] || g.themes.light;

@@ -6,22 +6,29 @@ Data Utilities
 Serie Data
 ----------------------
 
-.. js:function:: giotto.data.serie(data, [idname])
+.. js:function:: giotto.data.serie()
 
    Create a new :js:data:`serie` data object. Usage::
 
        var data = [{name: 'foo', year, 2013, value: 5675},
                    {name: 'gee', year, 2013, value: 3452545},
                     ...];
-       var g = giotto.data.multi(data, 'name');
+       var serie = giotto.data.serie().data(data);
 
-   :param array data: Array of objects containing data
-   :param string idname: Optional string which can be used to retrieve data by
-      via a spcific value of the objects, rather than the array index.
-   :returns: A new :js:func:`multi` function
+       serie.forEach(function (d) {
+
+       });
+
+   :returns: A new :js:data:`multi` function
 
 
 .. js:data:: serie
+
+   .. js:function:: serie.data([data])
+
+      Gets or sets the data to the specified array. If
+      ``data`` is specified set the data and return the :js:data:`serie`.
+      If ``data`` is not specified return the current data array.
 
    .. js:function:: serie.x([x])
 
@@ -40,6 +47,10 @@ Serie Data
       Gets or sets the label-accessor to the specified function or constant. If
       ``label`` is specified set the label-accessor and return the :js:data:`serie`.
       If ``label`` is not specified return the current label-accessor.
+
+   .. js:function:: serie.get(key)
+
+      Gets a value by key
 
 
 Geometric Data

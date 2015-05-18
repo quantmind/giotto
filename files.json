@@ -34,6 +34,8 @@
                 "src/giottoweb/cfg.js",
                 "src/giottoweb/require.config.js",
                 "src/giottoweb/open.js",
+                "src/giottoweb/main.js",
+                "src/giottoweb/quandl.js",
                 "src/giottoweb/features.js",
                 "src/giottoweb/colorbrewer.js",
                 "src/giottoweb/close.js"],
@@ -41,11 +43,11 @@
         "minify": false
     },
     "examples": {
-        "src": ["examples/*/*.js"],
+        "src": ["examples/**/*.js"],
         "minify": false
     },
     "tests": {
-        "src": ["src/tests/*.js"],
+        "src": ["src/tests/**/*.js"],
         "minify": false
     }
 }

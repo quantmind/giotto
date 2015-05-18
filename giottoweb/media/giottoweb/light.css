@@ -1,8 +1,8 @@
 @charset "UTF-8";
 /*
 ------------------------------------------------------------------
-Created by lux in 0.4 seconds
-Date: 2015-05-17 18:38:33
+Created by lux in 0.14 seconds
+Date: 2015-05-11 19:23:36
 
 http://quantmind.github.io/lux/
 ------------------------------------------------------------------ */
@@ -6788,9 +6788,9 @@ button.close {
 }
 
 body {
-    color: #333;
-    background: #fff;
     line-height: 1.5;
+    color: rgba(0, 0, 0, 0.8);
+    background: #fff;
     height: 101%;
     min-height: 101%;
 }
@@ -6809,11 +6809,11 @@ body {
 }
 
 .lazyContainer > .content {
+    top: 0;
     width: 100%;
     min-height: 100%;
     left: 0;
     position: absolute;
-    top: 0;
 }
 
 .navbar {
@@ -6822,6 +6822,10 @@ body {
 
 .navbar .navbar-toggle {
     margin-top: 8px;
+}
+
+.navbar-default {
+    background: #f8f8f8;
 }
 
 .navbar2-wrapper {
@@ -6844,16 +6848,16 @@ body {
     }
 
     .navbar2-wrapper.navbar-default .navbar2-page {
-        border-left: 1px solid;
+        border-left: 1px solid #e7e7e7;
     }
 
 }
 @media all and (min-width:768px) {
     .sidebar {
+        position: absolute;
+        margin-top: 51px;
         width: 200px;
         z-index: 1;
-        margin-top: 51px;
-        position: absolute;
     }
 
 }
@@ -6879,14 +6883,14 @@ p.form-error {
 }
 
 .katex-outer {
-    margin-right: auto;
     display: block;
-    margin-left: auto;
     margin-bottom: 10px;
     margin-right: auto;
-    display: block;
     margin-left: auto;
+    display: block;
     margin-bottom: 10px;
+    margin-right: auto;
+    margin-left: auto;
 }
 
 code.hljs.inline {
@@ -6902,8 +6906,8 @@ dl dd {
 }
 
 dl.class dl.method {
-    color: #333;
-    color: #333;
+    color: rgba(0, 0, 0, 0.8);
+    color: rgba(0, 0, 0, 0.8);
 }
 
 dl.class > dt > tt.descname,
@@ -6914,18 +6918,18 @@ dl.function > dt > tt.descname {
 
 dl.class dt tt.descname,
 dl.function dt tt.descname {
+    color: rgba(0, 0, 0, 0.8);
     font-weight: bold;
-    color: #333;
+    color: rgba(0, 0, 0, 0.8);
     font-weight: bold;
-    color: #333;
 }
 
 dl.class dt,
 dl.function dt {
-    font-weight: normal;
     color: #888;
     font-weight: normal;
     color: #888;
+    font-weight: normal;
 }
 
 [ng\:cloak],
@@ -6959,21 +6963,21 @@ dl.function dt {
 }
 
 .media-list > .media > a h3 {
-    font-weight: normal;
     color: #333;
+    font-weight: normal;
 }
 
 .post-image {
+    max-height: 140px;
     width: 140px;
     height: auto;
-    max-height: 140px;
     float: left;
 }
 
 .post-image-xs {
-    width: auto;
-    max-width: 90%;
     max-height: 150px;
+    max-width: 90%;
+    width: auto;
 }
 
 h1:hover > a.headerlink,
@@ -6987,8 +6991,8 @@ dt:hover > a.headerlink {
 }
 
 a.headerlink {
-    visibility: hidden;
     padding: 0 4px;
+    visibility: hidden;
     color: #eee;
     text-decoration: none;
 }
@@ -7010,6 +7014,167 @@ table.docutils.field-list th {
     padding: 0 20px 0 0;
 }
 
+.sunburst text {
+    z-index: 9999;
+}
+
+.sunburst path {
+    fill-rule: evenodd;
+    stroke: #fff;
+}
+
+.axis,
+.d3-slider-axis line {
+    shape-rendering: crispEdges;
+    fill: none;
+}
+
+.line {
+    fill: none;
+}
+
+.d3-tip:after {
+    display: inline;
+    font-size: 16px;
+    width: 100%;
+    line-height: 1;
+    position: absolute;
+    -webkit-box-sizing: border-box;
+       -moz-box-sizing: border-box;
+            box-sizing: border-box;
+}
+
+.d3-tip.n:after {
+    content: "\\25BC";
+    margin: -2px 0 0 0;
+    text-align: center;
+    left: 0;
+    top: 100%;
+}
+
+.d3-tip.e:after {
+    content: "\\25C0";
+    margin: -4px 0 0 0;
+    left: -8px;
+    top: 50%;
+}
+
+.d3-tip.s:after {
+    content: "\\25B2";
+    margin: 0 0 2px 0;
+    text-align: center;
+    left: 0;
+    top: -8px;
+}
+
+.d3-tip.w:after {
+    content: "\\25B6";
+    margin: -4px 0 0 -1px;
+    left: 100%;
+    top: 50%;
+}
+
+.d3-slider {
+    font-size: 1.1em;
+    margin: 20px;
+    font-family: Verdana,Arial,sans-serif;
+    z-index: 2;
+    position: relative;
+    border: 1px solid;
+}
+
+.d3-slider-horizontal {
+    height: 0.8em;
+}
+
+.d3-slider-horizontal.d3-slider-axis {
+    margin-bottom: 30px;
+}
+
+.d3-slider-range {
+    right: 0;
+    position: absolute;
+    height: 0.8em;
+    left: 0;
+}
+
+.d3-slider-range-vertical {
+    right: 0;
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+.d3-slider-range-vertical.d3-slider-axis {
+    margin-right: 30px;
+}
+
+.d3-slider-vertical {
+    width: 0.8em;
+    height: 100px;
+}
+
+.d3-slider-handle {
+    position: absolute;
+    width: 1.2em;
+    height: 1.2em;
+    z-index: 3;
+    -webkit-border-radius: 4px;
+       -moz-border-radius: 4px;
+            border-radius: 4px;
+    border: 1px solid;
+}
+
+.d3-slider-horizontal .d3-slider-handle {
+    top: -0.25em;
+    margin-left: -0.6em;
+}
+
+.d3-slider-axis {
+    position: relative;
+    z-index: 1;
+}
+
+.d3-slider-axis-bottom {
+    top: 0.8em;
+}
+
+.d3-slider-axis-right {
+    left: 0.8em;
+}
+
+.d3-slider-axis path {
+    stroke-width: 0;
+    fill: none;
+}
+
+.d3-slider-axis text {
+    font-size: 11px;
+}
+
+.d3-slider-vertical .d3-slider-handle {
+    margin-bottom: -0.6em;
+    left: -0.25em;
+    margin-left: 0;
+}
+
+.d3-slider-default {
+    border-color: #aaa;
+}
+
+.d3-slider-default .d3-slider-handle {
+    background-color: #ddd;
+    background-image: -moz-linear-gradient(top, #eee, #ddd);
+    background-image: -ms-linear-gradient(top, #eee, #ddd);
+    background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#eee), to(#ddd));
+    background-image: -webkit-linear-gradient(top, #eee, #ddd);
+    background-image: -o-linear-gradient(top, #eee, #ddd);
+    background-image: linear-gradient(top, #eee, #ddd);
+    background-repeat: repeat-x;
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#eee', endColorstr='#ddd', GradientType=0);
+    border-color: #aaa;
+}
+
 .page-header,
 .full-header {
     padding-top: 50px;
@@ -7020,12 +7185,12 @@ table.docutils.field-list th {
 }
 
 .page-header.index-header {
-    width: 101%;
     margin: 0;
-    background: #333;
-    color: #fff;
+    width: 101%;
     height: 101%;
+    background: #333;
     min-height: 100%;
+    color: #fff;
 }
 
 html,
@@ -7044,10 +7209,10 @@ form {
 }
 
 #footer {
-    color: #b3b3b3;
-    background: #333;
-    min-height: 300px;
     padding: 30px 0 40px;
+    min-height: 300px;
+    background: #333;
+    color: #b3b3b3;
 }
 
 #lux-logo {
@@ -7066,8 +7231,8 @@ form {
 
 .trianglify-box {
     padding: 20px;
-    background: rgba(255, 255, 255, 0.6);
     max-width: 400px;
+    background: rgba(255, 255, 255, 0.6);
     -webkit-border-radius: 5px;
        -moz-border-radius: 5px;
             border-radius: 5px;
@@ -7077,8 +7242,8 @@ form {
 }
 
 .features article {
-    width: 33.33%;
     padding: 30px;
+    width: 33.33%;
     float: left;
 }
 
@@ -7124,8 +7289,8 @@ form {
 }
 
 .error-message-container {
-    height: 100%;
     padding: 40px 120px;
+    height: 100%;
     background: rgba(0, 0, 0, 0.4);
     -webkit-box-sizing: border-box;
        -moz-box-sizing: border-box;
@@ -7142,8 +7307,8 @@ form {
     }
 
     .error-message-container {
-        text-align: center;
         padding: 40px 0;
+        text-align: center;
     }
 
 }

@@ -2,9 +2,7 @@
     gexamples.barchart = {
         height: '80%',
 
-        tooltip: {
-            show: true,
-        },
+        tooltip: true,
 
         line: {show: true},
 
@@ -21,23 +19,5 @@
                             return 1/(1+Math.exp(-x)) - 0.5;
                         })];
             }
-        },
-
-        // Callback for angular directive
-        angular: function (chart, opts) {
-
-            function update (form) {
-                if (form.type) {
-                    opts.type = form.type;
-                    chart.resume();
-                }
-            }
-
-            chart.scope().$on('formReady', function (e, form) {
-                update(form);
-            });
-            chart.scope().$on('formFieldChange', function (e, form) {
-                update(form);
-            });
         }
     };

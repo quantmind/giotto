@@ -14,10 +14,19 @@
         return rows;
     };
 
+    //  Giotto serie
+    //  =================
+    //
+    //  A serie is an abstraction on top of an array.
+    //  It provides accessor functions and several utilities for
+    //  understanding and manipulating the underlying data which is either
+    //  an array or another serie.
     g.data.serie = function () {
         var serie = {},
+            x = d3_geom_pointX,
+            y = d3_geom_pointY,
             data,
-            x, y, label;
+            label;
 
         serie.x = function (_) {
             if (!arguments.length) return x;
@@ -49,10 +58,13 @@
 
         serie.forEach = function (callback) {
             if (data)
-                data.forEach(function (d) {
-                    callback([x(d), y(d)]);
-                });
+                data.forEach(callback);
             return serie;
+        };
+
+        serie.map = function (callback) {
+            if (data)
+                return data.map(callback);
         };
 
         //  Get a value at key
@@ -62,25 +74,67 @@
                 return data.get(key);
         };
 
+        serie.xrange = function () {
+            return getRange(x);
+        };
+
+        serie.yrange = function () {
+            return getRange(y);
+        };
+
+        Object.defineProperty(serie, 'length', {
+            get: function () {
+                return data ? data.length : 0;
+            }
+        });
+
         return serie;
+
+        //  Get a valid range for this timeserie if possible
+        //  If a valid range is available is return as an array [min, max]
+        //  otherwise nothing is returned
+        function getRange (accessor) {
+            var vmin = Infinity,
+                vmax =-Infinity,
+                ordinal = false,
+                val;
+
+            if (!data) return;
+
+            data.forEach(function (d) {
+                val = accessor(d);
+                if (!isDate(val))
+                    val = +val;
+
+                if (isNaN(val))
+                    ordinal = true;
+                else {
+                    vmin = val < vmin ? val : vmin;
+                    vmax = val > vmax ? val : vmax;
+                }
+            });
+
+            if (!ordinal) return [vmin, vmax];
+        }
     };
 
+    g.serie = g.data.serie;
     //
     //  Build a multivariate data handler
     //
     //  data is an array of objects (records)
-    g.data.multi = function (data) {
+    g.data.multi = function () {
         var multi = g.data.serie(),
-            label,
             keys;
 
         multi.key = function (key) {
             if (key && !isFunction(key)) key = label_functor(key);
+            var data = multi.data();
             keys = null;
             if (key && data) {
                 keys = {};
-                data.forEach(function (data) {
-                    keys[key(data)] = data;
+                data.forEach(function (d) {
+                    keys[key(d)] = d;
                 });
             }
             return multi;
@@ -92,16 +146,20 @@
                 return keys[key];
         };
 
+        //  Build a single variate serie from this multi-variate serie
         multi.serie = function () {
+            var label = multi.label();
             return g.data.serie()
                          .data(multi)
                          .label(label)
-                         .x(x || label)
-                         .y(y);
+                         .x(multi.x() || label)
+                         .y(multi.y());
         };
 
         return multi;
     };
+
+    g.multi = g.data.multi;
 
 
     function label_functor (label) {

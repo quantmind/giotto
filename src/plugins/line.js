@@ -102,8 +102,10 @@
                             offset: 0
                         },
                         {
-                            color: opts.gradient,
-                            opacity: draw.fillOpacity,
+                            color: draw.fill,
+                            opacity: 0,
+                            //color: opts.gradient,
+                            //opacity: draw.fillOpacity,
                             offset: 100
                         }]).direction('y')(a);
                 } else

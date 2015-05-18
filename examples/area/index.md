@@ -6,11 +6,8 @@ image: $site_url/examples/area.png
 
 <div class="container-fluid">
   <div class="row">
-    <div class="col-sm-10">
-      <div data-options='gexamples.area1' style='width: 100%' giotto-chart></div>
-    </div>
-    <div class="col-sm-2 small">
-      $html_type_form
+    <div class="col-sm-12">
+      <div class='center-block' style='width: 100%; max-width: 800px' giotto-chart='gexamples.area1'></div>
     </div>
   </div>
 </div>

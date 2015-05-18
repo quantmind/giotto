@@ -1,34 +1,62 @@
     //
     //	Create a serie for a chart
+    //  ================================
     //
+    //  Return a giotto.data.serie object with chart specific functions
+    //
+    //  A Chart serie create a new giotto group where to draw the serie which
+    //  can be a univariate (x,y) or multivariate (x, y_1, y_2, ..., y_n)
     function chartSerie (chart, data) {
 
         if (!data) return;
 
-        var opts = chart.options(),
-            allranges = chart.allranges(),
-            serie = extend({}, opts.serie),
-            group, color, show, scaled;
+        var serie = data,
+            obj;
 
         // If data does not have the forEach function, extend the serie with it
         // and data is obtained from the serie data attribute
         if (!isFunction(data.forEach)) {
-            extend(serie, data);
-            data = serie.data;
-            delete serie.data;
+            obj = data;
+            data = obj.data;
+            delete obj.data;
+        } else
+            obj = {};
+
+        // if not a serie object create the serie
+        if (!data || isArray(data))
+            serie = g.data.serie().data(data);
+        else {
+            serie = data;
+            data = null;
+        }
+
+        if (obj.label) {
+            serie.label(d3_functor(obj.label));
+            delete obj.label;
         }
 
         serie.index = chart.numSeries();
 
-        // Default label
-        if (!serie.label) serie.label = 'serie ' + serie.index;
+        //  Add label if not available
+        if (!serie.label()) serie.label(d3_functor('serie ' + serie.index));
+
+        _extendSerie(chart, serie, obj);
+
+        return serie.data(serie.data());
+    }
+
+
+    function _extendSerie (chart, serie, groupOptions) {
+
+        var opts = chart.options(),
+            allranges = chart.allranges(),
+            serieData = serie.data,
+            drawXaxis = false,
+            drawYaxis = false,
+            group, color, show, scaled;
 
         opts.chartTypes.forEach(function (type) {
-            var o = serie[type];
-            if (isArray(o) && !serie.data) {
-                serie.data = o;
-                o = {}; // an ampty object so that it is shown
-            }
+            var o = groupOptions[type];
             if (o || (opts[type] && opts[type].show)) {
                 serie[type] = extend({}, opts[type], o);
                 show = true;
@@ -40,7 +68,7 @@
 
         // None of the chart are shown, specify line
         if (!show)
-            serie.line = extend({}, opts.line);
+            serie.line = extend({}, opts.line, {show: true});
 
         opts.chartTypes.forEach(function (type) {
             var o = serie[type];
@@ -86,59 +114,32 @@
             return serie;
         };
 
-        serie.data = function (_) {
-            if (!arguments.length) return data;
+        //  Override data function
+        serie.data = function (inpdata) {
+            if (!arguments.length) return serieData();
+            serieData(inpdata);
 
             // check axis and ranges
             if (scaled) {
-
-                var ranges = allranges[serie.axisgroup],
-                    p = ranges[serie.xaxis.position],
-                    xy = xyData(_, serie.x, serie.y),
-                    stype;
-
-                _ = xy.data;
-
-                if (!p) {
-                    ranges[serie.xaxis.position] = p = {
-                        range: xy.xrange,
-                        ordinal: xy.xordinal,
-                        serie: serie
-                    };
-                    serie.drawXaxis = true;
-                } else {
-                    p.range[0] = Math.min(p.range[0], xy.xrange[0]);
-                    p.range[1] = Math.max(p.range[1], xy.xrange[1]);
-                }
-
-                p = ranges[serie.yaxis.position];
-                if (!p) {
-                    ranges[serie.yaxis.position] = p = {
-                        range: xy.yrange,
-                        ordinal: xy.yordinal,
-                        serie: serie
-                    };
-                    serie.drawYaxis = true;
-                } else {
-                    p.range[0] = Math.min(p.range[0], xy.yrange[0]);
-                    p.range[1] = Math.max(p.range[1], xy.yrange[1]);
-                }
+                drawXaxis = setRange(serie.xaxis.position, serie.xrange());
+                drawYaxis = setRange(serie.yaxis.position, serie.yrange());
             }
-            data = _;
 
             opts.chartTypes.forEach(function (type) {
                 stype = serie[type];
                 if (stype && isFunction(stype.data))
-                    stype.data(data);
+                    stype.data(serie);
             });
 
             return serie;
         };
 
+        //  Draw the chart Serie
         serie.draw = function () {
             var opts = chart.options(),
                 stype;
 
+            //  Create the group
             if (!group) {
 
                 // Remove previous serie drawing if any
@@ -151,7 +152,7 @@
                     }
                 });
 
-                group = chart.paper().classGroup(slugify(serie.label), serie);
+                group = chart.paper().group(groupOptions);
 
                 // Is this the reference serie for its axisgroup?
                 if (serie.reference)
@@ -159,21 +160,24 @@
                                    .classed(chart.axisGroupId(serie.axisgroup), true);
 
                 // Draw X axis or set the scale of the reference X-axis
-                if (serie.drawXaxis)
-                    domain(group.xaxis(), 'x').drawXaxis();
+                if (drawXaxis)
+                    domain(group.xaxis(), 'x').xaxis().draw();
                 else if (serie.axisgroup)
                     scale(group.xaxis());
 
                 // Draw Y axis or set the scale of the reference Y-axis
-                if (serie.drawYaxis)
-                    domain(group.yaxis(), 'y').drawYaxis();
+                if (drawYaxis)
+                    domain(group.yaxis(), 'y').yaxis().draw();
                 else if (serie.axisgroup)
                     scale(group.yaxis());
 
                 opts.chartTypes.forEach(function (type) {
                     stype = serie[type];
                     if (stype)
-                        serie[type] = chartTypes[type](group, serie.data(), stype).label(serie.label);
+                        serie[type] = chartTypes[type](group, serie, stype)
+                                                .x(serie.x())
+                                                .y(serie.y())
+                                                .label(serie.label());
                 });
             } else {
                 opts.chartTypes.forEach(function (type) {
@@ -181,8 +185,8 @@
                     if (stype)
                         serie[type].label(serie.label);
                 });
-                serie.drawXaxis ? domain(group.xaxis()) : scale(group.xaxis());
-                serie.drawYaxis ? domain(group.yaxis()) : scale(group.yaxis());
+                drawXaxis ? domain(group.xaxis()) : scale(group.xaxis());
+                drawYaxis ? domain(group.yaxis()) : scale(group.yaxis());
             }
 
             return serie;
@@ -193,13 +197,15 @@
                     scale = axis.scale(),
                     opadding = 0.1;
 
-                if (p.ordinal) scale = group.ordinalScale(axis);
+                if (!p.range) scale = group.ordinalScale(axis);
 
                 p.scale = scale;
                 if (scale.rangeBand) {
                     scale.domain(data.map(function (d) {return d[xy];}));
                 } else if (o.auto) {
-                    scale.domain([p.range[0], p.range[1]]).nice();
+                    scale.domain([p.range[0], p.range[1]]);
+                    if (o.nice)
+                        scale.nice();
                     if (!isNull(o.min))
                         scale.domain([o.min, scale.domain()[1]]);
                     else if (!isNull(o.max))
@@ -213,10 +219,23 @@
             function scale (axis) {
                 if (serie.axisgroup) {
                     var p = allranges[serie.axisgroup][axis.orient()];
-                    axis.scale(p.scale);
+                    if (p.scale)
+                        axis.scale(p.scale);
                 }
             }
         };
 
-        return serie.data(data);
+        function setRange (position, range) {
+            var ranges = allranges[serie.axisgroup],
+                p = ranges[position];
+
+            // range is not available
+            if (!p) {
+                ranges[position] = {range: range};
+                return true;
+            } else if (p.range && range)
+                p.range = [Math.min(p.range[0], range[0]),
+                           Math.max(p.range[1], range[1])];
+            return false;
+        }
     }

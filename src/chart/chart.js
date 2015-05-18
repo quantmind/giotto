@@ -1,7 +1,7 @@
 
     g.createviz('chart', {
         margin: 30,
-        chartTypes: ['map', 'pie', 'bar', 'line', 'point', 'custom'],
+        chartTypes: ['geo', 'pie', 'bar', 'line', 'point', 'custom'],
         xaxis: {
             show: true
         },

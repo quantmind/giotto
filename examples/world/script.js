@@ -1,18 +1,19 @@
 
     gexamples.world = {
-        src: '/data/population.csv',
 
-        // data loader
-        loader: function (src, callback) {
-            return d3.dsv(';', 'text/csv')(src, function (error, data) {
-                if (!error) {
-                    // Create a multivariate data object
-                    data = d3.giotto.data.multi(data);
-                    callback(data.key('Country Code')
-                                 .label('Country Name'));
-                } else
-                    callback(error, data);
-            });
+        data: {
+            src: '/data/population.csv',
+
+            // data loader
+            loader: function (src) {
+                return d3.dsv(';', 'text/csv');
+            },
+
+            process: function (data) {
+                return d3.giotto.data.multi(data)
+                                .key('Country Code')
+                                .label('Country Name');
+            }
         },
 
         onInit: function (container) {
@@ -61,8 +62,10 @@
                     }).resume();
                 });
             },
-            processData: function (multi) {
-                return [multi.serie().y(this.scope().year)];
+            data: {
+                process: function (multi) {
+                    return [multi.serie().y(this.scope().year)];
+                }
             },
             map: {
                 show: true,
@@ -99,8 +102,10 @@
         timeserie: {
             line: {show: true},
             point: {show: true},
-            processData: function (multi) {
-                return [[]];
+            data: {
+                process: function (multi) {
+                    return [[]];
+                }
             },
             onInit: function (chart) {
                 //var map = chart.scope().container.map;

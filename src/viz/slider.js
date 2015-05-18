@@ -384,7 +384,7 @@
     };
 
     g.viz.slider = function (element) {
-        var slider = vizMixin(g.slider()),
+        var slider = giottoMixin(g.slider()),
             options = slider.options;
 
         slider.options = function (_) {
@@ -400,6 +400,10 @@
             var opts = options(),
                 onInit = opts.onInit;
             if (onInit) onInit(slider, opts);
+        };
+
+        slider.data = function () {
+            return slider;
         };
 
         return slider;

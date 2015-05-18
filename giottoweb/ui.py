@@ -7,10 +7,22 @@ def add_css(all):
     vars = all.variables
     vars.sidebar.width = px(200)
 
+    if all.theme == 'dark':
+        url = 'https://bootswatch.com/darkly/bootstrap.css'
+        highlight = 'railscasts'
+        theme_dark(all)
+    else:
+        url = 'https://bootswatch.com/spacelab/bootstrap.css'
+        highlight = 'tomorrow'
+        theme_light(all)
+
+    all.app.config['CODE_HIGHLIGHT_THEME'] = highlight
+    css('body',
+        CssInclude(url))
+
     vars.font_family = '"freight-text-pro",Georgia,Cambria,"Times New Roman",Times,serif'
     vars.font_size = px(18)
     vars.line_height = 1.5
-    vars.color = color(0,0,0,0.8)
     vars.index.background = '#333'
     vars.scroll.background = '#99EBFF'
 
@@ -114,3 +126,14 @@ def features(all):
         width='auto',
         float='none')
 
+
+def theme_light(all):
+    vars = all.variables
+    vars.color = color('#333')
+    vars.background = color('#fff')
+
+
+def theme_dark(all):
+    vars = all.variables
+    vars.color = color('#fff')
+    vars.background = color('#222')

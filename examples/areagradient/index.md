@@ -6,11 +6,8 @@ image: $site_url/examples/areagradient.png
 
 <div class="container-fluid">
   <div class="row">
-    <div class="col-sm-10">
-      <div data-options='gexamples.area2' style='width: 100%' giotto-chart></div>
-    </div>
-    <div class="col-sm-2 small">
-      $html_type_form
+    <div class="col-sm-12">
+      <div class='center-block' style='width: 100%; max-width: 800px' giotto-chart='gexamples.area2'></div>
     </div>
   </div>
 </div>
@@ -23,4 +20,4 @@ it is picked by the [paper.pickColour](/api/paper#paperpickcolor) method).
 
 Html:
 
-    <div data-options='gexamples.area2' style='width: 100%' giotto-chart></div>
+    <div class='center-block' style='width: 100%; max-width: 800px' giotto-chart='gexamples.area2'></div>

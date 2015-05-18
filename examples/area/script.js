@@ -3,15 +3,7 @@
 
         min_height: 250,
 
-        // Override default x,y accessor for series
-        serie: {
-            x: function (d) {return d.time;},
-            y: function (d) {return d.value;}
-        },
-
-        grid: {
-            show: true
-        },
+        grid: true,
 
         line: {
             area: true,
@@ -40,6 +32,10 @@
                 chart.options().type = form.type;
                 chart.resume();
             });
+            chart.scope().$on('changeTheme', function (e, theme) {
+                chart.options().selectTheme(theme);
+                chart.resume();
+            });
         }
     };
 
@@ -61,5 +57,5 @@
                 value: data[i-1].value + dx
             };
         }
-        return data;
+        return d3.giotto.serie().data(data).x('time').y('value');
     }

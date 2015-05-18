@@ -39,7 +39,9 @@
             geo: {},
             data: {}
         },
-        g = giotto;
+        g = giotto,
+        theme = root.giottoTheme || 'light';
 
     d3.giotto = giotto;
     d3.canvas = {};
+

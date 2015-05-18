@@ -51,8 +51,9 @@
                     return d3.round(0.8*(group.innerWidth() / draw.data().length));
                 };
 
-            for (var i=0; i<rawdata.length; i++)
-                data.push(bar(this, rawdata[i], width));
+            rawdata.forEach(function (d) {
+                data.push(bar(draw, d, width));
+            });
 
             return data;
         },

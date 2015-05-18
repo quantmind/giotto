@@ -3,12 +3,21 @@
     //  =====================================
     //
     //  In theory each group can have its own grid
+    g.themes.light.grid = {
+        color: '#333',
+        colorOpacity: 0.3
+    };
+    g.themes.dark.grid = {
+        color: '#888',
+        colorOpacity: 1
+    };
+
     g.paper.plugin('grid', {
 
         defaults: {
             show: false,
-            color: '#333',
-            colorOpacity: 0.3,
+            color: ctheme.grid.color,
+            colorOpacity: ctheme.grid.colorOpacity,
             fill: 'none',
             fillOpacity: 0.2,
             lineWidth: 0.5,
@@ -49,11 +58,11 @@
                     gopts.before = '*';
                     grid = paper.group(gopts);
                     grid.element().classed('grid', true);
-                    grid.xaxis().tickFormat(notick).scale(group.xaxis().scale());
-                    grid.yaxis().tickFormat(notick).scale(group.yaxis().scale());
+                    grid.xaxis().tickFormat(notick);
+                    grid.yaxis().tickFormat(notick);
                     grid.add(Rectangle).options(gopts.grid);
-                    if (gopts.xaxis.show) grid.drawXaxis();
-                    if (gopts.yaxis.show) grid.drawYaxis();
+                    if (gopts.xaxis.show) grid.xaxis().draw();
+                    if (gopts.yaxis.show) grid.yaxis().draw();
                     grid.on('zoom', zoomgrid);
                     grid.render();
                 } else
@@ -99,8 +108,8 @@
                     ctx.restore();
                 }
 
-                grid.xaxis().tickSize(-height, 0);
-                grid.yaxis().tickSize(-width, 0);
+                grid.xaxis().scale(group.xaxis().scale()).tickSize(-height, 0);
+                grid.yaxis().scale(group.xaxis().scale()).tickSize(-width, 0);
             }
 
             function zoomgrid () {

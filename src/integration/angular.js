@@ -47,6 +47,44 @@
             return d;
         };
 
+        //
+        //  Get Options for a Visualization Directive
+        //  ==============================================
+        //
+        //  Obtain information from
+        //  * javascript object
+        //  * element attributes
+        //  * scope variables
+        ag.getOptions = function (scope, attrs, name) {
+            var key = attrs[name],
+                exclude = [name, 'options', 'class', 'style'],
+                jsOptions;
+
+            if (typeof attrs.options === 'string')
+                key = attrs.options;
+
+            // Try the scope first
+            if (key) {
+                jsOptions = scope[key];
+
+                // try the global javascript object
+                if (!jsOptions)
+                    jsOptions = getRootAttribute(key);
+            }
+
+            if (typeof jsOptions === 'function')
+                jsOptions = jsOptions();
+
+            if (!jsOptions) jsOptions = {};
+
+            var attrOptions = {};
+            forEach(attrs, function (value, name) {
+                if (name.substring(0, 1) !== '$' && exclude.indexOf(name) === -1)
+                    attrOptions[name] = value;
+            });
+            return {js: jsOptions, attr: attrOptions};
+        };
+
         ag.module = function (angular, moduleName, deps) {
 
             if (!arguments.length) return mod;
@@ -66,17 +104,23 @@
 
                     }])
 
+                    //
+                    //  Giotto Visualization Collection
+                    //  ====================================
+                    //
+                    //  Directive to aggregate giotto visualizations with
+                    //  close interaction
                     .directive('giottoCollection', function () {
 
                         return {
                             restrict: 'AE',
 
                             controller: ['$scope', function (scope) {
-                                scope.giottoCollection = ag.mixin(g.collection());
+                                scope.giottoCollection = ag.mixin(g.viz.collection());
                             }],
 
                             link: function (scope, element, attrs) {
-                                var o = getOptions(attrs);
+                                var o = ag.getOptions(scope, attrs, 'giottoCollection');
                                 scope.giottoCollection
                                     .options(o.attr)
                                     .options(o.js)
@@ -116,11 +160,23 @@
             name = mod.name.toLowerCase() + name.substring(0,1).toUpperCase() + name.substring(1);
 
             function startViz(scope, element, o, options, injected) {
-                var collection = scope.giottoCollection;
+                var collection = scope.giottoCollection,
+                    key;
 
+                // Get the key for the collection (if a collection is available)
+                if (collection) {
+                    if (isString(options)) {
+                        key = options;
+                        options = null;
+                    } else
+                        key = collection.size() + 1;
+                }
+
+                // Add injects to the scope object
                 for (var i=0; i<injected.length; ++i)
-                    options[injects[i]] = injected[i];
+                    scope[injects[i]] = injected[i];
 
+                // Creat the visualization
                 var viz = vizType(element[0], o.attr)
                             .options(o.js)
                             .options(options);
@@ -130,15 +186,16 @@
 
                 element.data(name, viz);
 
-                if (collection) {
-                    var key = options.key || collection.size() + 1;
+                if (collection)
                     collection.set(key, viz);
-                } else {
+                else {
                     scope.$emit('giotto-viz', viz);
                     viz.start();
                 }
             }
 
+            //  Directive implementation for a visualization other than a
+            //  collection
             injects.push(function () {
                 var injected_arguments = arguments;
                 return {
@@ -149,15 +206,17 @@
                     link: function (scope, element, attrs) {
                         var viz = element.data(name);
                         if (!viz) {
-                            var o = getOptions(attrs),
+                            var key = attrs[name],
+                                o = ag.getOptions(scope, attrs, name),
                                 deps = o.js.require || o.attr.require;
                             if (deps) {
                                 if (!g._.isArray(deps)) deps = [deps];
                                 require(deps, function (opts) {
                                     startViz(scope, element, o, opts, injected_arguments);
                                 });
-                            } else
-                                startViz(scope, element, o, null, injected_arguments);
+                            } else {
+                                startViz(scope, element, o, key, injected_arguments);
+                            }
                         }
                     }
                 };
@@ -175,7 +234,7 @@
 
             angular.forEach(g.viz, function (vizType) {
                 var name = vizType.vizName ? vizType.vizName() : null;
-                if (name)
+                if (name && name !== 'collection')
                     g.angular.directive(vizType, name, injects);
             });
 

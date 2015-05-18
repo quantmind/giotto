@@ -33,19 +33,12 @@
             tickFormat: '%'
         },
 
-        tooltip: {
-            show: true
-        },
+        tooltip: true,
 
         legend: {
             show: true,
             position: 'bottom',
             margin: 0
-        },
-
-        serie: {
-            x: function (d) {return d.country;},
-            y: function (d) {return d[2013];}
         },
 
         data: {
@@ -67,6 +60,10 @@
                 d3.giotto._.forEach(jd, function (value) {
                     all.push(value);
                 });
+                data = d3.giotto.multi().data(all.sort(function (a, b) {
+                    return d3.descending(a[2013], b[2013]);
+                })).x('country');
+
                 return [{
                     label: 'tertiary education',
                     legend: [{
@@ -79,19 +76,8 @@
                         fill: noneucolor,
                         color: d3.rgb(noneucolor).darker()
                     }],
-                    data: all.sort(function (a, b) {return d3.descending(a[2013], b[2013]);})
+                    data: data.serie().y(2013)
                 }];
             }
-        },
-
-        // Callback for angular directive
-        angular: function (chart, opts) {
-
-            chart.scope().$on('formFieldChange', function (e, form, field) {
-                if (field === 'type') {
-                    opts.type = form[field];
-                    chart.resume();
-                }
-            });
         }
     };

@@ -1,7 +1,7 @@
 //
 //  Script for giotto website
 //  =============================
-lux.require(['lux/lux', 'giotto/giotto', 'd3-geo-projection', 'angular-ui-router', 'angular-strap'], function (lux, d3) {
+require(['lux/lux', 'giotto/giotto', 'd3-geo-projection', 'angular-ui-router', 'angular-strap'], function (lux, d3) {
     "use strict";
 
     var url = lux.context.url,
@@ -30,7 +30,7 @@ lux.require(['lux/lux', 'giotto/giotto', 'd3-geo-projection', 'angular-ui-router
         navbar: {
             brand: 'GiottoJS',
             //brandImage: lux.media('giottoweb/giotto.svg'),
-            theme: 'inverse',
+            theme: 'default',
             top: true,
             fixed: true,
             target: '_self',

@@ -2,6 +2,9 @@
 node_modules
 vendor
 
+# docs
+giottoweb/docs/_build/
+
 .project
 .pydevproject
 .grunt

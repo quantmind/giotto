@@ -3,11 +3,7 @@
         height: '60%',
         min_height: 250,
 
-        grid: {
-            show: true,
-            fill: '#fff',
-            fillOpacity: 1
-        },
+        grid: true,
 
         line: {
             show: true,

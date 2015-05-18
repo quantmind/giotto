@@ -3,17 +3,18 @@
         height: '60%',
         min_height: 250,
 
-        grid: {
-            show: true
-        },
+        grid: true,
+        tooltip: true,
 
         line: {
             area: true,
             lineWidth: 1,
-            fillOpacity: 0.8,
-            gradient: '#fff',
+            fillOpacity: 0.7,
+            gradient: true,
             active: {
                 fillOpacity: 1,
+                fill: '#fff',
+                lineWidth: 2,
                 symbol: 'circle',
                 size: '10px'
             }

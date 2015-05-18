@@ -3,6 +3,11 @@
 <div class="row">
 <div class="col-sm-12" data-highlight>
 <div class="page-header">
+<ul class="nav nav-pills">
+  <li ng-repeat="style in giottoThemes" ng-class="{active: style.name === currentTheme}" >
+    <a ng-href="?style={{style.name}}" ng-bind="style.title" ng-click="selectTheme($event, style.name)"></a>
+  </li>
+</ul>
 <h2>$title</h2>
 </div>
 $html_main

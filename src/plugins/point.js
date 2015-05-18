@@ -58,13 +58,15 @@
         },
 
         point_costructor = function (rawdata) {
-            var group = this.group(),
+            var draw = this,
+                group = this.group(),
                 size = group.scale(group.dim(this.options().size)),
                 point = g[group.type()].point,
                 data = [];
 
-            for (var i=0; i<rawdata.length; i++)
-                data.push(point(this, rawdata[i], size));
+            rawdata.forEach(function (d) {
+                data.push(point(draw, d, size));
+            });
             return data;
         };
 

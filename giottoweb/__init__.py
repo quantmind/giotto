@@ -22,10 +22,9 @@ EXTENSIONS = ['lux.extensions.base',
               'lux.extensions.oauth',
               'lux.extensions.code',
               'giottoweb.giotto']
-HTML_LINKS = ['giottoweb/bootstrap.min.css',
-              'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/'
+HTML_LINKS = ['https://cdnjs.cloudflare.com/ajax/libs/font-awesome/'
               '4.3.0/css/font-awesome.min.css',
-              'giottoweb/giottoweb.css']
+              {'href': 'giottoweb/light', 'id': 'giotto-theme'}]
 SCRIPTS = ['giottoweb/giottoweb']
 
 HTML_META = [{'http-equiv': 'X-UA-Compatible',
@@ -92,5 +91,5 @@ class Extension(lux.Extension):
         return [dist, vendor, data, examples]
 
     def on_html_document(self, app, request, doc):
-        doc.head.scripts.paths['d3-geo-projection'] = 'giottoweb/d3-geo-projection/d3.geo.projection'
         doc.head.embedded_js.append('var gexamples = {}, giottoQueue = [];\n')
+        doc.attr('ng-controller', 'GiottoExample')

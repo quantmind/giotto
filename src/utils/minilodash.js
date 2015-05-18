@@ -80,24 +80,6 @@
     },
     //
     //
-    // Obtain information from javascript object and element attributes
-    getOptions = function (attrs) {
-        var jsOptions;
-        if (attrs && typeof attrs.options === 'string') {
-            jsOptions = getRootAttribute(attrs.options);
-            if (typeof jsOptions === 'function')
-                jsOptions = jsOptions();
-        }
-        if (!isObject(jsOptions)) jsOptions = {};
-        var attrOptions = {};
-        forEach(attrs, function (value, name) {
-            if (name.substring(0, 1) !== '$' && name !== 'options')
-                attrOptions[name] = value;
-        });
-        return {js: jsOptions, attr: attrOptions};
-    },
-    //
-    //
     keys = _.keys = function (obj) {
         var keys = [];
         for (var key in obj) {

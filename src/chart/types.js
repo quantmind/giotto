@@ -14,8 +14,8 @@
 
     var chartTypes = {
 
-        map: function (group, data, opts) {
-            return group.map(data, opts);
+        geo: function (group, data, opts) {
+            return group.geo(data, opts);
         },
 
         pie: function (group, data, opts) {

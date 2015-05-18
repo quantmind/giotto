@@ -39,25 +39,25 @@ module.exports = function (grunt) {
     // js hint all libraries
     function jshint_libs () {
         var result = {
-                gruntfile: "Gruntfile.js",
-                options: {
-                    browser: true,
-                    expr: true,
-                    globals: {
-                        requirejs: true,
-                        require: true,
-                        exports: true,
-                        console: true,
-                        DOMParser: true,
-                        Showdown: true,
-                        module: true,
-                        ok: true,
-                        equal: true,
-                        test: true,
-                        asyncTest: true,
-                        start: true
-                    }
+            gruntfile: "Gruntfile.js",
+            options: {
+                browser: true,
+                expr: true,
+                globals: {
+                    requirejs: true,
+                    require: true,
+                    exports: true,
+                    console: true,
+                    DOMParser: true,
+                    Showdown: true,
+                    module: true,
+                    ok: true,
+                    equal: true,
+                    test: true,
+                    asyncTest: true,
+                    start: true
                 }
+            }
         };
         for_each(libs, function (name) {
             result[name] = this.dest || this.src;

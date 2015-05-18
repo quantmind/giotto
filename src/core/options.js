@@ -174,5 +174,17 @@
             });
         };
 
+        opts.selectTheme = function (theme) {
+            var ctheme = g.themes[theme],
+                obj;
+            forEach(ctheme, function (o, key) {
+                obj = opts[key];
+                if (obj)
+                    forEach(o, function (value, name) {
+                        obj[name] = value;
+                    });
+            });
+        };
+
         return opts;
     }

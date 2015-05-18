@@ -81,12 +81,12 @@
     };
 
     //
-    //  Mapping
+    //  Geometry (Maps)
     //  =====================
     //
-    //  Map charts and animations
+    //  Geo charts
     //
-    g.paper.plugin('map', {
+    g.paper.plugin('geo', {
         deep: ['active', 'tooltip', 'transition'],
 
         defaults: {
@@ -112,27 +112,28 @@
 
         init: function (group) {
 
-            group.map = function (data, opts) {
+            //
+            //  Create a new drawing for geometric datasets
+            group.geo = function (data, opts) {
                 var type = group.type(),
                     features,
                     path;
 
                 opts || (opts = {});
-                copyMissing(group.options().map, opts);
+                copyMissing(group.options().geo, opts);
                 group.element().classed('geo', true);
 
-                var map = group.add(mapdraw(group, g[type].mapdraw))
+                return group.add(geodraw(group, g[type].geodraw))
                                .options(opts)
                                .data(data);
-                return map;
             };
         }
     });
 
     //
-    //  Map drawing constructor
-    //  Used by both SVG and Canvas map renderer functions
-    function mapdraw (group, renderer) {
+    //  geo drawing constructor
+    //  Used by both SVG and Canvas geo renderer functions
+    function geodraw (group, renderer) {
         var path = d3.geo.path(),
             feature = g[group.type()].feature,
             draw = drawing(group, renderer),
@@ -168,7 +169,7 @@
             return path.projection(projection);
         };
 
-        // Set get/map topographic features
+        // Set get/geo topographic features
         draw.features = function (_) {
             if (!arguments.length) return features;
             features = _;
@@ -192,27 +193,13 @@
         function buildDataFeatures () {
             var geodata = [],
                 opts = draw.options(),
-                color = d3.scale.quantize().domain(scale.range()).range(color);
+                scale = group.yaxis().scale(),
+                color = d3.scale.quantize().domain(scale.range()).range(opts.colors.scale);
 
+            // Loop through features and pick data-geo functions
             features.forEach(function (geo) {
-                if (isFunction(geo)) {
-                    var color = colors;
-            if (!color) {
-                g.log.warn('colors range not specified in g.data.geo');
-                color = ['#333', '#222'];
-            }
-            var y = geodata.y(),
-                label = geodata.label() || grodata.x(),
-                d, val;
-
-            data = [];
-            color = d3.scale.quantize().domain(scale.range()).range(color);
-                    geo(draw.data(), function () {
-
-
-
-                    });
-                }
+                if (isFunction(geo))
+                    geo(draw);
                 else {
                     geo.active = false;
                     geodata.push(feature(draw, null, geo));
@@ -222,8 +209,8 @@
         }
     }
 
-    // Draw the map on SVG
-    g.svg.mapdraw = function () {
+    // Draw the geo on SVG
+    g.svg.geodraw = function () {
         var draw = this,
             opts = draw.options(),
             group = draw.group(),
@@ -266,12 +253,12 @@
             });
 
 
-        group.on('zoom.map', function () {
+        group.on('zoom.geo', function () {
             chart.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
         });
     };
 
-    //  An svg feature in the map
+    //  An svg feature in the geo
     //  Similar to a point in a point chart or a bar in a bar chart
     g.svg.feature = function (draw, data, feature) {
         var group = draw.group();
@@ -284,8 +271,8 @@
         return feature;
     };
 
-    // Draw the map on Canvas
-    g.canvas.mapdraw = function () {
+    // Draw the geo on Canvas
+    g.canvas.geodraw = function () {
         var draw = this,
             opts = draw.options(),
             group = draw.group(),

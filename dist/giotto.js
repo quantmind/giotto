@@ -1,6 +1,6 @@
 //      GiottoJS - v0.2.0
 //
-//      Compiled 2015-05-08.
+//      Compiled 2015-05-17.
 //
 //      Copyright (c) 2014 - 2015 - Luca Sbardella
 //      All rights reserved.
@@ -39,10 +39,12 @@
             geo: {},
             data: {}
         },
-        g = giotto;
+        g = giotto,
+        theme = root.giottoTheme || 'light';
 
     d3.giotto = giotto;
     d3.canvas = {};
+
 
     //  D3 internal functions
     //  =======================================================================
@@ -307,10 +309,19 @@
         return rows;
     };
 
+    //  Giotto serie
+    //  =================
+    //
+    //  A serie is an abstraction on top of an array.
+    //  It provides accessor functions and several utilities for
+    //  understanding and manipulating the underlying data which is either
+    //  an array or another serie.
     g.data.serie = function () {
         var serie = {},
+            x = d3_geom_pointX,
+            y = d3_geom_pointY,
             data,
-            x, y, label;
+            label;
 
         serie.x = function (_) {
             if (!arguments.length) return x;
@@ -342,10 +353,13 @@
 
         serie.forEach = function (callback) {
             if (data)
-                data.forEach(function (d) {
-                    callback([x(d), y(d)]);
-                });
+                data.forEach(callback);
             return serie;
+        };
+
+        serie.map = function (callback) {
+            if (data)
+                return data.map(callback);
         };
 
         //  Get a value at key
@@ -355,25 +369,67 @@
                 return data.get(key);
         };
 
+        serie.xrange = function () {
+            return getRange(x);
+        };
+
+        serie.yrange = function () {
+            return getRange(y);
+        };
+
+        Object.defineProperty(serie, 'length', {
+            get: function () {
+                return data ? data.length : 0;
+            }
+        });
+
         return serie;
+
+        //  Get a valid range for this timeserie if possible
+        //  If a valid range is available is return as an array [min, max]
+        //  otherwise nothing is returned
+        function getRange (accessor) {
+            var vmin = Infinity,
+                vmax =-Infinity,
+                ordinal = false,
+                val;
+
+            if (!data) return;
+
+            data.forEach(function (d) {
+                val = accessor(d);
+                if (!isDate(val))
+                    val = +val;
+
+                if (isNaN(val))
+                    ordinal = true;
+                else {
+                    vmin = val < vmin ? val : vmin;
+                    vmax = val > vmax ? val : vmax;
+                }
+            });
+
+            if (!ordinal) return [vmin, vmax];
+        }
     };
 
+    g.serie = g.data.serie;
     //
     //  Build a multivariate data handler
     //
     //  data is an array of objects (records)
-    g.data.multi = function (data) {
+    g.data.multi = function () {
         var multi = g.data.serie(),
-            label,
             keys;
 
         multi.key = function (key) {
             if (key && !isFunction(key)) key = label_functor(key);
+            var data = multi.data();
             keys = null;
             if (key && data) {
                 keys = {};
-                data.forEach(function (data) {
-                    keys[key(data)] = data;
+                data.forEach(function (d) {
+                    keys[key(d)] = d;
                 });
             }
             return multi;
@@ -385,16 +441,20 @@
                 return keys[key];
         };
 
+        //  Build a single variate serie from this multi-variate serie
         multi.serie = function () {
+            var label = multi.label();
             return g.data.serie()
                          .data(multi)
                          .label(label)
-                         .x(x || label)
-                         .y(y);
+                         .x(multi.x() || label)
+                         .y(multi.y());
         };
 
         return multi;
     };
+
+    g.multi = g.data.multi;
 
 
     function label_functor (label) {
@@ -544,24 +604,6 @@
             if (!obj) break;
         }
         return obj;
-    },
-    //
-    //
-    // Obtain information from javascript object and element attributes
-    getOptions = function (attrs) {
-        var jsOptions;
-        if (attrs && typeof attrs.options === 'string') {
-            jsOptions = getRootAttribute(attrs.options);
-            if (typeof jsOptions === 'function')
-                jsOptions = jsOptions();
-        }
-        if (!isObject(jsOptions)) jsOptions = {};
-        var attrOptions = {};
-        forEach(attrs, function (value, name) {
-            if (name.substring(0, 1) !== '$' && name !== 'options')
-                attrOptions[name] = value;
-        });
-        return {js: jsOptions, attr: attrOptions};
     },
     //
     //
@@ -2831,6 +2873,13 @@
         leaflet: 'http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css'
     };
 
+    g.themes = {
+        light: {},
+        dark: {}
+    };
+
+    var ctheme = g.themes[theme] || g.themes.light;
+
     var _idCounter = 0;
 
     // Base giotto mixin for paper, group and viz
@@ -3004,6 +3053,18 @@
         opts.clear = function () {
             forEach(pluginOptions, function (plugin) {
                 plugin.clear(opts[plugin.name]);
+            });
+        };
+
+        opts.selectTheme = function (theme) {
+            var ctheme = g.themes[theme],
+                obj;
+            forEach(ctheme, function (o, key) {
+                obj = opts[key];
+                if (obj)
+                    forEach(o, function (value, name) {
+                        obj[name] = value;
+                    });
             });
         };
 
@@ -4110,7 +4171,9 @@
     // Plugins for all visualization classes
     registerPlugin(g.viz);
     //
-    // Factory of Giotto visualization factories
+    //  Factory of Giotto visualization factories
+    //  =============================================
+    //
     //  name: name of the visualization constructor, the constructor is
     //        accessed via the giotto.viz object
     //  defaults: object of default parameters
@@ -4119,8 +4182,12 @@
     //  returns a functyion which create visualization of the ``name`` family
     g.createviz = function (name, defaults, constructor) {
 
+        (defaults || (defaults={}));
+
         // The visualization factory
         var
+
+        withPaper = defaults.paper === undefined ? true : defaults.paper,
 
         // The vizualization constructor
         vizType = function (element, p) {
@@ -4150,76 +4217,80 @@
                 return vizType.vizName();
             };
 
-            viz.paper = function (createNew) {
-                if (createNew || paper === undefined) {
-                    if (paper) {
-                        paper.clear();
-                        viz.options().clear();
-                    }
-                    paper = viz.createPaper();
-                }
-                return paper;
-            };
-
-            viz.createPaper = function () {
-                return g.paper(element, viz.options());
-            };
-
-            viz.element = function () {
-                return viz.paper().element();
-            };
-
-            viz.clear = function () {
-                viz.paper().clear();
-                return viz;
-            };
-
-            viz.alpha = function(x) {
-                if (!arguments.length) return alpha;
-
-                x = +x;
-                if (alpha) { // if we're already running
-                    if (x > 0) alpha = x; // we might keep it hot
-                    else alpha = 0; // or, next tick will dispatch "end"
-                } else if (x > 0) { // otherwise, fire it up!
-                    events.start({type: "start", alpha: alpha = x});
-                    d3.timer(viz.tick);
-                }
-
-                return viz;
-            };
-
-            viz.resume = function() {
-                return viz.alpha(0.1);
-            };
-
-            viz.stop = function() {
-                return viz.alpha(0);
-            };
-
-            viz.tick = function() {
-                // simulated annealing, basically
-                if ((alpha *= 0.99) < 0.005) {
-                    events.end({type: "end", alpha: alpha = 0});
-                    return true;
-                }
-                events.tick({type: "tick", alpha: alpha});
-            };
-
             // Starts the visualization
             viz.start = function () {
                 return onInitViz(viz).load(viz.resume);
             };
 
-            // render the visualization by invoking the render method of the paper
-            viz.render = function () {
-                paper.render();
-                return viz;
-            };
+            // Add paper functionalities
+            if (withPaper) {
 
-            viz.image = function () {
-                return paper.image();
-            };
+                viz.paper = function (createNew) {
+                    if (createNew || paper === undefined) {
+                        if (paper) {
+                            paper.clear();
+                            viz.options().clear();
+                        }
+                        paper = viz.createPaper();
+                    }
+                    return paper;
+                };
+
+                viz.createPaper = function () {
+                    return g.paper(element, viz.options());
+                };
+
+                viz.element = function () {
+                    return viz.paper().element();
+                };
+
+                viz.clear = function () {
+                    viz.paper().clear();
+                    return viz;
+                };
+
+                viz.alpha = function(x) {
+                    if (!arguments.length) return alpha;
+
+                    x = +x;
+                    if (alpha) { // if we're already running
+                        if (x > 0) alpha = x; // we might keep it hot
+                        else alpha = 0; // or, next tick will dispatch "end"
+                    } else if (x > 0) { // otherwise, fire it up!
+                        events.start({type: "start", alpha: alpha = x});
+                        d3.timer(viz.tick);
+                    }
+
+                    return viz;
+                };
+
+                viz.resume = function() {
+                    return viz.alpha(0.1);
+                };
+
+                viz.stop = function() {
+                    return viz.alpha(0);
+                };
+
+                viz.tick = function() {
+                    // simulated annealing, basically
+                    if ((alpha *= 0.99) < 0.005) {
+                        events.end({type: "end", alpha: alpha = 0});
+                        return true;
+                    }
+                    events.tick({type: "tick", alpha: alpha});
+                };
+
+                // render the visualization by invoking the render method of the paper
+                viz.render = function () {
+                    paper.render();
+                    return viz;
+                };
+
+                viz.image = function () {
+                    return paper.image();
+                };
+            }
 
             d3.rebind(viz, events, 'on');
 
@@ -4234,6 +4305,8 @@
 
             return viz;
         };
+
+        delete defaults.paper;
 
         g.viz[name] = vizType;
 
@@ -4511,7 +4584,7 @@
 
                 html += template({
                     c: data.color,
-                    l: draw.label() || 'serie',
+                    l: draw.label()(data.data) || 'serie',
                     x: draw.formatX(draw.x()(data.data)),
                     y: draw.formatY(draw.y()(data.data))
                 });
@@ -4757,7 +4830,7 @@
 
     g.createviz('chart', {
         margin: 30,
-        chartTypes: ['map', 'pie', 'bar', 'line', 'point', 'custom'],
+        chartTypes: ['geo', 'pie', 'bar', 'line', 'point', 'custom'],
         xaxis: {
             show: true
         },
@@ -4929,35 +5002,63 @@
     };
     //
     //	Create a serie for a chart
+    //  ================================
     //
+    //  Return a giotto.data.serie object with chart specific functions
+    //
+    //  A Chart serie create a new giotto group where to draw the serie which
+    //  can be a univariate (x,y) or multivariate (x, y_1, y_2, ..., y_n)
     function chartSerie (chart, data) {
 
         if (!data) return;
 
-        var opts = chart.options(),
-            allranges = chart.allranges(),
-            serie = extend({}, opts.serie),
-            group, color, show, scaled;
+        var serie = data,
+            obj;
 
         // If data does not have the forEach function, extend the serie with it
         // and data is obtained from the serie data attribute
         if (!isFunction(data.forEach)) {
-            extend(serie, data);
-            data = serie.data;
-            delete serie.data;
+            obj = data;
+            data = obj.data;
+            delete obj.data;
+        } else
+            obj = {};
+
+        // if not a serie object create the serie
+        if (!data || isArray(data))
+            serie = g.data.serie().data(data);
+        else {
+            serie = data;
+            data = null;
+        }
+
+        if (obj.label) {
+            serie.label(d3_functor(obj.label));
+            delete obj.label;
         }
 
         serie.index = chart.numSeries();
 
-        // Default label
-        if (!serie.label) serie.label = 'serie ' + serie.index;
+        //  Add label if not available
+        if (!serie.label()) serie.label(d3_functor('serie ' + serie.index));
+
+        _extendSerie(chart, serie, obj);
+
+        return serie.data(serie.data());
+    }
+
+
+    function _extendSerie (chart, serie, groupOptions) {
+
+        var opts = chart.options(),
+            allranges = chart.allranges(),
+            serieData = serie.data,
+            drawXaxis = false,
+            drawYaxis = false,
+            group, color, show, scaled;
 
         opts.chartTypes.forEach(function (type) {
-            var o = serie[type];
-            if (isArray(o) && !serie.data) {
-                serie.data = o;
-                o = {}; // an ampty object so that it is shown
-            }
+            var o = groupOptions[type];
             if (o || (opts[type] && opts[type].show)) {
                 serie[type] = extend({}, opts[type], o);
                 show = true;
@@ -4969,7 +5070,7 @@
 
         // None of the chart are shown, specify line
         if (!show)
-            serie.line = extend({}, opts.line);
+            serie.line = extend({}, opts.line, {show: true});
 
         opts.chartTypes.forEach(function (type) {
             var o = serie[type];
@@ -5015,59 +5116,32 @@
             return serie;
         };
 
-        serie.data = function (_) {
-            if (!arguments.length) return data;
+        //  Override data function
+        serie.data = function (inpdata) {
+            if (!arguments.length) return serieData();
+            serieData(inpdata);
 
             // check axis and ranges
             if (scaled) {
-
-                var ranges = allranges[serie.axisgroup],
-                    p = ranges[serie.xaxis.position],
-                    xy = xyData(_, serie.x, serie.y),
-                    stype;
-
-                _ = xy.data;
-
-                if (!p) {
-                    ranges[serie.xaxis.position] = p = {
-                        range: xy.xrange,
-                        ordinal: xy.xordinal,
-                        serie: serie
-                    };
-                    serie.drawXaxis = true;
-                } else {
-                    p.range[0] = Math.min(p.range[0], xy.xrange[0]);
-                    p.range[1] = Math.max(p.range[1], xy.xrange[1]);
-                }
-
-                p = ranges[serie.yaxis.position];
-                if (!p) {
-                    ranges[serie.yaxis.position] = p = {
-                        range: xy.yrange,
-                        ordinal: xy.yordinal,
-                        serie: serie
-                    };
-                    serie.drawYaxis = true;
-                } else {
-                    p.range[0] = Math.min(p.range[0], xy.yrange[0]);
-                    p.range[1] = Math.max(p.range[1], xy.yrange[1]);
-                }
+                drawXaxis = setRange(serie.xaxis.position, serie.xrange());
+                drawYaxis = setRange(serie.yaxis.position, serie.yrange());
             }
-            data = _;
 
             opts.chartTypes.forEach(function (type) {
                 stype = serie[type];
                 if (stype && isFunction(stype.data))
-                    stype.data(data);
+                    stype.data(serie);
             });
 
             return serie;
         };
 
+        //  Draw the chart Serie
         serie.draw = function () {
             var opts = chart.options(),
                 stype;
 
+            //  Create the group
             if (!group) {
 
                 // Remove previous serie drawing if any
@@ -5080,7 +5154,7 @@
                     }
                 });
 
-                group = chart.paper().classGroup(slugify(serie.label), serie);
+                group = chart.paper().group(groupOptions);
 
                 // Is this the reference serie for its axisgroup?
                 if (serie.reference)
@@ -5088,21 +5162,24 @@
                                    .classed(chart.axisGroupId(serie.axisgroup), true);
 
                 // Draw X axis or set the scale of the reference X-axis
-                if (serie.drawXaxis)
-                    domain(group.xaxis(), 'x').drawXaxis();
+                if (drawXaxis)
+                    domain(group.xaxis(), 'x').xaxis().draw();
                 else if (serie.axisgroup)
                     scale(group.xaxis());
 
                 // Draw Y axis or set the scale of the reference Y-axis
-                if (serie.drawYaxis)
-                    domain(group.yaxis(), 'y').drawYaxis();
+                if (drawYaxis)
+                    domain(group.yaxis(), 'y').yaxis().draw();
                 else if (serie.axisgroup)
                     scale(group.yaxis());
 
                 opts.chartTypes.forEach(function (type) {
                     stype = serie[type];
                     if (stype)
-                        serie[type] = chartTypes[type](group, serie.data(), stype).label(serie.label);
+                        serie[type] = chartTypes[type](group, serie, stype)
+                                                .x(serie.x())
+                                                .y(serie.y())
+                                                .label(serie.label());
                 });
             } else {
                 opts.chartTypes.forEach(function (type) {
@@ -5110,8 +5187,8 @@
                     if (stype)
                         serie[type].label(serie.label);
                 });
-                serie.drawXaxis ? domain(group.xaxis()) : scale(group.xaxis());
-                serie.drawYaxis ? domain(group.yaxis()) : scale(group.yaxis());
+                drawXaxis ? domain(group.xaxis()) : scale(group.xaxis());
+                drawYaxis ? domain(group.yaxis()) : scale(group.yaxis());
             }
 
             return serie;
@@ -5122,13 +5199,15 @@
                     scale = axis.scale(),
                     opadding = 0.1;
 
-                if (p.ordinal) scale = group.ordinalScale(axis);
+                if (!p.range) scale = group.ordinalScale(axis);
 
                 p.scale = scale;
                 if (scale.rangeBand) {
                     scale.domain(data.map(function (d) {return d[xy];}));
                 } else if (o.auto) {
-                    scale.domain([p.range[0], p.range[1]]).nice();
+                    scale.domain([p.range[0], p.range[1]]);
+                    if (o.nice)
+                        scale.nice();
                     if (!isNull(o.min))
                         scale.domain([o.min, scale.domain()[1]]);
                     else if (!isNull(o.max))
@@ -5142,12 +5221,25 @@
             function scale (axis) {
                 if (serie.axisgroup) {
                     var p = allranges[serie.axisgroup][axis.orient()];
-                    axis.scale(p.scale);
+                    if (p.scale)
+                        axis.scale(p.scale);
                 }
             }
         };
 
-        return serie.data(data);
+        function setRange (position, range) {
+            var ranges = allranges[serie.axisgroup],
+                p = ranges[position];
+
+            // range is not available
+            if (!p) {
+                ranges[position] = {range: range};
+                return true;
+            } else if (p.range && range)
+                p.range = [Math.min(p.range[0], range[0]),
+                           Math.max(p.range[1], range[1])];
+            return false;
+        }
     }
 
 
@@ -5166,8 +5258,8 @@
 
     var chartTypes = {
 
-        map: function (group, data, opts) {
-            return group.map(data, opts);
+        geo: function (group, data, opts) {
+            return group.geo(data, opts);
         },
 
         pie: function (group, data, opts) {
@@ -5203,76 +5295,37 @@
         }
     };
 
-
-    var xyData = function (data, x, y) {
-        if (!data) return;
-        if (!data.data) data = {data: data};
-
-        var xy = data.data,
-            xmin = Infinity,
-            ymin = Infinity,
-            xmax =-Infinity,
-            ymax =-Infinity,
-            xordinal = false,
-            yordinal = false,
-            v,
-            xm = function (x) {
-                v = +x;
-                if (isNaN(v)) {
-                    xordinal = true;
-                    return x;
-                }
-                else {
-                    xmin = v < xmin ? v : xmin;
-                    xmax = v > xmax ? v : xmax;
-                    return v;
-                }
-            },
-            ym = function (y) {
-                v = +y;
-                if (isNaN(v)) {
-                    yordinal = true;
-                    return y;
-                }
-                else {
-                    ymin = v < ymin ? v : ymin;
-                    ymax = v > ymax ? v : ymax;
-                    return v;
-                }
-            };
-        var xydata = [];
-        xy.forEach(function (d) {
-            xydata.push({x: xm(x(d)), y: ym(y(d))});
-        });
-        data.data = xydata;
-        data.xrange = [xmin, xmax];
-        data.yrange = [ymin, ymax];
-        data.xordinal = xordinal;
-        data.yordinal = yordinal;
-        return data;
-    };
-
     //
     // Manage a collection of visualizations
-    g.collection = function () {
-        var collection = vizMixin(d3.map());
+    g.createviz('collection', {
 
-        collection.start = function () {
-            return onInitViz(collection).load(start);
-        };
+            paper: false
+        },
 
-        return collection;
+        function (collection) {
 
-        function start () {
-            var opts = collection.options();
+            var vizs = {};
 
-            collection.forEach(function (key, viz) {
-                var o = opts[key];
-                if (o) viz.options(o);
-                viz.data(collection.data()).start();
-            });
-        }
-    };
+            collection.set = function (key, viz) {
+                vizs[key] = viz;
+            };
+
+            collection.size = function () {
+                return size(vizs);
+            };
+
+            // Required by the visualization class
+            collection.resume = function () {
+
+                var opts = collection.options();
+
+                forEach(vizs, function (viz, key) {
+                    var o = opts[key];
+                    if (o) viz.options(o);
+                    viz.data(collection.data()).start();
+                });
+            };
+        });
 
     g.createviz('map', {
         tile: null,
@@ -5772,7 +5825,7 @@
     };
 
     g.viz.slider = function (element) {
-        var slider = vizMixin(g.slider()),
+        var slider = giottoMixin(g.slider()),
             options = slider.options;
 
         slider.options = function (_) {
@@ -5788,6 +5841,10 @@
             var opts = options(),
                 onInit = opts.onInit;
             if (onInit) onInit(slider, opts);
+        };
+
+        slider.data = function () {
+            return slider;
         };
 
         return slider;
@@ -6222,6 +6279,15 @@
 
 
     // Axis functionalities for groups
+    g.themes.light.axis = {
+        color: '#888',
+        colorOpacity: 1
+    };
+    g.themes.dark.axis = {
+        color: '#888',
+        colorOpacity: 1
+    };
+
     g.paper.plugin('axis', {
 
         defaults: {
@@ -6232,11 +6298,17 @@
             lineWidth: 1,
             textRotate: 0,
             textAnchor: null,
-            color: '#444',
-            colorOpacity: 1,
+            color: ctheme.axis.color,
+            colorOpacity: ctheme.axis.colorOpacity,
             //minTickSize: undefined,
             min: null,
-            max: null
+            max: null,
+            //  axis scale
+            //  can be a function or a string such as 'linear', 'log', 'time'
+            scale: 'linear',
+            font: {
+                color: ctheme.axis.color
+            }
         },
 
         init: function (group) {
@@ -6245,45 +6317,32 @@
                 xaxis = d3v.axis(),
                 yaxis = d3v.axis();
 
-            xaxis.options = function () {return group.options().xaxis;};
-            yaxis.options = function () {return group.options().yaxis;};
+            [xaxis, yaxis].forEach(function (axis, i) {
+                var d = i === 0 ? 'x' : 'y',
+                    name = d + 'axis';
 
-            group.xaxis = function () {
-                return xaxis;
-            };
+                axis.options = function () {
+                    return group.options()[name];
+                };
 
-            group.yaxis = function () {
-                return yaxis;
-            };
+                group[name] = function () {
+                    return axis;
+                };
 
-            // Draw X axis
-            group.drawXaxis = function () {
-                return group.add(g[type].axis(group, xaxis, 'x-axis')).options(xaxis.options());
-            };
+                axis.draw = function () {
+                    return group.add(g[type].axis(group, axis, d + '-axis')).options(axis.options());
+                };
 
-            group.drawYaxis = function () {
-                return group.add(g[type].axis(group, yaxis, 'y-axis')).options(yaxis.options());
-            };
+                group['scale'+d] = function (v) {
+                    return axis.scale()(v);
+                };
 
-            group.scalex = function (x) {
-                return xaxis.scale()(x);
-            };
-
-            group.scaley = function (y) {
-                return yaxis.scale()(y);
-            };
-
-            // x coordinate in the input domain
-            group.x = function (u) {
-                var d = xaxis.scale().domain();
-                return u*(d[d.length-1] - d[0]) + d[0];
-            };
-
-            // y coordinate in the input domain
-            group.y = function (u) {
-                var d = yaxis.scale().domain();
-                return u*(d[d.length-1] - d[0]) + d[0];
-            };
+                // coordinate in the input domain
+                group[d] = function (u) {
+                    var d = axis.scale().domain();
+                    return u*(d[d.length-1] - d[0]) + d[0];
+                };
+            });
 
             group.ordinalScale = function (axis, range) {
                 var scale = axis.scale(),
@@ -6304,13 +6363,22 @@
 
                 [xaxis, yaxis].forEach(function (axis, i) {
                     var o = axis.options(),
-                        scale = axis.scale();
+                        scale;
 
                     if (o.scale === 'ordinal') {
-                        scale = group.ordinalScale(axis, ranges[i]);
+                        axis.scale(group.ordinalScale(axis, ranges[i]));
                     } else {
                         o.auto = isNull(o.min) || isNull(o.max);
-                        if (o.scale === 'time') scale = axis.scale(d3.time.scale()).scale();
+                        if (isFunction(o.scale))
+                            axis.scale(o.scale);
+                        else if (o.scale === 'time')
+                            axis.scale(d3.time.scale());
+                        else if (isString(o.scale)) {
+                            var dn = d3.scale[o.scale];
+                            if (isFunction(dn))
+                                axis.scale(dn());
+                        }
+                        scale = axis.scale();
                         scale.range(ranges[i]);
                     }
 
@@ -6350,11 +6418,11 @@
             });
             o.plugin('yaxis', {
                 deep: ['font'],
-                defaults: extend({position: 'left'}, opts.axis, value)
+                defaults: extend({position: 'left', nice: true}, opts.axis, value)
             });
             o.plugin('yaxis2', {
                 deep: ['font'],
-                defaults: extend({position: 'right'}, opts.axis, value)
+                defaults: extend({position: 'right', nice: true}, opts.axis, value)
             });
 
             opts.pluginOptions(o.pluginArray);
@@ -6501,8 +6569,9 @@
                     return d3.round(0.8*(group.innerWidth() / draw.data().length));
                 };
 
-            for (var i=0; i<rawdata.length; i++)
-                data.push(bar(this, rawdata[i], width));
+            rawdata.forEach(function (d) {
+                data.push(bar(draw, d, width));
+            });
 
             return data;
         },
@@ -7032,6 +7101,7 @@
 
                         loading_data = false;
                         viz.fire('loadend');
+
                         if (arguments.length === 1) xd = error;
                         else if(error)
                             return g.log.error(error);
@@ -7123,16 +7193,334 @@
     });
 
     //
+    //  Geometric data handler
+    //  ===========================
+    //
+    //  features, array of geometric features
+    g.data.geo = function (features) {
+
+        var value = function (d) {return d.value;},
+            label = function (d) {return d.label;},
+            minval=Infinity,
+            maxval=-Infinity,
+            scale = d3.scale.linear(),
+            colors;
+
+        function geo (serie, geodata, opts) {
+            minval = Infinity;
+            maxval = -Infinity;
+
+            features.forEach(function (feature) {
+                feature = {object: feature};
+                d = serie.get(feature.object.id);
+                if (d) {
+                    val = +y(d);
+                    if (val === val) {
+                        minval = Math.min(val, minval);
+                        maxval = Math.max(val, maxval);
+                        feature.data = [label(d), val];
+                        feature.fill = color(scale(val));
+                    } else {
+                        feature.active = false;
+                        feature.fill = opts.missingFill;
+                    }
+                }
+                data.push(feature);
+            });
+            if (scale(0) !== scale(0)) {
+                minval = Math.max(minval, 1);
+                maxval = Math.max(maxval, minval);
+            }
+            scale.domain([minval, maxval]);
+            return data;
+        }
+
+        geo.value = function (_) {
+            if (!arguments.length) return value;
+            value = d3_functor(_);
+            return geo;
+        };
+
+        geo.label = function (_) {
+            if (!arguments.length) return label;
+            label = d3_functor(_);
+            return geo;
+        };
+
+        geo.data = function () {
+            return data;
+        };
+
+        geo.minvalue = function () {
+            return minval;
+        };
+
+        geo.maxvalue = function () {
+            return maxval;
+        };
+
+        geo.scale = function (_) {
+            if (!arguments.length) return scale;
+            scale = _;
+            return geo;
+        };
+
+        geo.colors = function (cols) {
+            if (!arguments.length) return colors;
+            colors = cols;
+            return geo;
+        };
+
+        return geo;
+    };
+
+    //
+    //  Geometry (Maps)
+    //  =====================
+    //
+    //  Geo charts
+    //
+    g.paper.plugin('geo', {
+        deep: ['active', 'tooltip', 'transition'],
+
+        defaults: {
+            scale: 1,
+            color: '#333',
+            missingFill: '#d9d9d9',
+            fill: 'none',
+            fillOpacity: 1,
+            colorOpacity: 1,
+            lineWidth: 0.5,
+            projection: null,
+            features: null,
+            active: {
+                fill: 'darker'
+            },
+            formatX: d3_identity,
+            tooltip: {
+                template: function (d) {
+                    return "<p><strong>" + d.x + "</strong> " + d.y + "</p>";
+                }
+            }
+        },
+
+        init: function (group) {
+
+            //
+            //  Create a new drawing for geometric datasets
+            group.geo = function (data, opts) {
+                var type = group.type(),
+                    features,
+                    path;
+
+                opts || (opts = {});
+                copyMissing(group.options().geo, opts);
+                group.element().classed('geo', true);
+
+                return group.add(geodraw(group, g[type].geodraw))
+                               .options(opts)
+                               .data(data);
+            };
+        }
+    });
+
+    //
+    //  geo drawing constructor
+    //  Used by both SVG and Canvas geo renderer functions
+    function geodraw (group, renderer) {
+        var path = d3.geo.path(),
+            feature = g[group.type()].feature,
+            draw = drawing(group, renderer),
+            dataFeatures,
+            features;
+
+        // Return the path constructor
+        draw.path = function () {
+
+            var opts = draw.options(),
+                width = Math.round(0.5 * group.innerWidth()),
+                height = Math.round(0.5 * group.innerHeight()),
+                scale = Math.round(opts.scale*Math.min(width, height)),
+                projection;
+
+            if (opts.projection) {
+                projection = opts.projection;
+                if (isString(projection)) {
+                    if (g.geo[projection]) {
+                        g.geo[projection](draw, path);
+                        return path;
+                    }
+                    projection = d3.geo[projection];
+                }
+            }
+            if (!projection)
+                projection = d3.geo.mercator;
+
+            projection = projection()
+                            .scale(scale)
+                            .translate([width, height]);
+
+            return path.projection(projection);
+        };
+
+        // Set get/geo topographic features
+        draw.features = function (_) {
+            if (!arguments.length) return features;
+            features = _;
+            dataFeatures = null;
+            return draw;
+        };
+
+        draw.graticule = function () {
+            var g = {object: d3.geo.graticule()()};
+            return extend(g, group.options().grid, draw.options().grid);
+        };
+
+        draw.dataFeatures = function () {
+            if (features && (draw.changed() || !dataFeatures))
+                dataFeatures = buildDataFeatures();
+            return dataFeatures;
+        };
+
+        return draw;
+
+        function buildDataFeatures () {
+            var geodata = [],
+                opts = draw.options(),
+                scale = group.yaxis().scale(),
+                color = d3.scale.quantize().domain(scale.range()).range(opts.colors.scale);
+
+            // Loop through features and pick data-geo functions
+            features.forEach(function (geo) {
+                if (isFunction(geo))
+                    geo(draw);
+                else {
+                    geo.active = false;
+                    geodata.push(feature(draw, null, geo));
+                }
+            });
+            return geodata;
+        }
+    }
+
+    // Draw the geo on SVG
+    g.svg.geodraw = function () {
+        var draw = this,
+            opts = draw.options(),
+            group = draw.group(),
+            chart = group.element().selectAll("#" + draw.uid()),
+            trans = opts.transition,
+            features = draw.features(),
+            resizing = group.resizing();
+
+        if (!chart.size()) {
+            chart = group.element().append("g").attr('id', draw.uid());
+            resizing = true;
+        }
+
+        if (!features)
+            return opts.features(function (features) {
+                draw.features(features).render();
+            });
+
+        var geodata = draw.dataFeatures();
+        if (opts.grid) {
+            geodata = geodata.slice();
+            geodata.push(draw.graticule());
+        }
+
+        var paths = chart.selectAll('path').data(geodata),
+            path = draw.path();
+
+        paths.enter().append('path');
+        paths.exit().remove();
+        group.events(paths);
+
+        if (!resizing && trans && trans.duration)
+            paths = paths.transition().duration(trans.duration).ease(trans.ease);
+
+        group.draw(paths)
+            .style('vector-effect', 'non-scaling-stroke')
+            .attr('id', function (d) { return d.object.id;})
+            .attr('d', function (d) {
+                return path(d.object);
+            });
+
+
+        group.on('zoom.geo', function () {
+            chart.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+        });
+    };
+
+    //  An svg feature in the geo
+    //  Similar to a point in a point chart or a bar in a bar chart
+    g.svg.feature = function (draw, data, feature) {
+        var group = draw.group();
+        feature = drawingData(draw, data, feature);
+
+        feature.render = function (element) {
+            group.draw(element);
+        };
+
+        return feature;
+    };
+
+    // Draw the geo on Canvas
+    g.canvas.geodraw = function () {
+        var draw = this,
+            opts = draw.options(),
+            group = draw.group(),
+            features = draw.features();
+
+        if (!features)
+            return opts.features(function (features) {
+                draw.features(features).render();
+            });
+
+        if (opts.grid) {
+            features = features.slice();
+            features.push(draw.graticule());
+        }
+
+        var path = draw.path(),
+            ctx = group.context();
+
+        path.context(ctx);
+        features.forEach(function (d) {
+            path(d.object);
+        });
+    };
+
+    g.canvas.feature = function (draw, feature) {
+        var group = draw.group();
+
+        feature.render = function (element) {
+            group.draw(element).attr('d', draw.symbol ? draw.symbol : draw.path());
+        };
+
+        return feature;
+    };
+
+    //
     //  Add grid functionality to a group
     //  =====================================
     //
     //  In theory each group can have its own grid
+    g.themes.light.grid = {
+        color: '#333',
+        colorOpacity: 0.3
+    };
+    g.themes.dark.grid = {
+        color: '#888',
+        colorOpacity: 1
+    };
+
     g.paper.plugin('grid', {
 
         defaults: {
             show: false,
-            color: '#333',
-            colorOpacity: 0.3,
+            color: ctheme.grid.color,
+            colorOpacity: ctheme.grid.colorOpacity,
             fill: 'none',
             fillOpacity: 0.2,
             lineWidth: 0.5,
@@ -7173,11 +7561,11 @@
                     gopts.before = '*';
                     grid = paper.group(gopts);
                     grid.element().classed('grid', true);
-                    grid.xaxis().tickFormat(notick).scale(group.xaxis().scale());
-                    grid.yaxis().tickFormat(notick).scale(group.yaxis().scale());
+                    grid.xaxis().tickFormat(notick);
+                    grid.yaxis().tickFormat(notick);
                     grid.add(Rectangle).options(gopts.grid);
-                    if (gopts.xaxis.show) grid.drawXaxis();
-                    if (gopts.yaxis.show) grid.drawYaxis();
+                    if (gopts.xaxis.show) grid.xaxis().draw();
+                    if (gopts.yaxis.show) grid.yaxis().draw();
                     grid.on('zoom', zoomgrid);
                     grid.render();
                 } else
@@ -7223,8 +7611,8 @@
                     ctx.restore();
                 }
 
-                grid.xaxis().tickSize(-height, 0);
-                grid.yaxis().tickSize(-width, 0);
+                grid.xaxis().scale(group.xaxis().scale()).tickSize(-height, 0);
+                grid.yaxis().scale(group.xaxis().scale()).tickSize(-width, 0);
             }
 
             function zoomgrid () {
@@ -7709,8 +8097,10 @@
                             offset: 0
                         },
                         {
-                            color: opts.gradient,
-                            opacity: draw.fillOpacity,
+                            color: draw.fill,
+                            opacity: 0,
+                            //color: opts.gradient,
+                            //opacity: draw.fillOpacity,
                             offset: 100
                         }]).direction('y')(a);
                 } else
@@ -7878,328 +8268,6 @@
 
         return draw;
     }
-
-    //
-    //  Geometric data handler
-    //  ===========================
-    //
-    //  features, array of geometric features
-    g.data.geo = function (features) {
-
-        var value = function (d) {return d.value;},
-            label = function (d) {return d.label;},
-            minval=Infinity,
-            maxval=-Infinity,
-            scale = d3.scale.linear(),
-            colors;
-
-        function geo (serie, geodata, opts) {
-            minval = Infinity;
-            maxval = -Infinity;
-
-            features.forEach(function (feature) {
-                feature = {object: feature};
-                d = serie.get(feature.object.id);
-                if (d) {
-                    val = +y(d);
-                    if (val === val) {
-                        minval = Math.min(val, minval);
-                        maxval = Math.max(val, maxval);
-                        feature.data = [label(d), val];
-                        feature.fill = color(scale(val));
-                    } else {
-                        feature.active = false;
-                        feature.fill = opts.missingFill;
-                    }
-                }
-                data.push(feature);
-            });
-            if (scale(0) !== scale(0)) {
-                minval = Math.max(minval, 1);
-                maxval = Math.max(maxval, minval);
-            }
-            scale.domain([minval, maxval]);
-            return data;
-        }
-
-        geo.value = function (_) {
-            if (!arguments.length) return value;
-            value = d3_functor(_);
-            return geo;
-        };
-
-        geo.label = function (_) {
-            if (!arguments.length) return label;
-            label = d3_functor(_);
-            return geo;
-        };
-
-        geo.data = function () {
-            return data;
-        };
-
-        geo.minvalue = function () {
-            return minval;
-        };
-
-        geo.maxvalue = function () {
-            return maxval;
-        };
-
-        geo.scale = function (_) {
-            if (!arguments.length) return scale;
-            scale = _;
-            return geo;
-        };
-
-        geo.colors = function (cols) {
-            if (!arguments.length) return colors;
-            colors = cols;
-            return geo;
-        };
-
-        return geo;
-    };
-
-    //
-    //  Mapping
-    //  =====================
-    //
-    //  Map charts and animations
-    //
-    g.paper.plugin('map', {
-        deep: ['active', 'tooltip', 'transition'],
-
-        defaults: {
-            scale: 1,
-            color: '#333',
-            missingFill: '#d9d9d9',
-            fill: 'none',
-            fillOpacity: 1,
-            colorOpacity: 1,
-            lineWidth: 0.5,
-            projection: null,
-            features: null,
-            active: {
-                fill: 'darker'
-            },
-            formatX: d3_identity,
-            tooltip: {
-                template: function (d) {
-                    return "<p><strong>" + d.x + "</strong> " + d.y + "</p>";
-                }
-            }
-        },
-
-        init: function (group) {
-
-            group.map = function (data, opts) {
-                var type = group.type(),
-                    features,
-                    path;
-
-                opts || (opts = {});
-                copyMissing(group.options().map, opts);
-                group.element().classed('geo', true);
-
-                var map = group.add(mapdraw(group, g[type].mapdraw))
-                               .options(opts)
-                               .data(data);
-                return map;
-            };
-        }
-    });
-
-    //
-    //  Map drawing constructor
-    //  Used by both SVG and Canvas map renderer functions
-    function mapdraw (group, renderer) {
-        var path = d3.geo.path(),
-            feature = g[group.type()].feature,
-            draw = drawing(group, renderer),
-            dataFeatures,
-            features;
-
-        // Return the path constructor
-        draw.path = function () {
-
-            var opts = draw.options(),
-                width = Math.round(0.5 * group.innerWidth()),
-                height = Math.round(0.5 * group.innerHeight()),
-                scale = Math.round(opts.scale*Math.min(width, height)),
-                projection;
-
-            if (opts.projection) {
-                projection = opts.projection;
-                if (isString(projection)) {
-                    if (g.geo[projection]) {
-                        g.geo[projection](draw, path);
-                        return path;
-                    }
-                    projection = d3.geo[projection];
-                }
-            }
-            if (!projection)
-                projection = d3.geo.mercator;
-
-            projection = projection()
-                            .scale(scale)
-                            .translate([width, height]);
-
-            return path.projection(projection);
-        };
-
-        // Set get/map topographic features
-        draw.features = function (_) {
-            if (!arguments.length) return features;
-            features = _;
-            dataFeatures = null;
-            return draw;
-        };
-
-        draw.graticule = function () {
-            var g = {object: d3.geo.graticule()()};
-            return extend(g, group.options().grid, draw.options().grid);
-        };
-
-        draw.dataFeatures = function () {
-            if (features && (draw.changed() || !dataFeatures))
-                dataFeatures = buildDataFeatures();
-            return dataFeatures;
-        };
-
-        return draw;
-
-        function buildDataFeatures () {
-            var geodata = [],
-                opts = draw.options(),
-                color = d3.scale.quantize().domain(scale.range()).range(color);
-
-            features.forEach(function (geo) {
-                if (isFunction(geo)) {
-                    var color = colors;
-            if (!color) {
-                g.log.warn('colors range not specified in g.data.geo');
-                color = ['#333', '#222'];
-            }
-            var y = geodata.y(),
-                label = geodata.label() || grodata.x(),
-                d, val;
-
-            data = [];
-            color = d3.scale.quantize().domain(scale.range()).range(color);
-                    geo(draw.data(), function () {
-
-
-
-                    });
-                }
-                else {
-                    geo.active = false;
-                    geodata.push(feature(draw, null, geo));
-                }
-            });
-            return geodata;
-        }
-    }
-
-    // Draw the map on SVG
-    g.svg.mapdraw = function () {
-        var draw = this,
-            opts = draw.options(),
-            group = draw.group(),
-            chart = group.element().selectAll("#" + draw.uid()),
-            trans = opts.transition,
-            features = draw.features(),
-            resizing = group.resizing();
-
-        if (!chart.size()) {
-            chart = group.element().append("g").attr('id', draw.uid());
-            resizing = true;
-        }
-
-        if (!features)
-            return opts.features(function (features) {
-                draw.features(features).render();
-            });
-
-        var geodata = draw.dataFeatures();
-        if (opts.grid) {
-            geodata = geodata.slice();
-            geodata.push(draw.graticule());
-        }
-
-        var paths = chart.selectAll('path').data(geodata),
-            path = draw.path();
-
-        paths.enter().append('path');
-        paths.exit().remove();
-        group.events(paths);
-
-        if (!resizing && trans && trans.duration)
-            paths = paths.transition().duration(trans.duration).ease(trans.ease);
-
-        group.draw(paths)
-            .style('vector-effect', 'non-scaling-stroke')
-            .attr('id', function (d) { return d.object.id;})
-            .attr('d', function (d) {
-                return path(d.object);
-            });
-
-
-        group.on('zoom.map', function () {
-            chart.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
-        });
-    };
-
-    //  An svg feature in the map
-    //  Similar to a point in a point chart or a bar in a bar chart
-    g.svg.feature = function (draw, data, feature) {
-        var group = draw.group();
-        feature = drawingData(draw, data, feature);
-
-        feature.render = function (element) {
-            group.draw(element);
-        };
-
-        return feature;
-    };
-
-    // Draw the map on Canvas
-    g.canvas.mapdraw = function () {
-        var draw = this,
-            opts = draw.options(),
-            group = draw.group(),
-            features = draw.features();
-
-        if (!features)
-            return opts.features(function (features) {
-                draw.features(features).render();
-            });
-
-        if (opts.grid) {
-            features = features.slice();
-            features.push(draw.graticule());
-        }
-
-        var path = draw.path(),
-            ctx = group.context();
-
-        path.context(ctx);
-        features.forEach(function (d) {
-            path(d.object);
-        });
-    };
-
-    g.canvas.feature = function (draw, feature) {
-        var group = draw.group();
-
-        feature.render = function (element) {
-            group.draw(element).attr('d', draw.symbol ? draw.symbol : draw.path());
-        };
-
-        return feature;
-    };
 
     //
     //  Giotto Context Menu
@@ -8783,13 +8851,15 @@
         },
 
         point_costructor = function (rawdata) {
-            var group = this.group(),
+            var draw = this,
+                group = this.group(),
                 size = group.scale(group.dim(this.options().size)),
                 point = g[group.type()].point,
                 data = [];
 
-            for (var i=0; i<rawdata.length; i++)
-                data.push(point(this, rawdata[i], size));
+            rawdata.forEach(function (d) {
+                data.push(point(draw, d, size));
+            });
             return data;
         };
 
@@ -9045,6 +9115,44 @@ NS["src/text/giotto.min.css"] = '@charset "UTF-8";.sunburst text{z-index:9999}.s
             return d;
         };
 
+        //
+        //  Get Options for a Visualization Directive
+        //  ==============================================
+        //
+        //  Obtain information from
+        //  * javascript object
+        //  * element attributes
+        //  * scope variables
+        ag.getOptions = function (scope, attrs, name) {
+            var key = attrs[name],
+                exclude = [name, 'options', 'class', 'style'],
+                jsOptions;
+
+            if (typeof attrs.options === 'string')
+                key = attrs.options;
+
+            // Try the scope first
+            if (key) {
+                jsOptions = scope[key];
+
+                // try the global javascript object
+                if (!jsOptions)
+                    jsOptions = getRootAttribute(key);
+            }
+
+            if (typeof jsOptions === 'function')
+                jsOptions = jsOptions();
+
+            if (!jsOptions) jsOptions = {};
+
+            var attrOptions = {};
+            forEach(attrs, function (value, name) {
+                if (name.substring(0, 1) !== '$' && exclude.indexOf(name) === -1)
+                    attrOptions[name] = value;
+            });
+            return {js: jsOptions, attr: attrOptions};
+        };
+
         ag.module = function (angular, moduleName, deps) {
 
             if (!arguments.length) return mod;
@@ -9064,17 +9172,23 @@ NS["src/text/giotto.min.css"] = '@charset "UTF-8";.sunburst text{z-index:9999}.s
 
                     }])
 
+                    //
+                    //  Giotto Visualization Collection
+                    //  ====================================
+                    //
+                    //  Directive to aggregate giotto visualizations with
+                    //  close interaction
                     .directive('giottoCollection', function () {
 
                         return {
                             restrict: 'AE',
 
                             controller: ['$scope', function (scope) {
-                                scope.giottoCollection = ag.mixin(g.collection());
+                                scope.giottoCollection = ag.mixin(g.viz.collection());
                             }],
 
                             link: function (scope, element, attrs) {
-                                var o = getOptions(attrs);
+                                var o = ag.getOptions(scope, attrs, 'giottoCollection');
                                 scope.giottoCollection
                                     .options(o.attr)
                                     .options(o.js)
@@ -9114,11 +9228,23 @@ NS["src/text/giotto.min.css"] = '@charset "UTF-8";.sunburst text{z-index:9999}.s
             name = mod.name.toLowerCase() + name.substring(0,1).toUpperCase() + name.substring(1);
 
             function startViz(scope, element, o, options, injected) {
-                var collection = scope.giottoCollection;
+                var collection = scope.giottoCollection,
+                    key;
 
+                // Get the key for the collection (if a collection is available)
+                if (collection) {
+                    if (isString(options)) {
+                        key = options;
+                        options = null;
+                    } else
+                        key = collection.size() + 1;
+                }
+
+                // Add injects to the scope object
                 for (var i=0; i<injected.length; ++i)
-                    options[injects[i]] = injected[i];
+                    scope[injects[i]] = injected[i];
 
+                // Creat the visualization
                 var viz = vizType(element[0], o.attr)
                             .options(o.js)
                             .options(options);
@@ -9128,15 +9254,16 @@ NS["src/text/giotto.min.css"] = '@charset "UTF-8";.sunburst text{z-index:9999}.s
 
                 element.data(name, viz);
 
-                if (collection) {
-                    var key = options.key || collection.size() + 1;
+                if (collection)
                     collection.set(key, viz);
-                } else {
+                else {
                     scope.$emit('giotto-viz', viz);
                     viz.start();
                 }
             }
 
+            //  Directive implementation for a visualization other than a
+            //  collection
             injects.push(function () {
                 var injected_arguments = arguments;
                 return {
@@ -9147,15 +9274,17 @@ NS["src/text/giotto.min.css"] = '@charset "UTF-8";.sunburst text{z-index:9999}.s
                     link: function (scope, element, attrs) {
                         var viz = element.data(name);
                         if (!viz) {
-                            var o = getOptions(attrs),
+                            var key = attrs[name],
+                                o = ag.getOptions(scope, attrs, name),
                                 deps = o.js.require || o.attr.require;
                             if (deps) {
                                 if (!g._.isArray(deps)) deps = [deps];
                                 require(deps, function (opts) {
                                     startViz(scope, element, o, opts, injected_arguments);
                                 });
-                            } else
-                                startViz(scope, element, o, null, injected_arguments);
+                            } else {
+                                startViz(scope, element, o, key, injected_arguments);
+                            }
                         }
                     }
                 };
@@ -9173,7 +9302,7 @@ NS["src/text/giotto.min.css"] = '@charset "UTF-8";.sunburst text{z-index:9999}.s
 
             angular.forEach(g.viz, function (vizType) {
                 var name = vizType.vizName ? vizType.vizName() : null;
-                if (name)
+                if (name && name !== 'collection')
                     g.angular.directive(vizType, name, injects);
             });
 

@@ -127,7 +127,7 @@
 
                 html += template({
                     c: data.color,
-                    l: draw.label() || 'serie',
+                    l: draw.label()(data.data) || 'serie',
                     x: draw.formatX(draw.x()(data.data)),
                     y: draw.formatY(draw.y()(data.data))
                 });

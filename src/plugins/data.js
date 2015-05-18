@@ -79,6 +79,7 @@
 
                         loading_data = false;
                         viz.fire('loadend');
+
                         if (arguments.length === 1) xd = error;
                         else if(error)
                             return g.log.error(error);

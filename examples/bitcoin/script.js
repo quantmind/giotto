@@ -5,7 +5,25 @@
         fill: '#000',
         data: {
             src: function () {
-                return quandl.url('BAVERAGE/USD.json', {rows: 365});
+                return d3.giotto.quandl.url('BAVERAGE/USD.json', {rows: 365});
+            },
+            process: function (raw) {
+                raw.data.forEach(function (row) {
+                    row[0] = new Date(row[0]);
+                });
+                data = d3.giotto.data.multi().data(raw.data);
+
+                return [
+                    {
+                        label: 'Average Price',
+                        data: data.serie().y(1),
+                    }];
+                    //,
+                    //{
+                    //    label: 'Volume',
+                    //    yaxis: 2,
+                    //    data: data.serie().y(5),
+                    //}];
             }
         },
         tooltip: true,
@@ -36,28 +54,5 @@
             opts.yaxis.color = color;
             opts.yaxis.font.color = color;
             opts.grid.color = color;
-        },
-
-        processData: function (raw) {
-            var price = [],
-                volume = [],
-                dt;
-            raw.data.forEach(function (row) {
-                dt = new Date(row[0]);
-                price.push([dt, row[1]]);
-                volume.push([dt, row[5]]);
-            });
-            return [
-                {
-                    label: 'Average Price',
-                    data: price,
-
-                }];
-                //,
-                //{
-                //    label: 'Volume',
-                //    yaxis: 2,
-                //    data: volume
-                //}];
         }
     };
