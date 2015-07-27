@@ -30,8 +30,7 @@
         "dest": "dist/giotto.js"
     },
     "giottoweb": {
-        "src": ["vendor/requirejs/require.js",
-                "src/giottoweb/cfg.js",
+        "src": ["src/giottoweb/cfg.js",
                 "src/giottoweb/require.config.js",
                 "src/giottoweb/open.js",
                 "src/giottoweb/main.js",

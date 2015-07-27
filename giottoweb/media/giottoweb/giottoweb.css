@@ -1,8 +1,8 @@
 @charset "UTF-8";
 /*
 ------------------------------------------------------------------
-Created by lux in 0.46 seconds
-Date: 2015-07-27 07:26:08
+Created by lux in 0.23 seconds
+Date: 2015-07-27 08:16:39
 
 http://quantmind.github.io/lux/
 ------------------------------------------------------------------ */
@@ -13,8 +13,8 @@ http://quantmind.github.io/lux/
 }
 
 .full-width {
-    float: left;
     width: 100%;
+    float: left;
 }
 
 .block {
@@ -26,11 +26,11 @@ http://quantmind.github.io/lux/
 }
 
 .lazyContainer > .content {
-    left: 0;
-    top: 0;
     min-height: 100%;
-    width: 100%;
+    top: 0;
     position: absolute;
+    left: 0;
+    width: 100%;
 }
 
 .large {
@@ -127,12 +127,12 @@ p.form-error {
 }
 
 .features article {
-    float: left;
     padding: 30px;
     width: 33.33%;
     float: left;
     padding: 30px;
     width: 33.33%;
+    float: left;
 }
 
 .features article:before {
@@ -159,8 +159,8 @@ p.form-error {
 }
 @media all and (max-width:600px) {
     .features article {
-        float: none;
         width: auto;
+        float: none;
     }
 
 }
@@ -176,12 +176,12 @@ p.form-error {
 
 .katex-outer {
     display: block;
-    margin-bottom: 10px;
     margin-left: auto;
+    margin-bottom: 10px;
     margin-right: auto;
     display: block;
-    margin-bottom: 10px;
     margin-left: auto;
+    margin-bottom: 10px;
     margin-right: auto;
 }
 
@@ -7193,10 +7193,10 @@ html,
 }
 
 code.hljs.inline {
-    display: inline;
     padding: 2px 4px;
     display: inline;
     padding: 2px 4px;
+    display: inline;
 }
 
 dl dd {
@@ -7246,8 +7246,8 @@ dl.function dt {
 }
 
 .text-content > .standard {
-    max-width: 790px;
     margin-left: auto;
+    max-width: 790px;
     margin-right: auto;
 }
 
@@ -7264,16 +7264,16 @@ dl.function dt {
 }
 
 .post-image {
-    max-height: 140px;
-    height: auto;
     width: 140px;
     float: left;
+    max-height: 140px;
+    height: auto;
 }
 
 .post-image-xs {
-    max-width: 90%;
-    max-height: 150px;
     width: auto;
+    max-height: 150px;
+    max-width: 90%;
 }
 
 h1:hover > a.headerlink,
@@ -7297,8 +7297,8 @@ a.headerlink {
 }
 
 div.viewcode-block:target {
-    margin: -1px -10px;
     padding: 0 10px;
+    margin: -1px -10px;
 }
 
 table.docutils.field-list th {
@@ -7313,10 +7313,10 @@ table.docutils.field-list th {
 .page-header.index-header {
     height: 101%;
     min-height: 100%;
-    color: #fff;
-    background: #333;
-    margin: 0;
     width: 101%;
+    background: #333;
+    color: #fff;
+    margin: 0;
 }
 
 form {
@@ -7349,9 +7349,9 @@ form {
 }
 
 .trianglify-box {
-    max-width: 400px;
     padding: 20px;
     background: rgba(255, 255, 255, 0.6);
+    max-width: 400px;
     -webkit-border-radius: 5px;
        -moz-border-radius: 5px;
             border-radius: 5px;
@@ -7378,9 +7378,9 @@ form {
 }
 
 .error-message-container {
-    height: 100%;
     padding: 40px 120px;
     background: rgba(0, 0, 0, 0.4);
+    height: 100%;
     -webkit-box-sizing: border-box;
        -moz-box-sizing: border-box;
             box-sizing: border-box;

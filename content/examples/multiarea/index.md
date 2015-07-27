@@ -2,7 +2,7 @@ title: Multiple Area Charts with Gradient
 description: Multiple area charts for both svg and canvas elements are supported by rendering areas in a background element.
 author: Luca Sbardella
 date: 30 December 2014
-image: $site_url/examples/multiarea.png
+image: /examples/multiarea/multiarea.png
 
 <div class="container-fluid">
   <div class="row">

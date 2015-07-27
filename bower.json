@@ -35,7 +35,6 @@
     "d3": ""
   },
   "devDependencies": {
-    "requirejs": "",
     "d3-geo-projection": ""
   }
 }

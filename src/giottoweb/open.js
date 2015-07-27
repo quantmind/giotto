@@ -1,7 +1,7 @@
 //
 //  Script for giotto website
 //  =============================
-require(['lux/lux', 'giotto/giotto', 'd3-geo-projection', 'angular-ui-router', 'angular-strap'], function (lux, d3) {
+require(['lux', 'giotto', 'd3-geo-projection', 'angular-ui-router', 'angular-strap'], function (lux, d3) {
     "use strict";
 
     var url = lux.context.url,

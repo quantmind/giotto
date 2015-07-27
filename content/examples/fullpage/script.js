@@ -1,2 +1,2 @@
-    gexamples.fullpage = {
-    };
+gexamples.fullpage = {
+};

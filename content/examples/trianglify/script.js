@@ -1,12 +1,12 @@
 
-    gexamples.trianglify = {
+gexamples.trianglify = {
 
-        onInit: function (viz, opts) {
+    onInit: function (viz, opts) {
 
-            luxforms.redraw = function (e) {
-                e.preventDefault();
-                angular.extend(viz.options(), this.trianglify);
-                viz.resume();
-            };
-        }
-    };
+        luxforms.redraw = function (e) {
+            e.preventDefault();
+            angular.extend(viz.options(), this.trianglify);
+            viz.resume();
+        };
+    }
+};
