@@ -1,5 +1,7 @@
 '''Lux application for building giottojs.org
 '''
+import os
+
 DESCRIPTION = ('GiottoJS is a javascript visualization library built on '
                'top of d3js. '
                'It is designed to visualize both SVG and Canvas elements '
@@ -8,20 +10,20 @@ DESCRIPTION = ('GiottoJS is a javascript visualization library built on '
 SITE_URL = 'http://giottojs.org'
 HTML_TITLE = 'GiottoJs Examples'
 STATIC_LOCATION = '../docs/giotto'
-CONTEXT_LOCATION = 'giottoweb/content/context'
+CMS_PARTIALS_PATH = 'giottoweb/content/context'
 FAVICON = 'giottoweb/favicon.ico'
 MEDIA_URL = '/media/'
-STATIC_API = 'ng'
-MINIFIED_MEDIA = True
 EXTENSIONS = ['lux.extensions.base',
               'lux.extensions.ui',
               'lux.extensions.code',
               'lux.extensions.angular',
-              'lux.extensions.static',
               'lux.extensions.sitemap',
+              'lux.extensions.content',
+              'lux.extensions.static',
               'lux.extensions.oauth',
               'lux.extensions.code',
               'giottoweb.giotto']
+
 HTML_LINKS = ['https://cdnjs.cloudflare.com/ajax/libs/font-awesome/'
               '4.3.0/css/font-awesome.min.css',
               {'href': 'giottoweb/light', 'id': 'giotto-theme'}]
@@ -41,6 +43,8 @@ LINKS = {'AngularJS': 'https://angularjs.org/',
 OAUTH_PROVIDERS = {'google': {'analytics': {'id': 'UA-54439804-4'}},
                    'twitter': {'site': '@quantmind'}}
 
+REPO = os.path.dirname(os.path.dirname(__file__))
+
 bind = ':9060'
 workers = 0
 
@@ -48,17 +52,15 @@ workers = 0
 from os import path
 
 import lux
-from lux.extensions.static import (HtmlContent, MediaBuilder, Sitemap,
-                                   DirContent, Blog)
+from lux.extensions.content import Content, CMS
+
 from .ui import add_css
 
 
-meta_default = {'image': '$site_url$site_media/giottoweb/giotto.png',
+meta_default = {'image': '${MEDIA_URL}giottoweb/giotto.png',
                 'twitter:card': 'summary_large_image',
                 'template': 'partials/base.html'}
 
-example_list_meta = {'title': 'GiottoJS Examples',
-                     'description': 'A list of GiottoJS examples'}
 examples_meta = {'template': 'partials/examples.html',
                  'twitter:card': 'summary_large_image'}
 
@@ -67,28 +69,20 @@ class Extension(lux.Extension):
 
     def middleware(self, app):
         media_url = app.config['MEDIA_URL']
-        examples = HtmlContent('/',
-                               Sitemap('/sitemap.xml'),
-                               Blog('/examples',
-                                    meta=example_list_meta,
-                                    meta_children=examples_meta,
-                                    content=DirContent,
-                                    dir='examples',
-                                    drafts=False,
-                                    uirouter=False,
-                                    index_template='partials/blogindex.html'),
-                               HtmlContent('/api',
-                                           dir='giottoweb/content/api',
-                                           drafts=False,
-                                           meta=meta_default),
-                               drafts=False,
-                               uirouter=False,
-                               dir='giottoweb/content/site',
-                               meta=meta_default)
-        dist = MediaBuilder(media_url+'giotto', 'dist', lux=False)
-        vendor = MediaBuilder(media_url+'vendor', 'vendor', lux=False)
-        data = MediaBuilder('data', 'giottoweb/content/data', lux=False)
-        return [dist, vendor, data, examples]
+        site = Content('site', REPO, path='content/site', url='')
+        api = Content('api', REPO, path='content/api', url='api')
+        examples = Content('examples', REPO, path='content/examples',
+                           url='examples')
+        app.cms = CMS(app)
+        app.cms.add_router(Content('examples', REPO, path='content/examples',
+                                   content_meta=examples_meta,
+                                   url='examples'))
+        app.cms.add_router(Content('api', REPO, path='content/api',
+                                   url='api'))
+        app.cms.add_router(Content('site', REPO, path='content/site',
+                                   content_meta=meta_default,
+                                   url=''))
+        return app.middleware()
 
     def on_html_document(self, app, request, doc):
         doc.head.embedded_js.append('var gexamples = {}, giottoQueue = [];\n')

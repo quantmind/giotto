@@ -17,14 +17,17 @@ if __name__ == '__main__':
             args.append('--minify')
         # Build css file for giotto
         lux.execute_from_config('giottoweb',
-                                argv=args,
+                                script=args[0],
+                                argv=args[1:],
                                 EXTENSIONS=['lux.extensions.ui',
                                             'giottoweb.giotto'],
                                 EXCLUDE_EXTENSIONS_CSS=['lux.extensions.ui',
                                                         'giottoweb'])
         # Build css file for example site
+        args = argv('style')
         lux.execute_from_config('giottoweb',
-                                argv=argv('style'),
+                                script=args[0],
+                                argv=args[1:],
                                 EXCLUDE_EXTENSIONS_CSS=['giottoweb.giotto'])
     # Execute command
     lux.execute_from_config('giottoweb')
