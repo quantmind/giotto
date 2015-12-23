@@ -1,8 +1,8 @@
 @charset "UTF-8";
 /*
 ------------------------------------------------------------------
-Created by lux in 0.23 seconds
-Date: 2015-07-27 08:16:39
+Created by lux in 0.65 seconds
+Date: 2015-07-27 20:57:19
 
 http://quantmind.github.io/lux/
 ------------------------------------------------------------------ */
@@ -17,7 +17,8 @@ http://quantmind.github.io/lux/
     float: left;
 }
 
-.block {
+.block,
+.d3-slider-horizontal.d3-slider-axis {
     margin-bottom: 30px;
 }
 
@@ -26,10 +27,10 @@ http://quantmind.github.io/lux/
 }
 
 .lazyContainer > .content {
-    min-height: 100%;
-    top: 0;
-    position: absolute;
     left: 0;
+    top: 0;
+    min-height: 100%;
+    position: absolute;
     width: 100%;
 }
 
@@ -83,16 +84,16 @@ http://quantmind.github.io/lux/
     }
 
     .navbar.navbar-static-top .navbar-nav > li > a {
-        padding-top: 20px;
         padding-bottom: 20px;
+        padding-top: 20px;
     }
 
 }
 @media all and (max-width:768px) {
     .collapse {
-        display: block !important;
-        max-height: 0;
         visibility: hidden;
+        max-height: 0;
+        display: block !important;
         -webkit-transition: max-height 0.8s cubic-bezier(0,1,0,1) 0s;
            -moz-transition: max-height 0.8s cubic-bezier(0,1,0,1) 0s;
              -o-transition: max-height 0.8s cubic-bezier(0,1,0,1) 0s;
@@ -100,8 +101,8 @@ http://quantmind.github.io/lux/
     }
 
     .collapse.in {
-        max-height: 999px;
         visibility: visible;
+        max-height: 999px;
         -webkit-transition: max-height 0.8s cubic-bezier(0.1,0,1,0) 0s;
            -moz-transition: max-height 0.8s cubic-bezier(0.1,0,1,0) 0s;
              -o-transition: max-height 0.8s cubic-bezier(0.1,0,1,0) 0s;
@@ -127,11 +128,11 @@ p.form-error {
 }
 
 .features article {
-    padding: 30px;
     width: 33.33%;
+    padding: 30px;
     float: left;
-    padding: 30px;
     width: 33.33%;
+    padding: 30px;
     float: left;
 }
 
@@ -175,14 +176,14 @@ p.form-error {
 }
 
 .katex-outer {
-    display: block;
     margin-left: auto;
-    margin-bottom: 10px;
     margin-right: auto;
     display: block;
-    margin-left: auto;
     margin-bottom: 10px;
+    margin-left: auto;
     margin-right: auto;
+    display: block;
+    margin-bottom: 10px;
 }
 
 .hljs-comment,.hljs-title{color:#8e908c}.hljs-variable,.hljs-attribute,.hljs-tag,.hljs-regexp,.ruby .hljs-constant,.xml .hljs-tag .hljs-title,.xml .hljs-pi,.xml .hljs-doctype,.html .hljs-doctype,.css .hljs-id,.css .hljs-class,.css .hljs-pseudo{color:#c82829}.hljs-number,.hljs-preprocessor,.hljs-pragma,.hljs-built_in,.hljs-literal,.hljs-params,.hljs-constant{color:#f5871f}.ruby .hljs-class .hljs-title,.css .hljs-rules .hljs-attribute{color:#eab700}.hljs-string,.hljs-value,.hljs-inheritance,.hljs-header,.ruby .hljs-symbol,.xml .hljs-cdata{color:#718c00}.css .hljs-hexcolor{color:#3e999f}.hljs-function,.python .hljs-decorator,.python .hljs-title,.ruby .hljs-function .hljs-title,.ruby .hljs-title .hljs-keyword,.perl .hljs-sub,.javascript .hljs-title,.coffeescript .hljs-title{color:#4271ae}.hljs-keyword,.javascript .hljs-function{color:#8959a8}.hljs{display:block;overflow-x:auto;background:white;color:#4d4d4c;padding:0.5em;-webkit-text-size-adjust:none}.coffeescript .javascript,.javascript .xml,.tex .hljs-formula,.xml .javascript,.xml .vbscript,.xml .css,.xml .hljs-cdata{opacity:0.5}
@@ -7218,10 +7219,10 @@ dl.function dt tt.descname {
 
 dl.class dt,
 dl.function dt {
-    color: #888;
     font-weight: normal;
     color: #888;
     font-weight: normal;
+    color: #888;
 }
 
 [ng\:cloak],
@@ -7246,63 +7247,166 @@ dl.function dt {
 }
 
 .text-content > .standard {
-    margin-left: auto;
     max-width: 790px;
     margin-right: auto;
+    margin-left: auto;
 }
 
-.media-list > .media > a {
-    text-decoration: none;
+.sunburst text {
+    z-index: 9999;
 }
 
-.media-list > .media > a .post-body {
-    margin-left: 160px;
+.sunburst path {
+    fill-rule: evenodd;
+    stroke: #fff;
 }
 
-.media-list > .media > a h3 {
-    font-weight: normal;
+.axis,
+.d3-slider-axis line {
+    fill: none;
+    shape-rendering: crispEdges;
 }
 
-.post-image {
-    width: 140px;
-    float: left;
-    max-height: 140px;
-    height: auto;
+.line {
+    fill: none;
 }
 
-.post-image-xs {
-    width: auto;
-    max-height: 150px;
-    max-width: 90%;
+.d3-tip:after {
+    position: absolute;
+    width: 100%;
+    line-height: 1;
+    display: inline;
+    font-size: 16px;
+    -webkit-box-sizing: border-box;
+       -moz-box-sizing: border-box;
+            box-sizing: border-box;
 }
 
-h1:hover > a.headerlink,
-h2:hover > a.headerlink,
-h3:hover > a.headerlink,
-h4:hover > a.headerlink,
-h5:hover > a.headerlink,
-h6:hover > a.headerlink,
-dt:hover > a.headerlink {
-    visibility: visible;
+.d3-tip.n:after {
+    margin: -2px 0 0 0;
+    left: 0;
+    top: 100%;
+    text-align: center;
+    content: "\\25BC";
 }
 
-a.headerlink {
-    padding: 0 4px;
-    text-decoration: none;
-    visibility: hidden;
+.d3-tip.e:after {
+    margin: -4px 0 0 0;
+    left: -8px;
+    top: 50%;
+    content: "\\25C0";
 }
 
-.viewcode-link {
-    float: right;
+.d3-tip.s:after {
+    margin: 0 0 2px 0;
+    left: 0;
+    top: -8px;
+    text-align: center;
+    content: "\\25B2";
 }
 
-div.viewcode-block:target {
-    padding: 0 10px;
-    margin: -1px -10px;
+.d3-tip.w:after {
+    margin: -4px 0 0 -1px;
+    left: 100%;
+    top: 50%;
+    content: "\\25B6";
 }
 
-table.docutils.field-list th {
-    padding: 0 20px 0 0;
+.d3-slider {
+    margin: 20px;
+    position: relative;
+    font-size: 1.1em;
+    font-family: Verdana,Arial,sans-serif;
+    z-index: 2;
+    border: 1px solid;
+}
+
+.d3-slider-horizontal {
+    height: 0.8em;
+}
+
+.d3-slider-range {
+    left: 0;
+    position: absolute;
+    right: 0;
+    height: 0.8em;
+}
+
+.d3-slider-range-vertical {
+    left: 0;
+    top: 0;
+    position: absolute;
+    right: 0;
+}
+
+.d3-slider-range-vertical.d3-slider-axis {
+    margin-right: 30px;
+}
+
+.d3-slider-vertical {
+    width: 0.8em;
+    height: 100px;
+}
+
+.d3-slider-handle {
+    width: 1.2em;
+    position: absolute;
+    height: 1.2em;
+    z-index: 3;
+    -webkit-border-radius: 4px;
+       -moz-border-radius: 4px;
+            border-radius: 4px;
+    border: 1px solid;
+}
+
+.d3-slider-horizontal .d3-slider-handle {
+    top: -0.25em;
+    margin-left: -0.6em;
+}
+
+.d3-slider-axis {
+    position: relative;
+    z-index: 1;
+}
+
+.d3-slider-axis-bottom {
+    top: 0.8em;
+}
+
+.d3-slider-axis-right {
+    left: 0.8em;
+}
+
+.d3-slider-axis path {
+    fill: none;
+    stroke-width: 0;
+}
+
+.d3-slider-axis text {
+    font-size: 11px;
+}
+
+.d3-slider-vertical .d3-slider-handle {
+    left: -0.25em;
+    margin-left: 0;
+    margin-bottom: -0.6em;
+}
+
+.d3-slider-default {
+    border-color: #aaa;
+}
+
+.d3-slider-default .d3-slider-handle {
+    background-color: #ddd;
+    background-image: -moz-linear-gradient(top, #eee, #ddd);
+    background-image: -ms-linear-gradient(top, #eee, #ddd);
+    background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#eee), to(#ddd));
+    background-image: -webkit-linear-gradient(top, #eee, #ddd);
+    background-image: -o-linear-gradient(top, #eee, #ddd);
+    background-image: linear-gradient(top, #eee, #ddd);
+    background-repeat: repeat-x;
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#eee', endColorstr='#ddd', GradientType=0);
+    border-color: #aaa;
 }
 
 .page-header,
@@ -7311,12 +7415,12 @@ table.docutils.field-list th {
 }
 
 .page-header.index-header {
-    height: 101%;
-    min-height: 100%;
-    width: 101%;
     background: #333;
-    color: #fff;
+    min-height: 100%;
     margin: 0;
+    width: 101%;
+    height: 101%;
+    color: #fff;
 }
 
 form {
@@ -7324,14 +7428,14 @@ form {
 }
 
 #page-main {
-    min-height: 400px;
     padding-bottom: 50px;
+    min-height: 400px;
 }
 
 #footer {
-    min-height: 300px;
     padding: 30px 0 40px;
     background: #333;
+    min-height: 300px;
 }
 
 #lux-logo {
@@ -7349,9 +7453,9 @@ form {
 }
 
 .trianglify-box {
-    padding: 20px;
-    background: rgba(255, 255, 255, 0.6);
     max-width: 400px;
+    background: rgba(255, 255, 255, 0.6);
+    padding: 20px;
     -webkit-border-radius: 5px;
        -moz-border-radius: 5px;
             border-radius: 5px;
@@ -7378,8 +7482,8 @@ form {
 }
 
 .error-message-container {
-    padding: 40px 120px;
     background: rgba(0, 0, 0, 0.4);
+    padding: 40px 120px;
     height: 100%;
     -webkit-box-sizing: border-box;
        -moz-box-sizing: border-box;
@@ -7396,8 +7500,8 @@ form {
     }
 
     .error-message-container {
-        padding: 40px 0;
         text-align: center;
+        padding: 40px 0;
     }
 
 }

@@ -30,10 +30,10 @@ EXTENSIONS = ['lux.extensions.base',
               'lux.extensions.code',
               'lux.extensions.angular',
               'lux.extensions.sitemap',
+              'lux.extensions.rest',
               'lux.extensions.content',
               #'lux.extensions.static',
               'lux.extensions.oauth',
-              'lux.extensions.code',
               'giottoweb.giotto']
 
 HTML_LINKS = ['https://cdnjs.cloudflare.com/ajax/libs/font-awesome/'
@@ -66,18 +66,23 @@ meta_default = {'image': '${MEDIA_URL}giottoweb/giotto.png',
 examples_meta = {'template': 'partials/examples.html',
                  'twitter:card': 'summary_large_image'}
 
+api_meta = {'template': 'partials/api.html',
+            'twitter:card': 'summary_large_image'}
+
 
 class Example(TextCMS):
 
     @lux.cached
     def context(self, request):
-        path = remove_double_slash('%s/script.js' % request.urlargs['path'])
-        script = to_string(self.render_file(request, path))
-        mkdown = '\n'.join(('```javascript', script, '```'))
-        reader = lux.get_reader(request.app, 'script.md')
-        content = reader.process(mkdown, 'script')
-        return dict(script_js=script,
-                    html_script_js=content.html(request))
+        if 'path' in request.urlargs:
+            path = request.urlargs['path']
+            path = remove_double_slash('%s/script.js' % path)
+            script = to_string(self.render_file(request, path))
+            mkdown = '\n'.join(('```javascript', script, '```'))
+            reader = lux.get_reader(request.app, 'script.md')
+            content = reader.process(mkdown, 'script')
+            return dict(script_js=script,
+                        html_script_js=content.html(request))
 
 
 class Extension(lux.Extension):
@@ -91,9 +96,11 @@ class Extension(lux.Extension):
         app.cms.add_router(Example(Content('examples', REPO,
                                            path='content/examples',
                                            content_meta=examples_meta,
-                                           url='examples')))
-        app.cms.add_router(Content('api', REPO, path='content/api',
-                                   url='api'))
+                                           url='examples/')))
+        app.cms.add_router(Content('api', REPO,
+                                   path='content/api',
+                                   content_meta=api_meta,
+                                   url='api/'))
         app.cms.add_router(Content('site', REPO, path='content/site',
                                    content_meta=meta_default,
                                    url=''))

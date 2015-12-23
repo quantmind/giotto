@@ -5,6 +5,7 @@ vendor
 # docs
 giottoweb/docs/_build/
 
+.idea
 .project
 .pydevproject
 .grunt

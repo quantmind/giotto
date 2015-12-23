@@ -1,4 +1,6 @@
-title: GiottoJS - paper API
+head_title: paper - GiottoJS API
+title: paper
+order: 100
 
 
 A ``giotto.paper`` is a constructor for a ``paper`` object, an abstraction

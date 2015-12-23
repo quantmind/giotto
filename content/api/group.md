@@ -1,5 +1,7 @@
-title: GiottoJS - group API
+head_title: group - GiottoJS API
+title: paper.group
 description: A GiottoJS group maintainin a collection of drawing in memory. A group can be a g-element of an svg element or a canvas element.
+order: 99
 
 
 A group is a collection af drawings in a [paper](/api/paper).
