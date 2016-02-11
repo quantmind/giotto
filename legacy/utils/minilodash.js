@@ -3,47 +3,7 @@
     //
     ostring = Object.prototype.toString,
     //
-    // Underscore-like object
-    _ = g._ = {},
-    //  Simple extend function
-    //
-    extend = g.extend = _.extend = function () {
-        var length = arguments.length,
-            object = arguments[0],
-            index = 0,
-            deep = false,
-            obj;
 
-        if (object === true) {
-            deep = true;
-            object = arguments[1];
-            index++;
-        }
-
-        if (!object || length < index + 2)
-            return object;
-
-        while (++index < length) {
-            obj = arguments[index];
-            if (Object(obj) === obj) {
-                for (var prop in obj) {
-                    if (obj.hasOwnProperty(prop)) {
-                        if (deep) {
-                            if (isObject(obj[prop]))
-                                if (isObject(object[prop]))
-                                    extend(true, object[prop], obj[prop]);
-                                else
-                                    object[prop] = extend(true, {}, obj[prop]);
-                            else
-                                object[prop] = obj[prop];
-                        } else
-                            object[prop] = obj[prop];
-                    }
-                }
-            }
-        }
-        return object;
-    },
     //  copyMissing
     //  =================
     //
@@ -141,26 +101,6 @@
     },
 
     //
-    isObject = _.isObject = function (value) {
-        return ostring.call(value) === '[object Object]';
-    },
-    //
-    isString = _.isString = function (value) {
-        return ostring.call(value) === '[object String]';
-    },
-    //
-    isFunction = _.isFunction = function (value) {
-        return ostring.call(value) === '[object Function]';
-    },
-    //
-    isArray = _.isArray = function (value) {
-        return ostring.call(value) === '[object Array]';
-    },
-    //
-    isDate = _.isDate = function (value) {
-        return ostring.call(value) === '[object Date]';
-    },
-    //
     isNull = _.isNull = function (value) {
         return value === undefined || value === null;
     },
@@ -195,15 +135,6 @@
             }
         }
         return o;
-    },
-
-    //  Load a style sheet link
-    loadCss = _.loadCss = function (filename) {
-        var fileref = document.createElement("link");
-        fileref.setAttribute("rel", "stylesheet");
-        fileref.setAttribute("type", "text/css");
-        fileref.setAttribute("href", filename);
-        document.getElementsByTagName("head")[0].appendChild(fileref);
     },
 
     addCss = _.addCss = function (base, obj) {

@@ -161,7 +161,8 @@ module.exports = function(grunt) {
 
         if (cssTasks.length) {
             grunt.loadNpmTasks('grunt-sass');
-            cssTasks = ['shell:buildPythonCSS'].concat(cssTasks);
+            if (cfg.useLux)
+                cssTasks = ['shell:buildPythonCSS'].concat(cssTasks);
 
             if (!cfg.sass.options) cfg.sass.options = {
                 sourceMap: true,

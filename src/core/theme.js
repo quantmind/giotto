@@ -1,5 +1,6 @@
 'use strict';
 import {Giotto} from './main';
+import {loadCss} from '../utils/dom'
 
 // load Css unless blocked
 Giotto.theme = theme;
@@ -15,9 +16,6 @@ let current_theme = null;
 function theme (theme) {
     if (arguments.length === 0) return current_theme;
     if (current_theme === theme) return;
-
-    var style = document.createElement("style");
-    style.src = 'https://giottojs.com/media/' + Giotto.version + '/css/' + theme + '.min.css';
-    document.getElementsByTagName("head")[0].appendChild(style);
+    loadCss('https://giottojs.com/media/' + Giotto.version + '/css/' + theme + '.min.css');
     current_theme = theme;
 }

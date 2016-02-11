@@ -32,5 +32,29 @@
             "src": ["build/bundle.js"],
             "dest": "dist/giotto.js"
         }
+    },
+    "sass": {
+        "light": {
+            "files": {
+                "dist/css/light/giotto.css": "scss/light.scss"
+            }
+        },
+        "dark": {
+            "files": {
+                "dist/css/dark/giotto.css": "scss/dark.scss"
+            }
+        }
+    },
+    "cssmin": {
+        "light": {
+            "files": {
+                "dist/css/light/giotto.min.css": ["dist/css/light/giotto.css"]
+            }
+        },
+        "dark": {
+            "files": {
+                "dist/css/dark/giotto.min.css": ["dist/css/dark/giotto.css"]
+            }
+        }
     }
 }

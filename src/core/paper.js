@@ -1,20 +1,30 @@
 'use strict';
-import {Giotto} from './main';
+import {setOptions} from './options';
+import {getElement} from '../utils/dom'
 
 /**
  * Create a new Paper for Giotto
  *
  * @param options
  */
-Giotto.prototype.create = function (element) {
-    var paper = new Paper(this, element);
-    this.papers.push(paper);
-    return paper;
-};
+
 
 export class Paper {
-    constructor(giotto, element) {
-        this.gt = giotto;
-        this.element = element;
+
+    constructor(giotto, element, options) {
+        this._inner = {
+            giotto: giotto,
+            element: getElement(element),
+            options: setOptions(options),
+            draws: []
+        }
+    }
+
+    get giotto () {
+        return this._inner.giotto;
+    }
+
+    get element () {
+        return this._inner.element;
     }
 }
