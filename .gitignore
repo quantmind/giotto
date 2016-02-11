@@ -1,6 +1,7 @@
 # javascript
 node_modules
-vendor
+dist
+build
 
 # docs
 giottoweb/docs/_build/

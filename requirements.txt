@@ -1,6 +1,0 @@
-markdown
-unidecode
-sphinx
-pyyaml
--e git+https://github.com/quantmind/lux.git#egg=lux
--e git+https://github.com/quantmind/pulsar.git#egg=pulsar
