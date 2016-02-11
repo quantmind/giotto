@@ -42,6 +42,7 @@
         "babel-preset-es2015-rollup": "",
         "rollup-plugin-node-resolve": "",
         "rollup-plugin-babel": "",
+        "d3-interpolate": "",
         "d3-path": "",
         "d3-polygon": ""
     },

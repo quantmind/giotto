@@ -15,12 +15,14 @@ module.exports = function(grunt) {
         skipEntries = ['options', 'watch'],
         concats = {
             options: {
-                sourceMap: false // TODO change to true when Chrome sourcemaps bug is fixed
+                // TODO change to true when Chrome sourcemaps bug is fixed
+                sourceMap: false
             }
         },
         requireOptions = {
             baseUrl: srcPath + '/',
-            generateSourceMaps: false, // TODO change to true when Chrome sourcemaps bug is fixed
+            // TODO change to true when Chrome sourcemaps bug is fixed
+            generateSourceMaps: false,
             optimize: 'none',
             name: 'app',
             out: srcPath + '/build/bundle.js',
@@ -32,8 +34,14 @@ module.exports = function(grunt) {
         rollupPlugins = {
             babel: "rollup-plugin-babel",
             nodeResolve: "rollup-plugin-node-resolve"
-        },
-        lux = {
+        };
+
+    //
+    //  Configuration for lux.js
+    if (cfg.useLux) {
+        baseTasks = ['shell:buildLuxConfig', 'luxbuild'];
+        // Extend shell tasks with lux configuration tasks
+        cfg.shell = _.extend({
             buildLuxConfig: {
                 options: {
                     stdout: true,
@@ -52,12 +60,14 @@ module.exports = function(grunt) {
                     return path.resolve('manage.py') + ' style --cssfile ' + path.resolve('scss/deps/py.lux');
                 }
             }
-        };
-
-    if (cfg.useLux) {
-        baseTasks = ['shell:buildLuxConfig', 'luxbuild'];
-        // Extend shell tasks with lux configuration tasks
-        cfg.shell = _.extend(lux, cfg.shell);
+        }, cfg.shell);
+        //
+        grunt.registerTask('luxbuild', 'Load lux configuration', function() {
+            var paths = cfg.requirejs.compile.options.paths,
+                filename = srcPath + '/build/lux.json',
+                obj = grunt.file.readJSON(filename);
+            _.extend(paths, obj.paths);
+        });
     }
 
     if (!jslibs)
@@ -204,8 +214,9 @@ module.exports = function(grunt) {
         add_watch(jslibs, name, jsTasks);
         if (value.dest) concats[name] = value;
     });
-    // Initialise Grunt with all tasks defined above
+
     cfg.uglify = uglify_jslibs();
+
     // Main config is in karma.conf.js, with overrides below
     // We may want to set up an auto-watch config, see https://github.com/karma-runner/grunt-karma#running-tests
     cfg.karma = {
@@ -250,15 +261,6 @@ module.exports = function(grunt) {
             reporters: ['dots']
         }
     };
-
-    //
-    grunt.registerTask('luxbuild', 'Load lux configuration', function() {
-        var paths = cfg.requirejs.compile.options.paths,
-            filename = srcPath + '/build/lux.json',
-            obj = grunt.file.readJSON(filename);
-        _.extend(paths, obj.paths);
-    });
-
     //
     // These plugins provide necessary tasks.
     grunt.loadNpmTasks('grunt-contrib-uglify');
