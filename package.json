@@ -1,4 +1,20 @@
 {
+    "version": "0.2.0",
+    "name": "GiottoJs",
+    "description": "GiottoJS - Visualization Library",
+    "homepage": "https://github.com/quantmind/giotto",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/quantmind/giotto.git"
+    },
+    "keywords": [
+        "visualization",
+        "svg",
+        "canvas",
+        "animation",
+        "data"
+    ],
+    "license": "BSD-3-Clause",
     "author": {
         "name": "quantmind.com",
         "email": "message@quantmind.com"
@@ -44,27 +60,12 @@
         "rollup-plugin-babel": "",
         "d3-interpolate": "",
         "d3-path": "",
-        "d3-polygon": ""
+        "d3-polygon": "",
+        "bootstrap-sass": "^3.3.6"
     },
     "scripts": {
         "test": "grunt karma:ci && grunt coveralls"
     },
     "dependencies": {
-    },
-    "version": "0.2.0",
-    "name": "GiottoJs",
-    "title": "GiottoJs",
-    "description": "GiottoJS - Visualization Library",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/quantmind/giotto"
-    },
-    "keywords": [
-        "visualization",
-        "svg",
-        "canvas",
-        "animation",
-        "data"
-    ],
-    "license": "BSD-3-Clause"
+    }
 }

@@ -1,2 +1,4 @@
-build
+build/
+giottojs/
 release.py
+manage.py

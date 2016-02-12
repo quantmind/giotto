@@ -24,15 +24,6 @@
             "src/**/*.js"
         ]
     },
-    "js": {
-        "giotto": {
-            "options": {
-                "banner": "src/banner.js"
-            },
-            "src": ["build/bundle.js"],
-            "dest": "dist/giotto.js"
-        }
-    },
     "sass": {
         "light": {
             "files": {
@@ -55,6 +46,22 @@
             "files": {
                 "dist/css/dark/giotto.min.css": ["dist/css/dark/giotto.css"]
             }
+        }
+    },
+    "httpcopy": {
+        "sandstone": {
+            "src": [
+                "https://bootswatch.com/sandstone/_bootswatch.scss",
+                "https://bootswatch.com/sandstone/_variables.scss"
+            ],
+            "target": "scss/boostwatch/sandstone/"
+        },
+        "slate": {
+            "src": [
+                "https://bootswatch.com/slate/_bootswatch.scss",
+                "https://bootswatch.com/slate/_variables.scss"
+            ],
+            "target": "scss/boostwatch/slate/"
         }
     }
 }

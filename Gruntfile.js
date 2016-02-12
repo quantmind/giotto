@@ -3,9 +3,8 @@ module.exports = function(grunt) {
     'use strict';
 
     var srcPath = 'src',
-        config_file = srcPath +'/config.json',
+        config_file = 'config.json',
         cfg = grunt.file.readJSON(config_file),
-        jslibs = cfg.js,
         path = require('path'),
         _ = require('lodash'),
         baseTasks = [],
@@ -13,12 +12,6 @@ module.exports = function(grunt) {
         cssTasks = [],
         // These entries are tasks configurators not libraries
         skipEntries = ['options', 'watch'],
-        concats = {
-            options: {
-                // TODO change to true when Chrome sourcemaps bug is fixed
-                sourceMap: false
-            }
-        },
         requireOptions = {
             baseUrl: srcPath + '/',
             // TODO change to true when Chrome sourcemaps bug is fixed
@@ -34,6 +27,25 @@ module.exports = function(grunt) {
         rollupPlugins = {
             babel: "rollup-plugin-babel",
             nodeResolve: "rollup-plugin-node-resolve"
+        },
+        // Defaults for cobertura
+        cobertura = {
+            includeAllSources: true,
+            reporters: [
+                {
+                    "subdir": ".",
+                    "type": "cobertura",
+                    "dir": "coverage/"
+                },
+                {
+                    subdir: '.',
+                    type: 'lcovonly',
+                    dir: 'coverage/'
+                },
+                {
+                    type: 'text-summary'
+                }
+            ]
         };
 
     //
@@ -70,15 +82,7 @@ module.exports = function(grunt) {
         });
     }
 
-    if (!jslibs)
-        grunt.log.debug('"js" entry not available in "' + config_file + '"');
-
-    delete cfg.js;
-
     cfg.pkg = grunt.file.readJSON('package.json');
-
-    //
-    cfg.concat = concats;
     //
     // Extend clean tasks with standard cleanup duties
     cfg.clean = _.extend({
@@ -150,8 +154,29 @@ module.exports = function(grunt) {
         grunt.loadNpmTasks('grunt-rollup');
         jsTasks.push('rollup');
     }
-    // CONCAT and UGLIFY always added at the end
-    jsTasks = jsTasks.concat(['concat', 'uglify']);
+    //
+    // CONCAT
+    if (cfg.concat) {
+        // Preprocess Javascript jslibs
+        _.forOwn(cfg.concat, function(value, name) {
+            var options = value.options;
+            if (options && options.banner) {
+                options.banner = grunt.file.read(options.banner);
+            }
+            add_watch(cfg.concat, name, jsTasks);
+        });
+        cfg.uglify = _.extend(uglify_jslibs(cfg.concat), cfg.uglify);
+        grunt.loadNpmTasks('grunt-contrib-concat');
+        jsTasks.push('concat');
+    }
+    //
+    // UGLIFY
+    if (cfg.uglify) {
+        grunt.loadNpmTasks('grunt-contrib-uglify');
+        jsTasks.push('uglify');
+    }
+
+
     // Add initial tasks
     jsTasks = baseTasks.concat(jsTasks);
 
@@ -203,84 +228,32 @@ module.exports = function(grunt) {
             grunt.registerTask('css', 'Compile python and sass styles', buildCss);
         }
     }
-    //
-    //
-    // Preprocess Javascript jslibs
-    _.forOwn(jslibs, function(value, name) {
-        var options = value.options;
-        if (options && options.banner) {
-            options.banner = grunt.file.read(options.banner);
-        }
-        add_watch(jslibs, name, jsTasks);
-        if (value.dest) concats[name] = value;
-    });
 
-    cfg.uglify = uglify_jslibs();
-
-    // Main config is in karma.conf.js, with overrides below
-    // We may want to set up an auto-watch config, see https://github.com/karma-runner/grunt-karma#running-tests
-    cfg.karma = {
-        options: {
-            configFile: 'karma.conf.js'
-        },
-        ci: {
-            browsers: ['PhantomJS'],
-            coverageReporter: {
-                includeAllSources: true,
-                reporters: [{
-                    subdir: '.',
-                    type: 'cobertura',
-                    dir: 'coverage/'
-                }, {
-                    subdir: '.',
-                    type: 'lcovonly',
-                    dir: 'coverage/'
-                }, {
-                    type: 'text-summary'
-                }]
+    // Karma
+    if (cfg.karma) {
+        grunt.loadNpmTasks('grunt-karma');
+        _.forOwn(cfg.karma, function(value, key) {
+            if (skipEntries.indexOf(key) < 0) {
+                if (value.coverageReporter)
+                    value.coverageReporter = _.extend(value.coverageReporter, cobertura);
             }
-        },
-        phantomjs: {
-            browsers: ['PhantomJS']
-        },
-        dev: {
-            browsers: ['PhantomJS', 'Firefox', 'Chrome']
-        },
-        debug_chrome: {
-            singleRun: false,
-            browsers: ['Chrome'],
-            preprocessors: {},
-            coverageReporter: {},
-            reporters: ['dots']
-        },
-        debug_firefox: {
-            singleRun: false,
-            browsers: ['Firefox'],
-            preprocessors: {},
-            coverageReporter: {},
-            reporters: ['dots']
-        }
-    };
+        });
+    }
+
+    if (cfg.shell) grunt.loadNpmTasks('grunt-shell');
     //
     // These plugins provide necessary tasks.
-    grunt.loadNpmTasks('grunt-contrib-uglify');
-    grunt.loadNpmTasks('grunt-contrib-concat');
-    grunt.loadNpmTasks('grunt-karma');
     grunt.loadNpmTasks('grunt-contrib-watch');
-    grunt.loadNpmTasks('grunt-shell');
     grunt.loadNpmTasks('grunt-contrib-clean');
     //
     grunt.registerTask('test', testTasks);
-    grunt.registerTask('test:debug-chrome', ['karma:debug_chrome']);
-    grunt.registerTask('test:debug-firefox', ['karma:debug_firefox']);
     grunt.registerTask('js', 'Compile and lint javascript libraries', jsTasks);
     grunt.registerTask('build', 'Compile and lint javascript and css libraries', buildTasks);
-    grunt.registerTask('coverage', 'Test coverage using Jasmine and Istanbul', ['clean:test', 'karma:ci']);
     grunt.registerTask('all', 'Compile lint and test all libraries', ['build', 'test']);
     grunt.registerTask('default', ['build', 'karma:ci']);
     //
     grunt.initConfig(cfg);
-
+    //
     //
     // Add a watch entry to ``cfg``
     function add_watch(obj, name, tasks) {
@@ -305,9 +278,9 @@ module.exports = function(grunt) {
         }
     }
     //
-    function uglify_jslibs() {
+    function uglify_jslibs(concat) {
         var result = {};
-        _.forOwn(concats, function(value, name) {
+        _.forOwn(concat, function(value, name) {
             if (name !== 'options' && value.minify !== false) {
                 result[name] = {
                     dest: value.dest.replace('.js', '.min.js'),
