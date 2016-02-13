@@ -1,27 +1,13 @@
 {
-    "rollup": {
-        "options": {
-            "sourceMap": true,
-            "format": "umd",
-            "moduleName": "giotto",
-            "plugins": {
-                "babel": {
-                    "presets": ["es2015-rollup"]
-                },
-                "nodeResolve": {
-                    "jsnext": true
-                }
-            }
+    "requirejs": {
+        "giottojs": {
+            "name": "giottojs/app",
+            "out": "giottojs/media/giottojs/giottojs.js'"
         },
-        "build/bundle.js": ["src/giotto.js"]
-    },
-    "eslint": {
-        "options": {
-            "quiet": false
-        },
-        "target": [
-            "Gruntfile.js",
-            "src/**/*.js"
+        "paths": [
+            "giotto",
+            "angular",
+            "angular-sanitize"
         ]
     },
     "sass": {

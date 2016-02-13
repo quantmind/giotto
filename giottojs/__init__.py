@@ -1,5 +1,10 @@
-'''Lux application for building giottojs.org
-'''
+"""Lux application for building giottojs.org
+
+To compile::
+
+    pip3 install -r requirements.txt
+    python3 manage.py static
+"""
 import os
 
 from pulsar.utils.httpurl import remove_double_slash

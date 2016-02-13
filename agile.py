@@ -1,5 +1,6 @@
 from agile import AgileManager
 
+app_module = 'giottojs'
 note_file = 'docs/notes.md'
 
 

@@ -22,3 +22,7 @@ export class Giotto {
         return paper;
     }
 }
+
+export default function (options) {
+    return new Giotto(options);
+}

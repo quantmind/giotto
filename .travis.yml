@@ -1,16 +1,18 @@
 language: node_js
-node_js:
-- '0.10'
 
-before_install:
-  - npm install -g grunt-cli
-  - npm install -g bower
+node_js:
+  - "node"
 
 install:
   - npm install
-  - bower install
 
-before_script: grunt build
+script:
+  - npm test
 
 notifications:
   email: false
+
+branches:
+  only:
+    - master
+    - dev

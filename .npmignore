@@ -1,4 +1,5 @@
 build/
 giottojs/
+scss/
 release.py
 manage.py

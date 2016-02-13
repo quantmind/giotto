@@ -2,6 +2,10 @@
 node_modules
 dist
 build
+deps
+
+# css
+scss/boostwatch
 
 # docs
 giottoweb/docs/_build/
