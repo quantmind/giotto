@@ -59,12 +59,3 @@ export function isArray (value) {
 export function isDate (value) {
     return ostring.call(value) === '[object Date]';
 }
-
-/**
- * This function retrieve the inner elements of an object
- * @param obj
- * @returns {*}
- */
-export function inner (obj) {
-    return obj._inner;
-}

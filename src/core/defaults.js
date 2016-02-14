@@ -1,15 +1,15 @@
 'use strict';
-import {Giotto} from './main';
+import {giotto} from './main';
 
-Giotto.defaults = {
-    type: 'svg',
+giotto.defaults = {
+    type: 'canvas',
     resizeDelay: 200,
     resize: true,
     interact: true,
     css: null
 };
 
-Giotto.constants = {
+giotto.constants = {
     DEFAULT_VIZ_GROUP: 'default_viz_group',
     WIDTH: 400,
     HEIGHT: 300,

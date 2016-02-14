@@ -1,4 +1,5 @@
 'use strict';
+import {self} from 'd3-quant'
 import {setOptions} from './options';
 import {Paper} from './paper';
 
@@ -10,19 +11,27 @@ import {Paper} from './paper';
 export class Giotto {
 
     constructor (options) {
-        this._inner = {
-            options: setOptions(options, Giotto.defaults),
+        self.set(this, {
+            options: setOptions(options, giotto.defaults),
             papers: []
-        }
+        });
     }
 
     create (element, options) {
         var paper = new Paper(this, element, options);
-        this._inner.papers.push(paper);
+        self.get(this).papers.push(paper);
         return paper;
+    }
+
+    get options () {
+        return self.get(this).options;
+    }
+
+    get papers () {
+        return self.get(this).papers.slice();
     }
 }
 
-export default function (options) {
+export function giotto (options) {
     return new Giotto(options);
 }

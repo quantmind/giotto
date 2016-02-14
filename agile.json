@@ -1,4 +1,9 @@
 {
+    "release": {
+        "giottojs": {
+            "note_file": "docs/notes.md"
+        }
+    },
     "requirejs": {
         "giottojs": {
             "name": "giottojs/app",
@@ -48,6 +53,15 @@
                 "https://bootswatch.com/slate/_variables.scss"
             ],
             "target": "scss/boostwatch/slate/"
+        }
+    },
+    "shell": {
+        "d3_quant_path": {
+            "command": "cd ../d3-quant && pwd"
+        },
+        "d3-quant-link": {
+            "command": ["rm -rf ./node_modules/d3-quant",
+                        "ln -s ${d3_quant_path} ${repo_path}/node_modules/d3-quant"]
         }
     }
 }

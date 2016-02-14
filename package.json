@@ -1,6 +1,6 @@
 {
-    "version": "0.2.0",
-    "name": "GiottoJs",
+    "version": "0.1.0",
+    "name": "giotto",
     "description": "GiottoJS - Visualization Library",
     "homepage": "https://github.com/quantmind/giotto",
     "repository": {
@@ -12,7 +12,8 @@
         "svg",
         "canvas",
         "animation",
-        "data"
+        "data",
+        "d3"
     ],
     "license": "BSD-3-Clause",
     "author": {
@@ -27,28 +28,25 @@
         "rollup-plugin-node-resolve": "1.4",
         "babel-preset-es2015-rollup": "1.1",
         "babel-eslint": "4.1",
-        "jasmine-core": "^2.3.4",
-        "karma": "^0.13.19",
         "browserify": "13.0",
         "babelify": "7.0",
-        "karma-babel-preprocessor": "^6.0.1",
-        "karma-browserify": "^5.0.1",
-        "karma-chrome-launcher": "^0.2.1",
-        "karma-firefox-launcher": "^0.1.6",
-        "karma-jasmine": "^0.3.7",
-        "karma-phantomjs-launcher": "^1.0.0",
-        "phantomjs-prebuilt": "^2.1.3",
+        "babel-tape-runner": "2.0",
+        "tape": "4.4",
+        "faucet": "0.0",
+        "testling": "1.7",
+        "node-sass": "3.4",
+        "bootstrap-sass": "^3.3.6",
         "d3-interpolate": "",
         "d3-path": "",
         "d3-polygon": "",
-        "node-sass": "3.4",
-        "bootstrap-sass": "^3.3.6"
+        "d3-quant": "0.1"
     },
     "scripts": {
         "pretest": "rollup -c",
-        "test": "eslint index.js src test && uglifyjs build/giotto.js -c -m -o build/giotto.min.js",
-        "prerelease": "npm run test"
+        "test": "eslint index.js src test && babel-tape-runner `find test -name '*-test.js'` | faucet",
+        "prerelease": "npm run test && uglifyjs build/giotto.js -c -m -o build/giotto.min.js"
     },
-    "dependencies": {
+    "babel": {
+        "presets": ["es2015"]
     }
 }

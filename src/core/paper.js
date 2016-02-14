@@ -1,8 +1,8 @@
 'use strict';
 import {setOptions} from './options';
 import {getElement} from '../utils/dom';
-import {inner, extend, isString} from '../utils/object';
-import {default as round} from 'd3-interpolate/src/round';
+import {extend, isString} from '../utils/object';
+import {self, round} from 'd3-quant';
 
 /**
  * A paper is created via a giotto object
@@ -13,48 +13,49 @@ import {default as round} from 'd3-interpolate/src/round';
 export class Paper {
 
     constructor(giotto, element, options) {
-        this._inner = extend(setOptions(options), {
+        self.set(this, extend(setOptions(options), {
             giotto: giotto,
             element: getElement(element),
-            draws: []
-        });
+            draws: [],
+            factor: 1
+        }));
     }
 
     get giotto () {
-        return inner(this).giotto;
+        return self.get(this).giotto;
     }
 
     get element () {
-        return inner(this).element;
+        return self.get(this).element;
     }
 
     get marginLeft () {
-        var i = inner(this);
+        var i = self.get(this);
         return i.factor*pc(i.margin.left, i.size[0]);
     }
 
     get marginRight () {
-        var i = inner(this);
+        var i = self.get(this);
         return i.factor*pc(i.margin.right, i.size[0]);
     }
 
     get marginTop () {
-        var i = inner(this);
+        var i = self.get(this);
         return i.factor*pc(i.margin.left, i.size[1]);
     }
 
     get marginBottom () {
-        var i = inner(this);
+        var i = self.get(this);
         return i.factor*pc(i.margin.bottom, i.size[1]);
     }
 
     get innerWidth () {
-        var i = inner(this);
+        var i = self.get(this);
         return i.factor*i.size[0] - this.marginLeft - this.marginRight;
     }
 
     get innerHeight () {
-        var i = inner(this);
+        var i = self.get(this);
         return i.factor*i.size[1] - this.marginTop - this.marginBottom;
     }
 

@@ -1,4 +1,4 @@
 'use strict';
-import {Giotto} from './main';
+import {giotto} from './main';
 
-Giotto.version = '0.2.0';
+giotto.version = '0.2.0';
