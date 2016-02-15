@@ -1,4 +1,3 @@
-'use strict';
 import * as obj from './object';
 
 let _idCounter = 0;
@@ -24,7 +23,9 @@ export function loadCss (filename) {
 
 
 export function getElement (element) {
-    if (element && obj.isFunction(element.node))
+    if (!element) {
+        element = document.createElement('div');
+    } if (obj.isFunction(element.node))
         element = element.node();
     return element;
 }

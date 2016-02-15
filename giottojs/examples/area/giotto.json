@@ -1,0 +1,20 @@
+{
+    "height": "60%",
+    "minHeight": 250,
+    "grid": true,
+    "line": {
+        "area": true,
+        "active": {
+            "fillOpacity": 1,
+            "symbol": "circle",
+            "size": "10px"
+        }
+    },
+    "tooltip": true,
+    "data": {
+        "src": "giottojs.randomPath",
+        "options": {
+            "size": 300
+        }
+    }
+}

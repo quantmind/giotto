@@ -15,30 +15,6 @@
             "angular-sanitize"
         ]
     },
-    "sass": {
-        "light": {
-            "files": {
-                "dist/css/light/giotto.css": "scss/light.scss"
-            }
-        },
-        "dark": {
-            "files": {
-                "dist/css/dark/giotto.css": "scss/dark.scss"
-            }
-        }
-    },
-    "cssmin": {
-        "light": {
-            "files": {
-                "dist/css/light/giotto.min.css": ["dist/css/light/giotto.css"]
-            }
-        },
-        "dark": {
-            "files": {
-                "dist/css/dark/giotto.min.css": ["dist/css/dark/giotto.css"]
-            }
-        }
-    },
     "httpcopy": {
         "sandstone": {
             "src": [
@@ -53,6 +29,23 @@
                 "https://bootswatch.com/slate/_variables.scss"
             ],
             "target": "scss/boostwatch/slate/"
+        }
+    },
+    "sass": {
+        "options": {
+            "command": "$repo_path/node_modules/node-sass/bin/node-sass"
+        },
+        "giotto": {
+            "files": {
+                "build/css/sandstone.css": "scss/sandstone.scss",
+                "build/css/slate.css": "scss/slate.scss"
+            }
+        },
+        "giottojs": {
+            "files": {
+                "giottojs/media/giottojs/sandstone.css": "scss/giottojs-sandstone.scss",
+                "giottojs/media/giottojs/slate.css": "scss/giottojs-slate.scss"
+            }
         }
     },
     "shell": {

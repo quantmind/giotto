@@ -1,7 +1,7 @@
-'use strict';
 import {self} from 'd3-quant'
-import {setOptions} from './options';
-import {Paper} from './paper';
+import {getOptions, defaults} from './defaults';
+import {Canvas} from './canvas';
+import {Svg} from './svg';
 
 /**
  * Giotto class
@@ -12,13 +12,20 @@ export class Giotto {
 
     constructor (options) {
         self.set(this, {
-            options: setOptions(options, giotto.defaults),
+            options: getOptions(options, defaults),
             papers: []
         });
     }
 
-    create (element, options) {
-        var paper = new Paper(this, element, options);
+    // Create a new paper for a DOM element
+    //
+    paper (element, options) {
+        let paper;
+        options = getOptions(options, this.options);
+        if (options.type === 'canvas')
+            paper = new Canvas(this, element, options);
+        else
+            paper = new Svg(this, element, options);
         self.get(this).papers.push(paper);
         return paper;
     }

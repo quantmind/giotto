@@ -1,6 +1,3 @@
-'use strict';
-
-
 export function getWidth (element) {
     return getParentRectValue(element, 'width');
 }

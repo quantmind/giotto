@@ -8,6 +8,7 @@ DESCRIPTION = ('GiottoJS is a javascript visualization library built on '
 SITE_URL = 'http://giottojs.org'
 
 HTML_TITLE = 'GiottoJs Examples'
+DEFAULT_CONTENT_TYPE = 'text/html'
 SERVE_STATIC_FILES = True
 FAVICON = 'giottojs/favicon.ico'
 EXTENSIONS = ['lux.extensions.base',
@@ -35,7 +36,7 @@ LINKS = {'AngularJS': 'https://angularjs.org/',
          'd3': 'http://d3js.org/',
          'd3js': 'http://d3js.org/'}
 
-CONTENT_REPOSITORY = os.path.join(os.path.dirname(__file__), 'content')
+CONTENT_REPOSITORY = os.path.join(os.path.dirname(__file__))
 CMS_PARTIALS_PATH = os.path.join(CONTENT_REPOSITORY, 'context')
 
 bind = ':4020'

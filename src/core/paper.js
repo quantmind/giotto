@@ -1,7 +1,6 @@
-'use strict';
-import {setOptions} from './options';
-import {getElement} from '../utils/dom';
+import {select} from 'd3-selection'
 import {extend, isString} from '../utils/object';
+import {giottoId, getElement} from '../utils/dom';
 import {self, round} from 'd3-quant';
 
 /**
@@ -12,13 +11,28 @@ import {self, round} from 'd3-quant';
  */
 export class Paper {
 
-    constructor(giotto, element, options) {
-        self.set(this, extend(setOptions(options), {
+    constructor(giotto, element, options, renderer) {
+        self.set(this, extend(options, {
+            renderer: renderer,
             giotto: giotto,
             element: getElement(element),
+            id: giottoId(),
             draws: [],
             factor: 1
         }));
+        // Append the paper container
+        this.element
+            .append('div')
+            .attr('id', this.id)
+            .classed('gt-paper', true)
+            .classed('gt-paper-' + this.type, true);
+        this.addElement('gt-background');
+        this.addElement('gt-drawings');
+        this.addElement('gt-foreground');
+    }
+
+    get id () {
+        return self.get(this).id;
     }
 
     get giotto () {
@@ -26,7 +40,23 @@ export class Paper {
     }
 
     get element () {
-        return self.get(this).element;
+        return select(self.get(this).element);
+    }
+
+    get container () {
+        return this.element.select('#' + this.id);
+    }
+
+    get backgroundElement () {
+        return this.container.select('.gt-background');
+    }
+
+    get drawingElement () {
+        return this.container.select('.gt-drawings');
+    }
+
+    get foregroundElement () {
+        return this.container.select('.gt-background');
     }
 
     get marginLeft () {

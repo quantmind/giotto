@@ -7,8 +7,10 @@ deps
 # css
 scss/boostwatch
 
-# docs
-giottoweb/docs/_build/
+# giottojs
+giottojs/docs/_build/
+giottojs/media/giottojs/*.js
+giottojs/media/giottojs/*.css
 
 .idea
 .project

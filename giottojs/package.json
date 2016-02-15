@@ -1,0 +1,16 @@
+{
+    "name": "giottojs",
+    "devDependencies": {
+        "eslint": "2.0",
+        "uglify-js": "2.6",
+        "tape": "4.4",
+        "faucet": "0.0",
+        "testling": "1.7",
+        "bootstrap-sass": "^3.3.6",
+        "requirejs": "2.1"
+    },
+    "scripts": {
+        "test": "eslint Gruntfile.js media/js && babel-tape-runner `find test -name '*-test.js'` | faucet",
+        "prerelease": "npm run test && uglifyjs build/giotto.js -c -m -o build/giotto.min.js"
+    }
+}

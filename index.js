@@ -1,8 +1,6 @@
-import {giotto, Giotto} from './src/core/main';
-import {Paper} from './src/core/paper';
-import './src/core/version';
-import './src/core/defaults';
-import './src/core/theme';
-
-export {Paper, Giotto, giotto};
-export default giotto;
+export {giotto, Giotto} from './src/core/main';
+export {Paper} from './src/core/paper';
+export {version} from './package.json';
+export {defaults, constants} from './src/core/defaults';
+export {theme} from './src/core/theme';
+import './src/drawing/points';

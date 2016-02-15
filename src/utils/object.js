@@ -1,5 +1,3 @@
-'use strict';
-
 const ostring = Object.prototype.toString;
 
 export function extend () {
@@ -58,4 +56,14 @@ export function isArray (value) {
 
 export function isDate (value) {
     return ostring.call(value) === '[object Date]';
+}
+
+
+export function forEach (obj, callback) {
+    if (!obj) return;
+    if (obj.forEach) return obj.forEach(callback);
+    for (var key in obj) {
+        if (obj.hasOwnProperty(key))
+            callback(obj[key], key);
+    }
 }

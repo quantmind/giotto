@@ -1,7 +1,7 @@
-'use strict';
-import {giotto} from './main';
+import {forEach, extend} from '../utils/object'
 
-giotto.defaults = {
+
+export var defaults = {
     type: 'canvas',
     resizeDelay: 200,
     resize: true,
@@ -9,7 +9,7 @@ giotto.defaults = {
     css: null
 };
 
-giotto.constants = {
+export const constants = {
     DEFAULT_VIZ_GROUP: 'default_viz_group',
     WIDTH: 400,
     HEIGHT: 300,
@@ -22,3 +22,12 @@ giotto.constants = {
     // leaflet url
     leaflet: 'http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css'
 };
+
+
+export function getOptions (options, defaults, plugins) {
+    options = extend({}, defaults, options);
+    forEach(plugins, (value, key) => {
+        options[key] = extend({}, value, options[key]);
+    });
+    return options;
+}

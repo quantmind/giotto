@@ -1,4 +1,3 @@
-'use strict';
 
 function getSVGNode (el) {
     if(el.tagName.toLowerCase() === 'svg')
