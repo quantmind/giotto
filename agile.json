@@ -43,8 +43,8 @@
         },
         "giottojs": {
             "files": {
-                "giottojs/media/giottojs/sandstone.css": "scss/giottojs-sandstone.scss",
-                "giottojs/media/giottojs/slate.css": "scss/giottojs-slate.scss"
+                "giottojs/media/sandstone.css": "scss/giottojs-sandstone.scss",
+                "giottojs/media/slate.css": "scss/giottojs-slate.scss"
             }
         }
     },
@@ -55,6 +55,29 @@
         "d3-quant-link": {
             "command": ["rm -rf ./node_modules/d3-quant",
                         "ln -s ${d3_quant_path} ${repo_path}/node_modules/d3-quant"]
+        },
+        "giottojs": {
+            "command": ["cp build/giotto.js giottojs/media/giotto.js",
+                        "$python manage.py media --js-src giottojs/media",
+                        "./node_modules/requirejs/bin/r.js -o ./giottojs/bundle.js optimize=none",
+                        "./node_modules/.bin/uglifyjs ./giottojs/media/giottojs.js -c -m -o ./giottojs/media/giottojs.min.js"]
+        },
+        "clean": {
+            "command": ["rm -rf build",
+                        "rm -rf coverage",
+                        "rm giottojs/media/*.js",
+                        "rm giottojs/media/*.css",
+                        "rm giottojs/media/*.json",
+                        "rm -rf giottojs/media/lux"]
+        }
+    },
+    "tasks": {
+        "giottojs": {
+            "description": "Create the giottojs/media/giottojs.js script",
+            "command": ["shell:giottojs"]
+        },
+        "clean": {
+            "command": ["shell:clean"]
         }
     }
 }

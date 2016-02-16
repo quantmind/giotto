@@ -1,9 +1,9 @@
 require([
-    'giottojs/require.config',
+    'js/require.config',
     'angular',
-    'lux/forms'
+    'lux/forms/main'
 ], function(lux) {
     'use strict';
 
-    lux.bootstrap('luxsite', []);
+    lux.bootstrap('giottojs', []);
 });

@@ -52,7 +52,8 @@
         "d3-selection": "0.6",
         "d3-timer": "0.4",
         "angular": "1.5",
-        "angular-mocks": "1.5"
+        "angular-mocks": "1.5",
+        "requirejs": "2.1"
     },
     "scripts": {
         "pretest": "rollup -c",

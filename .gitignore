@@ -9,8 +9,10 @@ scss/boostwatch
 
 # giottojs
 giottojs/docs/_build/
-giottojs/media/giottojs/*.js
-giottojs/media/giottojs/*.css
+giottojs/media/lux
+giottojs/media/*.js
+giottojs/media/*.css
+giottojs/media/*.json
 
 .idea
 .project
