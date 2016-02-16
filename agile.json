@@ -56,6 +56,9 @@
             "command": ["rm -rf ./node_modules/d3-quant",
                         "ln -s ${d3_quant_path} ${repo_path}/node_modules/d3-quant"]
         },
+        "giotto": {
+            "command": ["npm test"]
+        },
         "giottojs": {
             "command": ["cp build/giotto.js giottojs/media/giotto.js",
                         "$python manage.py media --js-src giottojs/media",
@@ -72,17 +75,21 @@
         }
     },
     "tasks": {
+        "clean": {
+            "description": "Remove build files and directories",
+            "command": ["shell:clean"]
+        },
         "install": {
             "description": "Install and download assets for giotto and giottojs",
             "command": ["httpcopy"]
         },
+        "giotto": {
+            "description": "Create the build/giotto.(js/css) files",
+            "command": ["shell:giotto", "sass:giotto"]
+        },
         "giottojs": {
             "description": "Create the giottojs/media/giottojs.(js/css) files",
             "command": ["shell:giottojs", "sass:giottojs"]
-        },
-        "clean": {
-            "description": "Remove build files and directories",
-            "command": ["shell:clean"]
         }
     }
 }

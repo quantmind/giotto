@@ -14,43 +14,19 @@ http://giottojs.org
 
 # Giotto Library
 
-To build and test the library, you need to install [node](https://nodejs.org/), [gruntjs](http://gruntjs.com/) and
-[bower](http://bower.io/):
-```
-npm install -g grunt-cli
-npm install -g bower
-```
-
+To build and test the library, you need to install [node](https://nodejs.org/).
 To install dependencies for the build, inside the distribution directory issue:
 ```
 npm install
-bower install
 ```
-Compilation, tests with grunt:
+To run tests and build the bundle:
 ```
-grunt build
-grunt jasmine
+npm test
 ```
 
-# Giotto Web
+# GiottoJs
 
-To build giotto web you need to install [lux](http://quantmind.github.io/lux/), a python package for web applications:
-
-    pip3 install -U -r requirements.txt
-
-To build the static web site:
-
-    python3 manage.py build_static
-
-To build the static web site during for development:
-
-    python3 manage.py build_static --relative-url --nominify
-
-To run the developemnt server:
-
-    python3 manage.py serve
-
-
-## Credits
-
-* The ``giotto.slider`` component was created from [d3.slider](https://github.com/turban/d3.slider) in Jan 2015
+To build giottojs.org web site you need python 3.5. Once installed
+```
+pip install -r requirements.txt
+```
