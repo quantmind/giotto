@@ -65,9 +65,9 @@
         "clean": {
             "command": ["rm -rf build",
                         "rm -rf coverage",
-                        "rm giottojs/media/*.js",
-                        "rm giottojs/media/*.css",
-                        "rm giottojs/media/*.json",
+                        "rm -rf giottojs/media/*.js",
+                        "rm -rf giottojs/media/*.css",
+                        "rm -rf giottojs/media/*.json",
                         "rm -rf giottojs/media/lux"]
         }
     },
