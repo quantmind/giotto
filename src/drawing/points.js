@@ -20,6 +20,15 @@ Drawing.defaults.points = {
  */
 class Points extends Drawing {
 
+    /**
+     * Draw a data serie into a paper
+     *
+     * @param paper
+     * @param data
+     */
+    draw () {
+
+    }
 }
 
 

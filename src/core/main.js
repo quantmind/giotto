@@ -1,24 +1,60 @@
-import {self} from 'd3-quant'
-import {getOptions, defaults} from './defaults';
+import {self} from 'd3-quant';
+import {dispatch} from 'd3-dispatch';
+import {getOptions, defaults, GiottoBase} from './defaults';
 import {Canvas} from './canvas';
 import {Svg} from './svg';
+import {rebind} from '../utils/object';
 
 /**
  * Giotto class
  *
  * Manage multiple papers objects and coordinate rendering between them
  */
-export class Giotto {
+export class Giotto  extends GiottoBase {
 
     constructor (options) {
-        self.set(this, {
-            options: getOptions(options, defaults),
-            papers: []
-        });
+        super(getOptions(options, defaults));
+        var g = self.get(this);
+        g.papers = [];
+        g.events = dispatch('draw', 'redraw', 'dataBefore', 'data');
+        rebind(this, g.events, 'on');
     }
 
-    // Create a new paper for a DOM element
-    //
+    /**
+     *
+     * @returns {Array.<Object>} a copy of the array of papers
+     */
+    get papers () {
+        return self.get(this).papers.slice();
+    }
+
+    /**
+     * Set or get data from this instance
+     *
+     * @param series: when provided it is the serie data
+     * @returns this when setting, serie data when getting
+     */
+    data (series) {
+        var gt = self.get(this);
+        if (arguments.length === 1) {
+            var events = gt.events;
+            events.call('dataBefore', this, series);
+            gt.data = series;
+            gt.papers.forEach((p) => {
+                p.data(series);
+            });
+            events.call('data', this);
+            return this;
+        } else {
+            return gt.data;
+        }
+    }
+
+    /**
+     * Create a new paper for a DOM element
+     *
+     * @return a new Paper object
+     */
     paper (element, options) {
         let paper;
         options = getOptions(options, this.options);
@@ -30,12 +66,31 @@ export class Giotto {
         return paper;
     }
 
-    get options () {
-        return self.get(this).options;
+    /**
+     * Apply ``callback`` over all papers
+     *
+     * @param callback: function accepting the paper as first parameter
+     */
+    forEach (callback) {
+        self.get(this).papers.forEach(callback);
     }
 
-    get papers () {
-        return self.get(this).papers.slice();
+    /**
+     * Draw data into this giotto instance
+     *
+     * @param data
+     */
+    draw (data) {
+        this.clear();
+        this.forEach((paper) => {
+            paper.draw(data);
+        });
+    }
+
+    clear () {
+        this.forEach((paper) => {
+            paper.clear();
+        });
     }
 }
 

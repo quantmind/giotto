@@ -1,13 +1,11 @@
-head_title: paper - GiottoJS API
-title: paper
-order: 100
+# Paper
 
-
-A ``giotto.paper`` is a constructor for a ``paper`` object, an abstraction
+A ``giotto.paper`` is an abstraction
 on top of the ``svg`` or the ``canvas`` element.
-
-    var paper = giotto.paper(options);
-
+```javascript
+    var gt = giotto.giotto();
+    var paper = gt.paper(options);
+```
 where ``options`` is an object containing several parameters to customise the
 paper.
 

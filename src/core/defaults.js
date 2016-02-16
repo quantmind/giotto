@@ -1,4 +1,6 @@
 import {forEach, extend} from '../utils/object'
+import {giottoId} from '../utils/dom';
+import {self} from 'd3-quant';
 
 
 export var defaults = {
@@ -30,4 +32,43 @@ export function getOptions (options, defaults, plugins) {
         options[key] = extend({}, value, options[key]);
     });
     return options;
+}
+
+
+export class GiottoBase {
+
+    constructor (options) {
+        self.set(this, {
+            id: giottoId(),
+            options: options
+        });
+    }
+
+    get options () {
+        return self.get(this).options;
+    }
+
+    get id () {
+        return self.get(this).id;
+    }
+
+    /**
+     * Set or get date for the paper
+     *
+     * getting date is relatively straightforward and does not produce any
+     * side effets. Setting data causes the paper to do a complete re-draw
+     * by firing the ``on_data`` event
+     *
+     * @param _
+     * @returns {*}
+     */
+    data (_) {
+        if (arguments.length === 0) return self.get(this).data;
+        self.get(this).data = _;
+        this.fire('on_data');
+    }
+
+    fire () {
+
+    }
 }

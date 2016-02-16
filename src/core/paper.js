@@ -1,6 +1,7 @@
-import {select} from 'd3-selection'
+import {select} from 'd3-selection';
+import {GiottoBase} from './defaults';
 import {extend, isString} from '../utils/object';
-import {giottoId, getElement} from '../utils/dom';
+import {getElement} from '../utils/dom';
 import {self, round} from 'd3-quant';
 
 /**
@@ -9,17 +10,16 @@ import {self, round} from 'd3-quant';
  * var g = new Giotto();
  * var p = p.paper();
  */
-export class Paper {
+export class Paper extends GiottoBase {
 
-    constructor(giotto, element, options, renderer) {
-        self.set(this, extend(options, {
-            renderer: renderer,
+    constructor(giotto, element, options) {
+        super(options);
+        extend(self.get(this), {
             giotto: giotto,
             element: getElement(element),
-            id: giottoId(),
             draws: [],
             factor: 1
-        }));
+        });
         // Append the paper container
         this.element
             .append('div')
@@ -29,10 +29,6 @@ export class Paper {
         this.addElement('gt-background');
         this.addElement('gt-drawings');
         this.addElement('gt-foreground');
-    }
-
-    get id () {
-        return self.get(this).id;
     }
 
     get giotto () {
