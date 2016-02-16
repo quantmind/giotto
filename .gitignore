@@ -5,7 +5,7 @@ build
 deps
 
 # css
-scss/boostwatch
+scss/bootswatch
 
 # giottojs
 giottojs/docs/_build/

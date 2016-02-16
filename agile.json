@@ -21,19 +21,19 @@
                 "https://bootswatch.com/sandstone/_bootswatch.scss",
                 "https://bootswatch.com/sandstone/_variables.scss"
             ],
-            "target": "scss/boostwatch/sandstone/"
+            "target": "scss/bootswatch/sandstone/"
         },
         "slate": {
             "src": [
                 "https://bootswatch.com/slate/_bootswatch.scss",
                 "https://bootswatch.com/slate/_variables.scss"
             ],
-            "target": "scss/boostwatch/slate/"
+            "target": "scss/bootswatch/slate/"
         }
     },
     "sass": {
         "options": {
-            "command": "$repo_path/node_modules/node-sass/bin/node-sass"
+            "command": "./node_modules/.bin/node-sass"
         },
         "giotto": {
             "files": {
@@ -72,11 +72,16 @@
         }
     },
     "tasks": {
+        "install": {
+            "description": "Install and download assets for giotto and giottojs",
+            "command": ["httpcopy"]
+        },
         "giottojs": {
-            "description": "Create the giottojs/media/giottojs.js script",
-            "command": ["shell:giottojs"]
+            "description": "Create the giottojs/media/giottojs.(js/css) files",
+            "command": ["shell:giottojs", "sass:giottojs"]
         },
         "clean": {
+            "description": "Remove build files and directories",
             "command": ["shell:clean"]
         }
     }
