@@ -1,7 +1,9 @@
 module.exports = function(config) {
-    config.set({
+
+    var configuration = {
 
         browsers: ['PhantomJS', 'Firefox', 'Chrome'],
+
         phantomjsLauncher: {
             exitOnResourceError: true
         },
@@ -30,5 +32,11 @@ module.exports = function(config) {
         }
 
         // define reporters, port, logLevel, browsers etc.
-    });
+    };
+
+    if(process.env.TRAVIS){
+        configuration.browsers = ['PhantomJS', 'Firefox', 'ChromeNoSandbox'];
+    }
+
+    config.set(configuration);
 };

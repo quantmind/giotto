@@ -57,7 +57,8 @@
                         "ln -s ${d3_quant_path} ${repo_path}/node_modules/d3-quant"]
         },
         "giotto": {
-            "command": ["npm test"]
+            "command": ["npm test",
+                        "./node_modules/.bin/uglifyjs ./build/giotto.js -c -m -o ./build/giotto.min.js"]
         },
         "giottojs": {
             "command": ["cp build/giotto.js giottojs/media/giotto.js",

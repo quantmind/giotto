@@ -36,7 +36,7 @@ LINKS = {'AngularJS': 'https://angularjs.org/',
          'd3': 'http://d3js.org/',
          'd3js': 'http://d3js.org/'}
 
-CONTENT_REPOSITORY = os.path.join(os.path.dirname(__file__))
+CONTENT_REPOSITORY = os.path.dirname(__file__)
 CMS_PARTIALS_PATH = os.path.join(CONTENT_REPOSITORY, 'context')
 
 bind = ':4020'
