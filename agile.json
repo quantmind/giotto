@@ -37,8 +37,8 @@
         },
         "giotto": {
             "files": {
-                "build/css/sandstone.css": "scss/sandstone.scss",
-                "build/css/slate.css": "scss/slate.scss"
+                "build/sandstone.css": "scss/sandstone.scss",
+                "build/slate.css": "scss/slate.scss"
             }
         },
         "giottojs": {
@@ -60,6 +60,9 @@
             "command": ["npm test",
                         "./node_modules/.bin/uglifyjs ./build/giotto.js -c -m -o ./build/giotto.min.js"]
         },
+        "giotto-bundle": {
+            "command": ["zip -j build/giotto.zip -- LICENSE README.md build/*.js build/*.css"]
+        },
         "giottojs": {
             "command": ["cp build/giotto.js giottojs/media/giotto.js",
                         "$python manage.py media --js-src giottojs/media",
@@ -73,6 +76,17 @@
                         "rm -rf giottojs/media/*.css",
                         "rm -rf giottojs/media/*.json",
                         "rm -rf giottojs/media/lux"]
+        }
+    },
+    "s3": {
+        "options": {
+            "bucket": "quantmind-public"
+        },
+        "giotto": {
+            "files": {
+                "build/*.js": "giotto/{{ package.version }}/",
+                "build/*.css": "giotto/{{ package.version }}/"
+            }
         }
     },
     "tasks": {
@@ -91,6 +105,10 @@
         "giottojs": {
             "description": "Create the giottojs/media/giottojs.(js/css) files",
             "command": ["shell:giottojs", "sass:giottojs"]
+        },
+        "release": {
+            "description": "Make a new release",
+            "command": ["s3:giotto"]
         }
     }
 }

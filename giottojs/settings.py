@@ -22,8 +22,8 @@ EXTENSIONS = ['lux.extensions.base',
 
 HTML_LINKS = ['https://cdnjs.cloudflare.com/ajax/libs/font-awesome/'
               '4.3.0/css/font-awesome.min.css',
-              {'href': 'giottoweb/light', 'id': 'giotto-theme'}]
-SCRIPTS = ['giottojs/giottojs']
+              {'href': 'sandstone', 'id': 'giotto-theme'}]
+SCRIPTS = ['giottojs']
 
 HTML_META = [{'http-equiv': 'X-UA-Compatible',
               'content': 'IE=edge'},
@@ -38,5 +38,3 @@ LINKS = {'AngularJS': 'https://angularjs.org/',
 
 CONTENT_REPOSITORY = os.path.dirname(__file__)
 CMS_PARTIALS_PATH = os.path.join(CONTENT_REPOSITORY, 'context')
-
-bind = ':4020'
