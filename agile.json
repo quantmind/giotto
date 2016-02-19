@@ -1,19 +1,8 @@
 {
-    "release": {
-        "giottojs": {
-            "note_file": "docs/notes.md"
+    "github": {
+        "giotto": {
+            "version": "{{ package.version }}"
         }
-    },
-    "requirejs": {
-        "giottojs": {
-            "name": "giottojs/app",
-            "out": "giottojs/media/giottojs/giottojs.js'"
-        },
-        "paths": [
-            "giotto",
-            "angular",
-            "angular-sanitize"
-        ]
     },
     "httpcopy": {
         "sandstone": {
@@ -54,7 +43,7 @@
         },
         "d3-quant-link": {
             "command": ["rm -rf ./node_modules/d3-quant",
-                        "ln -s ${d3_quant_path} ${repo_path}/node_modules/d3-quant"]
+                        "ln -s {{ d3_quant_path }} {{repo_path }}/node_modules/d3-quant"]
         },
         "giotto": {
             "command": ["npm test",
@@ -65,7 +54,7 @@
         },
         "giottojs": {
             "command": ["cp build/giotto.js giottojs/media/giotto.js",
-                        "$python manage.py media --js-src giottojs/media",
+                        "{{ python }} manage.py media --js-src giottojs/media",
                         "./node_modules/requirejs/bin/r.js -o ./giottojs/bundle.js optimize=none",
                         "./node_modules/.bin/uglifyjs ./giottojs/media/giottojs.js -c -m -o ./giottojs/media/giottojs.min.js"]
         },
@@ -95,7 +84,7 @@
             "command": ["shell:clean"]
         },
         "install": {
-            "description": "Install and download assets for giotto and giottojs",
+            "description": "Install and download scss files from bootswatch.com for giotto and giottojs",
             "command": ["httpcopy"]
         },
         "giotto": {
