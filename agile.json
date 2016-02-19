@@ -53,10 +53,14 @@
             "command": ["zip -j build/giotto.zip -- LICENSE README.md build/*.js build/*.css"]
         },
         "giottojs": {
-            "command": ["cp build/giotto.js giottojs/media/giotto.js",
-                        "{{ python }} manage.py media --js-src giottojs/media",
-                        "./node_modules/requirejs/bin/r.js -o ./giottojs/bundle.js optimize=none",
-                        "./node_modules/.bin/uglifyjs ./giottojs/media/giottojs.js -c -m -o ./giottojs/media/giottojs.min.js"]
+            "command": [
+                "cp build/giotto.js giottojs/media/giotto.js",
+                "{{ python }} manage.py media --js-src giottojs/media",
+                "./node_modules/requirejs/bin/r.js -o ./giottojs/bundle.js optimize=none"
+            ]
+        },
+        "giottojs_uglify": {
+            "command": "./node_modules/.bin/uglifyjs ./giottojs/media/giottojs.js -c -m -o ./giottojs/media/giottojs.min.js"
         },
         "clean": {
             "command": ["rm -rf build",
@@ -93,7 +97,11 @@
         },
         "giottojs": {
             "description": "Create the giottojs/media/giottojs.(js/css) files",
-            "command": ["shell:giottojs", "sass:giottojs"]
+            "command": ["shell:giottojs", "shell:giottojs_uglify", "sass:giottojs"]
+        },
+        "js": {
+            "description": "Create the giottojs.js file only, no min.js no css",
+            "command": ["shell:giottojs"]
         },
         "release": {
             "description": "Make a new release",

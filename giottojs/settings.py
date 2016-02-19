@@ -10,7 +10,7 @@ SITE_URL = 'http://giottojs.org'
 HTML_TITLE = 'GiottoJs Examples'
 DEFAULT_CONTENT_TYPE = 'text/html'
 SERVE_STATIC_FILES = True
-FAVICON = 'giottojs/favicon.ico'
+FAVICON = 'favicon.ico'
 EXTENSIONS = ['lux.extensions.base',
               'lux.extensions.ui',
               'lux.extensions.code',
