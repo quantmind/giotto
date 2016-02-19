@@ -54,6 +54,7 @@
         },
         "giottojs": {
             "command": [
+                "./node_modules/.bin/eslint giottojs/js",
                 "cp build/giotto.js giottojs/media/giotto.js",
                 "{{ python }} manage.py media --js-src giottojs/media",
                 "./node_modules/requirejs/bin/r.js -o ./giottojs/bundle.js optimize=none"
