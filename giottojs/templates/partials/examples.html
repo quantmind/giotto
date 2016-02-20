@@ -1,6 +1,6 @@
 <div id="page-main" class="container">
     <div class="row">
-        <div class="col-sm-12" data-highlight>
+        <div class="col-sm-12" lux-highlight>
             <div class="page-header">
                 <ul class="nav nav-pills">
                   <li ng-repeat="style in giottoThemes" ng-class="{active: style.name === currentTheme}" >
@@ -10,11 +10,11 @@
                 <h2>$title</h2>
             </div>
             $html_main
-            <h3>Javascript code</h3>
-            $html_script_js
+            <h3>JSON Config</h3>
+            $html_giotto
         </div>
     </div>
 </div>
 <script>
-$script_js
+var gt = $script_giotto;
 </script>

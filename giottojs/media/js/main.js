@@ -4,7 +4,8 @@ require([
     'giotto',
     'js/colorbrewer',
     'lux/forms/main',
-    'lux/nav/main'
+    'lux/nav/main',
+    'lux/components/highlight'
 ], function(lux, angular, giotto, colorbrewer) {
     'use strict';
 
@@ -13,7 +14,8 @@ require([
 
     giotto.angularModule(angular);
 
-    angular.module('giottojs.main', ['lux.sidebar', 'lux.form', 'giotto'])
+    angular.module('giottojs.main', ['lux.sidebar', 'lux.form',
+                                     'lux.highlight', 'giotto'])
         .constant('giottojsNavigation', {
             brand: 'GiottoJS',
             brandImage: lux.media('giotto.svg'),

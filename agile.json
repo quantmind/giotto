@@ -10,14 +10,21 @@
                 "https://bootswatch.com/sandstone/_bootswatch.scss",
                 "https://bootswatch.com/sandstone/_variables.scss"
             ],
-            "target": "scss/bootswatch/sandstone/"
+            "target": "scss/deps/bootswatch/sandstone/"
         },
         "slate": {
             "src": [
                 "https://bootswatch.com/slate/_bootswatch.scss",
                 "https://bootswatch.com/slate/_variables.scss"
             ],
-            "target": "scss/bootswatch/slate/"
+            "target": "scss/deps/bootswatch/slate/"
+        },
+        "highlight": {
+            "src": [
+                "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.1.0/styles/tomorrow.min.css",
+                "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.1.0/styles/zenburn.min.css"
+            ],
+            "target": "scss/deps/highlight/"
         }
     },
     "sass": {
@@ -66,10 +73,17 @@
         "clean": {
             "command": ["rm -rf build",
                         "rm -rf coverage",
+                        "rm -rf scss/deps",
                         "rm -rf giottojs/media/*.js",
                         "rm -rf giottojs/media/*.css",
                         "rm -rf giottojs/media/*.json",
                         "rm -rf giottojs/media/lux"]
+        },
+        "highlight": {
+            "command": [
+                "mv scss/deps/highlight/tomorrow.min.css scss/deps/highlight/_tomorrow.css",
+                "mv scss/deps/highlight/zenburn.min.css scss/deps/highlight/_zenburn.css"
+            ]
         }
     },
     "s3": {
@@ -90,7 +104,7 @@
         },
         "install": {
             "description": "Install and download scss files from bootswatch.com for giotto and giottojs",
-            "command": ["httpcopy"]
+            "command": ["httpcopy", "shell:highlight"]
         },
         "giotto": {
             "description": "Create the build/giotto.(js/css) files",

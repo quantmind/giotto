@@ -2,8 +2,12 @@
 //  * Bootswatch variables
 //  * Bootstrap sass
 //  * Boostwatch scss
-@import 'bootswatch/sandstone/variables';
+@import 'deps/bootswatch/sandstone/variables';
 @import 'bootstrap-sass/assets/stylesheets/bootstrap';
-@import 'bootswatch/sandstone/bootswatch';
+@import 'deps/bootswatch/sandstone/bootswatch';
+@import 'deps/highlight/tomorrow';
+
+@import 'deps/lux/variables/all';
+@import 'deps/lux/components/writing';
 
 @import 'components/site';

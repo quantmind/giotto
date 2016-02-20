@@ -2,4 +2,4 @@
 
 if __name__ == '__main__':
     import lux
-    lux.execute_from_config('giottojs.settings')
+    lux.execute_from_config('giottojs')
