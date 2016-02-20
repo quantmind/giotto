@@ -39,8 +39,8 @@
         },
         "giottojs": {
             "files": {
-                "giottojs/media/sandstone.css": "scss/giottojs-sandstone.scss",
-                "giottojs/media/slate.css": "scss/giottojs-slate.scss"
+                "giottojs/media/giottojs/sandstone.css": "scss/giottojs-sandstone.scss",
+                "giottojs/media/giottojs/slate.css": "scss/giottojs-slate.scss"
             }
         }
     },
@@ -62,21 +62,21 @@
         "giottojs": {
             "command": [
                 "./node_modules/.bin/eslint giottojs/js",
-                "cp build/giotto.js giottojs/media/giotto.js",
+                "cp build/giotto.js giottojs/media/giottojs/giotto.js",
                 "{{ python }} manage.py media --js-src giottojs/media",
                 "./node_modules/requirejs/bin/r.js -o ./giottojs/bundle.js optimize=none"
             ]
         },
         "giottojs_uglify": {
-            "command": "./node_modules/.bin/uglifyjs ./giottojs/media/giottojs.js -c -m -o ./giottojs/media/giottojs.min.js"
+            "command": "./node_modules/.bin/uglifyjs giottojs/media/giottojs/giottojs.js -c -m -o giottojs/media/giottojs/giottojs.min.js"
         },
         "clean": {
             "command": ["rm -rf build",
                         "rm -rf coverage",
                         "rm -rf scss/deps",
-                        "rm -rf giottojs/media/*.js",
-                        "rm -rf giottojs/media/*.css",
-                        "rm -rf giottojs/media/*.json",
+                        "rm -rf giottojs/media/giottojs/*.js",
+                        "rm -rf giottojs/media/giottojs/*.css",
+                        "rm -rf giottojs/media/giottojs/*.json",
                         "rm -rf giottojs/media/lux"]
         },
         "highlight": {
@@ -111,7 +111,7 @@
             "command": ["shell:giotto", "sass:giotto"]
         },
         "giottojs": {
-            "description": "Create the giottojs/media/giottojs.(js/css) files",
+            "description": "Create the giottojs/media/giottojs/giottojs.(js/css) files",
             "command": ["shell:giottojs", "shell:giottojs_uglify", "sass:giottojs"]
         },
         "js": {

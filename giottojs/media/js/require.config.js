@@ -5,7 +5,7 @@ define(['lux/config/main'], function (lux) {
     var localRequiredPath = lux.PATH_TO_LOCAL_REQUIRED_FILES || '';
 
     lux.require.paths = lux.extend(lux.require.paths, {
-        'giotto': localRequiredPath + 'giotto'
+        'giotto': localRequiredPath + 'giottojs/giotto'
     });
 
     lux.config();

@@ -18,7 +18,7 @@ require([
                                      'lux.highlight', 'giotto'])
         .constant('giottojsNavigation', {
             brand: 'GiottoJS',
-            brandImage: lux.media('giotto.svg'),
+            brandImage: lux.media('giottojs/giotto.svg'),
             top: true,
             fixed: true,
             target: '_self',

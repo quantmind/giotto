@@ -11,6 +11,7 @@ from pulsar.utils.httpurl import remove_double_slash
 
 import lux
 from lux.extensions.content import Content, CMS
+from lux.utils.data import update_dict
 
 
 DESCRIPTION = ('GiottoJS is a javascript visualization library built on '
@@ -23,10 +24,9 @@ SITE_URL = 'http://giottojs.org'
 HTML_TITLE = 'GiottoJs Examples'
 DEFAULT_CONTENT_TYPE = 'text/html'
 SERVE_STATIC_FILES = True
-FAVICON = 'favicon.ico'
+FAVICON = 'giottojs/favicon.ico'
 EXTENSIONS = ['lux.extensions.base',
               'lux.extensions.ui',
-              'lux.extensions.code',
               'lux.extensions.angular',
               'lux.extensions.sitemap',
               'lux.extensions.rest',
@@ -35,8 +35,8 @@ EXTENSIONS = ['lux.extensions.base',
 
 HTML_LINKS = ['https://cdnjs.cloudflare.com/ajax/libs/font-awesome/'
               '4.3.0/css/font-awesome.min.css',
-              {'href': 'sandstone', 'id': 'giotto-theme'}]
-SCRIPTS = ['giottojs']
+              {'href': 'giottojs/sandstone', 'id': 'giotto-theme'}]
+SCRIPTS = ['giottojs/giottojs']
 
 HTML_META = [{'http-equiv': 'X-UA-Compatible',
               'content': 'IE=edge'},
@@ -49,17 +49,25 @@ LINKS = {'AngularJS': 'https://angularjs.org/',
          'd3': 'http://d3js.org/',
          'd3js': 'http://d3js.org/'}
 
-CONTENT_REPOSITORY = os.path.dirname(__file__)
+d = os.path.dirname
+CONTENT_REPOSITORY = d(__file__)
 CMS_PARTIALS_PATH = os.path.join(CONTENT_REPOSITORY, 'context')
+STATIC_LOCATION = os.path.join(d(d(CONTENT_REPOSITORY)), 'docs', 'giotto')
+OAUTH_PROVIDERS = {'google': {'analytics': {'id': 'UA-54439804-4'}},
+                   'twitter': {'site': '@quantmind'}}
 
 meta_default = {'image': '$site_url$site_media/giottoweb/giotto.png',
                 'twitter:card': 'summary_large_image',
+                'author': 'Luca Sbardella',
                 'template': 'partials/base.html'}
 
-example_list_meta = {'title': 'GiottoJS Examples',
-                     'description': 'A list of GiottoJS examples'}
-examples_meta = {'template': 'partials/examples.html',
-                 'twitter:card': 'summary_large_image'}
+example_list_meta = update_dict(meta_default,
+                                {'title': 'GiottoJS Examples',
+                                 'description': 'A list of GiottoJS examples'})
+
+examples_meta = update_dict(meta_default,
+                            {'template': 'partials/examples.html',
+                             'image': '/examples/$name/image.png'})
 
 
 class Example(Content):
@@ -67,7 +75,7 @@ class Example(Content):
     def read(self, request, name):
         read = super().read
         ct = read(request, name)
-        if 'path' in request.urlargs and ct.is_html:
+        if ct.is_html and ct.meta.name.startswith('examples'):
             path = request.urlargs['path']
             path = remove_double_slash('%s/giotto.json' % path)
             giotto = read(request, path).text

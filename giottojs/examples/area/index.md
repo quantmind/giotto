@@ -1,8 +1,6 @@
 title: Area Chart
 description: GiottoJS supports area charts for both svg and canvas elements by extending d3js area to canvas.
 date: 2014 December 26
-author: Luca Sbardella
-image: $site_url/examples/area.png
 
 <div class="container-fluid">
   <div class="row">
