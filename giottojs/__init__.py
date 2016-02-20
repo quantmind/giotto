@@ -72,19 +72,18 @@ examples_meta = update_dict(meta_default,
 
 class Example(Content):
 
-    def read(self, request, name):
-        read = super().read
-        ct = read(request, name)
-        if ct.is_html and ct.meta.name.startswith('examples'):
-            path = request.urlargs['path']
-            path = remove_double_slash('%s/giotto.json' % path)
-            giotto = read(request, path).text
+    def context(self, request, instance, context):
+        src = os.path.join(os.path.dirname(instance.src), 'giotto.json')
+        if os.path.isfile(src):
+            with open(src, 'r') as file:
+                giotto = file.read()
             mkdown = '\n'.join(('```json', giotto, '```'))
             reader = lux.get_reader(request.app, 'script.md')
-            content = reader.process(mkdown, 'script')
-            ct.meta['html_giotto'] = content.html(request)
-            ct.meta['script_giotto'] = giotto
-        return ct
+            content, _ = reader.process(src, mkdown)
+            render = request.app.template_engine(instance.meta.template_engine)
+            context['html_giotto'] = render(content, context)
+            context['script_giotto'] = giotto
+        return context
 
 
 class Extension(lux.Extension):

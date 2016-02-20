@@ -24,13 +24,13 @@ require([
             target: '_self',
             itemsRight: [
                 {
-                    href: '/examples/',
+                    href: '/examples',
                     icon: 'fa fa-bar-chart',
                     label: 'examples',
                     target: '_self'
                 },
                 {
-                    href: '/api/',
+                    href: '/api',
                     icon: 'fa fa-cogs',
                     label: 'api'
                 },
