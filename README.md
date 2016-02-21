@@ -1,12 +1,12 @@
 # Giotto JS
 
 <a href="http://giottojs.org">
-<img src="http://giottojs.org/media/giottoweb/giotto.svg" width="200px" alt="GiottoJS">
+<img src="https://assets.quantmind.com/giotto/giotto-banner.svg" width="500px" alt="GiottoJS">
 </a>
 
 D3 based visualization library.
 
-http://giottojs.org
+**The master branch is currently under active development and not ready for anything useful. It is a complete rewrite using d3 v 4 as dependency.** For the original code, which still runs on http://giottojs.org, check the [2015 branch](https://github.com/quantmind/giotto/tree/2015).
 
 <a href="https://travis-ci.org/quantmind/giotto" target="_self">
 <img src="https://travis-ci.org/quantmind/giotto.svg?branch=master" alt="giotto CI"></a>
