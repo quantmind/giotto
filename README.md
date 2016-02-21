@@ -1,7 +1,5 @@
-# Giotto JS
-
 <a href="http://giottojs.org">
-<img src="https://assets.quantmind.com/giotto/giotto-banner.svg" width="500px" alt="GiottoJS">
+<img src="https://assets.quantmind.com/giotto/giotto-banner.svg" width="400px" alt="GiottoJS">
 </a>
 
 D3 based visualization library.
