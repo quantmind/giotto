@@ -1,8 +1,7 @@
 import {select} from 'd3-selection';
 import {GiottoBase} from './defaults';
-import {extend, isString} from '../utils/object';
 import {getElement} from '../utils/dom';
-import {self, round} from 'd3-quant';
+import {self, round, extend, isString} from 'd3-quant';
 
 /**
  * A paper is created via a giotto object
@@ -26,9 +25,10 @@ export class Paper extends GiottoBase {
             .attr('id', this.id)
             .classed('gt-paper', true)
             .classed('gt-paper-' + this.type, true);
-        this.addElement('gt-background');
-        this.addElement('gt-drawings');
-        this.addElement('gt-foreground');
+        var LayerClass = Layer.type[this.type];
+        self.get(this).background = new LayerClass(this, 'gt-background');
+        self.get(this).drawings = new LayerClass(this, 'gt-drawings');
+        self.get(this).foreground = new LayerClass(this, 'gt-foreground');
     }
 
     get giotto () {
@@ -37,6 +37,18 @@ export class Paper extends GiottoBase {
 
     get element () {
         return select(self.get(this).element);
+    }
+
+    get background () {
+        return self.get(this).background;
+    }
+
+    get drawings () {
+        return self.get(this).drawings;
+    }
+
+    get foreground () {
+        return self.get(this).foreground;
     }
 
     get container () {
@@ -89,6 +101,41 @@ export class Paper extends GiottoBase {
         return this.innerHeight/this.innerWidth;
     }
 }
+
+/**
+ * A Layer is bound to a Paper.
+ *
+ * Each paper has three layers:
+ *
+ *  background: where all background drawings are place (areas for example)
+ *  drawings: where the main drawings are placed
+ *  foreground: usually for transitions and animations
+ */
+export class Layer {
+
+    constructor (paper, name) {
+        self.set(this, {paper: paper, name: name});
+    }
+
+    get element () {
+        var s = self.get(this);
+        return s.paper.container.select('.' + s.name);
+    }
+
+    get paper () {
+        return self.get(this).paper;
+    }
+
+    get type () {
+        return self.get(this).paper.type;
+    }
+
+    get context () {
+        return null;
+    }
+}
+
+Layer.type = {};
 
 
 function pc (margin, size) {

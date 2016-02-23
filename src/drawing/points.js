@@ -1,4 +1,6 @@
+import {self} from 'd3-quant';
 import {Drawing} from '../core/drawing';
+
 
 Drawing.defaults.points = {
     symbol: 'circle',
@@ -21,17 +23,36 @@ Drawing.defaults.points = {
 class Points extends Drawing {
 
     /**
-     * Draw a data serie into a paper
+     * Get or set the point symbol generator
      *
-     * @param paper
-     * @param data
+     * A symbol is implemented d3-shape and contain information
+     * about size and type
      */
-    draw () {
+    symbol (_) {
+        if (!arguments.length) return self.get(this).symbol;
+        self.get(this).symbol = _;
+        return this;
+    }
 
+    /**
+     * Draw points on a layer of a paper (usually the drawing layer)
+     *
+     * @param layer
+     */
+    draw (layer) {
+        var serie = this.data(),
+            x = serie.x(),
+            y = serie.y(),
+            symbol = this.symbol().context(layer.context());
+        this.data().forEach((d) => {
+            layer.startDraw([x(d), y(d)]);
+            layer.draw(symbol(d));
+            layer.endDraw();
+        });
     }
 }
 
 
-export function points (options) {
+Drawing.points = function (options) {
     return new Points(options);
-}
+};

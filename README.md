@@ -8,9 +8,10 @@ D3 based visualization library.
 
 http://giottojs.org
 
-<a href="https://travis-ci.org/quantmind/giotto" target="_self">
-<img src="https://travis-ci.org/quantmind/giotto.svg?branch=master" alt="giotto CI"></a>
+[![Build Status](https://travis-ci.org/quantmind/giotto.svg?branch=master)](https://travis-ci.org/quantmind/giotto)
 [![Coverage Status](https://img.shields.io/coveralls/quantmind/giotto.svg)](https://coveralls.io/r/quantmind/giotto?branch=master)
+[![Dependency Status](https://david-dm.org/quantmind/giotto.svg)](https://david-dm.org/quantmind/giotto)
+[![devDependency Status](https://david-dm.org/quantmind/giotto/dev-status.svg)](https://david-dm.org/quantmind/giotto#info=devDependencies)
 
 # Giotto Library
 

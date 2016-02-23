@@ -1,26 +1,44 @@
-import {Paper} from './paper';
+import {Paper, Layer} from './paper';
+
+
+class CanvasLayer extends Layer {
+
+    constructor (paper, name) {
+        super(paper, name);
+        paper.container
+            .append('canvas')
+            .attr('class', name)
+            .style({"position": "absolute", "top": "0", "left": "0"});
+    }
+
+    context () {
+        return this.element.node().getContext('2d');
+    }
+
+    startDraw (center) {
+        var ctx = this.context,
+            paper = this.paper;
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.translate(paper.marginLeft(), paper.marginTop());
+        if (center)
+            ctx.translate(center[0], center[1]);
+    }
+
+    draw () {}
+
+    endDraw () {
+        this.context.restore();
+    }
+}
+
+Layer.type.canvas = CanvasLayer;
 
 
 export class Canvas extends Paper {
 
     get type () {
         return "canvas";
-    }
-
-    addElement (className) {
-        this.container
-            .append('canvas')
-            .attr('class', className)
-            .style({"position": "absolute", "top": "0", "left": "0"});
-    }
-
-    /**
-     * Draw data into this canvas paper
-     *
-     * @param data
-     */
-    draw () {
-
     }
 
     /**

@@ -1,7 +1,25 @@
-.navbar-brand {
-  padding: 0;
+// Lux mixins
+@import '../deps/lux/mixins/all';
+
+// Lux Dependencies
+@import '../deps/lux/components/writing';
+@import '../deps/lux/components/datepicker';
+@import '../deps/lux/components/fileupload';
+@import '../deps/lux/components/grid';
+@import '../deps/lux/components/navbar';
+@import '../deps/lux/components/pagination';
+@import '../deps/lux/components/sidebar';
+
+
+.navbar .navbar-brand {
+  padding: 5px;
 
   img {
-    height: 60px;
+    height: 50px;
   }
+}
+
+// Padding for fixed header
+._header-padding{
+    padding-top: 60px;
 }

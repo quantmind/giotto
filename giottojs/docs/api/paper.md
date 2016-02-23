@@ -3,8 +3,8 @@
 A ``giotto.paper`` is an abstraction
 on top of the ``svg`` or the ``canvas`` element.
 ```javascript
-    var gt = giotto.giotto();
-    var paper = gt.paper(options);
+    var gt = giotto();
+    var paper = gt.paper(element, options);
 ```
 where ``options`` is an object containing several parameters to customise the
 paper.

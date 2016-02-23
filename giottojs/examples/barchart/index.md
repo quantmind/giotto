@@ -4,4 +4,4 @@ image: $site_url/examples/barchart.png
 date: 18 December 2014
 author: Luca Sbardella
 
-<div data-options='gexamples.barchart' style='max-width: 500px' class="center-block" giotto-chart></div>
+<div style='max-width: 500px' class="center-block" giotto="$html_url/giotto.json"></div>

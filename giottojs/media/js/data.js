@@ -1,23 +1,22 @@
-define(['lux/config/main'], function () {
+define(["angular",
+        "giotto"], function (angular, giotto) {
 
-    function randomPath(N) {
-        // Create a random path
-        var t = d3.range(0, N, 1),
-            σ = 0.1,
-            µ = 0,
-            data = [{time: 0, value: 0}],
-            norm = d3.random.normal(0, σ),
-            dt;
+    //
+    // Expose functions used in examples
+    angular.module('giottojs.data', [])
+        .run(['$rootscope', (scope) => {
+            scope.examples = {};
+            var examples = scope.examples;
 
-        for (var i = 1; i < t.length; i++) {
-            dt = t[i] - t[i - 1];
-            dx = dt * µ + σ * norm() * Math.sqrt(dt);
-            data[i] = {
-                time: i,
-                value: data[i - 1].value + dx
-            };
-        }
-        return d3.giotto.serie().data(data).x('time').y('value');
+            examples.simpleBarChart = simpleBarChart;
+            examples.randomPath = giotto.timeSeries.randomPath;
+        }]);
+
+
+    function simpleBarChart () {
+        return giotto.array.range(-5, 5, 0.5).map((x) => {
+            return [x, 1/(1+Math.exp(-x)) - 0.5];
+        });
     }
 
 });

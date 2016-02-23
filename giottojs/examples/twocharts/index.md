@@ -3,9 +3,12 @@ description: GiottoJS supports area charts for both svg and canvas elements by e
 date: 2014 December 26
 
 <div class="container-fluid">
-  <div class="row">
-    <div class="col-sm-12">
-      <div class='center-block' style='width: 100%; max-width: 800px' giotto='$html_url/giotto.json'></div>
+  <div class="row" giotto='$html_url/giotto.json'>
+    <div class="col-sm-6">
+      <div class='center-block' style='width: 100%; max-width: 800px' giotto-paper="left"></div>
+    </div>
+    <div class="col-sm-6">
+      <div class='center-block' style='width: 100%; max-width: 800px' giotto-paper="right"></div>
     </div>
   </div>
 </div>

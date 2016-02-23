@@ -67,6 +67,13 @@ export class Giotto  extends GiottoBase {
     }
 
     /**
+     * Update papers from JSON
+     */
+    setOptions () {
+
+    }
+
+    /**
      * Apply ``callback`` over all papers
      *
      * @param callback: function accepting the paper as first parameter
@@ -94,6 +101,6 @@ export class Giotto  extends GiottoBase {
     }
 }
 
-export function giotto (options) {
+export default function (options) {
     return new Giotto(options);
 }

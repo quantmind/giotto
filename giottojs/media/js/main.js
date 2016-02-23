@@ -3,6 +3,7 @@ require([
     'angular',
     'giotto',
     'js/colorbrewer',
+    'js/data',
     'lux/forms/main',
     'lux/nav/main',
     'lux/components/highlight'
@@ -12,13 +13,16 @@ require([
     // Create giotto angular module first
     giotto.colorbrewer = colorbrewer;
 
+    // Ceate giotto angular module
     giotto.angularModule(angular);
 
-    angular.module('giottojs.main', ['lux.sidebar', 'lux.form',
-                                     'lux.highlight', 'giotto'])
+    angular.module('giottojs.main', [
+        'lux.sidebar', 'lux.form',
+        'lux.highlight', 'giotto',
+        'giottojs.data'])
         .constant('giottojsNavigation', {
             brand: 'GiottoJS',
-            brandImage: lux.media('giottojs/giotto.svg'),
+            brandImage: lux.media('giottojs/giotto-banner.svg'),
             top: true,
             fixed: true,
             target: '_self',
@@ -43,7 +47,6 @@ require([
         .run(['$rootScope', '$lux', 'context', 'giottojsNavigation',
             function ($scope, $lux, context, giottojsNavigation) {
                 $scope.navbar = giottojsNavigation;
-                $scope.giottojs = {};
             }]
         );
 

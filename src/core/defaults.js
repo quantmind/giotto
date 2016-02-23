@@ -1,6 +1,5 @@
-import {forEach, extend} from '../utils/object'
 import {giottoId} from '../utils/dom';
-import {self} from 'd3-quant';
+import {self, forEach, extend} from 'd3-quant';
 
 
 export var defaults = {
@@ -53,10 +52,10 @@ export class GiottoBase {
     }
 
     /**
-     * Set or get date for the paper
+     * Set or get data for the paper
      *
-     * getting date is relatively straightforward and does not produce any
-     * side effets. Setting data causes the paper to do a complete re-draw
+     * getting data is relatively straightforward and does not produce any
+     * side effets. Setting data causes the object to do a complete re-draw
      * by firing the ``on_data`` event
      *
      * @param _

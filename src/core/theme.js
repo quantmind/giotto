@@ -1,5 +1,6 @@
-import {giotto} from './main';
+import {default as giotto} from './main';
 import {loadCss} from '../utils/dom'
+
 
 let current_theme = null;
 

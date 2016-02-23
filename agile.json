@@ -48,9 +48,13 @@
         "d3_quant_path": {
             "command": "cd ../d3-quant && pwd"
         },
-        "d3-quant-link": {
+        "d3_quant_link": {
             "command": ["rm -rf ./node_modules/d3-quant",
                         "ln -s {{ d3_quant_path }} {{repo_path }}/node_modules/d3-quant"]
+        },
+        "giotto-dev": {
+            "command": ["npm run-script build",
+                       "cp build/giotto.js giottojs/media/giottojs/giotto.js"]
         },
         "giotto": {
             "command": ["npm test",
@@ -59,12 +63,16 @@
         "giotto-bundle": {
             "command": ["zip -j build/giotto.zip -- LICENSE README.md build/*.js build/*.css"]
         },
-        "giottojs": {
+        "giottojs_pre": {
             "command": [
-                "./node_modules/.bin/eslint giottojs/js",
                 "cp build/giotto.js giottojs/media/giottojs/giotto.js",
-                "{{ python }} manage.py media --js-src giottojs/media",
-                "./node_modules/requirejs/bin/r.js -o ./giottojs/bundle.js optimize=none"
+                "{{ python }} manage.py media --js-src giottojs/media"
+            ]
+        },
+        "giottosjs_bundle": {
+            "command": [
+                "./node_modules/.bin/eslint giottojs/media/js",
+                "./node_modules/.bin/r.js -o ./giottojs/bundle.js optimize=none"
             ]
         },
         "giottojs_uglify": {
@@ -97,6 +105,16 @@
             }
         }
     },
+    "watch": {
+        "giotto": {
+            "files": ["index.js", "src/**/*.js", "test/*.js"],
+            "command": "giotto-dev"
+        },
+        "giottojs": {
+            "files": "giottojs/media/js/*.js",
+            "command": "giottojs-dev"
+        }
+    },
     "tasks": {
         "clean": {
             "description": "Remove build files and directories",
@@ -110,9 +128,22 @@
             "description": "Create the build/giotto.(js/css) files",
             "command": ["shell:giotto", "sass:giotto"]
         },
+        "giotto-dev": {
+            "description": "Eslint and build giotto.js file and run phantomJS tests",
+            "command": ["shell:giotto-dev"]
+        },
+        "giottojs-dev": {
+            "description": "Create the giottojs.js file, used by watch server",
+            "command": "shell:giottosjs_bundle"
+        },
         "giottojs": {
             "description": "Create the giottojs/media/giottojs/giottojs.(js/css) files",
-            "command": ["shell:giottojs", "shell:giottojs_uglify", "sass:giottojs"]
+            "command": [
+                "shell:giottojs_pre",
+                "shell:giottosjs_bundle",
+                "shell:giottojs_uglify",
+                "sass:giottojs"
+            ]
         },
         "js": {
             "description": "Create the giottojs.js file only, no min.js no css",
@@ -121,6 +152,14 @@
         "release": {
             "description": "Make a new release",
             "command": ["s3:giotto"]
+        },
+        "d3_quant": {
+            "description": "Create a symbolic link to d3-quant for development",
+            "command": ["shell:d3_quant_path", "shell:d3_quant_link"]
+        },
+        "serve": {
+            "description": "Starts development server",
+            "command": ["watch"]
         }
     }
 }

@@ -1,4 +1,4 @@
-import {giotto} from '../core/main';
+import {default as giotto} from '../core/main';
 //
 //  Giotto Angular Integration
 //  ==================================
@@ -21,12 +21,13 @@ export function angularModule (angular) {
 
         .factory('getOptions', ['$window', getOptionsFactory])
 
-        .directive('giottoLayout', ['getOptions', function (getOptions) {
+        .directive('giotto', ['getOptions', function (getOptions) {
             return {
                 restrict: 'AE',
 
                 controller: ['$scope', 'giottoDefaults', function (scope, giottoDefaults) {
-                    scope.giotto = giotto.giotto(giottoDefaults);
+                    // Add a giotto instance to the scope
+                    scope.giotto = giotto(giottoDefaults);
                 }],
 
                 link: giottoLayout(getOptions)
@@ -51,8 +52,9 @@ export function angularModule (angular) {
     function giottoLayout(getOptions) {
 
         return function (scope, element, attrs) {
-            var o = getOptions(scope, attrs, 'giottoLayout');
-            scope.giotto.options(o.attr);
+            var options = getOptions(scope, attrs, 'giotto');
+            // Set layout options for giotto instance
+            scope.giotto.setOptions(options);
         };
     }
 
@@ -64,9 +66,10 @@ export function angularModule (angular) {
 
             // No giotto in the scope, create one
             if (!gt) {
-                gt = giotto.giotto();
+                gt = giotto();
                 scope.giotto = gt;
             }
+
 
             gt.paper(element[0], options);
         };

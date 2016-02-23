@@ -1,4 +1,4 @@
-import * as obj from './object';
+import {isFunction} from 'd3-quant';
 
 let _idCounter = 0;
 
@@ -25,7 +25,7 @@ export function loadCss (filename) {
 export function getElement (element) {
     if (!element) {
         element = document.createElement('div');
-    } if (obj.isFunction(element.node))
+    } if (isFunction(element.node))
         element = element.node();
     return element;
 }

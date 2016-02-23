@@ -1,5 +1,4 @@
 import {GiottoBase} from './defaults';
-import {self} from 'd3-quant';
 
 /**
  * Drawing Class
@@ -11,16 +10,11 @@ import {self} from 'd3-quant';
  */
 export class Drawing extends GiottoBase {
 
-    get data () {
-        return self.get(this).data;
-    }
-
     /**
-     * Draw itself into a paper
+     * Draw itself into a paper.layer
      *
      * @param paper
      */
-
     draw () {
     }
 }

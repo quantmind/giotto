@@ -56,7 +56,7 @@ STATIC_LOCATION = os.path.join(d(d(CONTENT_REPOSITORY)), 'docs', 'giotto')
 OAUTH_PROVIDERS = {'google': {'analytics': {'id': 'UA-54439804-4'}},
                    'twitter': {'site': '@quantmind'}}
 
-meta_default = {'image': '$site_url$site_media/giottoweb/giotto.png',
+meta_default = {'image': '$site_url$site_media/giottojs/giotto-banner.png',
                 'twitter:card': 'summary_large_image',
                 'author': 'Luca Sbardella',
                 'template': 'partials/base.html'}
@@ -67,23 +67,23 @@ example_list_meta = update_dict(meta_default,
 
 examples_meta = update_dict(meta_default,
                             {'template': 'partials/examples.html',
-                             'image': '/examples/$name/image.png'})
+                             'image': '$html_url/image.png'})
 
 
 class Example(Content):
 
     def context(self, request, instance, context):
+        super().context(request, instance, context)
         src = os.path.join(os.path.dirname(instance.src), 'giotto.json')
         if os.path.isfile(src):
             with open(src, 'r') as file:
                 giotto = file.read()
             mkdown = '\n'.join(('```json', giotto, '```'))
             reader = lux.get_reader(request.app, 'script.md')
-            content, _ = reader.process(src, mkdown)
+            content, _ = reader.process(mkdown, src)
             render = request.app.template_engine(instance.meta.template_engine)
             context['html_giotto'] = render(content, context)
             context['script_giotto'] = giotto
-        return context
 
 
 class Extension(lux.Extension):
