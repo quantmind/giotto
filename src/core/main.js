@@ -18,7 +18,7 @@ export class Giotto extends GiottoBase {
         var g = self.get(this);
         g.papers = [];
         g.paperOptions = paperOptions || {};
-        g.events = dispatch('draw', 'redraw', 'resize', 'refresh', 'dataBefore', 'data');
+        g.events = dispatch('draw', 'redraw', 'clear', 'dataBefore', 'data');
         rebind(this, g.events, 'on');
     }
 
@@ -73,9 +73,9 @@ export class Giotto extends GiottoBase {
 
         options = extend(true, {}, opts, options);
         if (options.type === 'canvas')
-            paper = new Canvas(this, element, options);
+            paper = new Canvas(this, element, options, gt.events);
         else
-            paper = new Svg(this, element, options);
+            paper = new Svg(this, element, options, gt.events);
         gt.papers.push(paper);
         return paper;
     }

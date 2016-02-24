@@ -48,7 +48,6 @@ export class GiottoBase {
     data (_) {
         if (arguments.length === 0) return self.get(this).data;
         self.get(this).data = _;
-        this.fire('on_data');
     }
 
     fire () {

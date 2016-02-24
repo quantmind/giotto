@@ -29,6 +29,7 @@ class Responsive extends Plugin {
                 p.resizing = true;
                 timer(function () {
                     paper.resize();
+                    p.resizing = false;
                     return true;
                 }, p.delay);
             } else {

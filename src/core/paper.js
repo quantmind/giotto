@@ -19,12 +19,13 @@ import {self, round, extend, isString} from 'd3-quant';
  */
 export class Paper extends GiottoBase {
 
-    constructor(giotto, element, options) {
+    constructor(giotto, element, options, events) {
         super(options);
         var paper = self.get(this);
         extend(paper, {
             giotto: giotto,
             element: getElement(element),
+            events: events,
             draws: []
         });
         // Append the paper container
@@ -158,6 +159,22 @@ export class Paper extends GiottoBase {
 
     }
 
+    /**
+     * Resize the paper if it needs resizing
+     */
+    resize (size) {
+        var p = self.get(this);
+        if (!size) size = boundingBox(p);
+
+        if (p.size[0] !== size[0] || p.size[1] !== size[1]) {
+            p.size[0] = size[0];
+            p.size[1] = size[1];
+            this.clear();
+            this.draw();
+        }
+        return this;
+    }
+
     scheduleRedraw () {
 
     }
@@ -166,6 +183,7 @@ export class Paper extends GiottoBase {
      * Refresh the paper by setting proper dimension and positioning
      */
     clear () {
+        this.fire('clear');
         var container = this.container;
         var first_container = this.element.select('.gt-paper').node();
         var position = container.node() === first_container ? 'relative' : 'absolute';
@@ -173,11 +191,14 @@ export class Paper extends GiottoBase {
         this.background.clear();
         this.drawings.clear();
         this.foreground.clear();
-        this.draw();
     }
 
     remove () {
         return this.giotto.remove(this);
+    }
+
+    fire (event) {
+        self.get(this).events.call(event, this);
     }
 }
 
@@ -283,4 +304,17 @@ export function getSize (element, p) {
     }
 
     return [width, height];
+}
+
+
+function boundingBox (p) {
+    var w = p.elwidth ? size.getWidth(p.elwidth) : p.size[0],
+        h;
+    if (p.height_percentage)
+        h = round(w*p.height_percentage, 0);
+    else
+        h = p.elheight ? size.getHeight(p.elheight) : p.size[1];
+    if (p.min_height)
+        h = Math.max(h, p.min_height);
+    return [round(w), round(h)];
 }
