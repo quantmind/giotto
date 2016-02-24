@@ -1,4 +1,3 @@
-import {self} from 'd3-quant';
 import {paperDraw, Drawing} from '../core/drawing';
 
 

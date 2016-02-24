@@ -1,4 +1,4 @@
-import {self, isObject, isArray, extend} from 'd3-quant';
+import {self, isObject, extend} from 'd3-quant';
 import {dispatch} from 'd3-dispatch';
 import {defaults, GiottoBase} from './defaults';
 import {Canvas} from './canvas';
@@ -13,9 +13,11 @@ import {rebind} from '../utils/object';
 export class Giotto extends GiottoBase {
 
     constructor (options) {
+        var paperOptions = stripPapers(options);
         super(extend(true, {}, options, defaults));
         var g = self.get(this);
         g.papers = [];
+        g.paperOptions = paperOptions || {};
         g.events = dispatch('draw', 'redraw', 'resize', 'refresh', 'dataBefore', 'data');
         rebind(this, g.events, 'on');
     }
@@ -63,12 +65,18 @@ export class Giotto extends GiottoBase {
                 element = null;
             }
         }
-        options = extend(true, {}, this.options(), options);
+        var name = options ? options.name : undefined,
+            gt = self.get(this),
+            opts = gt.options;
+        if (name && gt.paperOptions[name])
+            opts = extend(true, {}, opts, gt.paperOptions[name]);
+
+        options = extend(true, {}, opts, options);
         if (options.type === 'canvas')
             paper = new Canvas(this, element, options);
         else
             paper = new Svg(this, element, options);
-        self.get(this).papers.push(paper);
+        gt.papers.push(paper);
         return paper;
     }
 
@@ -76,14 +84,16 @@ export class Giotto extends GiottoBase {
      * Update papers from JSON
      */
     options (_) {
-        var current = self.get(this).options;
+        var gt = self.get(this);
+        var current = gt.options;
         if (arguments.length === 0) return current;
+        //
         var options = extend({}, _);
-        var papers = options.papers;
-        delete options.papers;
-        options = extend(true, current, options);
-        options.papers = isArray(papers) ? papers : [];
-        self.get(this).options = options;
+        var paperOptions = stripPapers(options);
+        //
+        gt.options = extend(true, current, options);
+        gt.paperOptions = extend(true, gt.paperOptions, paperOptions);
+        //
         return this;
     }
 
@@ -143,4 +153,13 @@ export class Giotto extends GiottoBase {
 
 export default function (options) {
     return new Giotto(options);
+}
+
+
+function stripPapers (options) {
+    if (options && options.papers) {
+        var papers = options.papers;
+        delete options.papers;
+        return papers;
+    }
 }

@@ -3,9 +3,11 @@ import {StackedDrawing, paperDraw} from '../core/drawing';
 
 
 /**
- * Draw bars on a paper
+ * Draw area charts on a paper
  *
- * Grouped bar charts
+ * Area is plotted in the background layer, while lines are plotted in the
+ * front layer, unless specified otherwise in the options
+ * (set background to false)
  * http://bl.ocks.org/mbostock/3887051
  */
 class Area extends StackedDrawing {
@@ -35,4 +37,5 @@ paperDraw(Area, {
     fillOpacity: 0.7,
     colorOpacity: 1,
     lineWidth: 1,
+    background: true
 });

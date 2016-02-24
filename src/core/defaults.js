@@ -3,10 +3,7 @@ import {self} from 'd3-quant';
 
 
 export var defaults = {
-    type: 'canvas',
-    resizeDelay: 200,
-    resize: true,
-    interact: true
+    type: 'canvas'
 };
 
 

@@ -28,6 +28,7 @@ export function angularModule (angular) {
                 controller: ['$scope', 'giottoDefaults', function (scope, giottoDefaults) {
                     // Add a giotto instance to the scope
                     scope.giotto = giotto(giottoDefaults);
+                    scope.giottoQueue = [];
                 }],
 
                 link: giottoLayout($http, getOptions)
@@ -52,19 +53,22 @@ export function angularModule (angular) {
     function giottoLayout($http, getOptions) {
 
         return function (scope, element, attrs) {
-            var options = getOptions(scope, attrs, 'giotto');
+            var options = getOptions(scope, attrs, 'giotto'),
+                queue = scope.giottoQueue;
+
             // Set layout options for giotto instance
-            if (!scope.giotto.papers.length) {
-                // Create one paper, this giotto element does not specify any
-                scope.giotto.paper(element[0], {name: "default"});
-            }
+            if (queue && !queue.length)
+                queue.push([element[0], {}]);
+
+            //
             if (options.name && /^(http(s)?:)?\/\//.test(options.name)) {
                 $http.get(options.name).then(function (response) {
-                    options = response.data;
-                    scope.giotto.setOptions(options);
+                    giottoPapers(scope, response.data);
                 }, function () {
 
                 });
+            } else {
+                giottoPapers(scope, options);
             }
         };
     }
@@ -80,9 +84,10 @@ export function angularModule (angular) {
                 gt = giotto();
                 scope.giotto = gt;
             }
-
-
-            gt.paper(element[0], options);
+            if (scope.giottoQueue)
+                scope.giottoQueue.push([element[0], options]);
+            else
+                gt.paper(element[0], options);
         };
     }
 
@@ -144,6 +149,22 @@ export function angularModule (angular) {
                 obj = obj();
 
             return obj;
+        }
+    }
+
+    //
+    // Delay creation of papers until giotto has its options
+    function giottoPapers(scope, options) {
+        var gt = scope.giotto,
+            queue = scope.giottoQueue;
+
+        gt.options(options);
+
+        if (queue) {
+            delete scope.giottoQueue;
+            queue.forEach( (eo) => {
+                gt.paper(eo[0], eo[1]);
+            });
         }
     }
 

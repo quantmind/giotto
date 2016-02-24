@@ -5,10 +5,10 @@ class CanvasLayer extends Layer {
 
     constructor (paper, name) {
         super(paper, name);
-        var canvas = paper.container
-            .append('canvas')
-            .attr('class', name);
-        var position = paper.container.selectAll('*').length === 1 ? 'relative' : 'absolute';
+        var c = paper.container,
+            canvas = c.append('canvas').classed('gt-layer', true).classed(name, true),
+            node = canvas.node();
+        var position = c.select('canvas').node() === node ? 'relative' : 'absolute';
         canvas
             .style('position', position)
             .style('top', 0)

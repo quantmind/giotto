@@ -29,6 +29,14 @@ To build giottojs.org web site you need python 3.5. Once installed
 ```
 pip install -r requirements.txt
 ```
+To start the dev server
+```
+python manage.py serve --nominify
+```
+To build the static site
+```
+python manage.py build_static
+```
 
 # Acknowledgement
 

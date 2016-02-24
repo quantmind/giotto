@@ -1,14 +1,21 @@
 import {select} from 'd3-selection';
-import {GiottoBase, constants} from './defaults';
+import {map} from 'd3-collection';
+import {GiottoBase, defaults, constants} from './defaults';
 import {getElement} from '../utils/dom';
 import * as size from '../utils/size';
 import {self, round, extend, isString} from 'd3-quant';
 
 /**
- * A paper is created via a giotto object
- *
+ * A paper is created via a giotto object.
  * var g = new Giotto();
  * var p = p.paper();
+ *
+ * Its function are:
+ *
+ *  * size and resize the drawing window
+ *  * Render drawings
+ *  * Apply plugins
+ *
  */
 export class Paper extends GiottoBase {
 
@@ -23,6 +30,10 @@ export class Paper extends GiottoBase {
         // Append the paper container
         element = this.element;
 
+        var position = element.style('position');
+        if (!position || position === 'static')
+            element.style('position', 'relative');
+
         element
             .append('div')
             .attr('id', this.id)
@@ -36,6 +47,17 @@ export class Paper extends GiottoBase {
         paper.drawings = new LayerClass(this, 'gt-drawings');
         paper.foreground = new LayerClass(this, 'gt-foreground');
         this.clear();
+        paper.plugins = map();
+
+        var thisPaper = this;
+        Paper.plugins.each( (Class, name) => {
+            var opts = paper.options[name];
+            if (opts === true) opts = {};
+            if (opts) {
+                opts = extend({}, Class.defaults, opts);
+                paper.plugins.set(name, new Class(thisPaper, opts));
+            }
+        });
     }
 
     get factor () {
@@ -48,6 +70,11 @@ export class Paper extends GiottoBase {
 
     get element () {
         return select(self.get(this).element);
+    }
+
+    // paper name
+    get name () {
+        return self.get(this).name;
     }
 
     get background () {
@@ -131,6 +158,10 @@ export class Paper extends GiottoBase {
 
     }
 
+    scheduleRedraw () {
+
+    }
+
     /**
      * Refresh the paper by setting proper dimension and positioning
      */
@@ -150,6 +181,33 @@ export class Paper extends GiottoBase {
     }
 }
 
+
+export class Plugin {
+
+    constructor (paper, p) {
+        p.paper = paper;
+        self.set(this, p);
+    }
+
+    get paper () {
+        return self.get(this).paper;
+    }
+}
+
+Paper.plugins = map();
+
+/**
+ * Register a Plugin class to the Paper prototype
+ *
+ * @param Class: Plugin class
+ * @param pluginDefaults: optional defaults
+ */
+Plugin.register = function (Class, active, pluginDefaults) {
+    var name = Class.name.toLowerCase();
+    Class.defaults = pluginDefaults;
+    Paper.plugins.set(name, Class);
+    defaults[name] = active;
+}
 /**
  * A Layer is bound to a Paper.
  *
@@ -191,7 +249,6 @@ Layer.type = {};
 Layer.getFactor = function () {
     return 1;
 }
-
 
 function pc (margin, size) {
     if (isString(margin) && margin.indexOf('%') === margin.length-1)
