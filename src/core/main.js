@@ -1,6 +1,6 @@
-import {self} from 'd3-quant';
+import {self, isObject, isArray, extend} from 'd3-quant';
 import {dispatch} from 'd3-dispatch';
-import {getOptions, defaults, GiottoBase} from './defaults';
+import {defaults, GiottoBase} from './defaults';
 import {Canvas} from './canvas';
 import {Svg} from './svg';
 import {rebind} from '../utils/object';
@@ -10,13 +10,13 @@ import {rebind} from '../utils/object';
  *
  * Manage multiple papers objects and coordinate rendering between them
  */
-export class Giotto  extends GiottoBase {
+export class Giotto extends GiottoBase {
 
     constructor (options) {
-        super(getOptions(options, defaults));
+        super(extend(true, {}, options, defaults));
         var g = self.get(this);
         g.papers = [];
-        g.events = dispatch('draw', 'redraw', 'dataBefore', 'data');
+        g.events = dispatch('draw', 'redraw', 'resize', 'refresh', 'dataBefore', 'data');
         rebind(this, g.events, 'on');
     }
 
@@ -56,8 +56,14 @@ export class Giotto  extends GiottoBase {
      * @return a new Paper object
      */
     paper (element, options) {
-        let paper;
-        options = getOptions(options, this.options);
+        var paper;
+        if (arguments.length == 1) {
+            if (isObject(element)) {
+                options = element;
+                element = null;
+            }
+        }
+        options = extend(true, {}, this.options(), options);
         if (options.type === 'canvas')
             paper = new Canvas(this, element, options);
         else
@@ -69,8 +75,16 @@ export class Giotto  extends GiottoBase {
     /**
      * Update papers from JSON
      */
-    setOptions () {
-
+    options (_) {
+        var current = self.get(this).options;
+        if (arguments.length === 0) return current;
+        var options = extend({}, _);
+        var papers = options.papers;
+        delete options.papers;
+        options = extend(true, current, options);
+        options.papers = isArray(papers) ? papers : [];
+        self.get(this).options = options;
+        return this;
     }
 
     /**
@@ -98,6 +112,32 @@ export class Giotto  extends GiottoBase {
         this.forEach((paper) => {
             paper.clear();
         });
+    }
+
+    refresh () {
+        this.forEach((paper) => {
+            paper.refresh();
+        });
+    }
+    /**
+     * Remove a paper for this container
+     *
+     * If the paper was in the container, it is removed and the ``refresh``
+     * event is triggered
+     *
+     * @param paper
+     * @returns {boolean}
+     */
+    remove (paper) {
+        var gt = self.get(this),
+            papers = gt.papers,
+            index = papers.indexOf(paper);
+        if (index >= 0) {
+            papers.splice(index, 0);
+            paper.container.remove();
+            gt.refresh();
+            return true;
+        }
     }
 }
 

@@ -113,6 +113,10 @@
         "giottojs": {
             "files": "giottojs/media/js/*.js",
             "command": "giottojs-dev"
+        },
+        "giotto-scss": {
+            "files": ["scss/*.scss", "scss/**/*.scss"],
+            "command": "css"
         }
     },
     "tasks": {
@@ -127,6 +131,10 @@
         "giotto": {
             "description": "Create the build/giotto.(js/css) files",
             "command": ["shell:giotto", "sass:giotto"]
+        },
+        "css": {
+            "description": "Compile css files for both giotto and giottojs",
+            "command": ["sass"]
         },
         "giotto-dev": {
             "description": "Eslint and build giotto.js file and run phantomJS tests",

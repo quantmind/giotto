@@ -20,7 +20,7 @@ DESCRIPTION = ('GiottoJS is a javascript visualization library built on '
                'with a simple API. AngularJS integration')
 
 SITE_URL = 'http://giottojs.org'
-
+APP_NAME = 'GiottoJs'
 HTML_TITLE = 'GiottoJs Examples'
 DEFAULT_CONTENT_TYPE = 'text/html'
 SERVE_STATIC_FILES = True
@@ -69,6 +69,9 @@ examples_meta = update_dict(meta_default,
                             {'template': 'partials/examples.html',
                              'image': '$html_url/image.png'})
 
+api_meta = update_dict(meta_default,
+                       {'template': 'partials/api.html'})
+
 
 class Example(Content):
 
@@ -93,10 +96,14 @@ class Extension(lux.Extension):
         app.cms = CMS(app)
         middleware = []
         if repo and os.path.isdir(repo):
-            site = Content('site', repo, '')
+            site = Content('site', repo, '',
+                           content_meta=meta_default)
+            api = Content('api', repo,
+                          content_meta=api_meta)
             exam = Example('examples', repo,
                            content_meta=examples_meta)
             app.cms.add_router(exam)
+            app.cms.add_router(api)
             app.cms.add_router(site)
             middleware.extend(app.cms.middleware())
         return middleware

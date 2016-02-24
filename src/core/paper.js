@@ -1,6 +1,7 @@
 import {select} from 'd3-selection';
-import {GiottoBase} from './defaults';
+import {GiottoBase, constants} from './defaults';
 import {getElement} from '../utils/dom';
+import * as size from '../utils/size';
 import {self, round, extend, isString} from 'd3-quant';
 
 /**
@@ -13,22 +14,32 @@ export class Paper extends GiottoBase {
 
     constructor(giotto, element, options) {
         super(options);
-        extend(self.get(this), {
+        var paper = self.get(this);
+        extend(paper, {
             giotto: giotto,
             element: getElement(element),
-            draws: [],
-            factor: 1
+            draws: []
         });
         // Append the paper container
-        this.element
+        element = this.element;
+
+        element
             .append('div')
             .attr('id', this.id)
             .classed('gt-paper', true)
             .classed('gt-paper-' + this.type, true);
+        //
         var LayerClass = Layer.type[this.type];
-        self.get(this).background = new LayerClass(this, 'gt-background');
-        self.get(this).drawings = new LayerClass(this, 'gt-drawings');
-        self.get(this).foreground = new LayerClass(this, 'gt-foreground');
+        paper.size = getSize(element, paper);
+        paper.factor = paper.options.factor || LayerClass.getFactor();
+        paper.background = new LayerClass(this, 'gt-background');
+        paper.drawings = new LayerClass(this, 'gt-drawings');
+        paper.foreground = new LayerClass(this, 'gt-foreground');
+        this.clear();
+    }
+
+    get factor () {
+        return self.get(this).factor;
     }
 
     get giotto () {
@@ -100,6 +111,43 @@ export class Paper extends GiottoBase {
     get aspectRatio () {
         return this.innerHeight/this.innerWidth;
     }
+
+    get domWidth () {
+        return self.get(this).size[0];
+    }
+
+    get domHeight () {
+        return self.get(this).size[1];
+    }
+
+    get size () {
+        return self.get(this).size.slice();
+    }
+
+    /**
+     * Draw the paper
+     */
+    draw () {
+
+    }
+
+    /**
+     * Refresh the paper by setting proper dimension and positioning
+     */
+    clear () {
+        var container = this.container;
+        var first_container = this.element.select('.gt-paper').node();
+        var position = container.node() === first_container ? 'relative' : 'absolute';
+        container.style("position", position);
+        this.background.clear();
+        this.drawings.clear();
+        this.foreground.clear();
+        this.draw();
+    }
+
+    remove () {
+        return this.giotto.remove(this);
+    }
 }
 
 /**
@@ -130,16 +178,52 @@ export class Layer {
         return self.get(this).paper.type;
     }
 
+    get factor () {
+        return self.get(this).paper.type;
+    }
+
     get context () {
         return null;
     }
 }
 
 Layer.type = {};
+Layer.getFactor = function () {
+    return 1;
+}
 
 
 function pc (margin, size) {
     if (isString(margin) && margin.indexOf('%') === margin.length-1)
         margin = round(0.01*parseFloat(margin)*size, 5);
     return margin;
+}
+
+// Intrnal function for evaluating paper dom size
+export function getSize (element, p) {
+    var width = p.options.width;
+    var height = p.options.height;
+
+    if (!width) {
+        width = size.getWidth(element);
+        if (width)
+            p.elwidth = size.getWidthElement(element);
+        else
+            width = constants.WIDTH;
+    }
+
+    if (!height) {
+        height = size.getHeight(element);
+        if (height)
+            p.elheight = size.getHeightElement(element);
+        else
+            height = constants.HEIGHT;
+    }
+    // Allow to specify height as a percentage of width
+    else if (typeof(height) === "string" && height.indexOf('%') === height.length-1) {
+        p.height_percentage = 0.01*parseFloat(height);
+        height = round(p.height_percentage*width);
+    }
+
+    return [width, height];
 }

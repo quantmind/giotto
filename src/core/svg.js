@@ -10,6 +10,10 @@ class CanvasLayer extends Layer {
             .attr('class', name);
     }
 
+    clear () {
+
+    }
+
 }
 
 Layer.type.svg = CanvasLayer;
@@ -19,8 +23,5 @@ export class Svg extends Paper {
 
     get type () {
         return "svg";
-    }
-
-    addElement () {
     }
 }

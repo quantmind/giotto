@@ -1,6 +1,8 @@
-title: GiottoJS - drawing API
+head-title: $APP_NAME - Drawing API
+title: Drawing API
 
-A drawing is created in a [group](/api/group) object.
+A drawing is created by a [paper](/api/paper) object
+
 
 ### # drawing.x([x])
 

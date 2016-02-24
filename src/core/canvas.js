@@ -5,14 +5,46 @@ class CanvasLayer extends Layer {
 
     constructor (paper, name) {
         super(paper, name);
-        paper.container
+        var canvas = paper.container
             .append('canvas')
-            .attr('class', name)
-            .style({"position": "absolute", "top": "0", "left": "0"});
+            .attr('class', name);
+        var position = paper.container.selectAll('*').length === 1 ? 'relative' : 'absolute';
+        canvas
+            .style('position', position)
+            .style('top', 0)
+            .style('left', 0);
     }
 
-    context () {
+    /**
+     * Return canvas context
+     * @returns {CanvasRenderingContext2D}
+     */
+    get context () {
         return this.element.node().getContext('2d');
+    }
+
+    clear () {
+        var ctx = this.context,
+            width = this.paper.domWidth,
+            height = this.paper.domHeight,
+            factor = this.factor;
+
+        ctx.beginPath();
+        ctx.closePath();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+        ctx.canvas.width = width;
+        ctx.canvas.height = height;
+
+        if (factor != 1) {
+            ctx.canvas.style.width = width + "px";
+            ctx.canvas.style.height = height + "px";
+            ctx.canvas.width = width * window.devicePixelRatio;
+            ctx.canvas.height = height * window.devicePixelRatio;
+            ctx.scale(factor, factor);
+        }
+        return this;
     }
 
     startDraw (center) {
@@ -31,6 +63,10 @@ class CanvasLayer extends Layer {
         this.context.restore();
     }
 }
+
+Layer.getFactor = function () {
+    return window.devicePixelRatio || 1;
+};
 
 Layer.type.canvas = CanvasLayer;
 

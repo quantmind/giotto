@@ -12,7 +12,7 @@
     },
     "tooltip": true,
     "data": {
-        "src": "giottojs.randomPath",
+        "function": "d3.quant.timeSeries.randomPath",
         "options": {
             "size": 300
         }

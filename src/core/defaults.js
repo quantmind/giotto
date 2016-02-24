@@ -1,14 +1,14 @@
 import {giottoId} from '../utils/dom';
-import {self, forEach, extend} from 'd3-quant';
+import {self} from 'd3-quant';
 
 
 export var defaults = {
     type: 'canvas',
     resizeDelay: 200,
     resize: true,
-    interact: true,
-    css: null
+    interact: true
 };
+
 
 export const constants = {
     DEFAULT_VIZ_GROUP: 'default_viz_group',
@@ -25,15 +25,6 @@ export const constants = {
 };
 
 
-export function getOptions (options, defaults, plugins) {
-    options = extend({}, defaults, options);
-    forEach(plugins, (value, key) => {
-        options[key] = extend({}, value, options[key]);
-    });
-    return options;
-}
-
-
 export class GiottoBase {
 
     constructor (options) {
@@ -41,10 +32,6 @@ export class GiottoBase {
             id: giottoId(),
             options: options
         });
-    }
-
-    get options () {
-        return self.get(this).options;
     }
 
     get id () {

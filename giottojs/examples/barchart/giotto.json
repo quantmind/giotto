@@ -6,6 +6,6 @@
     },
     "draw": ["bar", "line"],
     "data": {
-        "function": "giottojs.simpleBarChart"
+        "function": "examples.simpleBarChart"
     }
 }

@@ -5,7 +5,7 @@ import {paperDraw, Drawing} from '../core/drawing';
 /**
  * Draw points on a paper
  */
-class Points extends Drawing {
+class Line extends Drawing {
 
     /**
      * Get or set the point symbol generator
@@ -38,13 +38,8 @@ class Points extends Drawing {
 }
 
 
-paperDraw(Points, {
-    symbol: 'circle',
-    size: '8px',
-    fill: true,
-    fillOpacity: 1,
-    colorOpacity: 1,
-    lineWidth: 2,
+paperDraw(Line, {
+    lineWidth: 1,
     active: {
         fill: 'darker',
         color: 'brighter',

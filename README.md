@@ -29,3 +29,13 @@ To build giottojs.org web site you need python 3.5. Once installed
 ```
 pip install -r requirements.txt
 ```
+
+# Acknowledgement
+
+This library is built on top of several [d3](https://github.com/d3) libraries
+as the [dev dependencies](https://david-dm.org/quantmind/giotto#info=devDependencies)
+shows. All these libraries are BSD licensed
+
+> Copyright (c) 2010-2015, Michael Bostock
+> All rights reserved.
+

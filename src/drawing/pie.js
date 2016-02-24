@@ -5,19 +5,7 @@ import {paperDraw, Drawing} from '../core/drawing';
 /**
  * Draw points on a paper
  */
-class Points extends Drawing {
-
-    /**
-     * Get or set the point symbol generator
-     *
-     * A symbol is implemented d3-shape and contain information
-     * about size and type
-     */
-    symbol (_) {
-        if (!arguments.length) return self.get(this).symbol;
-        self.get(this).symbol = _;
-        return this;
-    }
+class Pie extends Drawing {
 
     /**
      * Draw points on a layer of a paper (usually the drawing layer)
@@ -38,17 +26,27 @@ class Points extends Drawing {
 }
 
 
-paperDraw(Points, {
-    symbol: 'circle',
-    size: '8px',
-    fill: true,
-    fillOpacity: 1,
-    colorOpacity: 1,
-    lineWidth: 2,
+paperDraw(Pie, {
+    padAngle: 0,
+    cornerRadius: 0,
+    innerRadius: 0,
+    startAngle: 0,
     active: {
         fill: 'darker',
         color: 'brighter',
-        // Multiplier for size, set to 100% for no change
-        size: '150%'
+        //innerRadius: 100%,
+        //outerRadius: 105%,
+        fillOpacity: 1
+    },
+    tooltip: {
+        template: "<p><strong><%=x%></strong> <%=y%></p>"
+    },
+    labels: {
+        show: true,
+        position: 'ouside',
+        outerRadius: 1.05,
+        color: '#333',
+        colorOpacity: 0.5,
+        lineWidth: 1
     }
 });

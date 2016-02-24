@@ -1,5 +1,5 @@
 export {default as giotto} from './src/core/main';
-export {array} from './src/d3/index';
+export {array, quant} from './src/d3/index';
 export {version} from './package.json';
 export {defaults, constants} from './src/core/defaults';
 export {theme} from './src/core/theme';

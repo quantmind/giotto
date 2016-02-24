@@ -1,23 +1,14 @@
-import {self} from 'd3-quant';
-import {paperDraw, Drawing} from '../core/drawing';
+import {stackOrderNone, stackOffsetNone} from 'd3-shape';
+import {StackedDrawing, paperDraw} from '../core/drawing';
 
 
 /**
- * Draw points on a paper
+ * Draw bars on a paper
+ *
+ * Grouped bar charts
+ * http://bl.ocks.org/mbostock/3887051
  */
-class Points extends Drawing {
-
-    /**
-     * Get or set the point symbol generator
-     *
-     * A symbol is implemented d3-shape and contain information
-     * about size and type
-     */
-    symbol (_) {
-        if (!arguments.length) return self.get(this).symbol;
-        self.get(this).symbol = _;
-        return this;
-    }
+class Bars extends StackedDrawing {
 
     /**
      * Draw points on a layer of a paper (usually the drawing layer)
@@ -38,8 +29,10 @@ class Points extends Drawing {
 }
 
 
-paperDraw(Points, {
-    symbol: 'circle',
+paperDraw(Bars, {
+    direction: 'vertical',
+    stackOrder: stackOrderNone,
+    stackOffset: stackOffsetNone,
     size: '8px',
     fill: true,
     fillOpacity: 1,

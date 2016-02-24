@@ -7,14 +7,14 @@ require([
     'lux/forms/main',
     'lux/nav/main',
     'lux/components/highlight'
-], function(lux, angular, giotto, colorbrewer) {
+], function(lux, angular, d3, colorbrewer) {
     'use strict';
 
-    // Create giotto angular module first
-    giotto.colorbrewer = colorbrewer;
+    // Inject colorBrewer
+    d3.colorbrewer = colorbrewer;
 
     // Ceate giotto angular module
-    giotto.angularModule(angular);
+    d3.angularModule(angular);
 
     angular.module('giottojs.main', [
         'lux.sidebar', 'lux.form',

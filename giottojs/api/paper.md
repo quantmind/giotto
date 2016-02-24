@@ -1,4 +1,5 @@
-# Paper
+head-title: $APP_NAME - Paper API
+title: Paper API
 
 A ``giotto.paper`` is an abstraction
 on top of the ``svg`` or the ``canvas`` element.
@@ -6,8 +7,9 @@ on top of the ``svg`` or the ``canvas`` element.
     var gt = giotto();
     var paper = gt.paper(element, options);
 ```
-where ``options`` is an object containing several parameters to customise the
-paper.
+where ``options`` is an optional object containing several parameters
+to customise the paper and therefore override the defaults values in the ``gt``
+instance. ``element`` is the ``HtmlElement`` where the paper is located.
 
 **Contents**
 
@@ -28,9 +30,13 @@ it invokes the ``callback`` only on the mathing groups.
     });
 
 
-### # paper.element()
+### # paper.element
 
 Returns a d3 selection containing the outer element of the paper.
+
+### # paper.type
+
+The type of paper, either ``canvas`` or ``svg``.
 
 ### # paper.group([opts])
 

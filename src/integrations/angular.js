@@ -21,7 +21,7 @@ export function angularModule (angular) {
 
         .factory('getOptions', ['$window', getOptionsFactory])
 
-        .directive('giotto', ['getOptions', function (getOptions) {
+        .directive('giotto', ['$http', 'getOptions', function ($http, getOptions) {
             return {
                 restrict: 'AE',
 
@@ -30,7 +30,7 @@ export function angularModule (angular) {
                     scope.giotto = giotto(giottoDefaults);
                 }],
 
-                link: giottoLayout(getOptions)
+                link: giottoLayout($http, getOptions)
             };
         }])
 
@@ -49,12 +49,23 @@ export function angularModule (angular) {
         }]);
 
 
-    function giottoLayout(getOptions) {
+    function giottoLayout($http, getOptions) {
 
         return function (scope, element, attrs) {
             var options = getOptions(scope, attrs, 'giotto');
             // Set layout options for giotto instance
-            scope.giotto.setOptions(options);
+            if (!scope.giotto.papers.length) {
+                // Create one paper, this giotto element does not specify any
+                scope.giotto.paper(element[0], {name: "default"});
+            }
+            if (options.name && /^(http(s)?:)?\/\//.test(options.name)) {
+                $http.get(options.name).then(function (response) {
+                    options = response.data;
+                    scope.giotto.setOptions(options);
+                }, function () {
+
+                });
+            }
         };
     }
 
@@ -110,6 +121,8 @@ export function angularModule (angular) {
                 if (scope) options = getAttribute(scope, key);
 
                 if (!options) options = getAttribute($window, key);
+
+                if (!options) options = {name: key};
             }
             if (!options) options = {};
 
