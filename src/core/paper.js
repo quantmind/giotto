@@ -152,6 +152,9 @@ export class Paper extends GiottoBase {
         return self.get(this).size.slice();
     }
 
+    each (callback) {
+        self.get(this).draws.forEach(callback);
+    }
     /**
      * Draw the paper
      */

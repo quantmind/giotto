@@ -6,19 +6,26 @@ require([
     'js/data',
     'lux/forms/main',
     'lux/nav/main',
+    'lux/page/main',
     'lux/components/highlight'
 ], function(lux, angular, d3, colorbrewer) {
     'use strict';
 
+    //
     // Inject colorBrewer
     d3.colorbrewer = colorbrewer;
 
     // Ceate giotto angular module
     d3.angularModule(angular);
 
+    //
+    // Main angular module for giottojs
     angular.module('giottojs.main', [
-        'lux.sidebar', 'lux.form',
-        'lux.highlight', 'giotto',
+        'lux.sidebar',
+        'lux.form',
+        'lux.router',
+        'lux.highlight',
+        'giotto',
         'giottojs.data'])
         .constant('giottojsNavigation', {
             brand: 'GiottoJS',

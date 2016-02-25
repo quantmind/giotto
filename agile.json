@@ -65,12 +65,12 @@
         },
         "giottojs_pre": {
             "command": [
-                "cp build/giotto.js giottojs/media/giottojs/giotto.js",
-                "{{ python }} manage.py media --js-src giottojs/media"
+                "cp build/giotto.js giottojs/media/giottojs/giotto.js"
             ]
         },
         "giottosjs_bundle": {
             "command": [
+                "{{ python }} manage.py media --js-src giottojs/media",
                 "./node_modules/.bin/eslint giottojs/media/js",
                 "./node_modules/.bin/r.js -o ./giottojs/bundle.js optimize=none"
             ]

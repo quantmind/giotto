@@ -1,7 +1,29 @@
 head-title: $APP_NAME - Drawing API
 title: Drawing API
+order: 99
 
-A drawing is created by a [paper](/api/paper) object
+Drawings are created within a [paper](/api/paper) object and are responsible
+for creating the objects that we perceive on the paper. A drawing is
+composed of four components:
+
+* data and aesthetic mapping
+* statistical transformation
+* geometric object
+* position adjustment
+
+Usually all the drawings on a paper have something in common, typically that they are
+different views of the same data, for example, a scatterplot with overlaid smoother.
+
+A drawing does not need to specify all components, the paper will supply defaults
+if some components are omitted.
+
+## Data and Mapping
+
+Data are what turns an abstract drawing into a concrete one.
+Along with the data, we need a specification of which variables are mapped to which
+aesthetics. For example, we might map weight to x position, height to y position, and age
+to size. The details of the mapping are described by the scales; see Section 3.2. Choosing
+a good mapping is crucial for generating a useful graphic, as described in Section 7.
 
 
 ### # drawing.x([x])

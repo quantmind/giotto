@@ -1,23 +1,10 @@
-import {self} from 'd3-quant';
 import {paperDraw, Drawing} from '../core/drawing';
 
 
 /**
- * Draw points on a paper
+ * Draw lines on a paper
  */
 class Line extends Drawing {
-
-    /**
-     * Get or set the point symbol generator
-     *
-     * A symbol is implemented d3-shape and contain information
-     * about size and type
-     */
-    symbol (_) {
-        if (!arguments.length) return self.get(this).symbol;
-        self.get(this).symbol = _;
-        return this;
-    }
 
     /**
      * Draw points on a layer of a paper (usually the drawing layer)
@@ -39,11 +26,6 @@ class Line extends Drawing {
 
 
 paperDraw(Line, {
-    lineWidth: 1,
-    active: {
-        fill: 'darker',
-        color: 'brighter',
-        // Multiplier for size, set to 100% for no change
-        size: '150%'
-    }
+    interpolate: 'cardinal',
+    lineWidth: 1
 });

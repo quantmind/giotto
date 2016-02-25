@@ -1,6 +1,9 @@
 {
     "height": "60%",
     "minHeight": 250,
+    "draw": [
+        "area"
+    ],
     "data": {
         "function": "d3.quant.timeSeries.randomPath",
         "options": {

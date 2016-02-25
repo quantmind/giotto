@@ -1,5 +1,6 @@
 head-title: $APP_NAME - AngularJS Integration
 title: AngularJS Integration
+order: 1
 
 
 GiottoJs comes with a small utility for facilitating integration with [AngularJs][].

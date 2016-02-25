@@ -1,8 +1,10 @@
 head-title: $APP_NAME - Paper API
 title: Paper API
+order: 100
 
 A ``giotto.paper`` is an abstraction
-on top of the ``svg`` or the ``canvas`` element.
+on top of the ``svg`` or the ``canvas`` element and serves as placeholder
+for [drawings] and [plugins].
 ```javascript
     var gt = giotto();
     var paper = gt.paper(element, options);
@@ -11,105 +13,83 @@ where ``options`` is an optional object containing several parameters
 to customise the paper and therefore override the defaults values in the ``gt``
 instance. ``element`` is the ``HtmlElement`` where the paper is located.
 
-**Contents**
+
+<h2>Contents</h2>
 
 [TOC]
 
-### # paper.each([filter], callback)
+### paper.element
 
-Invokes the specified ``callback`` function for each [group] in the paper, passing the index ``i``
-with the ``this`` context of the current group. If the optional ``filter`` parameter is given,
-it invokes the ``callback`` only on the mathing groups.
+Returns a [d3 selection](https://github.com/d3/d3-selection) containing the
+outer element of the paper, i.e. the element containing the [paper-container](#papercontainer)
 
-    paper.each(function (i) {
-        this.yaxis.tickSize(5);
-    });
+### paper.container
 
-    paper.each('.timeseries', function (i) {
-        this.yaxis.tickSize(5);
-    });
+Returns a [d3 selection](https://github.com/d3/d3-selection) containing the
+element of the paper.
 
-
-### # paper.element
-
-Returns a d3 selection containing the outer element of the paper.
-
-### # paper.type
+### paper.type
 
 The type of paper, either ``canvas`` or ``svg``.
 
-### # paper.group([opts])
+### paper.id
 
-Create a new [group] and add it to the paper. Return the newly created group:
+Unique identifier of the paper, in the current Html document, an integer.
 
-    var canvas = paper.group({type: 'canvas'});
+### paper.size
 
-### # paper.resize([size])
+The current size in pixels of the paper [container element](#papercontainer).
+This is a two-elements array indicating ``width`` and ``height``.
+```javascript
+paper.size => [600, 400]
+```
+All [drawins] in in a paper have the same size.
 
-Resize the paper and fire the ``change`` event if resizing was performed. When provided,
-the ``size`` parameter should be a two element array specifying the new
-width and height of the paper. If not provided, the size array is calculated
-by the paper api.
+### paper.domWidth
 
-### # paper.select([filter])
+Alias of ``paper.size[0]``.
 
-Select a [group](/api/group) given a filter in a similar way as ``d3.select``.
-Returns the selected group or ``undefined``:
+### paper.domHeight
 
-    paper.select('*')   // returns the first group in the paper
-    paper.select('#plot1') // select the group with id plot1
+Alias of ``paper.size[1]``.
 
-### # paper.size()
+### paper.options([value])
 
-Returns a two elements array containing the pixel dimensions of the paper, including any margin.
+Set or get the [options](/api/options) of the paper.
 
-### # paper.type()
+### paper.each(function)
 
-Returns the default [group](/api/group) type for the paper.
-It can be either ``svg`` (default) or ``canvas``.
+Calls the specified ``function`` for each [drawing] in this paper, passing
+the drawing’s value and index as arguments. Returns undefined.
+The iteration order is the same as the order of the drawings in the paper.
+```javascript
+paper.each(function (draw, i) {
+    ...
+});
+```
 
-### # paper.uid()
+### paper.resize([size])
 
-Returns the unique identifier for the paper in the current Html document, an integer.
+Resize the paper if needed. The optional ``size`` parameter is a two elements
+array indicating the new size. When missing, it is calculated from the
+[paper.container](#papercontainer) element.
+The resizing occurs only when ``size`` is different from the current
+[size](#papersize) of the paper, otherwise it is a non operation.
 
-### # paper.pickColor()
+When resizing occurs, the paper is [cleared](#paperclear) and
+[redrawn](#paperdraw).
 
-Pick a color from the paper color range.
+### paper.clear()
 
-## Options
+Clear the paper by removing all visible drawing and plugins. This method does not
+remove drawings from the paper, it simply remove their graphical representation.
 
-The internal paper options can be accessed via the ``options`` method:
+### paper.draw()
 
-    var options = paper.options();
-
-There shouldn't be much need to modify the options once the paper is created,
-this accessor is here just in case.
-
-### type
-
-Default:
-
-    "svg"
-
-Currently only svg is fully supported.
-
-### margin
-
-Default:
-
-    {top: 20, right: 20, bottom: 20, left: 20}
-
-Set the margins for the inner part of the paper.
+Draw all [drawings].
 
 
-### colors
-
-Default:
-
-    d3.scale.category10().range()
-
-An Array of colors to use by the visualization rendering the paper.
-
-
-
-[group]: $site_url/api/group
+[drawings]: /api/drawing
+[drawing]: /api/drawing
+[plugins]: /api/plugin
+[plugin]: /api/plugin
