@@ -56,7 +56,7 @@ STATIC_LOCATION = os.path.join(d(d(CONTENT_REPOSITORY)), 'docs', 'giotto')
 OAUTH_PROVIDERS = {'google': {'analytics': {'id': 'UA-54439804-4'}},
                    'twitter': {'site': '@quantmind'}}
 
-meta_default = {'image': '$site_url$site_media/giottojs/giotto-banner.png',
+meta_default = {'image': '${MEDIA_URL}giottojs/giotto-banner.png',
                 'twitter:card': 'summary_large_image',
                 'author': 'Luca Sbardella',
                 'template': 'partials/base.html'}

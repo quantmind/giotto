@@ -7,7 +7,8 @@ require([
     'lux/forms/main',
     'lux/nav/main',
     'lux/page/main',
-    'lux/components/highlight'
+    'lux/components/highlight',
+    'angular-sanitize'
 ], function(lux, angular, d3, colorbrewer) {
     'use strict';
 

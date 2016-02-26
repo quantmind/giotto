@@ -3,7 +3,7 @@ title: Paper API
 order: 100
 
 A ``giotto.paper`` is an abstraction
-on top of the ``svg`` or the ``canvas`` element and serves as placeholder
+on top of the ``svg`` or the ``canvas`` elements and serves as placeholder
 for [drawings] and [plugins].
 ```javascript
     var gt = giotto();

@@ -3,7 +3,13 @@ import {self} from 'd3-quant';
 
 
 export var defaults = {
-    type: 'canvas'
+    type: 'canvas',
+    margin: {
+        top: 20,
+        right: 20,
+        bottom: 20,
+        left: 20
+    }
 };
 
 

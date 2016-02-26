@@ -29,7 +29,7 @@
     },
     "sass": {
         "options": {
-            "command": "./node_modules/.bin/node-sass"
+            "executable": "./node_modules/.bin/node-sass"
         },
         "giotto": {
             "files": {
@@ -110,8 +110,16 @@
             "files": ["index.js", "src/**/*.js", "test/*.js"],
             "command": "giotto-dev"
         },
+        "d3-quant": {
+            "files": ["../d3-quant/index.js", "../d3-quant/src/*.js"],
+            "command": "giotto-dev"
+        },
         "giottojs": {
-            "files": "giottojs/media/js/*.js",
+            "files": [
+                "giottojs/media/js/*.js",
+                "../lux/lux/media/js/*.js",
+                "../lux/lux/media/js/**/*.js"
+            ],
             "command": "giottojs-dev"
         },
         "giotto-scss": {

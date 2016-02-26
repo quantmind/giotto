@@ -108,22 +108,22 @@ export class Paper extends GiottoBase {
 
     get marginLeft () {
         var i = self.get(this);
-        return i.factor*pc(i.margin.left, i.size[0]);
+        return i.factor*pc(i.options.margin.left, i.size[0]);
     }
 
     get marginRight () {
         var i = self.get(this);
-        return i.factor*pc(i.margin.right, i.size[0]);
+        return i.factor*pc(i.options.margin.right, i.size[0]);
     }
 
     get marginTop () {
         var i = self.get(this);
-        return i.factor*pc(i.margin.left, i.size[1]);
+        return i.factor*pc(i.options.margin.left, i.size[1]);
     }
 
     get marginBottom () {
         var i = self.get(this);
-        return i.factor*pc(i.margin.bottom, i.size[1]);
+        return i.factor*pc(i.options.margin.bottom, i.size[1]);
     }
 
     get innerWidth () {
@@ -280,7 +280,7 @@ function pc (margin, size) {
     return margin;
 }
 
-// Intrnal function for evaluating paper dom size
+// Internal function for evaluating paper dom size
 export function getSize (element, p) {
     var width = p.options.width;
     var height = p.options.height;

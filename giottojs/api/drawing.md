@@ -2,7 +2,7 @@ head-title: $APP_NAME - Drawing API
 title: Drawing API
 order: 99
 
-Drawings are created within a [paper](/api/paper) object and are responsible
+Drawings are associated with a [paper] object and are responsible
 for creating the objects that we perceive on the paper. A drawing is
 composed of four components:
 
@@ -11,11 +11,13 @@ composed of four components:
 * geometric object
 * position adjustment
 
-Usually all the drawings on a paper have something in common, typically that they are
-different views of the same data, for example, a scatterplot with overlaid smoother.
+Usually all the drawings on a paper have something in common, typically they are
+different views of the same data, for example, a scatterplot with and
+overlaid line, and area chart with the corresponding line chart overlaid,
+a bar chart and its pie chart equivalent and so forth.
 
-A drawing does not need to specify all components, the paper will supply defaults
-if some components are omitted.
+A drawing does not need to specify all components, the [paper] will
+supply defaults if some components are omitted.
 
 ## Data and Mapping
 
@@ -43,14 +45,17 @@ If y is specified, sets the y-accessor to the specified function or constant.
 If y is not specified, returns the current y-accessor. This accessor is invoked
 for each element in the data array passed to the drawing generator.
 The default accessor assumes that each input element is a two-element array of numbers:
-
-    function y(d) {
-        return d[1];
-    }
-
+```javascript
+function y(d) {
+    return d[1];
+}
+```
 ### # drawing.options([options])
 
 If options is specified, set the options for the drawing object and return the
 ``drawing``. If is not specified, returns the current options which by default
 is an empty ``Object``. Drawing options are the way GiottoJS override default
 behaviour in a paper.
+
+
+[paper]: /api/paper "paper API"

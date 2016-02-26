@@ -72,6 +72,16 @@ test("Test canvas size percentage", (t) => {
     t.end();
 });
 
+test("Test margins", (t) => {
+    var gt = d3.giotto();
+    var paper = gt.paper({width: 600, height: 400});
+    t.equal(paper.marginLeft, 20);
+    t.equal(paper.marginRight, 20);
+    t.equal(paper.marginTop, 20);
+    t.equal(paper.marginBottom, 20);
+    t.end();
+});
+
 test("Test canvas layers", (t) => {
     var gt = d3.giotto();
     var paper = gt.paper();
