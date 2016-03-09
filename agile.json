@@ -146,7 +146,7 @@
         },
         "giotto-dev": {
             "description": "Eslint and build giotto.js file and run phantomJS tests",
-            "command": ["shell:giotto-dev"]
+            "command": ["d3_quant", "shell:giotto-dev"]
         },
         "giottojs-dev": {
             "description": "Create the giottojs.js file, used by watch server",

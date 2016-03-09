@@ -1,5 +1,6 @@
 import {select} from 'd3-selection';
 import {map} from 'd3-collection';
+import {scaleLinear} from 'd3-scale';
 import {GiottoBase, defaults, constants} from './defaults';
 import {getElement} from '../utils/dom';
 import * as size from '../utils/size';
@@ -47,17 +48,18 @@ export class Paper extends GiottoBase {
         paper.background = new LayerClass(this, 'gt-background');
         paper.drawings = new LayerClass(this, 'gt-drawings');
         paper.foreground = new LayerClass(this, 'gt-foreground');
+        paper.xscale = scaleLinear();
+        paper.yscale = scaleLinear();
         this.clear();
-        paper.plugins = map();
 
+        // Add plugins
+        paper.plugins = map();
         var thisPaper = this;
         Paper.plugins.each( (Class, name) => {
             var opts = paper.options[name];
             if (opts === true) opts = {};
-            if (opts) {
-                opts = extend({}, Class.defaults, opts);
-                paper.plugins.set(name, new Class(thisPaper, opts));
-            }
+            if (opts)
+                paper.plugins.set(name, new Class(thisPaper, opts, Class.defaults));
         });
     }
 
@@ -75,7 +77,7 @@ export class Paper extends GiottoBase {
 
     // paper name
     get name () {
-        return self.get(this).name;
+        return self.get(this).options.name;
     }
 
     get background () {
@@ -152,6 +154,16 @@ export class Paper extends GiottoBase {
         return self.get(this).size.slice();
     }
 
+    get width () {
+        var i = self.get(this);
+        return i.factor*i.size[0];
+    }
+
+    get height () {
+        var i = self.get(this);
+        return i.factor*i.size[1];
+    }
+
     each (callback) {
         self.get(this).draws.forEach(callback);
     }
@@ -159,7 +171,11 @@ export class Paper extends GiottoBase {
      * Draw the paper
      */
     draw () {
-
+        var paper = self.get(this);
+        // Draw plugins
+        paper.plugins.each((plugin) => {
+            plugin.draw();
+        });
     }
 
     /**
@@ -194,6 +210,9 @@ export class Paper extends GiottoBase {
         this.background.clear();
         this.drawings.clear();
         this.foreground.clear();
+        var paper = self.get(this);
+        paper.xscale.range([0, paper.size[0]]);
+        paper.yscale.range([paper.size[1], 0]);
     }
 
     remove () {
@@ -205,17 +224,17 @@ export class Paper extends GiottoBase {
     }
 }
 
-
+/**
+ * Base class for Plugins
+ */
 export class Plugin {
 
-    constructor (paper, p) {
-        p.paper = paper;
-        self.set(this, p);
+    constructor (paper, opts, defaults) {
+        extend(this, defaults, opts);
+        this.paper = paper;
     }
 
-    get paper () {
-        return self.get(this).paper;
-    }
+    draw () {}
 }
 
 Paper.plugins = map();
@@ -267,6 +286,11 @@ export class Layer {
     get context () {
         return null;
     }
+
+    // Drawing method
+    startDraw () {}
+    draw () {}
+    endDraw () {}
 }
 
 Layer.type = {};

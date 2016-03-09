@@ -22,6 +22,10 @@ To run tests and build the bundle:
 ```
 npm test
 ```
+To debug on Chrome:
+```
+npm start
+```
 
 # GiottoJs
 

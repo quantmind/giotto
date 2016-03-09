@@ -107,14 +107,11 @@ export class Giotto extends GiottoBase {
     }
 
     /**
-     * Draw data into this giotto instance
-     *
-     * @param data
+     * Draw into this giotto instance
      */
-    draw (data) {
-        this.clear();
+    draw () {
         this.forEach((paper) => {
-            paper.draw(data);
+            paper.draw();
         });
     }
 

@@ -17,8 +17,8 @@ class Transitions extends Plugin {
     /**
      * @returns The d3-ease function
      */
-    get easing () {
-        var fun = easing[self.get(this).easing];
+    get easingFunction () {
+        var fun = easing[this.easing];
         if (!fun) fun = easing['linear'];
         return fun;
     }

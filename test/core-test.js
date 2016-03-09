@@ -36,7 +36,8 @@ test("Test canvas paper", (t) => {
     t.ok(paper.element.node());
     t.equal(paper.type, 'canvas');
     t.equal(gt.papers.length, 1);
-    t.equal(paper.id, paper.container.attr('id'), "paper id same as paper container DOM id");
+    t.equal(paper.id, paper.container.attr('id'),
+        "paper id same as paper container DOM id");
     gt.forEach((p) => {
         t.equal(p, paper);
     });
@@ -75,10 +76,10 @@ test("Test canvas size percentage", (t) => {
 test("Test margins", (t) => {
     var gt = d3.giotto();
     var paper = gt.paper({width: 600, height: 400});
-    t.equal(paper.marginLeft, 20);
-    t.equal(paper.marginRight, 20);
-    t.equal(paper.marginTop, 20);
-    t.equal(paper.marginBottom, 20);
+    t.equal(paper.marginLeft, 20*paper.factor);
+    t.equal(paper.marginRight, 20*paper.factor);
+    t.equal(paper.marginTop, 20*paper.factor);
+    t.equal(paper.marginBottom, 20*paper.factor);
     t.end();
 });
 
@@ -111,6 +112,23 @@ test("Test svg layers", (t) => {
     t.equal(paper.background.paper, paper);
     t.equal(paper.drawings.paper, paper);
     t.equal(paper.foreground.paper, paper);
+    t.end();
+});
+
+
+test("Test paper options", (t) => {
+    var gt = d3.giotto({
+        papers: {
+            foo: {
+                background: '#ccc'
+            },
+            bla: {
+                background: '#000'
+            }
+        }
+    });
+    var paper = gt.paper({name: 'foo'});
+    t.equal(paper.name, 'foo');
     t.end();
 });
 

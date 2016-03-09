@@ -1,4 +1,3 @@
-import {self} from 'd3-quant';
 import {select} from 'd3-selection';
 import {timer} from 'd3-timer';
 import {Plugin} from '../core/paper';
@@ -11,27 +10,27 @@ import {Plugin} from '../core/paper';
  */
 class Responsive extends Plugin {
 
-    constructor (paper, p) {
-        super(paper, p);
-        p.resizing = false;
-        var me = this;
+    constructor (paper, opts, defaults) {
+        super(paper, opts, defaults);
+        this.resizing = false;
+        var self = this;
         select(window).on('resize.paper' + paper.id, function () {
-            me.resize();
+            self.resize();
         });
     }
 
     resize () {
-        var p = self.get(this),
-            paper = this.paper;
+        var self = this,
+            paper = self.paper;
 
-        if (!p.resizing) {
-            if (p.delay) {
-                p.resizing = true;
+        if (!self.resizing) {
+            if (self.delay) {
+                self.resizing = true;
                 timer(function () {
                     paper.resize();
-                    p.resizing = false;
+                    self.resizing = false;
                     return true;
-                }, p.delay);
+                }, self.delay);
             } else {
                 paper.resize();
             }

@@ -21,6 +21,7 @@ export function angularModule (angular) {
 
         .factory('getOptions', ['$window', getOptionsFactory])
 
+        // Outer giotto directive
         .directive('giotto', ['$http', 'getOptions', function ($http, getOptions) {
             return {
                 restrict: 'AE',
@@ -38,6 +39,7 @@ export function angularModule (angular) {
         .directive('giottoPaper', ['getOptions', function (getOptions) {
             return {
                 restrict: 'AE',
+                require: "giotto",
                 link: giottoPaper(getOptions)
             };
         }])
@@ -79,15 +81,10 @@ export function angularModule (angular) {
             var options = getOptions(scope, attrs, 'giottoPaper'),
                 gt = scope.giotto;
 
-            // No giotto in the scope, create one
-            if (!gt) {
-                gt = giotto();
-                scope.giotto = gt;
-            }
             if (scope.giottoQueue)
                 scope.giottoQueue.push([element[0], options]);
             else
-                gt.paper(element[0], options);
+                gt.paper(element[0], options).draw();
         };
     }
 
@@ -165,6 +162,7 @@ export function angularModule (angular) {
             queue.forEach( (eo) => {
                 gt.paper(eo[0], eo[1]);
             });
+            gt.draw();
         }
     }
 

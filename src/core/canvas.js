@@ -23,6 +23,10 @@ class CanvasLayer extends Layer {
         return this.element.node().getContext('2d');
     }
 
+    /**
+     * Clear the canvas
+     * @returns {CanvasLayer}
+     */
     clear () {
         var ctx = this.context,
             width = this.paper.domWidth,
@@ -47,17 +51,23 @@ class CanvasLayer extends Layer {
         return this;
     }
 
+    /**
+     * save context and reset transforms
+     *
+     * @param center optional two elements array to center the canvas
+     * @return the canvas context
+     */
     startDraw (center) {
         var ctx = this.context,
             paper = this.paper;
         ctx.save();
         ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.translate(paper.marginLeft(), paper.marginTop());
-        if (center)
+        if (center) {
+            ctx.translate(paper.marginLeft(), paper.marginTop());
             ctx.translate(center[0], center[1]);
+        }
+        return ctx;
     }
-
-    draw () {}
 
     endDraw () {
         this.context.restore();

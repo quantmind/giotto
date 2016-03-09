@@ -14,6 +14,9 @@ class CanvasLayer extends Layer {
 
     }
 
+    draw () {
+
+    }
 }
 
 Layer.type.svg = CanvasLayer;

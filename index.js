@@ -1,6 +1,7 @@
 export {default as giotto} from './src/core/main';
 export {Plugin} from './src/core/paper';
 export {array, quant} from './src/core/d3';
+export {default as gradient} from './src/core/gradient';
 export {version} from './package.json';
 export {defaults, constants} from './src/core/defaults';
 export {theme} from './src/core/theme';
@@ -18,6 +19,7 @@ import './src/drawing/pie';
 import './src/drawing/points';
 //
 // plugins
+import './src/plugins/background';
 import './src/plugins/grid';
 import './src/plugins/axis';
 import './src/plugins/responsive';

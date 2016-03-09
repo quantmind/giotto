@@ -1,9 +1,14 @@
+import {select} from 'd3-selection';
+
+
 export function getWidth (element) {
-    return getParentRectValue(element, 'width');
+    var el = getParentElementRect(element, 'width');
+    if (el) return elementWidth(el);
 }
 
 export function getHeight (element) {
-    return getParentRectValue(element, 'height');
+    var el = getParentElementRect(element, 'width');
+    if (el) return elementHeight(el);
 }
 
 export function getWidthElement (element) {
@@ -14,16 +19,20 @@ export function getHeightElement (element) {
     return getParentElementRect(element, 'height');
 }
 
-function getParentRectValue (element, key) {
-    let parent = element.node ? element.node() : element,
-        v;
-    while (parent && parent.tagName !== 'BODY') {
-        v = parent.getBoundingClientRect()[key];
-        if (v)
-            break;
-        parent = parent.parentNode;
-    }
-    return v;
+function elementWidth (el) {
+    var w = el.getBoundingClientRect()['width'],
+        s = select(el),
+        left = padding(s.style('padding-left')),
+        right = padding(s.style('padding-right'));
+    return w - left - right;
+}
+
+function elementHeight (el) {
+    var w = el.getBoundingClientRect()['height'],
+        s = select(el),
+        top = padding(s.style('padding-top')),
+        bottom = padding(s.style('padding-bottom'));
+    return w - top - bottom;
 }
 
 function getParentElementRect (element, key) {
@@ -35,4 +44,10 @@ function getParentElementRect (element, key) {
             return parent;
         parent = parent.parentNode;
     }
+}
+
+function padding (value) {
+    if (value && value.substring(value.length-2) == 'px')
+        return +value.substring(0, value.length-2);
+    return 0;
 }

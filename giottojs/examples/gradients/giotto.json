@@ -1,0 +1,27 @@
+{
+    "height": "100%",
+    "papers": {
+        "black": {
+            "background": "#000"
+        },
+        "blackwhite": {
+            "background": {
+                "direction": "x",
+                "color": [
+                    "#fff",
+                    "#000"
+                ]
+            }
+        },
+        "threecolors": {
+            "background": {
+                "direction": "x",
+                "color": [
+                    "#ffffd9",
+                    "#41b6c4",
+                    "#225ea8"
+                ]
+            }
+        }
+    }
+}
