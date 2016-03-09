@@ -1,12 +1,10 @@
-// Imports
-//  * Bootswatch variables
-//  * Bootstrap sass
-//  * Boostwatch scss
-@import 'deps/bootswatch/slate/variables';
+// Variables
+@import 'deps/bootswatch/sandstone/variables';
+@import 'deps/lux/variables/all';
+
 @import 'bootstrap-sass/assets/stylesheets/bootstrap';
 @import 'deps/bootswatch/slate/bootswatch';
 @import 'deps/highlight/zenburn';
 
-@import 'deps/lux/variables/all';
 @import 'themes/slate';
 @import 'components/site';

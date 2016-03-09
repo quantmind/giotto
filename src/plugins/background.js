@@ -8,7 +8,7 @@ import {isObject} from 'd3-quant';
 class Background extends Plugin {
 
     constructor (paper, opts, defaults) {
-        if (!isObject(opts)) opts = {color: opts};
+        if (opts && !isObject(opts)) opts = {color: opts};
         super(paper, opts, defaults);
     }
 

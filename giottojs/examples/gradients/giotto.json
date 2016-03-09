@@ -6,8 +6,8 @@
         },
         "blackwhite": {
             "background": {
-                "direction": "x",
-                "color": [
+                "mode": "x",
+                "colors": [
                     "#fff",
                     "#000"
                 ]
@@ -15,8 +15,31 @@
         },
         "threecolors": {
             "background": {
-                "direction": "x",
-                "color": [
+                "mode": "y",
+                "colors": [
+                    "#ffffd9",
+                    "#41b6c4",
+                    "#225ea8"
+                ]
+            }
+        },
+        "opacity": {
+            "background": {
+                "color": "#000",
+                "opacity": 0.1
+            }
+        },
+        "image": {
+            "background": {
+                "image": "/examples/gradients/starry-night.jpg",
+                "color": "#fff",
+                "opacity": 0.4
+            }
+        },
+        "radial": {
+            "background": {
+                "mode": "r",
+                "colors": [
                     "#ffffd9",
                     "#41b6c4",
                     "#225ea8"

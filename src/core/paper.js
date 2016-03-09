@@ -4,7 +4,7 @@ import {scaleLinear} from 'd3-scale';
 import {GiottoBase, defaults, constants} from './defaults';
 import {getElement} from '../utils/dom';
 import * as size from '../utils/size';
-import {self, round, extend, isString} from 'd3-quant';
+import {self, round, extend, isString, isArray, isObject} from 'd3-quant';
 
 /**
  * A paper is created via a giotto object.
@@ -58,8 +58,7 @@ export class Paper extends GiottoBase {
         Paper.plugins.each( (Class, name) => {
             var opts = paper.options[name];
             if (opts === true) opts = {};
-            if (opts)
-                paper.plugins.set(name, new Class(thisPaper, opts, Class.defaults));
+            paper.plugins.set(name, new Class(thisPaper, opts, Class.defaults));
         });
     }
 
@@ -110,22 +109,22 @@ export class Paper extends GiottoBase {
 
     get marginLeft () {
         var i = self.get(this);
-        return i.factor*pc(i.options.margin.left, i.size[0]);
+        return i.factor*pc(i.plugins.get('margin').left, i.size[0]);
     }
 
     get marginRight () {
         var i = self.get(this);
-        return i.factor*pc(i.options.margin.right, i.size[0]);
+        return i.factor*pc(i.plugins.get('margin').right, i.size[0]);
     }
 
     get marginTop () {
         var i = self.get(this);
-        return i.factor*pc(i.options.margin.left, i.size[1]);
+        return i.factor*pc(i.plugins.get('margin').left, i.size[1]);
     }
 
     get marginBottom () {
         var i = self.get(this);
-        return i.factor*pc(i.options.margin.bottom, i.size[1]);
+        return i.factor*pc(i.plugins.get('margin').bottom, i.size[1]);
     }
 
     get innerWidth () {
@@ -174,7 +173,20 @@ export class Paper extends GiottoBase {
         var paper = self.get(this);
         // Draw plugins
         paper.plugins.each((plugin) => {
-            plugin.draw();
+            if (plugin.active)
+                plugin.draw();
+        });
+        // Draw
+        var draws = paper.options.draw;
+        if (draws && !isArray(draws)) draws = [draws];
+        if (!draws) return;
+        paper = this;
+
+        draws.forEach( (draw) => {
+            if (!isObject(draw)) draw = {marks: draw};
+            if (!draw.marks)
+                throw Error('Could not draw object, no "marks" specified');
+            paper[draw.marks](draw);
         });
     }
 
@@ -231,18 +243,21 @@ export class Plugin {
 
     constructor (paper, opts, defaults) {
         extend(this, defaults, opts);
+        this.active = opts ? true : false;
         this.paper = paper;
     }
 
     draw () {}
 }
 
+// Optional paper plugins
 Paper.plugins = map();
 
 /**
  * Register a Plugin class to the Paper prototype
  *
  * @param Class: Plugin class
+ * @param active: if true the plugin is active by default and to switch it off one must set the plugin name to false.
  * @param pluginDefaults: optional defaults
  */
 Plugin.register = function (Class, active, pluginDefaults) {

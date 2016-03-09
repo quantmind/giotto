@@ -11,4 +11,7 @@ With GiottoJS adding gradients to svg or canvas elements is easy.
 <article giotto-paper='black'></article>
 <article giotto-paper='blackwhite'></article>
 <article giotto-paper='threecolors'></article>
+<article giotto-paper='opacity'></article>
+<article giotto-paper='image'></article>
+<article giotto-paper='radial'></article>
 </div>

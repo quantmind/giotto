@@ -1,6 +1,6 @@
 import {stack} from 'd3-shape';
 import {self, extend} from 'd3-quant';
-import {GiottoBase, defaults} from './defaults';
+import {GiottoBase} from './defaults';
 import {Paper} from './paper';
 
 /**
@@ -55,14 +55,13 @@ export function paperDraw (Class, defaultOptions) {
         var o1 = this.giotto.options()[name];
         // paper options
         var o2 = this.options()[name];
-        options = extend(true, {}, o1, o2, options);
-        var draw = Class(this, options);
+        options = extend(true, {}, defaultOptions, o1, o2, options);
+        var draw = new Class(this, options);
         self.get(this).draws.push(draw);
         return draw;
     };
 
-    defaults[name] = defaultOptions;
-
+    Paper.prototype[name].defaults = defaultOptions;
 }
 
 

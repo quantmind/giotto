@@ -3,6 +3,7 @@ import {dispatch} from 'd3-dispatch';
 import {defaults, GiottoBase} from './defaults';
 import {Canvas} from './canvas';
 import {Svg} from './svg';
+import {dataProviders} from './data';
 import {rebind} from '../utils/object';
 
 /**
@@ -13,13 +14,13 @@ import {rebind} from '../utils/object';
 export class Giotto extends GiottoBase {
 
     constructor (options) {
-        var paperOptions = stripPapers(options);
-        super(extend(true, {}, options, defaults));
+        super(extend(true, {}, defaults));
         var g = self.get(this);
         g.papers = [];
-        g.paperOptions = paperOptions || {};
+        g.paperOptions = {};
         g.events = dispatch('draw', 'redraw', 'clear', 'dataBefore', 'data');
         rebind(this, g.events, 'on');
+        this.options(options);
     }
 
     /**
@@ -36,20 +37,22 @@ export class Giotto extends GiottoBase {
      * @param series: when provided it is the serie data
      * @returns this when setting, serie data when getting
      */
-    data (series) {
-        var gt = self.get(this);
+    data (_) {
+        var i = self.get(this);
         if (arguments.length === 1) {
-            var events = gt.events;
-            events.call('dataBefore', this, series);
-            gt.data = series;
-            gt.papers.forEach((p) => {
-                p.data(series);
+            var gt = this;
+            dataProviders(_, function (series) {
+                var events = i.events;
+                events.call('dataBefore', gt, series);
+                i.data = series;
+                i.papers.forEach((p) => {
+                    p.data(series);
+                });
+                events.call('data', gt);
             });
-            events.call('data', this);
-            return this;
-        } else {
-            return gt.data;
-        }
+            return gt;
+        } else
+            return i.data;
     }
 
     /**
@@ -81,7 +84,7 @@ export class Giotto extends GiottoBase {
     }
 
     /**
-     * Update papers from JSON
+     * Update options and papers from JSON
      */
     options (_) {
         var gt = self.get(this);
@@ -89,11 +92,13 @@ export class Giotto extends GiottoBase {
         if (arguments.length === 0) return current;
         //
         var options = extend({}, _);
-        var paperOptions = stripPapers(options);
+        var paperOptions = popKey(options, 'papers');
+        var data = popKey(options, 'data');
         //
         gt.options = extend(true, current, options);
         gt.paperOptions = extend(true, gt.paperOptions, paperOptions);
         //
+        if (data) this.data(data);
         return this;
     }
 
@@ -152,11 +157,13 @@ export default function (options) {
     return new Giotto(options);
 }
 
-
-function stripPapers (options) {
-    if (options && options.papers) {
-        var papers = options.papers;
-        delete options.papers;
-        return papers;
+/**
+ * Internal function for stripping papers entry from an options object
+ */
+function popKey (options, key) {
+    if (options && options[key]) {
+        var value = options[key];
+        delete options[key];
+        return value;
     }
 }

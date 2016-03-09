@@ -1,5 +1,5 @@
 export {default as giotto} from './src/core/main';
-export {Plugin} from './src/core/paper';
+export {Plugin, Paper} from './src/core/paper';
 export {array, quant} from './src/core/d3';
 export {default as gradient} from './src/core/gradient';
 export {version} from './package.json';
@@ -19,6 +19,7 @@ import './src/drawing/pie';
 import './src/drawing/points';
 //
 // plugins
+import './src/plugins/margin';
 import './src/plugins/background';
 import './src/plugins/grid';
 import './src/plugins/axis';

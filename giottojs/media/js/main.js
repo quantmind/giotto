@@ -55,6 +55,7 @@ require([
         .run(['$rootScope', '$lux', 'context', 'giottojsNavigation',
             function ($scope, $lux, context, giottojsNavigation) {
                 $scope.navbar = giottojsNavigation;
+                $scope.d3 = d3;
             }]
         );
 

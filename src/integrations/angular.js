@@ -1,4 +1,23 @@
+import {dataProviders} from '../core/data';
 import {default as giotto} from '../core/main';
+
+
+function angularEval (scope) {
+
+    return parse;
+
+    function parse (expr, name, callback) {
+        var result = scope.$eval(expr, {
+            name: name,
+            callback: callback
+        });
+        if (result) callback(null, {
+            data: result,
+            name: name
+        });
+    }
+}
+
 //
 //  Giotto Angular Integration
 //  ==================================
@@ -16,10 +35,18 @@ import {default as giotto} from '../core/main';
 //      d3.giotto.angular.module(angular).addAll();
 //
 export function angularModule (angular) {
+
     var module = angular.module('giotto', [])
         .value('giottoDefaults', {})
 
         .factory('getOptions', ['$window', getOptionsFactory])
+
+        .run(['$rootScope', function (scope) {
+            var ev = angularEval(scope);
+            dataProviders.register.set('angularEval', ev);
+            if (!dataProviders.register.get('eval'))
+                dataProviders.register.set('eval', ev);
+        }])
 
         // Outer giotto directive
         .directive('giotto', ['$http', 'getOptions', function ($http, getOptions) {
@@ -39,7 +66,6 @@ export function angularModule (angular) {
         .directive('giottoPaper', ['getOptions', function (getOptions) {
             return {
                 restrict: 'AE',
-                require: "giotto",
                 link: giottoPaper(getOptions)
             };
         }])
@@ -81,6 +107,11 @@ export function angularModule (angular) {
             var options = getOptions(scope, attrs, 'giottoPaper'),
                 gt = scope.giotto;
 
+            // No giotto in the scope, create one
+            if (!gt) {
+                gt = giotto();
+                scope.giotto = gt;
+            }
             if (scope.giottoQueue)
                 scope.giottoQueue.push([element[0], options]);
             else

@@ -1,3 +1,6 @@
 title: Sobol
 author: Luca Sbardella
-priority: 0
+
+<div data-aspect-ratio="2:1">
+<div giotto='$html_url/giotto.json'></div>
+</div>

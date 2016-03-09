@@ -4,6 +4,7 @@ export function rebind (target, source) {
     return target;
 }
 
+
 function d3_rebind(target, source, method) {
     return function() {
       var value = method.apply(source, arguments);

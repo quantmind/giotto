@@ -3,13 +3,7 @@ import {self} from 'd3-quant';
 
 
 export var defaults = {
-    type: 'canvas',
-    margin: {
-        top: 20,
-        right: 20,
-        bottom: 20,
-        left: 20
-    }
+    type: 'canvas'
 };
 
 
@@ -39,6 +33,16 @@ export class GiottoBase {
 
     get id () {
         return self.get(this).id;
+    }
+
+    /**
+     * Set or return the options for this giotto object
+     */
+    options (_) {
+        var b = self.get(this);
+        if (arguments.length === 0) return b.options;
+        b.options = _;
+        return this;
     }
 
     /**
