@@ -3,12 +3,10 @@ import * as d3 from '../';
 
 
 test("Test no options for drawings", (t) => {
-    var gt = d3.giotto(),
-        opts = gt.options();
-    t.ok(opts);
-    t.equal(opts.points, undefined);
-    t.equal(opts.bars, undefined);
-    t.equal(opts.line, undefined);
+    var gt = d3.giotto();
+    t.equal(gt.$scope.points, undefined);
+    t.equal(gt.$scope.bars, undefined);
+    t.equal(gt.$scope.line, undefined);
     t.end();
 });
 

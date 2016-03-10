@@ -1,11 +1,4 @@
-import {giottoId} from '../utils/dom';
-import {self} from 'd3-quant';
-
-
-export var defaults = {
-    type: 'canvas'
-};
-
+import {default as scopeFactory} from './scope';
 
 export const constants = {
     DEFAULT_VIZ_GROUP: 'default_viz_group',
@@ -22,45 +15,57 @@ export const constants = {
 };
 
 
+function giottoScope (scope, self, options) {
+    scope.$extend(options);
+    scope.$self = self;
+    return scope;
+}
+
+
 export class GiottoBase {
 
-    constructor (options) {
-        self.set(this, {
-            id: giottoId(),
-            options: options
-        });
+    constructor (parent, options) {
+        var scope;
+        if (arguments.length === 1)
+            scope = parent;
+        else {
+            scope = parent ? parent.$scope.$new() : scopeFactory()();
+        }
+        this.$scope = GiottoBase.scope(scope, this, options);
     }
 
     get id () {
-        return self.get(this).id;
+        return this.$scope.$id;
+    }
+
+    get parent () {
+        var parent = this.$scope.$parent;
+        return parent ? parent.$self : null;
+    }
+
+    get root () {
+        return this.$scope.$root.$self;
     }
 
     /**
      * Set or return the options for this giotto object
      */
-    options (_) {
-        var b = self.get(this);
-        if (arguments.length === 0) return b.options;
-        b.options = _;
+    scope (_) {
+        if (arguments.length === 0) return this.$scope;
+        this.$scope.$extend(_);
         return this;
     }
 
-    /**
-     * Set or get data for the paper
-     *
-     * getting data is relatively straightforward and does not produce any
-     * side effets. Setting data causes the object to do a complete re-draw
-     * by firing the ``on_data`` event
-     *
-     * @param _
-     * @returns {*}
-     */
-    data (_) {
-        if (arguments.length === 0) return self.get(this).data;
-        self.get(this).data = _;
+    broadcast () {
+        this.$scope.$broadcast.apply(this.$scope, arguments);
+        return this;
     }
 
-    fire () {
-
+    on () {
+        this.$scope.$on.apply(this.$scope, arguments);
+        return this;
     }
 }
+
+
+GiottoBase.scope = giottoScope;

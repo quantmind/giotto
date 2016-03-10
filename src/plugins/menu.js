@@ -1,4 +1,4 @@
-import {Plugin} from '../core/paper';
+import {Plugin} from '../core/plugin';
 
 
 /**

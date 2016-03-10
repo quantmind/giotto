@@ -1,10 +1,12 @@
 import {select} from 'd3-selection';
 import {map} from 'd3-collection';
 import {scaleLinear} from 'd3-scale';
-import {GiottoBase, defaults, constants} from './defaults';
+import {GiottoBase, constants} from './defaults';
 import {getElement} from '../utils/dom';
+import {Plugin} from './plugin';
 import * as size from '../utils/size';
-import {self, round, extend, isString, isArray, isObject} from 'd3-quant';
+import {round, isString, isArray, isObject} from 'd3-quant';
+import {popKey} from '../utils/object';
 
 /**
  * A paper is created via a giotto object.
@@ -20,18 +22,13 @@ import {self, round, extend, isString, isArray, isObject} from 'd3-quant';
  */
 export class Paper extends GiottoBase {
 
-    constructor(giotto, element, options, events) {
-        super(options);
-        var paper = self.get(this);
-        extend(paper, {
-            giotto: giotto,
-            element: getElement(element),
-            events: events,
-            draws: []
-        });
+    constructor(giotto, element, options) {
+        super(giotto, options);
+        var scope = this.$scope;
+        scope.$element = getElement(element);
+
         // Append the paper container
         element = this.element;
-
         var position = element.style('position');
         if (!position || position === 'static')
             element.style('position', 'relative');
@@ -43,52 +40,46 @@ export class Paper extends GiottoBase {
             .classed('gt-paper-' + this.type, true);
         //
         var LayerClass = Layer.type[this.type];
-        paper.size = getSize(element, paper);
-        paper.factor = paper.options.factor || LayerClass.getFactor();
-        paper.background = new LayerClass(this, 'gt-background');
-        paper.drawings = new LayerClass(this, 'gt-drawings');
-        paper.foreground = new LayerClass(this, 'gt-foreground');
-        paper.xscale = scaleLinear();
-        paper.yscale = scaleLinear();
+        scope.$name = popKey(scope, 'name');
+        scope.$width = popKey(scope, 'width');
+        scope.$height = popKey(scope, 'height');
+        scope.$size = getSize(element, scope);
+        scope.$factor = popKey(scope, 'factor') || LayerClass.getFactor();
+        scope.$xscale = scaleLinear();
+        scope.$yscale = scaleLinear();
+        scope.$layers = map();
+        scope.$layers.set('background', new LayerClass(this, 'gt-background'));
+        scope.$layers.set('drawings', new LayerClass(this, 'gt-drawings'));
+        scope.$layers.set('foreground', new LayerClass(this, 'gt-foreground'));
+        scope.$plugins = map();
+        scope.$draws = [];
         this.clear();
-
-        // Add plugins
-        paper.plugins = map();
-        var thisPaper = this;
-        Paper.plugins.each( (Class, name) => {
-            var opts = paper.options[name];
-            if (opts === true) opts = {};
-            paper.plugins.set(name, new Class(thisPaper, opts, Class.defaults));
-        });
-    }
-
-    get factor () {
-        return self.get(this).factor;
-    }
-
-    get giotto () {
-        return self.get(this).giotto;
+        Plugin.$apply(this);
     }
 
     get element () {
-        return select(self.get(this).element);
+        return select(this.$scope.$element);
     }
 
     // paper name
     get name () {
-        return self.get(this).options.name;
+        return this.$scope.$name;
+    }
+
+    get factor () {
+        return this.$scope.$factor;
     }
 
     get background () {
-        return self.get(this).background;
+        return this.$scope.$layers.get('background');
     }
 
     get drawings () {
-        return self.get(this).drawings;
+        return this.$scope.$layers.get('drawings');
     }
 
     get foreground () {
-        return self.get(this).foreground;
+        return this.$scope.$layers.get('foreground');
     }
 
     get container () {
@@ -108,79 +99,76 @@ export class Paper extends GiottoBase {
     }
 
     get marginLeft () {
-        var i = self.get(this);
-        return i.factor*pc(i.plugins.get('margin').left, i.size[0]);
+        var scope = this.$scope;
+        return scope.$factor*pc(scope.$margin.left, scope.$size[0]);
     }
 
     get marginRight () {
-        var i = self.get(this);
-        return i.factor*pc(i.plugins.get('margin').right, i.size[0]);
+        var scope = this.$scope;
+        return scope.$factor*pc(scope.$margin.right, scope.$size[0]);
     }
 
     get marginTop () {
-        var i = self.get(this);
-        return i.factor*pc(i.plugins.get('margin').left, i.size[1]);
+        var scope = this.$scope;
+        return scope.$factor*pc(scope.$margin.top, scope.$size[1]);
     }
 
     get marginBottom () {
-        var i = self.get(this);
-        return i.factor*pc(i.plugins.get('margin').bottom, i.size[1]);
+        var scope = this.$scope;
+        return scope.$factor*pc(scope.$margin.bottom, scope.$size[1]);
+    }
+
+    get domWidth () {
+        return this.$scope.$size[0];
+    }
+
+    get domHeight () {
+        return this.$scope.$size[1];
+    }
+
+    get size () {
+        return this.$scope.$size.slice();
+    }
+
+    get width () {
+        var scope = this.$scope;
+        return scope.$factor*scope.$size[0];
+    }
+
+    get height () {
+        var scope = this.$scope;
+        return scope.$factor*scope.$size[1]
     }
 
     get innerWidth () {
-        var i = self.get(this);
-        return i.factor*i.size[0] - this.marginLeft - this.marginRight;
+        return this.width - this.marginLeft - this.marginRight;
     }
 
     get innerHeight () {
-        var i = self.get(this);
-        return i.factor*i.size[1] - this.marginTop - this.marginBottom;
+        return this.height - this.marginTop - this.marginBottom;
     }
 
     get aspectRatio () {
         return this.innerHeight/this.innerWidth;
     }
 
-    get domWidth () {
-        return self.get(this).size[0];
-    }
-
-    get domHeight () {
-        return self.get(this).size[1];
-    }
-
-    get size () {
-        return self.get(this).size.slice();
-    }
-
-    get width () {
-        var i = self.get(this);
-        return i.factor*i.size[0];
-    }
-
-    get height () {
-        var i = self.get(this);
-        return i.factor*i.size[1];
-    }
-
     each (callback) {
-        self.get(this).draws.forEach(callback);
+        this.$scope.$draws.forEach(callback);
     }
     /**
      * Draw the paper
      */
     draw () {
-        var paper = self.get(this);
         // Draw plugins
-        paper.plugins.each((plugin) => {
+        this.$scope.$plugins.each((plugin) => {
             if (plugin.active)
                 plugin.draw();
         });
         // Draw
-        var draws = paper.options.draw;
+        var draws = this.$scope.draw;
         if (draws && !isArray(draws)) draws = [draws];
         if (!draws) return;
-        paper = this;
+        var paper = this;
 
         draws.forEach( (draw) => {
             if (!isObject(draw)) draw = {marks: draw};
@@ -194,12 +182,12 @@ export class Paper extends GiottoBase {
      * Resize the paper if it needs resizing
      */
     resize (size) {
-        var p = self.get(this);
-        if (!size) size = boundingBox(p);
+        var scope = this.$scope;
+        if (!size) size = boundingBox(scope);
 
-        if (p.size[0] !== size[0] || p.size[1] !== size[1]) {
-            p.size[0] = size[0];
-            p.size[1] = size[1];
+        if (scope.$size[0] !== size[0] || scope.$size[1] !== size[1]) {
+            scope.$size[0] = size[0];
+            scope.$size[1] = size[1];
             this.clear();
             this.draw();
         }
@@ -214,58 +202,24 @@ export class Paper extends GiottoBase {
      * Refresh the paper by setting proper dimension and positioning
      */
     clear () {
-        this.fire('clear');
+        this.broadcast('clear');
         var container = this.container;
         var first_container = this.element.select('.gt-paper').node();
         var position = container.node() === first_container ? 'relative' : 'absolute';
         container.style("position", position);
-        this.background.clear();
-        this.drawings.clear();
-        this.foreground.clear();
-        var paper = self.get(this);
-        paper.xscale.range([0, paper.size[0]]);
-        paper.yscale.range([paper.size[1], 0]);
+        var scope = this.$scope;
+        scope.$layers.each(function (layer) {
+            layer.clear();
+        });
+        scope.$xscale.range([0, scope.$size[0]]);
+        scope.$yscale.range([scope.$size[1], 0]);
     }
 
     remove () {
         return this.giotto.remove(this);
     }
-
-    fire (event) {
-        self.get(this).events.call(event, this);
-    }
 }
 
-/**
- * Base class for Plugins
- */
-export class Plugin {
-
-    constructor (paper, opts, defaults) {
-        extend(this, defaults, opts);
-        this.active = opts ? true : false;
-        this.paper = paper;
-    }
-
-    draw () {}
-}
-
-// Optional paper plugins
-Paper.plugins = map();
-
-/**
- * Register a Plugin class to the Paper prototype
- *
- * @param Class: Plugin class
- * @param active: if true the plugin is active by default and to switch it off one must set the plugin name to false.
- * @param pluginDefaults: optional defaults
- */
-Plugin.register = function (Class, active, pluginDefaults) {
-    var name = Class.name.toLowerCase();
-    Class.defaults = pluginDefaults;
-    Paper.plugins.set(name, Class);
-    defaults[name] = active;
-}
 /**
  * A Layer is bound to a Paper.
  *
@@ -278,24 +232,28 @@ Plugin.register = function (Class, active, pluginDefaults) {
 export class Layer {
 
     constructor (paper, name) {
-        self.set(this, {paper: paper, name: name});
+        this.$scope = paper.$scope.$new();
+        this.$scope.$name = name;
     }
 
     get element () {
-        var s = self.get(this);
-        return s.paper.container.select('.' + s.name);
+        return this.paper.container.select('.' + this.name);
     }
 
     get paper () {
-        return self.get(this).paper;
+        return this.$scope.$self;
+    }
+
+    get name () {
+        return this.$scope.$name;
     }
 
     get type () {
-        return self.get(this).paper.type;
+        return this.paper.type;
     }
 
     get factor () {
-        return self.get(this).paper.type;
+        return this.paper.factor;
     }
 
     get context () {
@@ -320,14 +278,14 @@ function pc (margin, size) {
 }
 
 // Internal function for evaluating paper dom size
-export function getSize (element, p) {
-    var width = p.options.width;
-    var height = p.options.height;
+export function getSize (element, scope) {
+    var width = scope.$width;
+    var height = scope.$height;
 
     if (!width) {
         width = size.getWidth(element);
         if (width)
-            p.elwidth = size.getWidthElement(element);
+            scope.$elwidth = size.getWidthElement(element);
         else
             width = constants.WIDTH;
     }
@@ -335,14 +293,14 @@ export function getSize (element, p) {
     if (!height) {
         height = size.getHeight(element);
         if (height)
-            p.elheight = size.getHeightElement(element);
+            scope.$elheight = size.getHeightElement(element);
         else
             height = constants.HEIGHT;
     }
     // Allow to specify height as a percentage of width
     else if (typeof(height) === "string" && height.indexOf('%') === height.length-1) {
-        p.height_percentage = 0.01*parseFloat(height);
-        height = round(p.height_percentage*width);
+        scope.$heightPercentage = 0.01*parseFloat(height);
+        height = round(scope.$heightPercentage*width);
     }
 
     return [width, height];

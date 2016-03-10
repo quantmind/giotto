@@ -1,5 +1,5 @@
 import {easeLinear, easeQuadIn, easeQuadOut} from 'd3-ease';
-import {Plugin} from '../core/paper';
+import {Plugin} from '../core/plugin';
 
 var easing = {
     'linear': easeLinear,

@@ -3,28 +3,18 @@ import * as d3 from '../';
 
 
 test("Test giotto function", (t) => {
-    t.plan(4);
-    t.equal(typeof(d3.giotto), 'function');
-    t.equal(typeof(d3.version), 'string');
-    t.equal(d3.giotto.version, d3.version);
-    t.ok(d3.defaults);
+    t.plan(3);
+    t.equal(typeof(d3.giotto), 'function', 'giotto is a function');
+    t.equal(typeof(d3.version), 'string', 'version is a string');
+    t.equal(d3.giotto.version, d3.version, 'giotto version same as version');
 });
 
 
 test("Test giotto constructor", (t) => {
     var gt = d3.giotto();
-    t.ok(gt.options());
-    t.equal(gt.papers.length, 0);
-    t.ok(d3.quant.isFunction(gt.on));
-    t.end();
-});
-
-
-test("Test giotto options", (t) => {
-    var gt = d3.giotto();
-    t.ok(gt.options);
-    t.equal(gt.papers.length, 0);
-    t.ok(d3.quant.isFunction(gt.on));
+    t.ok(d3.quant.isObject(gt.scope()), 'giotto scope is an object');
+    t.equal(gt.papers.length, 0, 'no papers');
+    t.ok(d3.quant.isFunction(gt.on), 'on is a function');
     t.end();
 });
 
@@ -70,16 +60,26 @@ test("Test canvas size percentage", (t) => {
     t.equal(paper.domHeight, 300);
     t.equal(paper.size[0], 600);
     t.equal(paper.size[1], 300);
+    t.equal(paper.$scope.$heightPercentage, 0.5, '$heightPercentage is 0.5');
     t.end();
 });
 
 test("Test margins", (t) => {
     var gt = d3.giotto();
-    var paper = gt.paper({width: 600, height: 400});
-    t.equal(paper.marginLeft, 20*paper.factor);
-    t.equal(paper.marginRight, 20*paper.factor);
-    t.equal(paper.marginTop, 20*paper.factor);
-    t.equal(paper.marginBottom, 20*paper.factor);
+    var paper = gt.paper({
+        width: 600,
+        height: 400,
+        factor: 1,
+        margin: {
+            right: 30
+        }
+    });
+    t.equal(paper.factor, 1, 'paper factor is 1');
+    t.equal(paper.factor, paper.$scope.$factor);
+    t.equal(paper.marginLeft, 20);
+    t.equal(paper.marginRight, 30);
+    t.equal(paper.marginTop, 20);
+    t.equal(paper.marginBottom, 20);
     t.end();
 });
 

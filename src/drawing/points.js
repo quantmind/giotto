@@ -24,7 +24,7 @@ class Points extends Drawing {
      *
      * @param layer
      */
-    draw (layer) {
+    _draw (layer) {
         var serie = this.data(),
             x = serie.x(),
             y = serie.y(),

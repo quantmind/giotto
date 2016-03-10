@@ -1,10 +1,9 @@
-import {self, isObject, extend} from 'd3-quant';
-import {dispatch} from 'd3-dispatch';
-import {defaults, GiottoBase} from './defaults';
+import {isObject, extend} from 'd3-quant';
+import {GiottoBase} from './defaults';
 import {Canvas} from './canvas';
 import {Svg} from './svg';
-import {dataProviders} from './data';
-import {rebind} from '../utils/object';
+import {dataProviders, Data} from './data';
+import {popKey} from '../utils/object';
 
 /**
  * Giotto class
@@ -14,13 +13,15 @@ import {rebind} from '../utils/object';
 export class Giotto extends GiottoBase {
 
     constructor (options) {
-        super(extend(true, {}, defaults));
-        var g = self.get(this);
-        g.papers = [];
-        g.paperOptions = {};
-        g.events = dispatch('draw', 'redraw', 'clear', 'dataBefore', 'data');
-        rebind(this, g.events, 'on');
-        this.options(options);
+        super(null, null);
+        var scope = this.$scope;
+        scope.$papers = [];
+        scope.$plugins = {};
+        scope.$paperOptions = {};
+        scope.$data = new Data();
+        if (!scope.$defaultPaperType)
+            scope.$defaultPaperType = 'canvas';
+        this.scope(options);
     }
 
     /**
@@ -28,7 +29,7 @@ export class Giotto extends GiottoBase {
      * @returns {Array.<Object>} a copy of the array of papers
      */
     get papers () {
-        return self.get(this).papers.slice();
+        return this.$scope.$papers.slice();
     }
 
     /**
@@ -38,21 +39,16 @@ export class Giotto extends GiottoBase {
      * @returns this when setting, serie data when getting
      */
     data (_) {
-        var i = self.get(this);
         if (arguments.length === 1) {
-            var gt = this;
-            dataProviders(_, function (series) {
-                var events = i.events;
-                events.call('dataBefore', gt, series);
-                i.data = series;
-                i.papers.forEach((p) => {
-                    p.data(series);
-                });
-                events.call('data', gt);
+            var self = this;
+            dataProviders(_, function (data) {
+                self.broadcast('dataBefore', data);
+                self.$scope.$data.update(data);
+                self.broadcast('data');
             });
-            return gt;
+            return this;
         } else
-            return i.data;
+            return this.$scope.$data;
     }
 
     /**
@@ -68,35 +64,39 @@ export class Giotto extends GiottoBase {
                 element = null;
             }
         }
-        var name = options ? options.name : undefined,
-            gt = self.get(this),
-            opts = gt.options;
-        if (name && gt.paperOptions[name])
-            opts = extend(true, {}, opts, gt.paperOptions[name]);
+        var scope = this.$scope,
+            opts = null,
+            name = options ? options.name : undefined;
+
+        if (name && scope.$paperOptions[name])
+            opts = extend(true, {}, scope.$paperOptions[name]);
 
         options = extend(true, {}, opts, options);
-        if (options.type === 'canvas')
-            paper = new Canvas(this, element, options, gt.events);
+        var type = popKey(options, 'type') || scope.$defaultPaperType;
+
+        if (type === 'canvas')
+            paper = new Canvas(this, element, options);
         else
-            paper = new Svg(this, element, options, gt.events);
-        gt.papers.push(paper);
+            paper = new Svg(this, element, options);
+
+        scope.$papers.push(paper);
+        paper.broadcast('paper');
         return paper;
     }
 
     /**
-     * Update options and papers from JSON
+     * Get or update scope from JSON
      */
-    options (_) {
-        var gt = self.get(this);
-        var current = gt.options;
-        if (arguments.length === 0) return current;
+    scope (_) {
+        var scope = this.$scope;
+        if (arguments.length === 0) return scope;
         //
         var options = extend({}, _);
         var paperOptions = popKey(options, 'papers');
         var data = popKey(options, 'data');
         //
-        gt.options = extend(true, current, options);
-        gt.paperOptions = extend(true, gt.paperOptions, paperOptions);
+        scope.$extend(_);
+        scope.$paperOptions = extend(true, scope.$paperOptions, paperOptions);
         //
         if (data) this.data(data);
         return this;
@@ -108,7 +108,7 @@ export class Giotto extends GiottoBase {
      * @param callback: function accepting the paper as first parameter
      */
     forEach (callback) {
-        self.get(this).papers.forEach(callback);
+        this.$scope.$papers.forEach(callback);
     }
 
     /**
@@ -141,13 +141,12 @@ export class Giotto extends GiottoBase {
      * @returns {boolean}
      */
     remove (paper) {
-        var gt = self.get(this),
-            papers = gt.papers,
+        var papers = this.$scope.$papers,
             index = papers.indexOf(paper);
         if (index >= 0) {
             papers.splice(index, 0);
             paper.container.remove();
-            gt.refresh();
+            this.refresh();
             return true;
         }
     }
@@ -155,15 +154,4 @@ export class Giotto extends GiottoBase {
 
 export default function (options) {
     return new Giotto(options);
-}
-
-/**
- * Internal function for stripping papers entry from an options object
- */
-function popKey (options, key) {
-    if (options && options[key]) {
-        var value = options[key];
-        delete options[key];
-        return value;
-    }
 }

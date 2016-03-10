@@ -1,6 +1,6 @@
 import {select} from 'd3-selection';
 import {timer} from 'd3-timer';
-import {Plugin} from '../core/paper';
+import {Plugin} from '../core/plugin';
 
 
 /**

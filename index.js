@@ -1,9 +1,11 @@
 export {default as giotto} from './src/core/main';
-export {Plugin, Paper} from './src/core/paper';
+export {default as scopeFactory} from './src/core/scope';
+export {Paper} from './src/core/paper';
+export {Plugin} from './src/core/plugin';
 export {array, quant} from './src/core/d3';
 export {default as gradient} from './src/core/gradient';
 export {version} from './package.json';
-export {defaults, constants} from './src/core/defaults';
+export {constants} from './src/core/defaults';
 export {theme} from './src/core/theme';
 export {angularModule} from './src/integrations/angular';
 

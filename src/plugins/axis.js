@@ -1,4 +1,4 @@
-import {Plugin} from '../core/paper';
+import {Plugin} from '../core/plugin';
 
 /**
  * An Axis is associated with a given paper as well as a given drawing

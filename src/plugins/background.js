@@ -1,4 +1,4 @@
-import {Plugin} from '../core/paper';
+import {Plugin} from '../core/plugin';
 import {default as gradient} from '../core/gradient';
 import {isObject} from 'd3-quant';
 
@@ -15,7 +15,7 @@ class Background extends Plugin {
     draw () {
         var paper = this.paper,
             layer = paper.background,
-            grad = gradient(this);
+            grad = gradient(this.$scope);
         grad.xscale.range([0, paper.width]);
         grad.yscale.range([0, paper.height]);
 

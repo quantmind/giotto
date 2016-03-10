@@ -1,4 +1,4 @@
-import {Plugin} from '../core/paper';
+import {Plugin} from '../core/plugin';
 import {isObject} from 'd3-quant';
 
 /**
@@ -19,6 +19,22 @@ class Margin extends Plugin {
             }
         }
         super(paper, value, defaults);
+    }
+
+    get left () {
+        return this.$scope.left;
+    }
+
+    get right () {
+        return this.$scope.right;
+    }
+
+    get top () {
+        return this.$scope.top;
+    }
+
+    get bottom () {
+        return this.$scope.bottom;
     }
 }
 

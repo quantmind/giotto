@@ -186,7 +186,7 @@ export function angularModule (angular) {
         var gt = scope.giotto,
             queue = scope.giottoQueue;
 
-        gt.options(options);
+        gt.scope(options);
 
         if (queue) {
             delete scope.giottoQueue;

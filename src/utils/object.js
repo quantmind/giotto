@@ -5,6 +5,14 @@ export function rebind (target, source) {
 }
 
 
+export function popKey (object, key) {
+    if (object && object[key]) {
+        var value = object[key];
+        delete object[key];
+        return value;
+    }
+}
+
 function d3_rebind(target, source, method) {
     return function() {
       var value = method.apply(source, arguments);

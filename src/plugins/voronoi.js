@@ -2,6 +2,7 @@ import * as d3_voronoi from 'd3-voronoi';
 
 import {default as gradient} from '../core/gradient';
 
+
 gradient.voronoi = function () {
     var context = this.getContext(),
         x1 = this.xscale(0),

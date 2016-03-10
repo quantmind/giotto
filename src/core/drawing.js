@@ -1,33 +1,29 @@
 import {stack} from 'd3-shape';
-import {self, extend} from 'd3-quant';
 import {GiottoBase} from './defaults';
 import {Paper} from './paper';
+import {_parentScope} from './plugin';
 
 /**
  * Drawing Class
  *
- * A Drawing is paert of a paper and therefore it receive the same updates
- * a paper receive.
- *
- * base class for all drawings
+ * base class for all drawings in a Paper
  */
 export class Drawing extends GiottoBase {
 
-    constructor (paper, options) {
-        super(options);
-        var draw = self.get(this);
-        draw.paper = paper;
-        draw.show = true;
+    get data () {
+        var data = this.root.data();
+        return data;
     }
 
     get paper () {
-        return self.get(this).paper;
+        return this.parent;
     }
 
     /**
      * Draw itself into a paper.layer
      *
-     * @param paper
+     * This method is called by the paper when it needs to draw the drawing
+     * It should not be called directly
      */
     draw () {
     }
@@ -52,12 +48,15 @@ export function paperDraw (Class, defaultOptions) {
 
     Paper.prototype[name] = function (options) {
         // default options from giotto
-        var o1 = this.giotto.options()[name];
-        // paper options
-        var o2 = this.options()[name];
-        options = extend(true, {}, defaultOptions, o1, o2, options);
-        var draw = new Class(this, options);
-        self.get(this).draws.push(draw);
+        var root = _parentScope(this.$scope, name, defaultOptions),
+            draw = new Class(root.$new().$extend(options));
+
+        // add the draw to paper draws
+        this.$scope.$draws.push(draw);
+        // draw to the paper
+        if (!draw.broadcast('draw').defaultPrevented)
+            draw.draw();
+
         return draw;
     };
 
