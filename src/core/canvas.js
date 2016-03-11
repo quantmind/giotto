@@ -63,7 +63,7 @@ class CanvasLayer extends Layer {
         ctx.save();
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         if (center) {
-            ctx.translate(paper.marginLeft(), paper.marginTop());
+            ctx.translate(paper.marginLeft, paper.marginTop);
             ctx.translate(center[0], center[1]);
         }
         return ctx;
@@ -110,8 +110,3 @@ export class Canvas extends Paper {
         return dataUrl;
     }
 }
-
-/**
- * Animation for canvas papers
- *
- */

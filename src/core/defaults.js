@@ -38,6 +38,10 @@ export class GiottoBase {
         return this.$scope.$id;
     }
 
+    get name () {
+        return this.$scope.$name || this.id;
+    }
+
     get parent () {
         var parent = this.$scope.$parent;
         return parent ? parent.$self : null;
@@ -45,6 +49,10 @@ export class GiottoBase {
 
     get root () {
         return this.$scope.$root.$self;
+    }
+
+    get logger () {
+        return this.$scope.$logger;
     }
 
     /**

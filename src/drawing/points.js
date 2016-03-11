@@ -1,4 +1,4 @@
-import {self} from 'd3-quant';
+import {symbol} from 'd3-shape';
 import {paperDraw, Drawing} from '../core/drawing';
 
 
@@ -24,14 +24,31 @@ class Points extends Drawing {
      *
      * @param layer
      */
-    _draw (layer) {
-        var serie = this.data(),
-            x = serie.x(),
+    draw (layer) {
+        if (arguments.length === 0)
+            layer = this.paper.drawings;
+
+        var self = this,
+            series = this.getSeries();
+
+        this.on('data', function (e, serie) {
+            if (self.$scope.from.indexOf(serie.name) > -1)
+                self._draw(layer, this.getSeries());
+        });
+
+        this._draw(layer, series);
+    }
+
+    _draw (layer, series) {
+        if (!this.canDraw(layer, series)) return;
+        var serie = series[0].copy();
+
+        var x = serie.x(),
             y = serie.y(),
-            symbol = this.symbol().context(layer.context());
-        this.data().forEach((d) => {
+            s = symbol().context(layer.context);
+        serie.forEach((d) => {
             layer.startDraw([x(d), y(d)]);
-            layer.draw(symbol(d));
+            layer.draw(s(d));
             layer.endDraw();
         });
     }

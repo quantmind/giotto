@@ -2,7 +2,7 @@ import {isObject, extend} from 'd3-quant';
 import {GiottoBase} from './defaults';
 import {Canvas} from './canvas';
 import {Svg} from './svg';
-import {dataProviders, Data} from './data';
+import {data} from '../data/index';
 import {popKey} from '../utils/object';
 
 /**
@@ -18,7 +18,7 @@ export class Giotto extends GiottoBase {
         scope.$papers = [];
         scope.$plugins = {};
         scope.$paperOptions = {};
-        scope.$data = new Data();
+        scope.$data = data(scope.$new());
         if (!scope.$defaultPaperType)
             scope.$defaultPaperType = 'canvas';
         this.scope(options);
@@ -39,16 +39,9 @@ export class Giotto extends GiottoBase {
      * @returns this when setting, serie data when getting
      */
     data (_) {
-        if (arguments.length === 1) {
-            var self = this;
-            dataProviders(_, function (data) {
-                self.broadcast('dataBefore', data);
-                self.$scope.$data.update(data);
-                self.broadcast('data');
-            });
-            return this;
-        } else
-            return this.$scope.$data;
+        if (arguments.length === 0) return this.$scope.$data;
+        this.$scope.$data.load(_);
+        return this;
     }
 
     /**

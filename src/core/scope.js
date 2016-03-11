@@ -2,6 +2,7 @@ import {giottoId} from '../utils/dom';
 import {dispatch} from 'd3-dispatch';
 import {extend, isObject} from 'd3-quant';
 import {default as noop} from '../utils/noop';
+import {default as logger} from '../utils/log';
 
 let scope = function () {
     return new Scope();
@@ -25,6 +26,7 @@ export class Scope {
         this.$id = giottoId();
         this.$parent = null;
         this.$root = this;
+        this.$logger = logger();
         this.$events = dispatch('draw', 'redraw', 'clear', 'dataBefore', 'data', 'destroy', 'paper');
     }
 

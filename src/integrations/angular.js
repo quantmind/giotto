@@ -1,22 +1,5 @@
-import {dataProviders} from '../core/data';
+import {data} from '../data/index';
 import {default as giotto} from '../core/main';
-
-
-function angularEval (scope) {
-
-    return parse;
-
-    function parse (expr, name, callback) {
-        var result = scope.$eval(expr, {
-            name: name,
-            callback: callback
-        });
-        if (result) callback(null, {
-            data: result,
-            name: name
-        });
-    }
-}
 
 //
 //  Giotto Angular Integration
@@ -42,10 +25,10 @@ export function angularModule (angular) {
         .factory('getOptions', ['$window', getOptionsFactory])
 
         .run(['$rootScope', function (scope) {
-            var ev = angularEval(scope);
-            dataProviders.register.set('angularEval', ev);
-            if (!dataProviders.register.get('eval'))
-                dataProviders.register.set('eval', ev);
+            if (!data.$eval)
+                data.$eval = function (expr, locals) {
+                    return scope.$eval(expr, locals);
+                };
         }])
 
         // Outer giotto directive

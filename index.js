@@ -1,6 +1,7 @@
 export {default as giotto} from './src/core/main';
 export {default as scopeFactory} from './src/core/scope';
 export {Paper} from './src/core/paper';
+export {data} from './src/data/index';
 export {Plugin} from './src/core/plugin';
 export {array, quant} from './src/core/d3';
 export {default as gradient} from './src/core/gradient';
@@ -27,5 +28,6 @@ import './src/plugins/grid';
 import './src/plugins/axis';
 import './src/plugins/responsive';
 import './src/plugins/transitions';
+import './src/plugins/tooltip';
 
 giotto.version = version;

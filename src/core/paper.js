@@ -43,6 +43,7 @@ export class Paper extends GiottoBase {
         scope.$name = popKey(scope, 'name');
         scope.$width = popKey(scope, 'width');
         scope.$height = popKey(scope, 'height');
+        scope.$minHeight = popKey(scope, 'minHeight');
         scope.$size = getSize(element, scope);
         scope.$factor = popKey(scope, 'factor') || LayerClass.getFactor();
         scope.$xscale = scaleLinear();
@@ -59,11 +60,6 @@ export class Paper extends GiottoBase {
 
     get element () {
         return select(this.$scope.$element);
-    }
-
-    // paper name
-    get name () {
-        return this.$scope.$name;
     }
 
     get factor () {
@@ -174,6 +170,8 @@ export class Paper extends GiottoBase {
             if (!isObject(draw)) draw = {marks: draw};
             if (!draw.marks)
                 throw Error('Could not draw object, no "marks" specified');
+            if (!paper[draw.marks])
+                throw Error('Could not draw object, marks "' + draw.marks + '" not available');
             paper[draw.marks](draw);
         });
     }
@@ -307,14 +305,14 @@ export function getSize (element, scope) {
 }
 
 
-function boundingBox (p) {
-    var w = p.elwidth ? size.getWidth(p.elwidth) : p.size[0],
+function boundingBox (scope) {
+    var w = scope.$elwidth ? size.getWidth(scope.$elwidth) : scope.$size[0],
         h;
-    if (p.height_percentage)
-        h = round(w*p.height_percentage, 0);
+    if (scope.$heightPercentage)
+        h = round(w*scope.$heightPercentage, 0);
     else
-        h = p.elheight ? size.getHeight(p.elheight) : p.size[1];
-    if (p.min_height)
-        h = Math.max(h, p.min_height);
+        h = scope.$elheight ? size.getHeight(scope.$elheight) : scope.$size[1];
+    if (scope.$minHeight)
+        h = Math.max(h, scope.$minHeight);
     return [round(w), round(h)];
 }

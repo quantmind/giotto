@@ -10,7 +10,7 @@ module.exports = function(config) {
         basePath: '',
         frameworks: ['browserify', 'tap'],
 
-        files: ['test/**/*.js'],
+        files: ['test/*-test.js'],
 
         preprocessors: {
             'src/**/*.js': 'browserify',
