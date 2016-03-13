@@ -20,37 +20,39 @@ class Points extends Drawing {
     }
 
     /**
-     * Draw points on a layer of a paper (usually the drawing layer)
+     * Draw points on a layer
      *
      * @param layer
      */
-    draw (layer) {
-        if (arguments.length === 0)
-            layer = this.paper.drawings;
-
-        var self = this,
-            series = this.getSeries();
-
-        this.on('data', function (e, serie) {
-            if (self.$scope.from.indexOf(serie.name) > -1)
-                self._draw(layer, this.getSeries());
-        });
-
-        this._draw(layer, series);
-    }
-
     _draw (layer, series) {
         if (!this.canDraw(layer, series)) return;
-        var serie = series[0].copy();
+        var serie = series[0].copy(),
+            //scalex = this.scale(this.$scope.scalex || 'x'),
+            //scaley = this.scale(this.$scope.scaley || 'y'),
+            group = layer.group(this);
 
-        var x = serie.x(),
-            y = serie.y(),
-            s = symbol().context(layer.context);
-        serie.forEach((d) => {
-            layer.startDraw([x(d), y(d)]);
-            layer.draw(s(d));
-            layer.endDraw();
-        });
+        var sym = symbol().context(layer.context),
+            points = group.selectAll('path').data(serie);
+
+        points
+            .enter()
+            .append('path')
+            .merge(points)
+            .attr('x', serie.x())
+            .attr('x', serie.y())
+            .attr('d', sym);
+
+        points
+            .exit()
+            //.transition(this.exitTransition())
+            .remove();
+
+        layer.drawSelection(points);
+        //serie.forEach((d) => {
+        //    layer.startDraw([x(d), y(d)]);
+        //    layer.draw(s(d));
+        //    layer.endDraw();
+        //});
     }
 }
 

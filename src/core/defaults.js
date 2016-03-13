@@ -42,6 +42,22 @@ export class GiottoBase {
         return this.$scope.$name || this.id;
     }
 
+    /**
+     * Return the data object
+     * @returns {*}
+     */
+    get data () {
+        return this.$scope.$$data;
+    }
+
+    /**
+     * Return the paper object which own this object
+     * @returns {*}
+     */
+    get paper () {
+        return this.$scope.$$paper;
+    }
+
     get parent () {
         var parent = this.$scope.$parent;
         return parent ? parent.$self : null;
@@ -53,6 +69,15 @@ export class GiottoBase {
 
     get logger () {
         return this.$scope.$logger;
+    }
+
+    /**
+     * Draw itself into a paper.layer
+     *
+     * This method is called by the paper when it needs to draw the drawing
+     * It should not be called directly
+     */
+    draw () {
     }
 
     /**

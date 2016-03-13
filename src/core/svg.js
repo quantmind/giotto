@@ -1,7 +1,7 @@
 import {Paper, Layer} from './paper';
 
 
-class CanvasLayer extends Layer {
+class SvgLayer extends Layer {
 
     constructor(paper, name) {
         super(paper, name);
@@ -11,15 +11,25 @@ class CanvasLayer extends Layer {
     }
 
     clear () {
-
+        this.element.selectAll('*').remove();
+        return this;
     }
 
     draw () {
 
     }
+
+    group (draw) {
+        return this.element.selectAll('#' + draw.id)
+                            .data([draw])
+                            .enter()
+                            .append('g')
+                            .attr('id', draw.id);
+    }
+
 }
 
-Layer.type.svg = CanvasLayer;
+Layer.type.svg = SvgLayer;
 
 
 export class Svg extends Paper {

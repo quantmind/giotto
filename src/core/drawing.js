@@ -17,26 +17,23 @@ export class Drawing extends GiottoBase {
         if (!isArray(scope.from)) scope.from = [scope.from];
     }
 
-    get data () {
-        var data = this.root.data();
-        return data;
-    }
-
-    get paper () {
-        return this.parent;
-    }
-
     get marks () {
         return this.$scope.marks;
     }
 
     /**
-     * Draw itself into a paper.layer
-     *
-     * This method is called by the paper when it needs to draw the drawing
-     * It should not be called directly
+     * Get the correct scale @ name for this drawing
+     * @param name
      */
-    draw () {
+    scale (name) {
+        var scale = this.paper.scale(name);
+        //
+        // If the scale does not exist, create one with options from this draw scope
+        if (!scale)
+            scale = this.paper.scale(name, this.$scope);
+        //
+        // Scale domain not given
+        return scale.refresh(this);
     }
 
     getSeries () {
@@ -58,6 +55,23 @@ export class Drawing extends GiottoBase {
         this.$scope.$currentSeries = series;
         return current || true;
     }
+
+    draw (layer) {
+        if (arguments.length === 0)
+            layer = this.paper.drawings;
+
+        var self = this,
+            series = this.getSeries();
+
+        this.on('data', function (e, serie) {
+            if (self.$scope.from.indexOf(serie.name) > -1)
+                self._draw(layer, this.getSeries());
+        });
+
+        this._draw(layer, series);
+    }
+
+    _draw () {}
 }
 
 export class StackedDrawing extends Drawing {

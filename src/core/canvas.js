@@ -1,10 +1,13 @@
 import {Paper, Layer} from './paper';
+import {default as orderedMap} from '../utils/map';
+import {default as canvasSelection} from '../canvas/index';
 
 
 class CanvasLayer extends Layer {
 
     constructor (paper, name) {
         super(paper, name);
+        this.$scope.groups = orderedMap();
         var c = paper.container,
             canvas = c.append('canvas').classed('gt-layer', true).classed(name, true),
             node = canvas.node();
@@ -21,6 +24,15 @@ class CanvasLayer extends Layer {
      */
     get context () {
         return this.element.node().getContext('2d');
+    }
+
+    group (draw) {
+        var group = draw.$scope.$$selection;
+        if (!group) {
+            group = canvasSelection(this.context);
+            draw.$scope.$$selection = group;
+        }
+        return group;
     }
 
     /**
@@ -51,6 +63,9 @@ class CanvasLayer extends Layer {
         return this;
     }
 
+    drawSelection (selection) {
+        return selection;
+    }
     /**
      * save context and reset transforms
      *

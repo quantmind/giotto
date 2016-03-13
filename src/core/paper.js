@@ -7,6 +7,7 @@ import {Plugin} from './plugin';
 import * as size from '../utils/size';
 import {round, isString, isArray, isObject} from 'd3-quant';
 import {popKey} from '../utils/object';
+import {default as createScale} from './scales';
 
 /**
  * A paper is created via a giotto object.
@@ -49,17 +50,23 @@ export class Paper extends GiottoBase {
         scope.$xscale = scaleLinear();
         scope.$yscale = scaleLinear();
         scope.$layers = map();
+        scope.$scales = map();
+        scope.$plugins = map();
         scope.$layers.set('background', new LayerClass(this, 'gt-background'));
         scope.$layers.set('drawings', new LayerClass(this, 'gt-drawings'));
         scope.$layers.set('foreground', new LayerClass(this, 'gt-foreground'));
-        scope.$plugins = map();
         scope.$draws = [];
+        scope.$$paper = this;
         this.clear();
         Plugin.$apply(this);
     }
 
     get element () {
         return select(this.$scope.$element);
+    }
+
+    get data () {
+        return this.root.data();
     }
 
     get factor () {
@@ -216,6 +223,14 @@ export class Paper extends GiottoBase {
     remove () {
         return this.giotto.remove(this);
     }
+
+    scale (name, opts) {
+        if (arguments.length === 1) return this.$scope.$scales.get(name);
+        // Create the scale
+        var scale = createScale(this, opts);
+        this.$scope.$scales.set(name, scale);
+        return scale;
+    }
 }
 
 /**
@@ -259,6 +274,7 @@ export class Layer {
     }
 
     // Drawing method
+    drawSelection () {}
     startDraw () {}
     draw () {}
     endDraw () {}

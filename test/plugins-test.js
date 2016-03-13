@@ -5,11 +5,11 @@ import * as d3 from '../';
 test("Test active plugins", (t) => {
     var plugins = d3.Plugin.$plugins;
 
-    t.equal(plugins.get('responsive').$active, true);
-    t.equal(plugins.get('transitions').$active, true);
-    t.equal(plugins.get('grid').$active, false);
-    t.equal(plugins.get('axis').$active, false);
-    t.equal(plugins.get('background').$active, false);
+    t.equal(plugins.get('responsive').$active, true, 'responsive active');
+    t.equal(plugins.get('transitions').$active, true, 'transitions active');
+    t.equal(plugins.get('grid').$active, false, 'grid not active');
+    t.equal(plugins.get('axis').$active, false, 'axis not active');
+    t.equal(plugins.get('background').$active, false, 'background not active');
     t.end();
 });
 
@@ -17,7 +17,7 @@ test("Test active plugins", (t) => {
 
 test("Test margin plugin", (t) => {
     var gt = d3.giotto(),
-        paper = gt.paper(),
+        paper = gt.new(),
         margin = paper.$scope.$margin;
 
     t.equal(margin, paper.$scope.$plugins.get('margin'), 'margin plugin equivalence');
@@ -30,7 +30,7 @@ test("Test margin plugin", (t) => {
     t.equal(margin.bottom, 20);
     t.equal(margin.active, true);
 
-    var paper2 = gt.paper({
+    var paper2 = gt.new({
         margin: {
             top: 40,
             right: 10,

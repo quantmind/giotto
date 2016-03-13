@@ -1,5 +1,6 @@
 import {easeLinear, easeQuadIn, easeQuadOut} from 'd3-ease';
 import {Plugin} from '../core/plugin';
+import 'd3-transition';
 
 var easing = {
     'linear': easeLinear,
@@ -14,6 +15,9 @@ var easing = {
  */
 class Transitions extends Plugin {
 
+    constructor (paper, opts, defaults) {
+        super(paper, opts, defaults);
+    }
     /**
      * @returns The d3-ease function
      */

@@ -7,20 +7,20 @@ import {paperDraw, Drawing} from '../core/drawing';
 class Line extends Drawing {
 
     /**
-     * Draw points on a layer of a paper (usually the drawing layer)
+     * Draw line from a serie
      *
      * @param layer
      */
-    draw (layer) {
-        var serie = this.data(),
-            x = serie.x(),
-            y = serie.y(),
-            symbol = this.symbol().context(layer.context());
-        this.data().forEach((d) => {
-            layer.startDraw([x(d), y(d)]);
-            layer.draw(symbol(d));
-            layer.endDraw();
-        });
+    _draw (layer, series) {
+        if (!this.canDraw(layer, series)) return;
+        var serie = series[0].copy(),
+            //scalex = this.scale(this.$scope.scalex || 'x'),
+            //scaley = this.scale(this.$scope.scaley || 'y'),
+            group = layer.group(this);
+
+        group
+            .select('path')
+            .datum(serie);
     }
 }
 

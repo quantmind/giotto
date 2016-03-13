@@ -21,7 +21,7 @@ test("Test giotto constructor", (t) => {
 
 test("Test canvas paper", (t) => {
     var gt = d3.giotto();
-    var paper = gt.paper();
+    var paper = gt.new();
     t.ok(paper.element);
     t.ok(paper.element.node());
     t.equal(paper.type, 'canvas');
@@ -41,7 +41,7 @@ test("Test canvas paper", (t) => {
 
 test("Test canvas size", (t) => {
     var gt = d3.giotto();
-    var paper = gt.paper({width: 600, height: 400});
+    var paper = gt.new({width: 600, height: 400});
     t.ok(paper.element);
     t.ok(paper.element.node());
     t.equal(paper.domWidth, 600);
@@ -53,7 +53,7 @@ test("Test canvas size", (t) => {
 
 test("Test canvas size percentage", (t) => {
     var gt = d3.giotto();
-    var paper = gt.paper({width: 600, height: '50%'});
+    var paper = gt.new({width: 600, height: '50%'});
     t.ok(paper.element);
     t.ok(paper.element.node());
     t.equal(paper.domWidth, 600);
@@ -66,7 +66,7 @@ test("Test canvas size percentage", (t) => {
 
 test("Test margins", (t) => {
     var gt = d3.giotto();
-    var paper = gt.paper({
+    var paper = gt.new({
         width: 600,
         height: 400,
         factor: 1,
@@ -85,7 +85,7 @@ test("Test margins", (t) => {
 
 test("Test canvas layers", (t) => {
     var gt = d3.giotto();
-    var paper = gt.paper();
+    var paper = gt.new();
     t.equal(paper.type, 'canvas');
     t.equal(gt.papers.length, 1);
     t.equal(paper.background.type, 'canvas');
@@ -102,7 +102,7 @@ test("Test canvas layers", (t) => {
 
 test("Test svg layers", (t) => {
     var gt = d3.giotto();
-    var paper = gt.paper({type: 'svg'});
+    var paper = gt.new({type: 'svg'});
     t.equal(paper.type, 'svg');
     t.equal(gt.papers.length, 1);
     t.equal(paper.background.type, 'svg');
@@ -127,7 +127,7 @@ test("Test paper options", (t) => {
             }
         }
     });
-    var paper = gt.paper({name: 'foo'});
+    var paper = gt.new({name: 'foo'});
     t.equal(paper.name, 'foo');
     t.end();
 });
@@ -135,7 +135,7 @@ test("Test paper options", (t) => {
 
 test("Test multiple papers", (t) => {
     var gt = d3.giotto();
-    var paper = gt.paper();
+    var paper = gt.new();
     t.ok(paper.element);
     t.ok(paper.element.node());
     //TODO: fix this test!

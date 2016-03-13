@@ -22,6 +22,10 @@ class Data extends GiottoBase {
         return this.$scope.$sources.get(name);
     }
 
+    size () {
+        return this.$scope.$sources.size();
+    }
+
     set (serie) {
         this.logger.debug('Data: setting new serie "' + serie.name + '"');
         this.$scope.$sources.set(serie.name, serie);

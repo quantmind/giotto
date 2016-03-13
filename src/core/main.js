@@ -15,10 +15,10 @@ export class Giotto extends GiottoBase {
     constructor (options) {
         super(null, null);
         var scope = this.$scope;
-        scope.$papers = [];
+        scope.$$papers = [];
         scope.$plugins = {};
-        scope.$paperOptions = {};
-        scope.$data = data(scope.$new());
+        scope.$$paperOptions = {};
+        scope.$$data = data(scope.$new());
         if (!scope.$defaultPaperType)
             scope.$defaultPaperType = 'canvas';
         this.scope(options);
@@ -29,19 +29,7 @@ export class Giotto extends GiottoBase {
      * @returns {Array.<Object>} a copy of the array of papers
      */
     get papers () {
-        return this.$scope.$papers.slice();
-    }
-
-    /**
-     * Set or get data from this instance
-     *
-     * @param series: when provided it is the serie data
-     * @returns this when setting, serie data when getting
-     */
-    data (_) {
-        if (arguments.length === 0) return this.$scope.$data;
-        this.$scope.$data.load(_);
-        return this;
+        return this.$scope.$$papers.slice();
     }
 
     /**
@@ -49,7 +37,7 @@ export class Giotto extends GiottoBase {
      *
      * @return a new Paper object
      */
-    paper (element, options) {
+    new (element, options) {
         var paper;
         if (arguments.length == 1) {
             if (isObject(element)) {
@@ -61,8 +49,8 @@ export class Giotto extends GiottoBase {
             opts = null,
             name = options ? options.name : undefined;
 
-        if (name && scope.$paperOptions[name])
-            opts = extend(true, {}, scope.$paperOptions[name]);
+        if (name && scope.$$paperOptions[name])
+            opts = extend(true, {}, scope.$$paperOptions[name]);
 
         options = extend(true, {}, opts, options);
         var type = popKey(options, 'type') || scope.$defaultPaperType;
@@ -72,7 +60,7 @@ export class Giotto extends GiottoBase {
         else
             paper = new Svg(this, element, options);
 
-        scope.$papers.push(paper);
+        scope.$$papers.push(paper);
         paper.broadcast('paper');
         return paper;
     }
@@ -89,9 +77,9 @@ export class Giotto extends GiottoBase {
         var data = popKey(options, 'data');
         //
         scope.$extend(_);
-        scope.$paperOptions = extend(true, scope.$paperOptions, paperOptions);
+        scope.$$paperOptions = extend(true, scope.$$paperOptions, paperOptions);
         //
-        if (data) this.data(data);
+        if (data) this.data.load(data);
         return this;
     }
 
@@ -101,7 +89,7 @@ export class Giotto extends GiottoBase {
      * @param callback: function accepting the paper as first parameter
      */
     forEach (callback) {
-        this.$scope.$papers.forEach(callback);
+        this.$scope.$$papers.forEach(callback);
     }
 
     /**
@@ -134,7 +122,7 @@ export class Giotto extends GiottoBase {
      * @returns {boolean}
      */
     remove (paper) {
-        var papers = this.$scope.$papers,
+        var papers = this.$scope.$$papers,
             index = papers.indexOf(paper);
         if (index >= 0) {
             papers.splice(index, 0);

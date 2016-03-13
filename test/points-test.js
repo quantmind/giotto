@@ -9,13 +9,13 @@ test("Test plotting points into a paper", (t) => {
         }
     });
 
-    t.ok(gt.data());
+    t.equal(gt.data.size(), 1);
 
-    gt.paper({
+    gt.new({
         draw: 'points'
     });
 
-    gt.draw();
+    //gt.draw();
 
     t.end();
 });
