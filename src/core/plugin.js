@@ -1,5 +1,5 @@
 import {map} from 'd3-collection';
-import {GiottoBase} from './defaults';
+import {GiottoBase, model} from './defaults';
 import {prefix} from './scope';
 import {popKey} from '../utils/object';
 
@@ -8,14 +8,12 @@ import {popKey} from '../utils/object';
  */
 export class Plugin extends GiottoBase {
 
-    constructor (parent, opts, root) {
-        var scope = GiottoBase.scope(root.$new(), parent, opts)
-        super(scope.$new());
+    constructor (parent, opts, scope) {
+        scope = scope.$new().$extend(opts);
+        super(scope);
+        this.$scope.$self = parent;
+        this.$scope.$$paper = parent;
         this.$scope.$active = opts ? true : false;
-    }
-
-    get paper () {
-        return this.parent;
     }
 
     get active () {
@@ -37,45 +35,74 @@ Plugin.$plugins = map();
  * @param pluginDefaults: optional defaults
  */
 Plugin.register = function (Class, active, pluginDefaults) {
-    var name = Class.name.toLowerCase();
-    Class.$active = active;
-    Class.$defaults = pluginDefaults;
-    Plugin.$plugins.set(name, Class);
+    var name = popKey(pluginDefaults, 'name');
+    if(!name) name = Class.name;
+    name = name.toLowerCase();
+    Plugin.$plugins.set(name, {
+        Class: Class,
+        active: active,
+        defaults: pluginDefaults
+    });
 };
 
 
 Plugin.$apply = function (paper) {
     var scope = paper.$scope;
 
-    Plugin.$plugins.each( (Class, name) => {
+    Plugin.$plugins.each( (p, name) => {
 
-        var opts = scope[name] || Class.$active,
-            $name = prefix + name,
-            root = _parentScope(scope.$root, name, Class.$defaults);
+        var bits = name.split('.'),
+            namespace = bits[0],
+            $namespace = prefix + namespace,
+            opts = scope[namespace],
+            root = _parentScope(scope.$root, namespace, bits[1], p.defaults);
 
+        name = bits[1];
+        if (opts === undefined) opts = p.active;
         if (opts === true) opts = {};
 
-        var plugin = new Class(paper, opts, root);
+        var plugin = new p.Class(paper, opts, root);
 
-        scope[$name] = plugin;
-        scope.$plugins.set(name, plugin);
+        if (name) {
+            if (!scope[$namespace]) scope[$namespace] = map();
+            scope[$namespace].set(name, plugin);
+        }
+        else scope[$namespace] = plugin;
+
+        scope.$plugins.push(plugin);
     });
 };
 
 
-export function _parentScope(scope, name, defaults) {
-    var $name = prefix + name;
-    var parentScope = scope[$name];
+export function _parentScope(scope, namespace, name, defaults) {
+    var $$namespace = prefix + prefix + namespace,
+        container = scope[$$namespace],
+        parentScope;
+
+    if (name) {
+        if (!container) scope[$$namespace] = container = map();
+        parentScope = container.get(name);
+    }
+    else
+        parentScope = container;
+
     //
     // parent scope not available
     if (!parentScope) {
         if (scope.$parent && scope.$parent !== scope) {
-            parentScope = _parentScope(scope.$parent, name, defaults).$new();
-            parentScope = GiottoBase.scope(parentScope, scope.$self);
+            parentScope = _parentScope(scope.$parent, namespace, name, defaults);
+            parentScope = model(parentScope, scope);
         }
+        else {
+            parentScope = scope.$new(true).$extend(defaults);
+            parentScope.$self = scope.$self;
+            parentScope.$name = name ? namespace + '.' + name : namespace;
+        }
+
+        if (name)
+            container.set(name, parentScope);
         else
-            parentScope = GiottoBase.scope(scope.$new(), scope.$self, defaults);
-        scope[$name] = parentScope.$extend(popKey(scope, name));
+            scope[$$namespace] = parentScope;
     }
     return parentScope;
 }

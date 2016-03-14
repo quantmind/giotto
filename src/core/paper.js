@@ -1,13 +1,12 @@
 import {select} from 'd3-selection';
 import {map} from 'd3-collection';
-import {scaleLinear} from 'd3-scale';
 import {GiottoBase, constants} from './defaults';
 import {getElement} from '../utils/dom';
 import {Plugin} from './plugin';
 import * as size from '../utils/size';
 import {round, isString, isArray, isObject} from 'd3-quant';
 import {popKey} from '../utils/object';
-import {default as createScale} from './scales';
+import {rangeFunctions} from '../plugins/scales';
 
 /**
  * A paper is created via a giotto object.
@@ -24,8 +23,9 @@ import {default as createScale} from './scales';
 export class Paper extends GiottoBase {
 
     constructor(giotto, element, options) {
-        super(giotto, options);
+        super(giotto.$scope.$new().$extend(options));
         var scope = this.$scope;
+        scope.$$paper = this;
         scope.$element = getElement(element);
 
         // Append the paper container
@@ -47,16 +47,13 @@ export class Paper extends GiottoBase {
         scope.$minHeight = popKey(scope, 'minHeight');
         scope.$size = getSize(element, scope);
         scope.$factor = popKey(scope, 'factor') || LayerClass.getFactor();
-        scope.$xscale = scaleLinear();
-        scope.$yscale = scaleLinear();
+        scope.$colors = paperColors(scope);
         scope.$layers = map();
-        scope.$scales = map();
-        scope.$plugins = map();
+        scope.$plugins = [];
         scope.$layers.set('background', new LayerClass(this, 'gt-background'));
         scope.$layers.set('drawings', new LayerClass(this, 'gt-drawings'));
         scope.$layers.set('foreground', new LayerClass(this, 'gt-foreground'));
         scope.$draws = [];
-        scope.$$paper = this;
         this.clear();
         Plugin.$apply(this);
     }
@@ -163,7 +160,7 @@ export class Paper extends GiottoBase {
      */
     draw () {
         // Draw plugins
-        this.$scope.$plugins.each((plugin) => {
+        this.$scope.$plugins.forEach((plugin) => {
             if (plugin.active)
                 plugin.draw();
         });
@@ -216,20 +213,33 @@ export class Paper extends GiottoBase {
         scope.$layers.each(function (layer) {
             layer.clear();
         });
-        scope.$xscale.range([0, scope.$size[0]]);
-        scope.$yscale.range([scope.$size[1], 0]);
     }
 
     remove () {
         return this.giotto.remove(this);
     }
 
-    scale (name, opts) {
-        if (arguments.length === 1) return this.$scope.$scales.get(name);
-        // Create the scale
-        var scale = createScale(this, opts);
-        this.$scope.$scales.set(name, scale);
-        return scale;
+    scale (name) {
+        return this.$scope.$scales.get(name).scale();
+    }
+
+    /**
+     * Pick a color from the default colors
+     */
+    pickColor (index) {
+        var scope = this.$scope;
+        if (arguments.length === 0) {
+            if (scope.$colorIndex === undefined)
+                scope.$colorIndex = 0;
+            index = scope.$colorIndex++;
+        }
+
+        if (index >= scope.$colors.length) {
+            scope.$colorIndex = 0;
+            index = 0;
+        }
+
+        return scope.$colors[index];
     }
 }
 
@@ -274,7 +284,11 @@ export class Layer {
     }
 
     // Drawing method
-    drawSelection () {}
+    pen (p) {
+        return p;
+    }
+
+    drawSelections () {}
     startDraw () {}
     draw () {}
     endDraw () {}
@@ -331,4 +345,11 @@ function boundingBox (scope) {
     if (scope.$minHeight)
         h = Math.max(h, scope.$minHeight);
     return [round(w), round(h)];
+}
+
+
+function paperColors(scope) {
+    var colors = scope.colors || 'category10',
+        scale = rangeFunctions.get(colors);
+    if (scale) return scale(this).range();
 }

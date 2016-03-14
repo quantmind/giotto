@@ -2,6 +2,7 @@ import {test} from 'tape';
 import * as d3 from '../';
 
 
+
 test("Test plotting points into a paper", (t) => {
     var gt = d3.giotto({
         data: {
@@ -15,7 +16,7 @@ test("Test plotting points into a paper", (t) => {
         draw: 'points'
     });
 
-    //gt.draw();
+    gt.draw();
 
     t.end();
 });

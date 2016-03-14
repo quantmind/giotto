@@ -2,18 +2,8 @@ title: Area Chart
 description: GiottoJS supports area charts for both svg and canvas elements by extending d3js area to canvas.
 date: 2014 December 26
 
-<div class="container-fluid">
-  <div class="row">
-    <div class="col-sm-12">
-      <div class='center-block' style='width: 100%; max-width: 800px' giotto='$html_url/giotto.json'></div>
-    </div>
-  </div>
+<div data-aspect-ratio="2:1">
+<div giotto='$html_url/giotto.json'></div>
 </div>
 
-Area charts are enabled by setting the ``area`` parameter in the ``line`` entry
-to to ``true``.
-
-
-Html:
-
-    <div style='width: 100%' giotto-config='$path/giotto.json'></div>
+Area charts are enabled by adding ``area`` to the ``draw`` list.

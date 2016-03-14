@@ -22,6 +22,16 @@ class Data extends GiottoBase {
         return this.$scope.$sources.get(name);
     }
 
+    getOne (name) {
+        var one = this.get(name);
+        if (!one) {
+            var values = this.$scope.$sources.values();
+            if (values.length === 1) return values[0];
+            return this.get('default') || values[0];
+        }
+        return one;
+    }
+
     size () {
         return this.$scope.$sources.size();
     }

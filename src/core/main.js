@@ -1,9 +1,10 @@
-import {isObject, extend} from 'd3-quant';
+import {isObject, isFunction, extend} from 'd3-quant';
 import {GiottoBase} from './defaults';
 import {Canvas} from './canvas';
 import {Svg} from './svg';
 import {data} from '../data/index';
 import {popKey} from '../utils/object';
+import {default as contextMenuProvider} from '../utils/menu';
 
 /**
  * Giotto class
@@ -19,6 +20,10 @@ export class Giotto extends GiottoBase {
         scope.$plugins = {};
         scope.$$paperOptions = {};
         scope.$$data = data(scope.$new());
+        scope.$contextMenuCallback = contextMenu;
+        scope.$contextMenu = contextMenuProvider()(function (element) {
+            return scope.$contextMenuCallback(element);
+        });
         if (!scope.$defaultPaperType)
             scope.$defaultPaperType = 'canvas';
         this.scope(options);
@@ -75,8 +80,10 @@ export class Giotto extends GiottoBase {
         var options = extend({}, _);
         var paperOptions = popKey(options, 'papers');
         var data = popKey(options, 'data');
+        var type = popKey(options, 'type');
         //
         scope.$extend(_);
+        if (type) scope.$defaultPaperType = type;
         scope.$$paperOptions = extend(true, scope.$$paperOptions, paperOptions);
         //
         if (data) this.data.load(data);
@@ -135,4 +142,50 @@ export class Giotto extends GiottoBase {
 
 export default function (options) {
     return new Giotto(options);
+}
+
+
+function contextMenu (menu) {
+    var scope = this,
+        gt = scope.$self,
+        items = scope.contextMenu;
+    if (!items) return;
+    if (items === true) items = [];
+
+    if (!scope.$menuInitialised) {
+        //TODO: this is a temporary hack
+        scope.$menuInitialised = true;
+        items.splice(0, 0, {
+            label: function () {
+                return 'Convert to ' + convert();
+            },
+            callback: function () {
+                scope.$defaultPaperType = convert();
+                gt.redraw();
+            }
+        });
+    }
+
+    menu.selectAll('*').remove();
+    menu.append('ul')
+        .attr('role', 'menu')
+        .classed('dropdown-menu', true)
+        .selectAll('li')
+        .data(items)
+        .enter()
+        .append('li')
+            .attr('role', 'presentation')
+        .append('a')
+            .attr('role', 'menuitem').attr('href', '#')
+        .text(function (d) {
+            return isFunction(d.label) ? d.label() : d.label;
+        });
+        //.on('click', function (d) {
+        //    if (d.callback) d.callback(viz);
+        //});
+    return true;
+
+    function convert () {
+        return scope.$defaultPaperType === 'svg' ? 'canvas' : 'svg';
+    }
 }

@@ -1,4 +1,5 @@
 import {data} from '../data/index';
+import {extend} from 'd3-quant';
 import {default as giotto} from '../core/main';
 
 //
@@ -20,7 +21,7 @@ import {default as giotto} from '../core/main';
 export function angularModule (angular) {
 
     var module = angular.module('giotto', [])
-        .value('giottoDefaults', {})
+        .constant('giottoDefaults', {})
 
         .factory('getOptions', ['$window', getOptionsFactory])
 
@@ -32,36 +33,41 @@ export function angularModule (angular) {
         }])
 
         // Outer giotto directive
-        .directive('giotto', ['$http', 'getOptions', function ($http, getOptions) {
-            return {
-                restrict: 'AE',
+        .directive('giotto', ['getOptions', 'giottoDefaults', '$http',
+            function (getOptions, giottoDefaults, $http) {
+                return {
+                    restrict: 'AE',
 
-                controller: ['$scope', 'giottoDefaults', function (scope, giottoDefaults) {
-                    // Add a giotto instance to the scope
-                    scope.giotto = giotto(giottoDefaults);
-                    scope.giottoQueue = [];
-                }],
+                    controller: ['$scope', 'giottoDefaults', function (scope) {
+                        // Add a giotto queue to the scope
+                        scope.giottoQueue = [];
+                    }],
 
-                link: giottoLayout($http, getOptions)
-            };
-        }])
+                    link: giottoLayout(getOptions, giottoDefaults, $http)
+                };
+            }]
+        )
 
-        .directive('giottoPaper', ['getOptions', function (getOptions) {
-            return {
-                restrict: 'AE',
-                link: giottoPaper(getOptions)
-            };
-        }])
+        .directive('giottoPaper', ['getOptions', 'giottoDefaults',
+            function (getOptions, giottoDefaults) {
+                return {
+                    restrict: 'AE',
+                    link: giottoPaper(getOptions, giottoDefaults)
+                };
+            }]
+        )
 
-        .directive('giottoStats', ['getOptions', '$window', function (getOptions, $window) {
-            return {
-                restrict: 'AE',
-                link: giottoStats(getOptions, $window)
-            };
-        }]);
+        .directive('giottoStats', ['getOptions', '$window',
+            function (getOptions, $window) {
+                return {
+                    restrict: 'AE',
+                    link: giottoStats(getOptions, $window)
+                };
+            }]
+        );
 
 
-    function giottoLayout($http, getOptions) {
+    function giottoLayout(getOptions, giottoDefaults, $http) {
 
         return function (scope, element, attrs) {
             var options = getOptions(scope, attrs, 'giotto'),
@@ -74,32 +80,45 @@ export function angularModule (angular) {
             //
             if (options.name && /^(http(s)?:)?\/\//.test(options.name)) {
                 $http.get(options.name).then(function (response) {
-                    giottoPapers(scope, response.data);
+                    giottoPapers(scope, response.data, giottoDefaults);
                 }, function () {
 
                 });
             } else {
-                giottoPapers(scope, options);
+                giottoPapers(scope, options, giottoDefaults);
             }
         };
     }
 
-    function giottoPaper(getOptions) {
+    function giottoPaper(getOptions, giottoDefaults) {
 
         return function (scope, element, attrs) {
             var options = getOptions(scope, attrs, 'giottoPaper'),
-                gt = scope.giotto;
+                gt = scope.giottoQueue;
 
-            // No giotto in the scope, create one
+            // No giotto queue in the scope, create giotto
             if (!gt) {
-                gt = giotto();
-                scope.giotto = gt;
-            }
-            if (scope.giottoQueue)
-                scope.giottoQueue.push([element[0], options]);
-            else
-                gt.paper(element[0], options).draw();
+                scope.giottoQueue = gt = [];
+                gt.push([element[0], {}]);
+                giottoPapers(scope, options, giottoDefaults)
+            } else
+                gt.push([element[0], options]);
         };
+    }
+
+    //
+    // Create giotto and papers
+    function giottoPapers(scope, options, defaults) {
+        var queue = scope.giottoQueue,
+            gt = giotto(extend(true, {}, defaults, options));
+
+        if (queue) {
+            delete scope.giottoQueue;
+            queue.forEach( (eo) => {
+                gt.new(eo[0], eo[1]);
+            });
+            gt.draw();
+        }
     }
 
     function giottoStats(getOptions, $window) {
@@ -160,23 +179,6 @@ export function angularModule (angular) {
                 obj = obj();
 
             return obj;
-        }
-    }
-
-    //
-    // Delay creation of papers until giotto has its options
-    function giottoPapers(scope, options) {
-        var gt = scope.giotto,
-            queue = scope.giottoQueue;
-
-        gt.scope(options);
-
-        if (queue) {
-            delete scope.giottoQueue;
-            queue.forEach( (eo) => {
-                gt.paper(eo[0], eo[1]);
-            });
-            gt.draw();
         }
     }
 

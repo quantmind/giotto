@@ -52,6 +52,9 @@ require([
                 }
             ]
         })
+        .config(['giottoDefaults', function (giottoDefaults) {
+            giottoDefaults.contextMenu = [];
+        }])
         .run(['$rootScope', '$lux', 'context', 'giottojsNavigation',
             function ($scope, $lux, context, giottojsNavigation) {
                 $scope.navbar = giottojsNavigation;

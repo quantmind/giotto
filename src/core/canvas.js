@@ -63,29 +63,27 @@ class CanvasLayer extends Layer {
         return this;
     }
 
-    drawSelection (selection) {
-        return selection;
-    }
-    /**
-     * save context and reset transforms
-     *
-     * @param center optional two elements array to center the canvas
-     * @return the canvas context
-     */
-    startDraw (center) {
-        var ctx = this.context,
-            paper = this.paper;
-        ctx.save();
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        if (center) {
-            ctx.translate(paper.marginLeft, paper.marginTop);
-            ctx.translate(center[0], center[1]);
-        }
-        return ctx;
+    pen (p) {
+        return function() {
+            return p;
+        };
     }
 
-    endDraw () {
-        this.context.restore();
+    drawSelections () {
+        for (let i=0; i<arguments.length; ++i) {
+            arguments[i].each(function () {
+                this.draw();
+            });
+        }
+    }
+
+    translate (x, y) {
+        var paper = this.paper
+        return function (d) {
+            return {
+                'translate': [paper.marginLeft + x(d), paper.marginTop + y(d)]
+            };
+        };
     }
 }
 

@@ -1,5 +1,5 @@
 import {stack} from 'd3-shape';
-import {isArray} from 'd3-quant';
+import {isArray, isFunction} from 'd3-quant';
 import {GiottoBase} from './defaults';
 import {Paper} from './paper';
 import {_parentScope} from './plugin';
@@ -19,21 +19,6 @@ export class Drawing extends GiottoBase {
 
     get marks () {
         return this.$scope.marks;
-    }
-
-    /**
-     * Get the correct scale @ name for this drawing
-     * @param name
-     */
-    scale (name) {
-        var scale = this.paper.scale(name);
-        //
-        // If the scale does not exist, create one with options from this draw scope
-        if (!scale)
-            scale = this.paper.scale(name, this.$scope);
-        //
-        // Scale domain not given
-        return scale.refresh(this);
     }
 
     getSeries () {
@@ -71,6 +56,16 @@ export class Drawing extends GiottoBase {
         this._draw(layer, series);
     }
 
+    scaled (value, scale) {
+        scale = this.paper.scale(scale);
+        if (isFunction(value))
+            return function (d) {
+                return scale(value(d));
+            };
+        else
+            return scale(value);
+    }
+
     _draw () {}
 }
 
@@ -93,7 +88,7 @@ export function paperDraw (Class, defaultOptions) {
 
     Paper.prototype[name] = function (options) {
         // default options from giotto
-        var root = _parentScope(this.$scope, name, defaultOptions),
+        var root = _parentScope(this.$scope, name, null, defaultOptions),
             draw = new Class(root.$new().$extend(options));
 
         // add the draw to paper draws

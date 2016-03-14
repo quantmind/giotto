@@ -5,11 +5,11 @@ import * as d3 from '../';
 test("Test active plugins", (t) => {
     var plugins = d3.Plugin.$plugins;
 
-    t.equal(plugins.get('responsive').$active, true, 'responsive active');
-    t.equal(plugins.get('transitions').$active, true, 'transitions active');
-    t.equal(plugins.get('grid').$active, false, 'grid not active');
-    t.equal(plugins.get('axis').$active, false, 'axis not active');
-    t.equal(plugins.get('background').$active, false, 'background not active');
+    t.equal(plugins.get('responsive').active, true, 'responsive active');
+    t.equal(plugins.get('transitions').active, true, 'transitions active');
+    t.equal(plugins.get('grid').active, false, 'grid not active');
+    t.equal(plugins.get('axis').active, false, 'axis not active');
+    t.equal(plugins.get('background').active, false, 'background not active');
     t.end();
 });
 
@@ -20,9 +20,11 @@ test("Test margin plugin", (t) => {
         paper = gt.new(),
         margin = paper.$scope.$margin;
 
-    t.equal(margin, paper.$scope.$plugins.get('margin'), 'margin plugin equivalence');
+    t.ok(margin instanceof d3.Plugin);
+    t.ok(paper.$scope.$plugins.indexOf(margin) > -1, 'margin plugin equivalence');
 
-    t.equal(margin.parent, paper, 'margin parent should be the paper');
+    t.equal(margin.$scope.$self, paper, 'margin $self should be the paper');
+    t.equal(margin.paper, paper, 'margin paper should be the paper');
 
     t.equal(margin.left, 20);
     t.equal(margin.right, 20);
@@ -36,7 +38,7 @@ test("Test margin plugin", (t) => {
             right: 10,
             bottom: 45
         }}),
-        margin2 = paper2.$scope.$plugins.get('margin');
+        margin2 = paper2.$scope.$margin;
 
     t.equal(margin2.left, 20);
     t.equal(margin2.right, 10);

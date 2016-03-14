@@ -1,13 +1,9 @@
 {
-    "height": "60%",
-    "minHeight": 250,
+    "type": "svg",
     "draw": [
-        "area"
+        "line"
     ],
     "data": {
-        "function": "d3.quant.timeSeries.randomPath",
-        "options": {
-            "size": 300
-        }
+        "eval": "d3.quant.timeSeries.randomPath({size: 300})"
     }
 }

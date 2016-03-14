@@ -15,23 +15,22 @@ export const constants = {
 };
 
 
-function giottoScope (scope, self, options) {
-    scope.$extend(options);
-    scope.$self = self;
+export function model(parentScope, sibling) {
+    var scope = parentScope.$new();
+    if (sibling) {
+        scope.$self = sibling.$self;
+        scope.$$paper = sibling.$$paper;
+    }
     return scope;
 }
 
 
 export class GiottoBase {
 
-    constructor (parent, options) {
-        var scope;
-        if (arguments.length === 1)
-            scope = parent;
-        else {
-            scope = parent ? parent.$scope.$new() : scopeFactory()();
-        }
-        this.$scope = GiottoBase.scope(scope, this, options);
+    constructor (scope) {
+        if (!scope) scope = scopeFactory()();
+        this.$scope = scope;
+        this.$scope.$self = this;
     }
 
     get id () {
@@ -47,7 +46,7 @@ export class GiottoBase {
      * @returns {*}
      */
     get data () {
-        return this.$scope.$$data;
+        return this.$scope.$root.$$data;
     }
 
     /**
@@ -99,6 +98,3 @@ export class GiottoBase {
         return this;
     }
 }
-
-
-GiottoBase.scope = giottoScope;

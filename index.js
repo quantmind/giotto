@@ -25,6 +25,7 @@ import './src/drawing/points';
 //
 // plugins
 import './src/plugins/margin';
+import './src/plugins/scales';
 import './src/plugins/background';
 import './src/plugins/grid';
 import './src/plugins/axis';
