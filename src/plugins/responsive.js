@@ -12,29 +12,34 @@ class Responsive extends Plugin {
 
     constructor (paper, opts, defaults) {
         super(paper, opts, defaults);
-        this.resizing = false;
         var self = this;
+        this.$scope.$resizing = false;
         select(window).on('resize.paper' + paper.id, function () {
             self.resize();
         });
     }
 
     resize () {
-        var self = this,
-            paper = self.paper;
+        var scope = this.$scope,
+            paper = this.paper;
 
-        if (!self.resizing) {
-            if (self.delay) {
-                self.resizing = true;
+        if (!scope.$resizing) {
+            if (scope.delay) {
+                scope.$resizing = true;
                 timer(function () {
                     paper.resize();
-                    self.resizing = false;
+                    scope.$resizing = false;
                     return true;
-                }, self.delay);
-            } else {
+                }, scope.delay);
+            } else
                 paper.resize();
-            }
         }
+    }
+
+    destroy () {
+        // remove resizing event for this paper
+        select(window).on('resize.paper' + this.paper.id, null);
+        super.destroy();
     }
 }
 

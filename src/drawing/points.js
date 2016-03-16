@@ -27,32 +27,32 @@ class Points extends Drawing {
     _draw (layer, series) {
         if (!this.canDraw(layer, series)) return;
         var serie = series[0],
+            scope = this.$scope,
+            merge = layer.transition('merge'),
             x = this.scaled(serie.x(), this.$scope.scalex || 'x'),
             y = this.scaled(serie.y(), this.$scope.scaley || 'y'),
             group = layer.group(this);
 
         var sym = layer.pen(symbol()),
-            points = group.selectAll('path').data(serie.dataArray);
+            points = group.selectAll('path.' + this.id).data(serie.dataArray);
 
-        layer.drawSelections(
-            points
-                .enter()
+        points
+            .enter()
                 .append('path')
-                .merge(points)
-                //.transition()
+                .classed(this.id, true)
+                .attr('transform', layer.translate(x, y))
+                .style('fill-opacity', 0)
+            .merge(points)
+                .transition(merge)
                 .attr('transform', layer.translate(x, y))
                 .style('fill', '#ccc')
-                .attr('d', sym),
-            points
-                .exit()
-                //.transition(this.exitTransition())
-                .remove()
-        );
-        //serie.forEach((d) => {
-        //    layer.startDraw([x(d), y(d)]);
-        //    layer.draw(s(d));
-        //    layer.endDraw();
-        //});
+                .style('fill-opacity', scope.fillOpacity)
+                .attr('d', sym);
+
+        points
+            .exit()
+            //.transition(this.exitTransition())
+            .remove();
     }
 }
 

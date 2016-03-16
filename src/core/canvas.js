@@ -1,6 +1,7 @@
 import {Paper, Layer} from './paper';
+import {select} from 'd3-selection';
 import {default as orderedMap} from '../utils/map';
-import {default as canvasSelection} from '../canvas/index';
+import {default as canvasSelection, canvasResolution} from '../canvas/index';
 
 
 class CanvasLayer extends Layer {
@@ -26,13 +27,27 @@ class CanvasLayer extends Layer {
         return this.element.node().getContext('2d');
     }
 
-    group (draw) {
-        var group = draw.$scope.$$selection;
-        if (!group) {
-            group = canvasSelection(this.context);
-            draw.$scope.$$selection = group;
+    selection () {
+        var node = this.$scope.$$canvasNode;
+        if (!node) {
+            node = canvasSelection(this.context, this.factor).node();
+            this.$scope.$$canvasNode = node;
         }
-        return group;
+        return select(node);
+    }
+
+    /**
+     * Canvas transition object
+     *
+     * @param name: Transition name
+     * @returns {*}
+     */
+    transition (name) {
+        return super.transition(name).attrTween('draw', reDraw);
+    }
+
+    group () {
+        return this.selection();
     }
 
     /**
@@ -63,41 +78,52 @@ class CanvasLayer extends Layer {
         return this;
     }
 
-    pen (p) {
-        return function() {
-            return p;
-        };
-    }
-
-    drawSelections () {
-        for (let i=0; i<arguments.length; ++i) {
-            arguments[i].each(function () {
-                this.draw();
-            });
-        }
+    draw () {
+        if (this.$scope.$$canvasNode)
+            this.selection().attr('draw', 0);
     }
 
     translate (x, y) {
-        var paper = this.paper
+        var paper = this.paper;
         return function (d) {
             return {
                 'translate': [paper.marginLeft + x(d), paper.marginTop + y(d)]
             };
         };
     }
+
+    pen (p) {
+        return function () {
+            return function () {
+                return p;
+            };
+        };
+    }
 }
 
-Layer.getFactor = function () {
-    return window.devicePixelRatio || 1;
-};
+Layer.getFactor = canvasResolution;
 
 Layer.type.canvas = CanvasLayer;
 
 
 export class Canvas extends Paper {
 
+    constructor (giotto, element, options) {
+        super(giotto, element, options);
+        var self = this;
+        this.on('draw.' + this.id, function (e) {
+            if (self.$scope.$isChild(e.$currentScope))
+                self.clear();
+        });
+    }
+
     get type () {
-        return "canvas";
+        return 'canvas';
+    }
+
+    destroy () {
+        this.on('draw.' + this.id, null);
+        return super.destroy();
     }
 
     /**
@@ -122,4 +148,13 @@ export class Canvas extends Paper {
         target.remove();
         return dataUrl;
     }
+}
+
+
+function reDraw () {
+    return ping;
+}
+
+function ping (t) {
+    return t;
 }

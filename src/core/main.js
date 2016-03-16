@@ -1,10 +1,14 @@
 import {isObject, isFunction, extend} from 'd3-quant';
+import {map} from 'd3-collection';
 import {GiottoBase} from './defaults';
 import {Canvas} from './canvas';
 import {Svg} from './svg';
 import {data} from '../data/index';
 import {popKey} from '../utils/object';
 import {default as contextMenuProvider} from '../utils/menu';
+
+export var all = map();
+
 
 /**
  * Giotto class
@@ -17,18 +21,14 @@ export class Giotto extends GiottoBase {
         super(null, null);
         var scope = this.$scope;
         scope.$$papers = [];
-        scope.$plugins = {};
         scope.$$paperOptions = {};
         scope.$$data = data(scope.$new());
-        scope.$contextMenuCallback = contextMenu;
-        scope.$contextMenu = contextMenuProvider()(function (element) {
-            return scope.$contextMenuCallback(element);
-        });
         if (!scope.$defaultPaperType)
             scope.$defaultPaperType = 'canvas';
         this.scope(options);
+        contextMenu.init(scope);
+        all.set(this.id, this);
     }
-
     /**
      *
      * @returns {Array.<Object>} a copy of the array of papers
@@ -36,7 +36,6 @@ export class Giotto extends GiottoBase {
     get papers () {
         return this.$scope.$$papers.slice();
     }
-
     /**
      * Create a new paper for a DOM element
      *
@@ -119,6 +118,11 @@ export class Giotto extends GiottoBase {
             paper.refresh();
         });
     }
+
+    destroy () {
+        all.remove(this.id);
+        super.destroy();
+    }
     /**
      * Remove a paper for this container
      *
@@ -132,11 +136,27 @@ export class Giotto extends GiottoBase {
         var papers = this.$scope.$$papers,
             index = papers.indexOf(paper);
         if (index >= 0) {
-            papers.splice(index, 0);
-            paper.container.remove();
-            this.refresh();
-            return true;
+            papers.splice(index, 1);
+            paper.destroy();
+            return paper.element.node();
         }
+    }
+
+    /**
+     * Remove all papers from this container
+     *
+     * @returns {Array} of DOM element which contained the removed papers
+     */
+    removeAll () {
+        var elements = [],
+            element,
+            paper;
+        this.logger.info('Remove all papers from ' + this.name + ' container');
+        while (paper = this.$scope.$$papers[0]) {
+            element = this.remove(paper);
+            if (element) elements.push(element);
+        }
+        return elements;
     }
 }
 
@@ -147,24 +167,8 @@ export default function (options) {
 
 function contextMenu (menu) {
     var scope = this,
-        gt = scope.$self,
-        items = scope.contextMenu;
+        items = this.contextMenu;
     if (!items) return;
-    if (items === true) items = [];
-
-    if (!scope.$menuInitialised) {
-        //TODO: this is a temporary hack
-        scope.$menuInitialised = true;
-        items.splice(0, 0, {
-            label: function () {
-                return 'Convert to ' + convert();
-            },
-            callback: function () {
-                scope.$defaultPaperType = convert();
-                gt.redraw();
-            }
-        });
-    }
 
     menu.selectAll('*').remove();
     menu.append('ul')
@@ -178,14 +182,46 @@ function contextMenu (menu) {
         .append('a')
             .attr('role', 'menuitem').attr('href', '#')
         .text(function (d) {
-            return isFunction(d.label) ? d.label() : d.label;
+            return isFunction(d.label) ? d.label.call(scope) : d.label;
+        })
+        .on('click', function (d) {
+            if (d.callback) d.callback.call(scope);
         });
-        //.on('click', function (d) {
-        //    if (d.callback) d.callback(viz);
-        //});
     return true;
+}
+
+
+contextMenu.init = function (scope) {
+    var items = scope.contextMenu;
+    if (!items) return;
+
+    if (scope.contextMenuRender === undefined)
+        scope.contextMenuRender = contextMenu;
+
+    scope.$contextMenu = contextMenuProvider()(function (element) {
+        if (scope.contextMenuRender)
+            return scope.contextMenuRender(element);
+    });
+
+    if (items === true) items = [];
+    var gt = scope.$self;
+
+    scope.contextMenu = items;
+
+    items.splice(0, 0, {
+        label: function () {
+            return 'Convert to ' + convert();
+        },
+        callback: function () {
+            scope.$defaultPaperType = convert();
+            gt.removeAll().forEach(function (element) {
+                gt.new(element);
+            });
+            gt.draw();
+        }
+    });
 
     function convert () {
         return scope.$defaultPaperType === 'svg' ? 'canvas' : 'svg';
     }
-}
+};

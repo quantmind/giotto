@@ -11,16 +11,28 @@ class DataProvider extends data.DataBase {
     /**
      * Method called once the data is ready to be dispatched
      *
-     * @param data
-     * @param opts
+     * @param record: the array of data
+     * @param source: the source of this data provider
+     * @param opts: optional parameters for the data provider
      */
-    ready (record, opts) {
-        var transform = opts.transform || 'default',
+    ready (record, source, opts) {
+        var logger = this.logger,
+            transform = opts.transform || 'default',
             transformFunction = data.transforms.get(transform);
+
         if (!transformFunction)
             this.logger.error('Cannot find transform function "' + transform + "'");
-        else
-            this.parent.set(transformFunction(record, opts));
+        else {
+            var self = this,
+                serie = transformFunction(record, opts);
+
+            // Inject load method into the serie
+            serie.load = function () {
+                logger.info('Load data for ' + serie.name);
+                self.load(source, opts);
+            };
+            this.parent.set(serie);
+        }
     }
 }
 
@@ -36,7 +48,7 @@ class Values extends DataProvider {
         if (!entry || !entry.forEach)
             this.logger.error('Values data provider received invalid data');
         else
-            this.ready(entry, opts);
+            this.ready(entry, entry, opts);
     }
 }
 
@@ -53,7 +65,7 @@ class Eval extends DataProvider {
             this.logger.info('Evaluating expression: ' + expr);
             var result = data.$eval(expr, opts);
             if (result)
-                this.ready(result, opts);
+                this.ready(result, expr, opts);
         }
     }
 }

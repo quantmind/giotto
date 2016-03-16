@@ -6,10 +6,11 @@ test("Test active plugins", (t) => {
     var plugins = d3.Plugin.$plugins;
 
     t.equal(plugins.get('responsive').active, true, 'responsive active');
-    t.equal(plugins.get('transitions').active, true, 'transitions active');
     t.equal(plugins.get('grid').active, false, 'grid not active');
     t.equal(plugins.get('axis').active, false, 'axis not active');
     t.equal(plugins.get('background').active, false, 'background not active');
+
+    t.equal(plugins.get('transitions.merge').active, true, 'transitions.merge is active');
     t.end();
 });
 

@@ -15,6 +15,7 @@ require([
     //
     // Inject colorBrewer
     d3.colorbrewer = colorbrewer;
+    lux.root.d3 = d3;
 
     // Ceate giotto angular module
     d3.angularModule(angular);
@@ -58,7 +59,6 @@ require([
         .run(['$rootScope', '$lux', 'context', 'giottojsNavigation',
             function ($scope, $lux, context, giottojsNavigation) {
                 $scope.navbar = giottojsNavigation;
-                $scope.d3 = d3;
             }]
         );
 

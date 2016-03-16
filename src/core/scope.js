@@ -24,6 +24,7 @@ export class Scope {
 
     constructor () {
         this.$id = giottoId();
+        this.$isolated = {};
         this.$parent = null;
         this.$root = this;
         this.$logger = logger();
@@ -38,6 +39,8 @@ export class Scope {
         if (isolate) {
             child = new Scope();
             child.$root = this.$root;
+            child.$logger = this.$logger;
+            child.$events = this.$events;
         } else {
             // Only create a child scope class if somebody asks for one,
             // but cache it to allow the VM to optimize lookups.
@@ -91,9 +94,12 @@ export class Scope {
         return this;
     }
 
-    $on (name, listener) {
-        this.$events.on(name, listener);
-        return this;
+    $on () {
+        return this.$events.on.apply(this.$events, arguments);
+    }
+
+    $isChild (scope) {
+        return this === scope || (this.$parent && this.$parent.$isChild(scope));
     }
 }
 
@@ -124,9 +130,8 @@ class Event {
 function createChildScopeClass(parent) {
 
     function ChildScope() {
-        this.$$watchers = this.$$nextSibling =
-            this.$$childHead = this.$$childTail = null;
         this.$id = giottoId();
+        this.$isolated = {};
         this.$$ChildScope = null;
     }
 
@@ -137,7 +142,7 @@ function createChildScopeClass(parent) {
 
 
 function destroyChildScope($event) {
-    $event.currentScope.$$destroyed = true;
+    $event.$currentScope.$$destroyed = true;
 }
 
 

@@ -109,15 +109,15 @@ export function angularModule (angular) {
     //
     // Create giotto and papers
     function giottoPapers(scope, options, defaults) {
-        var queue = scope.giottoQueue,
-            gt = giotto(extend(true, {}, defaults, options));
+        var queue = scope.giottoQueue;
+        scope.gt = giotto(extend(true, {}, defaults, options));
 
         if (queue) {
             delete scope.giottoQueue;
             queue.forEach( (eo) => {
-                gt.new(eo[0], eo[1]);
+                scope.gt.new(eo[0], eo[1]);
             });
-            gt.draw();
+            scope.gt.draw();
         }
     }
 

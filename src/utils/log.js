@@ -6,12 +6,13 @@ export default function (_) {
     logger = _;
 }
 
+var debug_level = 'debug';
+var debug = false;
 
-var debug = true;
 
 var logger = {
 
-    debug: consoleLog('debug'),
+    debug: consoleLog(debug_level),
 
     info: consoleLog('info'),
 
@@ -28,6 +29,7 @@ var logger = {
 
 
 function consoleLog(level) {
+
     var Console = window.console || {},
         logFn = Console[level] || Console.log || noop,
         hasApply = false;

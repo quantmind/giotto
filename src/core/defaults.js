@@ -69,16 +69,6 @@ export class GiottoBase {
     get logger () {
         return this.$scope.$logger;
     }
-
-    /**
-     * Draw itself into a paper.layer
-     *
-     * This method is called by the paper when it needs to draw the drawing
-     * It should not be called directly
-     */
-    draw () {
-    }
-
     /**
      * Set or return the options for this giotto object
      */
@@ -94,7 +84,12 @@ export class GiottoBase {
     }
 
     on () {
-        this.$scope.$on.apply(this.$scope, arguments);
-        return this;
+        return this.$scope.$on.apply(this.$scope, arguments);
+    }
+
+    draw () {}
+
+    destroy () {
+        this.$scope.$destroy();
     }
 }

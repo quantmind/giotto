@@ -1,6 +1,6 @@
 import {Plugin} from '../core/plugin';
 import {map} from 'd3-collection';
-import {isObject, isNumber} from 'd3-quant';
+import {isNumber, isString} from 'd3-quant';
 import * as d3 from 'd3-scale';
 
 
@@ -54,8 +54,9 @@ class Scale extends Plugin {
 
     domain () {
         var scope = this.$scope,
-            domain = scope.domain || {};
-        if (!isObject(domain)) domain = {from: domain};
+            domain = scope.domain;
+        if (isString(domain)) domain = {from: domain};
+        else if (!domain) domain = {};
         scope.domain = domain;
         domain = null;
 

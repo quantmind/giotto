@@ -6,7 +6,6 @@ import {Plugin} from './plugin';
 import * as size from '../utils/size';
 import {round, isString, isArray, isObject} from 'd3-quant';
 import {popKey} from '../utils/object';
-import {rangeFunctions} from '../plugins/scales';
 
 /**
  * A paper is created via a giotto object.
@@ -47,7 +46,6 @@ export class Paper extends GiottoBase {
         scope.$minHeight = popKey(scope, 'minHeight');
         scope.$size = getSize(element, scope);
         scope.$factor = popKey(scope, 'factor') || LayerClass.getFactor();
-        scope.$colors = paperColors(scope);
         scope.$layers = map();
         scope.$plugins = [];
         scope.$layers.set('background', new LayerClass(this, 'gt-background'));
@@ -56,10 +54,16 @@ export class Paper extends GiottoBase {
         scope.$draws = [];
         this.clear();
         Plugin.$apply(this);
+        // Register data listener
+        this.on('data.' + this.id, dataListener(this));
     }
 
     get element () {
         return select(this.$scope.$element);
+    }
+
+    get container () {
+        return this.element.select('#' + this.id);
     }
 
     get data () {
@@ -68,6 +72,10 @@ export class Paper extends GiottoBase {
 
     get factor () {
         return this.$scope.$factor;
+    }
+
+    get draws () {
+        return this.$scope.$draws.slice();
     }
 
     get background () {
@@ -80,10 +88,6 @@ export class Paper extends GiottoBase {
 
     get foreground () {
         return this.$scope.$layers.get('foreground');
-    }
-
-    get container () {
-        return this.element.select('#' + this.id);
     }
 
     get backgroundElement () {
@@ -159,12 +163,7 @@ export class Paper extends GiottoBase {
      * Draw the paper
      */
     draw () {
-        // Draw plugins
-        this.$scope.$plugins.forEach((plugin) => {
-            if (plugin.active)
-                plugin.draw();
-        });
-        // Draw
+        // Gather draws
         var draws = this.$scope.draw;
         if (draws && !isArray(draws)) draws = [draws];
         if (!draws) return;
@@ -178,6 +177,27 @@ export class Paper extends GiottoBase {
                 throw Error('Could not draw object, marks "' + draw.marks + '" not available');
             paper[draw.marks](draw);
         });
+        this.reDraw();
+    }
+
+    reDraw () {
+        // Draw plugins
+        if (this.broadcast('draw').defaultPrevented) return;
+        this.logger.debug('Redraw paper ' + this.name);
+
+        this.$scope.$plugins.forEach((plugin) => {
+            if (plugin.active)
+                plugin.draw();
+        });
+
+        this.$scope.$draws.forEach((d) => {
+            d.draw();
+        });
+
+        // Finally draw layers (for canvas)
+        this.$scope.$layers.each((layer) => {
+            layer.draw();
+        });
     }
 
     /**
@@ -190,18 +210,13 @@ export class Paper extends GiottoBase {
         if (scope.$size[0] !== size[0] || scope.$size[1] !== size[1]) {
             scope.$size[0] = size[0];
             scope.$size[1] = size[1];
-            this.clear();
-            this.draw();
+            this.reDraw();
         }
         return this;
     }
 
-    scheduleRedraw () {
-
-    }
-
     /**
-     * Refresh the paper by setting proper dimension and positioning
+     * Clear the paper by clearing all paper layers
      */
     clear () {
         this.broadcast('clear');
@@ -219,27 +234,25 @@ export class Paper extends GiottoBase {
         return this.giotto.remove(this);
     }
 
-    scale (name) {
-        return this.$scope.$scales.get(name).scale();
+    destroy () {
+        // remove data listener
+        this.on('data.' + this.id, null);
+        // destroy plugins
+        this.$scope.$plugins.forEach((plugin) => {
+            plugin.destroy();
+        });
+        // destroy draws
+        this.$scope.$draws.forEach((d) => {
+            d.destroy();
+        });
+        // remove container
+        this.container.remove();
+        // finally call super method
+        super.destroy();
     }
 
-    /**
-     * Pick a color from the default colors
-     */
-    pickColor (index) {
-        var scope = this.$scope;
-        if (arguments.length === 0) {
-            if (scope.$colorIndex === undefined)
-                scope.$colorIndex = 0;
-            index = scope.$colorIndex++;
-        }
-
-        if (index >= scope.$colors.length) {
-            scope.$colorIndex = 0;
-            index = 0;
-        }
-
-        return scope.$colors[index];
+    scale (name) {
+        return this.$scope.$scales.get(name).scale();
     }
 }
 
@@ -252,23 +265,15 @@ export class Paper extends GiottoBase {
  *  drawings: where the main drawings are placed
  *  foreground: usually for transitions and animations
  */
-export class Layer {
+export class Layer extends GiottoBase {
 
     constructor (paper, name) {
-        this.$scope = paper.$scope.$new();
+        super(paper.$scope.$new());
         this.$scope.$name = name;
     }
 
     get element () {
         return this.paper.container.select('.' + this.name);
-    }
-
-    get paper () {
-        return this.$scope.$self;
-    }
-
-    get name () {
-        return this.$scope.$name;
     }
 
     get type () {
@@ -283,15 +288,31 @@ export class Layer {
         return null;
     }
 
+    /**
+     * Return a d3-selection for this layer
+     *
+     * @returns {*}
+     */
+    selection () {
+        return this.element;
+    }
+
+    transition (name) {
+        var fullname = this.name + '.' + name,
+            t = this.$scope.$transitions.get(name),
+            selection = this.selection();
+        if (t) return t.transition(selection, fullname);
+        else return selection.transition(fullname).duration(100);
+    }
+
     // Drawing method
+    dim (d) {
+        return d;
+    }
+
     pen (p) {
         return p;
     }
-
-    drawSelections () {}
-    startDraw () {}
-    draw () {}
-    endDraw () {}
 }
 
 Layer.type = {};
@@ -348,8 +369,17 @@ function boundingBox (scope) {
 }
 
 
-function paperColors(scope) {
-    var colors = scope.colors || 'category10',
-        scale = rangeFunctions.get(colors);
-    if (scale) return scale(this).range();
+function dataListener (paper) {
+
+    return function (e, serie) {
+        var redraw = false;
+
+        paper.$scope.$draws.forEach((d) => {
+            var from = d.$scope.from;
+            if (isArray(from) && from.indexOf(serie.name) > -1)
+                redraw = true;
+        });
+
+        if (redraw) paper.reDraw();
+    };
 }

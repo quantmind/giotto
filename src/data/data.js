@@ -1,5 +1,5 @@
 import {map} from 'd3-collection';
-import {isArray, isObject} from 'd3-quant';
+import {isArray, isObject, isFunction} from 'd3-quant';
 import {GiottoBase} from '../core/defaults';
 
 
@@ -72,6 +72,8 @@ class Data extends GiottoBase {
     }
 
     load (options) {
+        if (arguments.length === 0) return this.reLoad();
+
         if (!isArray(options)) options = [options];
         var self = this,
             provider;
@@ -87,6 +89,13 @@ class Data extends GiottoBase {
                     }
                 });
             }
+        });
+    }
+
+    reLoad () {
+        this.$scope.$sources.each((source) => {
+            if (isFunction(source.load))
+                source.load();
         });
     }
 }

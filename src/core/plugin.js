@@ -19,8 +19,6 @@ export class Plugin extends GiottoBase {
     get active () {
         return this.$scope.$active;
     }
-
-    draw () {}
 }
 
 // Optional paper plugins
@@ -75,12 +73,11 @@ Plugin.$apply = function (paper) {
 
 
 export function _parentScope(scope, namespace, name, defaults) {
-    var $$namespace = prefix + prefix + namespace,
-        container = scope[$$namespace],
+    var container = scope.$isolated[namespace],
         parentScope;
 
     if (name) {
-        if (!container) scope[$$namespace] = container = map();
+        if (!container) scope.$isolated[namespace] = container = map();
         parentScope = container.get(name);
     }
     else
@@ -102,7 +99,7 @@ export function _parentScope(scope, namespace, name, defaults) {
         if (name)
             container.set(name, parentScope);
         else
-            scope[$$namespace] = parentScope;
+            scope.$isolated[namespace] = parentScope;
     }
     return parentScope;
 }

@@ -44,16 +44,7 @@ export class Drawing extends GiottoBase {
     draw (layer) {
         if (arguments.length === 0)
             layer = this.paper.drawings;
-
-        var self = this,
-            series = this.getSeries();
-
-        this.on('data', function (e, serie) {
-            if (self.$scope.from.indexOf(serie.name) > -1)
-                self._draw(layer, this.getSeries());
-        });
-
-        this._draw(layer, series);
+        this._draw(layer, this.getSeries());
     }
 
     scaled (value, scale) {
@@ -93,8 +84,8 @@ export function paperDraw (Class, defaultOptions) {
 
         // add the draw to paper draws
         this.$scope.$draws.push(draw);
-        // draw to the paper
-        return draw.draw();
+        // return the draw without drawing it
+        return draw;
     };
 
     Paper.prototype[name].defaults = defaultOptions;

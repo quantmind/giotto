@@ -27,6 +27,10 @@ class SvgLayer extends Layer {
 
     }
 
+    dim (d) {
+        return d+'px';
+    }
+
     group (draw) {
         var group = this.element.selectAll('#' + draw.id).data([draw]);
 

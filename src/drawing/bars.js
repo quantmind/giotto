@@ -15,22 +15,36 @@ class Bars extends StackedDrawing {
      *
      * @param layer
      */
-    draw (layer) {
-        var serie = this.data(),
-            x = serie.x(),
-            y = serie.y(),
-            symbol = this.symbol().context(layer.context());
-        this.data().forEach((d) => {
-            layer.startDraw([x(d), y(d)]);
-            layer.draw(symbol(d));
-            layer.endDraw();
-        });
+    _draw (layer, series) {
+        var serie = series[0],
+            scope = this.$scope,
+            merge = layer.transition('merge'),
+            ys = this.$scope.scaley || 'y',
+            x = this.scaled(serie.x(), this.$scope.scalex || 'x'),
+            y = this.scaled(serie.y(), ys),
+            group = layer.group(this);
+
+        var bars = group.selectAll('rect.' + this.id).data(serie.dataArray);
+
+        bars
+            .enter()
+                .append('rect')
+                .classed(this.id, true)
+                .style('fill-opacity', 0)
+            .merge(bars)
+                .transition(merge)
+                .attr('transform', layer.translate(x, y))
+                .style('fill', '#ccc')
+                .style('fill-opacity', scope.fillOpacity);
+
+        bars
+            .exit()
+            .remove();
     }
 }
 
 
 paperDraw(Bars, {
-    direction: 'vertical',
     stackOrder: stackOrderNone,
     stackOffset: stackOffsetNone,
     size: '8px',

@@ -1,18 +1,22 @@
 import {map} from 'd3-collection';
+import {timeout} from 'd3-timer';
+import {default as canvasTransform} from './transitions';
 import * as d3 from 'd3-color';
+
 
 var namespace = 'canvas';
 
-
 /**
  * A proxy for a data entry on canvas
- * It allow to use the d3-select and d3-transition libraries
+ *
+ * It allow the use the d3-select and d3-transition libraries
  * on canvas joins
  */
 export class CanvasElement {
 
-    constructor (context) {
+    constructor (context, factor) {
         this.context = context;
+        this.factor = factor || 1;
     }
 
     children () {
@@ -23,27 +27,21 @@ export class CanvasElement {
     querySelectorAll (selector) {
         var selections = [];
         if (this.childNodes) {
-            var children = this.childNodes;
-            if (selector === '*')
-                return children.slice();
-            for (let i = 0; i < children.length; ++i)
-                if (children[i].tag === selector)
-                    selections.push(children[i]);
+            if (selector === '*') return this.children.slice();
+            return select(selector, this.childNodes, selections);
         }
         return selections;
     }
 
     querySelector (selector) {
         if (this.childNodes) {
-            var children = this.childNodes;
-            for (let i = 0; i < children.length; ++i)
-                if (children[i].tag === selector)
-                    return children[i];
+            if (selector === '*') return this.childNodes[0];
+            return select(selector, this.childNodes);
         }
     }
 
     createElementNS (namespaceURI, qualifiedName) {
-        var elem = new CanvasElement(this.context);
+        var elem = new CanvasElement(this.context, this.factor);
         elem.tag = qualifiedName;
         return elem;
     }
@@ -78,8 +76,14 @@ export class CanvasElement {
     }
 
     setAttribute (attr, value) {
-        if (!this.attrs) this.attrs = map();
-        this.attrs.set(attr, value);
+        if (this.parentNode) {
+            if (attr === 'class') this.class = value;
+            else {
+                if (!this.attrs) this.attrs = map();
+                canvasTransform(this, attr, value);
+            }
+        } else if (attr === 'draw')
+            timeout(redraw(this, value));
     }
 
     removeAttribute (attr) {
@@ -98,28 +102,28 @@ export class CanvasElement {
         return namespace;
     }
 
-    draw () {
-        var attrs = this.attrs,
-            ctx = this.context;
-        if (!attrs) return;
+    draw (t) {
+        var ctx = this.context,
+            attrs = this.attrs;
+        if (!this.parentNode || !attrs) return;
+
         ctx.save();
         ctx.setTransform(1, 0, 0, 1, 0, 0);
-        var transform = this._get('transform');
+        var transform = this.getValue('transform');
         if (transform) {
             if (transform.translate)
                 ctx.translate(transform.translate[0], transform.translate[1]);
         }
         ctx.beginPath();
-        if (attrs.has('d'))
-            attrs.get('d').context(ctx)();
-        fillColor(ctx, this._get('fill'), this._get('fill-opacity'));
-        strokeColor(ctx, this._get('stroke'), this._get('stroke-opacity'), this._get('stroke-width'));
+        if (attrs.has('d')) attrs.get('d').draw(this, t);
+        fillStyle(this);
+        strokeStyle(this);
         ctx.restore();
     }
 
-    _get (attr) {
+    getValue (attr) {
         var value = this.getAttribute(attr);
-        if (value === undefined && this.parentNode) return this.parentNode._get(attr);
+        if (value === undefined && this.parentNode) return this.parentNode.getValue(attr);
         return value;
     }
 
@@ -156,30 +160,71 @@ export class CanvasElement {
     get document () {
         return this;
     }
-}
-
-
-function fillColor(ctx, fill, opacity) {
-    if (fill) {
-        fill = d3.color(fill);
-        if (opacity || opacity===0)
-            fill.opacity = opacity;
-        ctx.fillStyle = ''+fill;
-        ctx.fill();
-        return fill;
+    //
+    onStart () {
+        return;
     }
 }
 
 
+function select(selector, children, selections) {
+    var bits = selector.split('.'),
+        tag = bits[0],
+        classes = bits.splice(1).join(' ');
 
-function strokeColor(ctx, stroke, opacity, width) {
-    if (stroke) {
+    for (let i = 0; i < children.length; ++i)
+        if (children[i].tag === tag) {
+            if (classes && children[i].class !== classes)
+                continue;
+            if (selections)
+                selections.push(children[i]);
+            else
+                return children[i];
+        }
+
+    return selections;
+}
+
+
+function redraw (node, t) {
+
+    return function () {
+        var ctx = node.context;
+        ctx.beginPath();
+        ctx.closePath();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        node.children().forEach((child) => {
+            child.draw(t);
+        });
+    };
+}
+
+
+function strokeStyle (node) {
+    var stroke = node.getValue('stroke');
+    if (stroke && stroke !== 'none') {
         stroke = d3.color(stroke);
-        if (opacity || opacity===0)
+        var opacity = node.getValue('stroke-opacity');
+        if (opacity || opacity === 0)
             stroke.opacity = opacity;
-        ctx.strokeStyle = ''+stroke;
-        ctx.lineWidth = width || 1;
-        ctx.stroke();
+        node.context.strokeStyle = '' + stroke;
+        node.context.lineWidth = node.factor * (node.getValue('stroke-width') || 1);
+        node.context.stroke();
         return stroke;
+    }
+}
+
+
+function fillStyle (node) {
+    var fill = node.getValue('fill');
+    if (fill && fill !== 'none') {
+        fill = d3.color(fill);
+        var opacity = node.getValue('fill-opacity');
+        if (opacity || opacity===0)
+            fill.opacity = opacity;
+        node.context.fillStyle = ''+fill;
+        node.context.fill();
+        return fill;
     }
 }
