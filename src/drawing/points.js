@@ -31,6 +31,7 @@ class Points extends Drawing {
             merge = layer.transition('merge'),
             x = this.scaled(serie.x(), this.$scope.scalex || 'x'),
             y = this.scaled(serie.y(), this.$scope.scaley || 'y'),
+            color = scope.color || this.paper.$scope.$colors.pick(),
             group = layer.group(this);
 
         var sym = layer.pen(symbol()),
@@ -41,12 +42,13 @@ class Points extends Drawing {
                 .append('path')
                 .classed(this.id, true)
                 .attr('transform', layer.translate(x, y))
-                .style('fill-opacity', 0)
+                .attr('fill', color)
+                .attr('fill-opacity', 0)
             .merge(points)
                 .transition(merge)
                 .attr('transform', layer.translate(x, y))
-                .style('fill', '#ccc')
-                .style('fill-opacity', scope.fillOpacity)
+                .attr('fill', color)
+                .attr('fill-opacity', scope.fillOpacity)
                 .attr('d', sym);
 
         points

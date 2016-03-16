@@ -39,13 +39,7 @@ class SvgLayer extends Layer {
                 .append('g')
                 .merge(group)
                 .attr('id', draw.id)
-                .attr('transform', "translate(" + this.paper.marginLeft + "," + this.paper.marginTop + ")");
-    }
-
-    translate (x, y) {
-        return function (d) {
-            return "translate(" + x(d) + "," + y(d) + ")";
-        };
+                .attr('transform', this._translate(this.paper.marginLeft, this.paper.marginTop));
     }
 }
 

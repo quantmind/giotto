@@ -14,14 +14,11 @@ class Background extends Plugin {
 
     draw () {
         var paper = this.paper,
-            layer = paper.background,
             grad = gradient(this.$scope);
         grad.xscale.range([0, paper.width]);
         grad.yscale.range([0, paper.height]);
 
-        grad.context = layer.startDraw();
-        layer.draw(grad.draw());
-        layer.endDraw();
+        grad.draw(paper.background);
     }
 }
 

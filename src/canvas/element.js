@@ -1,5 +1,6 @@
 import {map} from 'd3-collection';
 import {timeout} from 'd3-timer';
+import {isFunction} from 'd3-quant';
 import {default as canvasTransform} from './transitions';
 import * as d3 from 'd3-color';
 
@@ -76,14 +77,16 @@ export class CanvasElement {
     }
 
     setAttribute (attr, value) {
-        if (this.parentNode) {
+        if (attr === 'draw') {
+            if (!this.parentNode)
+                timeout(redraw(this, value));
+        } else {
             if (attr === 'class') this.class = value;
             else {
                 if (!this.attrs) this.attrs = map();
                 canvasTransform(this, attr, value);
             }
-        } else if (attr === 'draw')
-            timeout(redraw(this, value));
+        }
     }
 
     removeAttribute (attr) {
@@ -109,13 +112,10 @@ export class CanvasElement {
 
         ctx.save();
         ctx.setTransform(1, 0, 0, 1, 0, 0);
-        var transform = this.getValue('transform');
-        if (transform) {
-            if (transform.translate)
-                ctx.translate(transform.translate[0], transform.translate[1]);
-        }
+        transform(this, this.parentNode.attrs.get('transform'));
+        transform(this, this.attrs.get('transform'));
         ctx.beginPath();
-        if (attrs.has('d')) attrs.get('d').draw(this, t);
+        path(this, attrs.get('d'), t);
         fillStyle(this);
         strokeStyle(this);
         ctx.restore();
@@ -226,5 +226,26 @@ function fillStyle (node) {
         node.context.fillStyle = ''+fill;
         node.context.fill();
         return fill;
+    }
+}
+
+
+function transform(node, trans) {
+    if (!trans) return;
+    var index1 = trans.indexOf('translate('),
+        index2, s, bits;
+    if (index1 > -1) {
+        s = trans.substring(index1+10);
+        index2 = s.indexOf(')');
+        bits = s.substring(0, index2).split(',');
+        node.context.translate(node.factor*bits[0], node.factor*bits[1]);
+    }
+}
+
+
+function path(node, path, t) {
+    if (path) {
+        if (isFunction(path.draw)) path.draw(node, t);
+        else path.context(node.context)();
     }
 }

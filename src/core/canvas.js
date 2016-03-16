@@ -47,7 +47,8 @@ class CanvasLayer extends Layer {
     }
 
     group () {
-        return this.selection();
+        return this.selection().attr(
+            'transform', this._translate(this.paper.marginLeft, this.paper.marginTop));
     }
 
     /**
@@ -81,15 +82,6 @@ class CanvasLayer extends Layer {
     draw () {
         if (this.$scope.$$canvasNode)
             this.selection().attr('draw', 0);
-    }
-
-    translate (x, y) {
-        var paper = this.paper;
-        return function (d) {
-            return {
-                'translate': [paper.marginLeft + x(d), paper.marginTop + y(d)]
-            };
-        };
     }
 
     pen (p) {

@@ -1,3 +1,4 @@
+import {isFunction} from 'd3-quant';
 import {interpolate} from 'd3-interpolate';
 import {map} from 'd3-collection';
 
@@ -70,6 +71,10 @@ class PathTransition extends Transition {
     }
 }
 
+PathTransition.test = function (pen) {
+    return isFunction(pen.x);
+};
+
 
 var transitions = {
     d: PathTransition
@@ -80,7 +85,7 @@ export default function (node, attr, value) {
     var transAttr = attributes.get(attr),
         TransitionClass = transitions[transAttr];
 
-    if (!TransitionClass) {
+    if (!TransitionClass || !TransitionClass.test(value)) {
         node.attrs.set(attr, value);
     } else {
         var transition = node.attrs.get(transAttr);

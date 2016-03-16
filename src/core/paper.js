@@ -313,6 +313,17 @@ export class Layer extends GiottoBase {
     pen (p) {
         return p;
     }
+
+    translate (x, y) {
+        var self = this;
+        return function (d) {
+            return self._translate(x(d), y(d));
+        };
+    }
+
+    _translate (x, y) {
+        return "translate(" + x + "," + y + ")";
+    }
 }
 
 Layer.type = {};
