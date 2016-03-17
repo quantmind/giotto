@@ -12,7 +12,7 @@ export {angularModule} from './src/integrations/angular';
 export {default as orderedMap} from './src/utils/map';
 export {default as canvasSelect, tweenAttr} from './src/canvas/index';
 
-export {default as logger} from './src/utils/log';
+export {capfirst, slugify, logger, noop} from './src/utils/index';
 
 
 import {version} from './package.json';

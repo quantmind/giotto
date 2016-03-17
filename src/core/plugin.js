@@ -1,12 +1,12 @@
 import {map} from 'd3-collection';
-import {GiottoBase, model} from './defaults';
+import {PaperBase, model} from './defaults';
 import {prefix} from './scope';
 import {popKey} from '../utils/object';
 
 /**
  * Base class for Plugins
  */
-export class Plugin extends GiottoBase {
+export class Plugin extends PaperBase {
 
     constructor (parent, opts, scope) {
         scope = scope.$new().$extend(opts);
@@ -91,9 +91,14 @@ export function _parentScope(scope, namespace, name, defaults) {
             parentScope = model(parentScope, scope);
         }
         else {
-            parentScope = scope.$new(true).$extend(defaults);
-            parentScope.$self = scope.$self;
+            //parentScope = scope.$new(true).$extend(defaults);
+            //parentScope.$self = scope.$self;
+            parentScope = scope.$new().$extend(defaults);
             parentScope.$name = name ? namespace + '.' + name : namespace;
+            if (name) {
+                var opts = scope[namespace];
+                if (opts) parentScope.$extend(popKey(opts, name));
+            }
         }
 
         if (name)

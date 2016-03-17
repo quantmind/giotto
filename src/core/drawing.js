@@ -1,6 +1,6 @@
 import {stack} from 'd3-shape';
-import {isArray, isFunction} from 'd3-quant';
-import {GiottoBase} from './defaults';
+import {isArray} from 'd3-quant';
+import {PaperBase} from './defaults';
 import {Paper} from './paper';
 import {_parentScope} from './plugin';
 
@@ -9,7 +9,7 @@ import {_parentScope} from './plugin';
  *
  * base class for all drawings in a Paper
  */
-export class Drawing extends GiottoBase {
+export class Drawing extends PaperBase {
 
     constructor(scope) {
         super(scope);
@@ -45,16 +45,6 @@ export class Drawing extends GiottoBase {
         if (arguments.length === 0)
             layer = this.paper.drawings;
         this._draw(layer, this.getSeries());
-    }
-
-    scaled (value, scale) {
-        scale = this.paper.scale(scale);
-        if (isFunction(value))
-            return function (d) {
-                return scale(value(d));
-            };
-        else
-            return scale(value);
     }
 
     _draw () {}

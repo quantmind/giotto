@@ -100,24 +100,9 @@ Layer.type.canvas = CanvasLayer;
 
 export class Canvas extends Paper {
 
-    constructor (giotto, element, options) {
-        super(giotto, element, options);
-        var self = this;
-        this.on('draw.' + this.id, function (e) {
-            if (self.$scope.$isChild(e.$currentScope))
-                self.clear();
-        });
-    }
-
     get type () {
         return 'canvas';
     }
-
-    destroy () {
-        this.on('draw.' + this.id, null);
-        return super.destroy();
-    }
-
     /**
      * Return an image for this canvas paper
      *

@@ -89,8 +89,20 @@ Plugin.register(Scale, true, {
     range: 'width'
 });
 
+Plugin.register(Scale, false, {
+    name: 'scales.x2',
+    nice: true,
+    range: 'width'
+});
+
 Plugin.register(Scale, true, {
     name: 'scales.y',
+    nice: true,
+    range: 'height'
+});
+
+Plugin.register(Scale, false, {
+    name: 'scales.y2',
     nice: true,
     range: 'height'
 });

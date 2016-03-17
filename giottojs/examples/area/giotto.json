@@ -2,6 +2,10 @@
     "draw": [
         "line"
     ],
+    "axes": {
+        "x": true,
+        "y": true
+    },
     "data": {
         "eval": "d3.quant.timeSeries.randomPath({size: 300})"
     }

@@ -28,7 +28,7 @@ class Points extends Drawing {
         if (!this.canDraw(layer, series)) return;
         var serie = series[0],
             scope = this.$scope,
-            merge = layer.transition('merge'),
+            merge = layer.transition('update'),
             x = this.scaled(serie.x(), this.$scope.scalex || 'x'),
             y = this.scaled(serie.y(), this.$scope.scaley || 'y'),
             color = scope.color || this.paper.$scope.$colors.pick(),

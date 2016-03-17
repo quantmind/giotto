@@ -1,40 +1,57 @@
-import {easeLinear, easeQuadIn, easeQuadOut} from 'd3-ease';
+import {capfirst} from '../utils/index';
 import {Plugin} from '../core/plugin';
-
-var easing = {
-    'linear': easeLinear,
-    'quadIn': easeQuadIn,
-    'quadOut': easeQuadOut
-};
+import {forEach, isObject} from 'd3-quant';
+import {map} from 'd3-collection';
+import * as d3 from 'd3-ease';
 
 
+/**
+ * Transition plugins are for holding transition configuration parameters.
+ *
+ * A transition is obtained from a paper layer on behalf of a drawing component
+ */
 class Transitions extends Plugin {
 
+    constructor (paper, opts, defaults) {
+        var transitions = map(),
+            options = {};
+        forEach(opts, (o, key) => {
+            if (isObject(o)) transitions.set(key, o);
+            else options[key] = o;
+        });
+        super(paper, options, defaults);
+        var scope = this.$scope;
+        scope.transitions = map();
+        transitions.each((o, key) => {
+            scope.transitions.set(key, scope.$new().$extend(o));
+        });
+    }
     /**
      * @returns The d3-ease function
      */
-    get easingFunction () {
-        var fun = easing[this.$scope.easing];
-        if (!fun) fun = easing['linear'];
+    easingFunction (name) {
+        var fun = d3['ease' + capfirst(name)];
+        if (!fun) throw Error('No such easing function ' + name);
         return fun;
     }
 
-    transition (selection, name) {
-        var scope = this.$scope;
-        name = this.paper.name + '.' + name;
-        return selection.transition(name).duration(scope.duration).ease(this.easingFunction);
+    get (layer, name) {
+        var scope = this.$scope,
+            cfg = scope.transitions.get(name) || scope,
+            fullname = this.paper.name + '.' + layer.name;
+
+        if (name)
+            fullname += '.' + name;
+
+        return layer.selection()
+                        .transition(fullname)
+                        .duration(cfg.duration)
+                        .ease(this.easingFunction(cfg.easing));
     }
 }
 
-Plugin.register(Transitions, true, {
-    name: 'transitions.merge',
-    duration: 750,
-    easing: 'quadIn'
-});
 
 Plugin.register(Transitions, true, {
-    name: 'transitions.exit',
     duration: 750,
-    easing: 'quadOut'
+    easing: 'cubic'
 });
-

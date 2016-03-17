@@ -21,7 +21,7 @@
         "email": "message@quantmind.com"
     },
     "devDependencies": {
-        "eslint": "2.3",
+        "eslint": "2.4",
         "rollup": "0.25",
         "uglify-js": "2.6",
         "rollup-plugin-json": "2.0",

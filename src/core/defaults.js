@@ -1,4 +1,7 @@
 import {default as scopeFactory} from './scope';
+import {map} from 'd3-collection';
+import {round, isFunction, isString} from 'd3-quant';
+
 
 export const constants = {
     DEFAULT_VIZ_GROUP: 'default_viz_group',
@@ -13,6 +16,26 @@ export const constants = {
     // leaflet url
     leaflet: 'http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css'
 };
+
+
+export var themeDefaults = map();
+
+themeDefaults.set('default', {
+    color: '#000',
+    fill: '#fff'
+});
+
+themeDefaults.set('dark', {
+    color: '#fff',
+    fill: '#000'
+});
+
+
+export function giottoDefaults(opts) {
+    var theme = null;
+    if (opts) theme = opts.theme;
+    return themeDefaults.get(theme || '') || themeDefaults.get('default');
+}
 
 
 export function model(parentScope, sibling) {
@@ -47,14 +70,6 @@ export class GiottoBase {
      */
     get data () {
         return this.$scope.$root.$$data;
-    }
-
-    /**
-     * Return the paper object which own this object
-     * @returns {*}
-     */
-    get paper () {
-        return this.$scope.$$paper;
     }
 
     get parent () {
@@ -92,4 +107,99 @@ export class GiottoBase {
     destroy () {
         this.$scope.$destroy();
     }
+}
+
+
+export class PaperBase extends GiottoBase {
+    /**
+     * Return the paper object which own this object
+     * @returns {*}
+     */
+    get paper () {
+        return this.$scope.$$paper;
+    }
+
+    get marginLeft () {
+        var scope = this.paper.$scope;
+        return scope.$factor*pc(scope.$margin.left, scope.$size[0]);
+    }
+
+    get marginRight () {
+        var scope = this.paper.$scope;
+        return scope.$factor*pc(scope.$margin.right, scope.$size[0]);
+    }
+
+    get marginTop () {
+        var scope = this.paper.$scope;
+        return scope.$factor*pc(scope.$margin.top, scope.$size[1]);
+    }
+
+    get marginBottom () {
+        var scope = this.paper.$scope;
+        return scope.$factor*pc(scope.$margin.bottom, scope.$size[1]);
+    }
+
+    get domWidth () {
+        var scope = this.paper.$scope;
+        return scope.$size[0];
+    }
+
+    get domHeight () {
+        var scope = this.paper.$scope;
+        return scope.$size[1];
+    }
+
+    get size () {
+        var scope = this.paper.$scope;
+        return scope.$size.slice();
+    }
+
+    get width () {
+        var scope = this.paper.$scope;
+        return scope.$factor*scope.$size[0];
+    }
+
+    get height () {
+        var scope = this.paper.$scope;
+        return scope.$factor*scope.$size[1]
+    }
+
+    get innerWidth () {
+        return this.width - this.marginLeft - this.marginRight;
+    }
+
+    get innerHeight () {
+        return this.height - this.marginTop - this.marginBottom;
+    }
+
+    get aspectRatio () {
+        return this.innerHeight/this.innerWidth;
+    }
+
+    scale (name) {
+        var scale = this.paper.$scope.$scales.get(name);
+        if (!scale) throw Error('No such scale ' + name);
+        return scale.scale();
+    }
+
+    axis (name) {
+        return this.paper.$scope.$axes.get(name);
+    }
+
+    scaled (value, scale) {
+        scale = this.scale(scale);
+        if (isFunction(value))
+            return function (d) {
+                return scale(value(d));
+            };
+        else
+            return scale(value);
+    }
+}
+
+
+function pc (margin, size) {
+    if (isString(margin) && margin.indexOf('%') === margin.length-1)
+        margin = round(0.01*parseFloat(margin)*size, 5);
+    return margin;
 }

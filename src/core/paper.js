@@ -1,10 +1,10 @@
 import {select} from 'd3-selection';
 import {map} from 'd3-collection';
-import {GiottoBase, constants} from './defaults';
+import {PaperBase, constants} from './defaults';
 import {getElement} from '../utils/dom';
 import {Plugin} from './plugin';
 import * as size from '../utils/size';
-import {round, isString, isArray, isObject} from 'd3-quant';
+import {round, isArray, isObject, isFunction} from 'd3-quant';
 import {popKey} from '../utils/object';
 
 /**
@@ -19,7 +19,7 @@ import {popKey} from '../utils/object';
  *  * Apply plugins
  *
  */
-export class Paper extends GiottoBase {
+export class Paper extends PaperBase {
 
     constructor(giotto, element, options) {
         super(giotto.$scope.$new().$extend(options));
@@ -66,10 +66,6 @@ export class Paper extends GiottoBase {
         return this.element.select('#' + this.id);
     }
 
-    get data () {
-        return this.root.data();
-    }
-
     get factor () {
         return this.$scope.$factor;
     }
@@ -100,60 +96,6 @@ export class Paper extends GiottoBase {
 
     get foregroundElement () {
         return this.container.select('.gt-background');
-    }
-
-    get marginLeft () {
-        var scope = this.$scope;
-        return scope.$factor*pc(scope.$margin.left, scope.$size[0]);
-    }
-
-    get marginRight () {
-        var scope = this.$scope;
-        return scope.$factor*pc(scope.$margin.right, scope.$size[0]);
-    }
-
-    get marginTop () {
-        var scope = this.$scope;
-        return scope.$factor*pc(scope.$margin.top, scope.$size[1]);
-    }
-
-    get marginBottom () {
-        var scope = this.$scope;
-        return scope.$factor*pc(scope.$margin.bottom, scope.$size[1]);
-    }
-
-    get domWidth () {
-        return this.$scope.$size[0];
-    }
-
-    get domHeight () {
-        return this.$scope.$size[1];
-    }
-
-    get size () {
-        return this.$scope.$size.slice();
-    }
-
-    get width () {
-        var scope = this.$scope;
-        return scope.$factor*scope.$size[0];
-    }
-
-    get height () {
-        var scope = this.$scope;
-        return scope.$factor*scope.$size[1]
-    }
-
-    get innerWidth () {
-        return this.width - this.marginLeft - this.marginRight;
-    }
-
-    get innerHeight () {
-        return this.height - this.marginTop - this.marginBottom;
-    }
-
-    get aspectRatio () {
-        return this.innerHeight/this.innerWidth;
     }
 
     each (callback) {
@@ -250,10 +192,6 @@ export class Paper extends GiottoBase {
         // finally call super method
         super.destroy();
     }
-
-    scale (name) {
-        return this.$scope.$scales.get(name).scale();
-    }
 }
 
 /**
@@ -265,7 +203,7 @@ export class Paper extends GiottoBase {
  *  drawings: where the main drawings are placed
  *  foreground: usually for transitions and animations
  */
-export class Layer extends GiottoBase {
+export class Layer extends PaperBase {
 
     constructor (paper, name) {
         super(paper.$scope.$new());
@@ -297,12 +235,14 @@ export class Layer extends GiottoBase {
         return this.element;
     }
 
+    /**
+     * Get a d3 transition @ name for this layer
+     *
+     * @param name
+     * @returns {*}
+     */
     transition (name) {
-        var fullname = this.name + '.' + name,
-            t = this.$scope.$transitions.get(name),
-            selection = this.selection();
-        if (t) return t.transition(selection, fullname);
-        else return selection.transition(fullname).duration(100);
+        return this.$scope.$transitions.get(this, name);
     }
 
     // Drawing method
@@ -315,10 +255,14 @@ export class Layer extends GiottoBase {
     }
 
     translate (x, y) {
-        var self = this;
-        return function (d) {
-            return self._translate(x(d), y(d));
-        };
+        if (isFunction(x)) {
+            var self = this;
+            return function (d) {
+                return self._translate(x(d), y(d));
+            };
+        } else {
+            return this._translate(x, y);
+        }
     }
 
     _translate (x, y) {
@@ -329,12 +273,6 @@ export class Layer extends GiottoBase {
 Layer.type = {};
 Layer.getFactor = function () {
     return 1;
-}
-
-function pc (margin, size) {
-    if (isString(margin) && margin.indexOf('%') === margin.length-1)
-        margin = round(0.01*parseFloat(margin)*size, 5);
-    return margin;
 }
 
 // Internal function for evaluating paper dom size

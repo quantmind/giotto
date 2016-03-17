@@ -1,9 +1,10 @@
 import {Plugin} from '../core/plugin';
 
 /**
- * An Axis is associated with a given paper as well as a given drawing
+ * An Grid is associated with a given paper
  *
- * At most a paper can draw two x-axis and two y-axis
+ * A paper can only have one active grid and the grid can be bound to one or
+ * two axes
  */
 class Grid extends Plugin {
 
@@ -14,6 +15,5 @@ Plugin.register(Grid, false, {
     layer: 'background',
     fillOpacity: 0.2,
     lineWidth: 0.5,
-    xaxis: true,
-    yaxis: true
+    axes: ['x', 'y']
 });

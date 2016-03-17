@@ -47,20 +47,8 @@ class ContextMenu {
 
         var docLeft = (window.pageXOffset || document.scrollLeft || 0) - (document.clientLeft || 0),
             docTop = (window.pageYOffset || document.scrollTop || 0) - (document.clientTop || 0),
-            elementWidth = element.node().scrollWidth,
-            elementHeight = element.node().scrollHeight,
-            docWidth = document.clientWidth + docLeft,
-            docHeight = document.clientHeight + docTop,
-            totalWidth = elementWidth + event.pageX,
-            totalHeight = elementHeight + event.pageY,
             left = Math.max(event.pageX - docLeft, 0),
             top = Math.max(event.pageY - docTop, 0);
-
-        if (totalWidth > docWidth)
-            left = left - (totalWidth - docWidth);
-
-        if (totalHeight > docHeight)
-            top = top - (totalHeight - docHeight);
 
         element.style({
             top: top + 'px',

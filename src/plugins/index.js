@@ -7,4 +7,3 @@ import './axis';
 import './responsive';
 import './transitions';
 import './tooltip';
-import './transitions';
