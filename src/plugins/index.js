@@ -1,4 +1,5 @@
 import './margin';
+import './font';
 import './scales';
 import './colors';
 import './background';

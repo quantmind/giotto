@@ -9,10 +9,8 @@ export {version} from './package.json';
 export {constants} from './src/core/defaults';
 export {theme} from './src/core/theme';
 export {angularModule} from './src/integrations/angular';
-export {default as orderedMap} from './src/utils/map';
-export {default as canvasSelect, tweenAttr} from './src/canvas/index';
 
-export {capfirst, slugify, logger, noop} from './src/utils/index';
+export {capfirst, slugify, logger, noop, orderedMap} from './src/utils/index';
 
 
 import {version} from './package.json';

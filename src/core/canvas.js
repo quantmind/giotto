@@ -1,7 +1,6 @@
 import {Paper, Layer} from './paper';
-import {select} from 'd3-selection';
-import {default as orderedMap} from '../utils/map';
-import {default as canvasSelection, canvasResolution} from '../canvas/index';
+import {orderedMap} from '../utils/index';
+import * as canvas from 'd3-canvas-transition';
 
 
 class CanvasLayer extends Layer {
@@ -30,20 +29,10 @@ class CanvasLayer extends Layer {
     selection () {
         var node = this.$scope.$$canvasNode;
         if (!node) {
-            node = canvasSelection(this.context, this.factor).node();
+            node = canvas.selection(this.context, this.factor);
             this.$scope.$$canvasNode = node;
         }
-        return select(node);
-    }
-
-    /**
-     * Canvas transition object
-     *
-     * @param name: Transition name
-     * @returns {*}
-     */
-    transition (name) {
-        return super.transition(name).attrTween('draw', reDraw);
+        return node;
     }
 
     group () {
@@ -78,22 +67,9 @@ class CanvasLayer extends Layer {
         }
         return this;
     }
-
-    draw () {
-        if (this.$scope.$$canvasNode)
-            this.selection().attr('draw', 0);
-    }
-
-    pen (p) {
-        return function () {
-            return function () {
-                return p;
-            };
-        };
-    }
 }
 
-Layer.getFactor = canvasResolution;
+Layer.getFactor = canvas.resolution;
 
 Layer.type.canvas = CanvasLayer;
 
@@ -125,13 +101,4 @@ export class Canvas extends Paper {
         target.remove();
         return dataUrl;
     }
-}
-
-
-function reDraw () {
-    return ping;
-}
-
-function ping (t) {
-    return t;
 }

@@ -13,9 +13,7 @@ var scales = {
 };
 
 /**
- * An Axis is associated with a given paper as well as a given drawing
- *
- * At most a paper can draw two x-axis and two y-axis
+ * A Scale is associated with a given paper
  */
 class Scale extends Plugin {
 

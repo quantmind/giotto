@@ -1,4 +1,4 @@
-import {select} from 'd3-selection';
+import {select} from 'd3-canvas-transition';
 import {timer} from 'd3-timer';
 import {Plugin} from '../core/plugin';
 

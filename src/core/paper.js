@@ -1,10 +1,10 @@
-import {select} from 'd3-selection';
 import {map} from 'd3-collection';
 import {PaperBase, constants} from './defaults';
 import {getElement} from '../utils/dom';
 import {Plugin} from './plugin';
 import * as size from '../utils/size';
 import {round, isArray, isObject, isFunction} from 'd3-quant';
+import {select} from 'd3-canvas-transition';
 import {popKey} from '../utils/object';
 
 /**
@@ -45,7 +45,7 @@ export class Paper extends PaperBase {
         scope.$height = popKey(scope, 'height');
         scope.$minHeight = popKey(scope, 'minHeight');
         scope.$size = getSize(element, scope);
-        scope.$factor = popKey(scope, 'factor') || LayerClass.getFactor();
+        scope.$factor = LayerClass.getFactor(popKey(scope, 'factor'));
         scope.$layers = map();
         scope.$plugins = [];
         scope.$layers.set('background', new LayerClass(this, 'gt-background'));
@@ -125,19 +125,21 @@ export class Paper extends PaperBase {
     reDraw () {
         // Draw plugins
         if (this.broadcast('draw').defaultPrevented) return;
-        this.logger.debug('Redraw paper ' + this.name);
+        var scope = this.$scope;
+        this.logger.debug('Redraw paper ' + this.name + ' (' + scope.$size[0] + 'px, ' + scope.$size[1] + 'px)');
+        this.clear();
 
-        this.$scope.$plugins.forEach((plugin) => {
+        scope.$plugins.forEach((plugin) => {
             if (plugin.active)
                 plugin.draw();
         });
 
-        this.$scope.$draws.forEach((d) => {
+        scope.$draws.forEach((d) => {
             d.draw();
         });
 
         // Finally draw layers (for canvas)
-        this.$scope.$layers.each((layer) => {
+        scope.$layers.each((layer) => {
             layer.draw();
         });
     }
@@ -211,7 +213,7 @@ export class Layer extends PaperBase {
     }
 
     get element () {
-        return this.paper.container.select('.' + this.name);
+        return this.paper.container.selectAll('.' + this.name);
     }
 
     get type () {
@@ -250,10 +252,6 @@ export class Layer extends PaperBase {
         return d;
     }
 
-    pen (p) {
-        return p;
-    }
-
     translate (x, y) {
         if (isFunction(x)) {
             var self = this;
@@ -271,9 +269,7 @@ export class Layer extends PaperBase {
 }
 
 Layer.type = {};
-Layer.getFactor = function () {
-    return 1;
-}
+
 
 // Internal function for evaluating paper dom size
 export function getSize (element, scope) {

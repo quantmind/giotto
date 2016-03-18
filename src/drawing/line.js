@@ -22,7 +22,7 @@ class Line extends Drawing {
             y = this.scaled(serie.y(), ys),
             //y0 = this.paper.scale(ys).domain()[0],
             //line0 = layer.pen(d3.line().x(x).y(y0)),
-            line = layer.pen(d3.line().x(x).y(y).curve(this.curve())),
+            line = d3.line().x(x).y(y).curve(this.curve()),
             merge = layer.transition('update'),
             group = layer.group(this),
             color = scope.color || this.paper.$scope.$colors.pick(),

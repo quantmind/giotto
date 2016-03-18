@@ -1,8 +1,14 @@
 import {stack} from 'd3-shape';
-import {isArray} from 'd3-quant';
+import {extend, isArray} from 'd3-quant';
 import {PaperBase} from './defaults';
 import {Paper} from './paper';
 import {_parentScope} from './plugin';
+
+
+const defaultDrawing = {
+    color: null,
+    fill: null
+};
 
 /**
  * Drawing Class
@@ -69,7 +75,8 @@ export function paperDraw (Class, defaultOptions) {
 
     Paper.prototype[name] = function (options) {
         // default options from giotto
-        var root = _parentScope(this.$scope, name, null, defaultOptions),
+        var defaultValues = extend({}, defaultDrawing, defaultOptions),
+            root = _parentScope(this.$scope, name, null, defaultValues),
             draw = new Class(root.$new().$extend(options));
 
         // add the draw to paper draws

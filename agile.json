@@ -52,6 +52,13 @@
             "command": ["rm -rf ./node_modules/d3-quant",
                         "ln -s {{ d3_quant_path }} {{repo_path }}/node_modules/d3-quant"]
         },
+        "d3_canvas_path": {
+            "command": "cd ../d3-canvas-transition && pwd"
+        },
+        "d3_canvas_link": {
+            "command": ["rm -rf ./node_modules/d3-canvas-transition",
+                        "ln -s {{ d3_canvas_path }} {{repo_path }}/node_modules/d3-canvas-transition"]
+        },
         "giotto-dev": {
             "command": ["npm run-script build",
                        "cp build/giotto.js giottojs/media/giottojs/giotto.js"]
@@ -114,6 +121,10 @@
             "files": ["../d3-quant/index.js", "../d3-quant/src/*.js"],
             "command": "giotto-dev"
         },
+        "d3-canvas": {
+            "files": ["../d3-canvas-transition/index.js", "../d3-canvas-transition/src/*.js"],
+            "command": "giotto-dev"
+        },
         "giottojs": {
             "files": [
                 "giottojs/media/js/*.js",
@@ -146,7 +157,7 @@
         },
         "giotto-dev": {
             "description": "Eslint and build giotto.js file and run phantomJS tests",
-            "command": ["d3_quant", "shell:giotto-dev"]
+            "command": ["d3_quant", "d3_canvas", "shell:giotto-dev"]
         },
         "giottojs-dev": {
             "description": "Create the giottojs.js file, used by watch server",
@@ -172,6 +183,10 @@
         "d3_quant": {
             "description": "Create a symbolic link to d3-quant for development",
             "command": ["shell:d3_quant_path", "shell:d3_quant_link"]
+        },
+        "d3_canvas": {
+            "description": "Create a symbolic link to d3-canvas-transition for development",
+            "command": ["shell:d3_canvas_path", "shell:d3_canvas_link"]
         },
         "serve": {
             "description": "Starts development server",

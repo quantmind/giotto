@@ -17,9 +17,7 @@ class SvgLayer extends Layer {
     }
 
     clear () {
-        var element = this.element;
-        element.selectAll('*').remove();
-        element.style('width', this.paper.domWidth).style('height', this.paper.domHeight);
+        this.element.style('width', this.paper.domWidth).style('height', this.paper.domHeight);
         return this;
     }
 
@@ -36,14 +34,17 @@ class SvgLayer extends Layer {
 
         return group
                 .enter()
-                .append('g')
+                    .append('g')
+                    .attr('id', draw.id)
                 .merge(group)
-                .attr('id', draw.id)
-                .attr('transform', this._translate(this.paper.marginLeft, this.paper.marginTop));
+                    .attr('transform', this._translate(this.paper.marginLeft, this.paper.marginTop));
     }
 }
 
 Layer.type.svg = SvgLayer;
+SvgLayer.getFactor = function () {
+    return 1;
+}
 
 
 export class Svg extends Paper {

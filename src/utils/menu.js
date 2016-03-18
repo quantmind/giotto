@@ -1,4 +1,4 @@
-import * as d3 from 'd3-selection';
+import * as d3 from 'd3-canvas-transition';
 
 
 class ContextMenu {
@@ -43,25 +43,20 @@ class ContextMenu {
         var element = this.element;
         if (!callback(element)) return;
 
-        element.classed('open', true);
-
         var docLeft = (window.pageXOffset || document.scrollLeft || 0) - (document.clientLeft || 0),
-            docTop = (window.pageYOffset || document.scrollTop || 0) - (document.clientTop || 0),
-            left = Math.max(event.pageX - docLeft, 0),
-            top = Math.max(event.pageY - docTop, 0);
+            docTop = (window.pageYOffset || document.scrollTop || 0) - (document.clientTop || 0);
 
-        element.style({
-            top: top + 'px',
-            left: left + 'px',
-            position: 'fixed'
-        });
+        element
+            .style('position', 'fixed')
+            .style('top', Math.max(event.pageY - docTop, 0) + 'px')
+            .style('left', Math.max(event.pageX - docLeft, 0) + 'px')
+            .classed('open', true);
+
         return this;
     }
 
     close () {
-        if (this.opened) {
-            this.element.classed('open', false);
-        }
+        if (this.opened) this.element.classed('open', false);
         return this;
     }
 
