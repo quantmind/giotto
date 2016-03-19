@@ -121,22 +121,22 @@ export class PaperBase extends GiottoBase {
 
     get marginLeft () {
         var scope = this.paper.$scope;
-        return scope.$factor*pc(scope.$margin.left, scope.$size[0]);
+        return pc(scope.$margin.left, scope.$size[0]);
     }
 
     get marginRight () {
         var scope = this.paper.$scope;
-        return scope.$factor*pc(scope.$margin.right, scope.$size[0]);
+        return pc(scope.$margin.right, scope.$size[0]);
     }
 
     get marginTop () {
         var scope = this.paper.$scope;
-        return scope.$factor*pc(scope.$margin.top, scope.$size[1]);
+        return pc(scope.$margin.top, scope.$size[1]);
     }
 
     get marginBottom () {
         var scope = this.paper.$scope;
-        return scope.$factor*pc(scope.$margin.bottom, scope.$size[1]);
+        return pc(scope.$margin.bottom, scope.$size[1]);
     }
 
     get domWidth () {
@@ -155,13 +155,11 @@ export class PaperBase extends GiottoBase {
     }
 
     get width () {
-        var scope = this.paper.$scope;
-        return scope.$factor*scope.$size[0];
+        return this.paper.$scope.$size[0];
     }
 
     get height () {
-        var scope = this.paper.$scope;
-        return scope.$factor*scope.$size[1]
+        return this.paper.$scope.$size[1]
     }
 
     get innerWidth () {
