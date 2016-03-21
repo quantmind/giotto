@@ -1,15 +1,16 @@
 {
-    "height": "60%",
-    "colors": {
-        "scale": "d3.colorbrewer.YlOrBr[9].slice().reverse()"
+    "scales": {
+        "color": {
+            "range": "d3.colorbrewer.YlOrBr[9].slice().reverse()",
+            "domain": {
+                "from": "countrydebt.year.2013.debt"
+            }
+        }
     },
     "tooltip": true,
-    "transition": {
-        "duration": 1000
-    },
     "pie": {
         "innerRadius": 0.7,
-        "cornerRadius": 0.01,
+        "cornerRadius": 0.05,
         "padAngle": 0.5,
         "fillOpacity": 0.7,
         "active": {
@@ -20,19 +21,25 @@
         },
         "formatY": "'€ ' + d3.format(',.0f')(d) + 'M'"
     },
-    "draw": ["pie"],
+    "draw": {
+        "marks": "pie",
+        "from": "countrydebt.year.2013",
+        "label": "country",
+        "value": "debt"
+    },
     "data": {
+        "name": "countrydebt",
         "fields": [
             "year",
-            "Country",
-            "Debt"
+            "country",
+            "debt"
         ],
         "transform": {
+            "type": "filter",
             "dimension": "year",
-            "x": "Country",
-            "y": "Debt"
+            "filter": [2013]
         },
-        "data": [
+        "values": [
             [
                 2012,
                 "Belgium",

@@ -5,6 +5,7 @@
         "angular-sanitize": "empty:",
         "angular-animate": "empty:",
         "angular-ui-bootstrap": "empty:",
+        "crossfilter": "empty:",
         "giotto": "empty:",
         "markdown": "../../node_modules/markdown/lib/markdown"
     },

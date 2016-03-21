@@ -185,13 +185,28 @@ export class PaperBase extends GiottoBase {
     }
 
     scaled (value, scale) {
-        scale = this.scale(scale);
+        if (!isFunction(scale)) scale = this.scale(scale);
         if (isFunction(value))
             return function (d) {
                 return scale(value(d));
             };
         else
             return scale(value);
+    }
+
+    translate (x, y) {
+        if (isFunction(x)) {
+            var self = this;
+            return function (d) {
+                return self._translate(x(d), y(d));
+            };
+        } else {
+            return this._translate(x, y);
+        }
+    }
+
+    _translate (x, y) {
+        return "translate(" + x + "," + y + ")";
     }
 }
 

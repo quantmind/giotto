@@ -1,5 +1,6 @@
 import {map} from 'd3-collection';
-import {data} from './data';
+import data from './data';
+import {isArray, isObject, isString} from 'd3-quant';
 
 /**
  * Base class for data providers
@@ -18,21 +19,32 @@ class DataProvider extends data.DataBase {
     ready (record, source, opts) {
         var logger = this.logger,
             transform = opts.transform || 'default',
-            transformFunction = data.transforms.get(transform);
+            self = this;
 
-        if (!transformFunction)
-            this.logger.error('Cannot find transform function "' + transform + "'");
-        else {
-            var self = this,
-                serie = transformFunction(record, opts);
+        opts.name = opts.name || 'default';
 
-            // Inject load method into the serie
-            serie.load = function () {
-                logger.info('Load data for ' + serie.name);
-                self.load(source, opts);
-            };
-            this.parent.set(serie);
-        }
+        record = this.data.record(record, source, opts, function () {
+            logger.info('Load data for ' + opts.name);
+            self.load(source, opts);
+        });
+
+        if (!isArray(transform)) transform = [transform];
+
+        transform.forEach(t => {
+            if (!isObject(t)) t = {type: t};
+            if (!t.type) this.logger.error('Transform "type" not specified');
+            else {
+                var transformFunction = data.transforms.get(t.type);
+                if (!transformFunction)
+                    this.logger.error('Cannot find transform function "' + t.type + "'");
+                else
+                    transformFunction(record, t);
+            }
+        });
+
+        record.series.each((serie) => {
+            self.data.set(serie);
+        });
     }
 }
 
@@ -55,12 +67,13 @@ class Values extends DataProvider {
 
 data.providers.set('values', Values);
 
+const evalErrorMessage = 'Cannot evaluate expression, data.$eval function is not available';
 
 class Eval extends DataProvider {
 
     load (expr, opts) {
         if (!data.$eval)
-            this.logger.error('Cannot evaluate expression, data.$eval function is not available');
+            this.logger.error(evalErrorMessage);
         else {
             this.logger.info('Evaluating expression: ' + expr);
             var result = data.$eval(expr, opts);
@@ -72,3 +85,23 @@ class Eval extends DataProvider {
 
 
 data.providers.set('eval', Eval);
+
+
+export function evalString (str, safe) {
+    if (isString(str)) {
+        if (!data.$eval) {
+            if (safe) return str;
+            else throw Error(evalErrorMessage);
+        }
+        try {
+            var r = data.$eval(str);
+            if (r === undefined)
+                throw new Error('Could not evaluate ' + str);
+            return r;
+        } catch (e) {
+            if (safe) return str;
+            else throw e;
+        }
+    }
+    return str;
+}

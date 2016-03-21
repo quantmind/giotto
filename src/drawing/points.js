@@ -27,27 +27,29 @@ class Points extends Drawing {
     _draw (layer, series) {
         if (!this.canDraw(layer, series)) return;
         var serie = series[0],
+            data = serie.data(),
             scope = this.$scope,
             merge = layer.transition('update'),
-            x = this.scaled(serie.x(), this.$scope.scalex || 'x'),
-            y = this.scaled(serie.y(), this.$scope.scaley || 'y'),
-            color = scope.color || this.paper.$scope.$colors.pick(),
+            x = this.scaled(this.accessor(scope.x), scope.scalex || 'x'),
+            y = this.scaled(this.accessor(scope.y), scope.scaley || 'y'),
+            size = this.accessor(scope.size),
+            fill = this.color(scope.fill, serie),
             group = layer.group(this);
 
-        var sym = layer.pen(symbol()),
-            points = group.selectAll('path.' + this.id).data(serie.dataArray);
+        var sym = symbol().size(size),
+            points = group.selectAll('path.points').data(data);
 
         points
             .enter()
                 .append('path')
-                .classed(this.id, true)
+                .attr('class', 'points')
                 .attr('transform', layer.translate(x, y))
-                .attr('fill', color)
+                .attr('fill', fill)
                 .attr('fill-opacity', 0)
             .merge(points)
                 .transition(merge)
                 .attr('transform', layer.translate(x, y))
-                .attr('fill', color)
+                .attr('fill', fill)
                 .attr('fill-opacity', scope.fillOpacity)
                 .attr('d', sym);
 
@@ -56,16 +58,23 @@ class Points extends Drawing {
             //.transition(this.exitTransition())
             .remove();
     }
+
+    color (color, serie) {
+        if (color === true) color = this.paper.$scope.$colors.pick();
+        return this.accessor(color, serie.fields);
+    }
 }
 
 
 paperDraw(Points, {
     symbol: 'circle',
-    size: '8px',
     fill: true,
     fillOpacity: 1,
     colorOpacity: 1,
     lineWidth: 2,
+    x: 'x',
+    y: 'y',
+    size: 60,
     active: {
         fill: 'darker',
         color: 'brighter',

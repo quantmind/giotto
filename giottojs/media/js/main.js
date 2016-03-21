@@ -2,6 +2,7 @@ require([
     'js/require.config',
     'angular',
     'giotto',
+    'crossfilter',
     'js/colorbrewer',
     'js/data',
     'lux/forms/main',
@@ -9,12 +10,13 @@ require([
     'lux/page/main',
     'lux/components/highlight',
     'angular-sanitize'
-], function(lux, angular, d3, colorbrewer) {
+], function(lux, angular, d3, crossfilter, colorbrewer) {
     'use strict';
 
     //
     // Inject colorBrewer
     d3.colorbrewer = colorbrewer;
+    d3.quant.crossfilterSerie.crossfilter = crossfilter;
     lux.root.d3 = d3;
 
     // Ceate giotto angular module

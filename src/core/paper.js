@@ -3,7 +3,7 @@ import {PaperBase, constants} from './defaults';
 import {getElement} from '../utils/dom';
 import {Plugin} from './plugin';
 import * as size from '../utils/size';
-import {round, isArray, isObject, isFunction} from 'd3-quant';
+import {round, isArray, isObject} from 'd3-quant';
 import {select} from 'd3-canvas-transition';
 import {popKey} from '../utils/object';
 
@@ -137,11 +137,6 @@ export class Paper extends PaperBase {
         scope.$draws.forEach((d) => {
             d.draw();
         });
-
-        // Finally draw layers (for canvas)
-        scope.$layers.each((layer) => {
-            layer.draw();
-        });
     }
 
     /**
@@ -237,6 +232,17 @@ export class Layer extends PaperBase {
         return this.element;
     }
 
+    group (draw) {
+        var group = this.selection().selectAll('.' + draw.id).data([draw]);
+
+        return group
+                .enter()
+                    .append('g')
+                    .attr('class', draw.id)
+                .merge(group)
+                    .attr('transform', this._translate(this.marginLeft, this.marginTop));
+    }
+
     /**
      * Get a d3 transition @ name for this layer
      *
@@ -250,21 +256,6 @@ export class Layer extends PaperBase {
     // Drawing method
     dim (d) {
         return d;
-    }
-
-    translate (x, y) {
-        if (isFunction(x)) {
-            var self = this;
-            return function (d) {
-                return self._translate(x(d), y(d));
-            };
-        } else {
-            return this._translate(x, y);
-        }
-    }
-
-    _translate (x, y) {
-        return "translate(" + x + "," + y + ")";
     }
 }
 

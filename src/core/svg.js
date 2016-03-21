@@ -21,23 +21,8 @@ class SvgLayer extends Layer {
         return this;
     }
 
-    draw () {
-
-    }
-
     dim (d) {
         return d+'px';
-    }
-
-    group (draw) {
-        var group = this.element.selectAll('#' + draw.id).data([draw]);
-
-        return group
-                .enter()
-                    .append('g')
-                    .attr('id', draw.id)
-                .merge(group)
-                    .attr('transform', this._translate(this.paper.marginLeft, this.paper.marginTop));
     }
 }
 

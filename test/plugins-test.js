@@ -56,3 +56,30 @@ test("Test margin plugin", (t) => {
 
     t.end();
 });
+
+
+test("Test scale override", (t) => {
+    var gt = d3.giotto(),
+        paper = gt.new(),
+        color = paper.$scope.$scales.get('color');
+    t.ok(color instanceof d3.Plugin);
+    t.equal(color.$scope.range, 'category10');
+
+    global.myRange = function () {
+        return ['#ccc', '#ddd'];
+    };
+
+    paper = d3.giotto({
+        scales: {
+            color: {
+                range: 'myRange()'
+            }
+        }
+    }).new();
+
+    color = paper.$scope.$scales.get('color');
+    t.equal(color.$scope.range, 'myRange()');
+
+    delete global.myRange;
+    t.end();
+});

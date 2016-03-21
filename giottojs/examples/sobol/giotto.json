@@ -14,6 +14,7 @@
         }
     },
     "data": {
+        "fields": ["x", "y"],
         "eval": "d3.quant.sobol(2).generate(1000)"
     }
 }

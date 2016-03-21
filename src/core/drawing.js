@@ -1,7 +1,9 @@
 import {stack} from 'd3-shape';
-import {extend, isArray} from 'd3-quant';
+import {extend, isArray, isFunction,
+        isNumber, indexValue, constantValue} from 'd3-quant';
 import {PaperBase} from './defaults';
 import {Paper} from './paper';
+import {evalString} from '../data/index'
 import {_parentScope} from './plugin';
 
 
@@ -53,6 +55,21 @@ export class Drawing extends PaperBase {
         this._draw(layer, this.getSeries());
     }
 
+    /**
+     * return an accessor function
+     *
+     * @param key
+     * @returns {*}
+     */
+    accessor (key, fields) {
+        key = evalString(key, true);
+        if (!isFunction(key)) {
+            if (isNumber(key) || (fields && fields.indexOf(key) === -1)) key = constantValue(key);
+            else key = indexValue(key);
+        }
+        return key;
+    }
+
     _draw () {}
 }
 
@@ -72,11 +89,11 @@ export class StackedDrawing extends Drawing {
 
 export function paperDraw (Class, defaultOptions) {
     var name = Class.name.toLowerCase();
+    defaultOptions = extend({}, defaultDrawing, defaultOptions);
 
     Paper.prototype[name] = function (options) {
         // default options from giotto
-        var defaultValues = extend({}, defaultDrawing, defaultOptions),
-            root = _parentScope(this.$scope, name, null, defaultValues),
+        var root = _parentScope(this.$scope, name, null, defaultOptions),
             draw = new Class(root.$new().$extend(options));
 
         // add the draw to paper draws

@@ -18,6 +18,16 @@ a bar chart and its pie chart equivalent and so forth.
 
 A drawing does not need to specify all components, the [paper] will
 supply defaults if some components are omitted.
+```json
+{
+    "marks": "points",
+    "from": "<data source name>"
+    "x": "<x-field>",
+    "x": "<y-field>",
+    "size": "<size-field>",
+    "shape": '<shape-field>"
+}
+```
 
 ## Data and Mapping
 
@@ -56,6 +66,11 @@ If options is specified, set the options for the drawing object and return the
 ``drawing``. If is not specified, returns the current options which by default
 is an empty ``Object``. Drawing options are the way GiottoJS override default
 behaviour in a paper.
+
+
+## Scales
+
+
 
 
 [paper]: /api/paper "paper API"

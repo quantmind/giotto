@@ -1,16 +1,10 @@
 import {Plugin} from '../core/plugin';
 import {map} from 'd3-collection';
 import {isNumber, isString} from 'd3-quant';
+import {capfirst} from '../utils/index';
+import {evalString} from '../data/index';
 import * as d3 from 'd3-scale';
 
-
-var scales = {
-    linear: d3.scaleLinear,
-    pow: d3.scalePow,
-    sqrt: d3.scaleSqrt,
-    log: d3.scaleLog,
-    time: d3.scaleTime
-};
 
 /**
  * A Scale is associated with a given paper
@@ -28,7 +22,7 @@ class Scale extends Plugin {
 
         if (!scale || scope.type !== type) {
             type = scope.type || 'linear';
-            var scaleFunction = scales[type];
+            var scaleFunction = d3['scale' + capfirst(type)];
             if (!scaleFunction)
                 throw Error('No such scale "' + type + '"');
             scale = scaleFunction();
@@ -39,6 +33,7 @@ class Scale extends Plugin {
         // range information
         var range = rangeFunctions.get(scope.range);
         if (range) scale.range(range(this.paper));
+        else scale.range(evalString(scope.range));
 
         // domain information
         var domain = this.domain();
@@ -61,12 +56,19 @@ class Scale extends Plugin {
         if (isNumber(scope.domain.min) && isNumber(scope.domain.max))
             domain = [scope.domain.min, scope.domain.max];
         else {
-            let bits;
+            let bits, name, field;
             if (scope.domain.from) bits = scope.domain.from.split('.');
             else bits = [''];
-            var serie = this.data.getOne(bits[0]);
+            if (bits.length > 1) {
+                name = bits.slice(0, bits.length-1).join('.');
+                field = bits[bits.length-1];
+            } else {
+                name = bits[0];
+                field = this.name.split('.')[1];
+            }
+
+            var serie = this.data.getOne(name);
             if (serie) {
-                var field = bits[1] || this.name.split('.')[1];
                 domain = serie.range(field);
                 if (isNumber(scope.domain.min)) domain[0] = scope.domain.min;
                 else if (isNumber(scope.domain.max)) domain[0] = scope.domain.max;
@@ -108,7 +110,11 @@ Plugin.register(Scale, false, {
 Plugin.register(Scale, true, {
     name: 'scales.r',
     nice: true,
-    range: 'radius'
+    range: 'radius',
+    domain: {
+        min: 0,
+        max: 1
+    }
 });
 
 Plugin.register(Scale, true, {

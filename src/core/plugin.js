@@ -2,6 +2,7 @@ import {map} from 'd3-collection';
 import {PaperBase, model} from './defaults';
 import {prefix} from './scope';
 import {popKey} from '../utils/object';
+import {isObject} from 'd3-quant';
 
 /**
  * Base class for Plugins
@@ -56,6 +57,7 @@ Plugin.$apply = function (paper) {
             root = _parentScope(scope.$root, namespace, bits[1], p.defaults);
 
         name = bits[1];
+        if (name && isObject(opts)) opts = opts[name];
         if (opts === undefined) opts = p.active;
         if (opts === true) opts = {};
 
@@ -74,7 +76,7 @@ Plugin.$apply = function (paper) {
 
 export function _parentScope(scope, namespace, name, defaults) {
     var container = scope.$isolated[namespace],
-        parentScope;
+        parentScope, opts;
 
     if (name) {
         if (!container) scope.$isolated[namespace] = container = map();
@@ -95,9 +97,12 @@ export function _parentScope(scope, namespace, name, defaults) {
             //parentScope.$self = scope.$self;
             parentScope = scope.$new().$extend(defaults);
             parentScope.$name = name ? namespace + '.' + name : namespace;
+            opts = scope[namespace];
             if (name) {
-                var opts = scope[namespace];
-                if (opts) parentScope.$extend(popKey(opts, name));
+                if (opts && isObject(opts[name])) parentScope.$extend(popKey(opts, name));
+            }
+            else {
+                if (isObject(opts)) parentScope.$extend(popKey(scope, namespace));
             }
         }
 

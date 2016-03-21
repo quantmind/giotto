@@ -15,27 +15,28 @@ class Line extends Drawing {
      */
     _draw (layer, series) {
         if (!this.canDraw(layer, series)) return;
-        var serie = series[0],
+        var data = series[0].data(),
             scope = this.$scope,
             ys = this.$scope.scaley || 'y',
-            x = this.scaled(serie.x(), this.$scope.scalex || 'x'),
-            y = this.scaled(serie.y(), ys),
+            x = this.scaled(this.accessor(scope.x), this.$scope.scalex || 'x'),
+            y = this.scaled(this.accessor(scope.y), ys),
             //y0 = this.paper.scale(ys).domain()[0],
             //line0 = layer.pen(d3.line().x(x).y(y0)),
             line = d3.line().x(x).y(y).curve(this.curve()),
             merge = layer.transition('update'),
             group = layer.group(this),
             color = scope.color || this.paper.$scope.$colors.pick(),
-            path = group.selectAll('path.' + this.id).data([serie.dataArray]),
+            path = group.selectAll('path.line').data([data]),
             width = layer.dim(scope.lineWidth);
 
+        this.group = group;
         // make sure color is in scope
         scope.color = color;
 
         path
             .enter()
                 .append('path')
-                .classed(this.id, true)
+                .attr('class', 'line')
                 .attr('fill', 'none')
                 .attr('stroke', color)
                 .attr('stroke-opacity', 0)
@@ -71,5 +72,7 @@ class Line extends Drawing {
 paperDraw(Line, {
     curve: 'cardinalOpen',
     lineWidth: 1,
-    colorOpacity: 1
+    colorOpacity: 1,
+    x: 'x',
+    y: 'y'
 });

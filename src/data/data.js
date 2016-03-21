@@ -1,11 +1,13 @@
 import {map} from 'd3-collection';
-import {isArray, isObject, isFunction} from 'd3-quant';
+import {isArray, isObject, forEach, mapFields} from 'd3-quant';
 import {GiottoBase} from '../core/defaults';
 
 
-export function data (scope) {
+function data (scope) {
     return new data.Data(scope)
 }
+
+export default data;
 
 /**
  * Class for managing data providers, data transforms and data events
@@ -15,6 +17,7 @@ class Data extends GiottoBase {
     constructor ($scope) {
         super($scope);
         this.$scope.$sources = map();
+        this.$scope.$records = map();
         this.$scope.$providers = map();
     }
 
@@ -93,10 +96,42 @@ class Data extends GiottoBase {
     }
 
     reLoad () {
-        this.$scope.$sources.each((source) => {
-            if (isFunction(source.load))
-                source.load();
+        this.$scope.$records.each((record) => {
+            record.load();
         });
+    }
+
+    /**
+     * Create a new serie record from data
+     * @param data Array of data record
+     * @param source: original source object
+     * @param opts: object of data options
+     * @param load: loading function
+     */
+    record (data, source, opts, load) {
+        var fields = opts.fields;
+        //
+        // Fields available, map array of array into array of objects
+        if (fields) {
+            data = mapFields(fields, data);
+        } else {
+            fields = [];
+            forEach(data[0], function (key) {
+                fields.push(key);
+            });
+        }
+        var record = Object.freeze({
+            'name': opts.name,
+            'data': data,
+            'fields': fields,
+            'series': map(),
+            'opts': opts,
+            'source': source,
+            'load': load
+        });
+
+        this.$scope.$records.set(record.name, record);
+        return record;
     }
 }
 

@@ -35,11 +35,6 @@ class CanvasLayer extends Layer {
         return node;
     }
 
-    group () {
-        return this.selection().attr(
-            'transform', this._translate(this.paper.marginLeft, this.paper.marginTop));
-    }
-
     /**
      * Clear the canvas
      * @returns {CanvasLayer}
