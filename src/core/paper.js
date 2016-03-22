@@ -7,6 +7,7 @@ import {round, isArray, isObject} from 'd3-quant';
 import {select} from 'd3-canvas-transition';
 import {popKey} from '../utils/object';
 
+
 /**
  * A paper is created via a giotto object.
  * var g = new Giotto();

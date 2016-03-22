@@ -15,6 +15,7 @@ export class Plugin extends PaperBase {
         this.$scope.$self = parent;
         this.$scope.$$paper = parent;
         this.$scope.$active = opts ? true : false;
+        this.$scope.$extend(parent.$scope);
     }
 
     get active () {
@@ -54,7 +55,7 @@ Plugin.$apply = function (paper) {
             namespace = bits[0],
             $namespace = prefix + namespace,
             opts = scope[namespace],
-            root = _parentScope(scope.$root, namespace, bits[1], p.defaults);
+            root = _parentScope(p.Class, scope.$root, namespace, bits[1], p.defaults);
 
         name = bits[1];
         if (name && isObject(opts)) opts = opts[name];
@@ -74,7 +75,7 @@ Plugin.$apply = function (paper) {
 };
 
 
-export function _parentScope(scope, namespace, name, defaults) {
+export function _parentScope(Class, scope, namespace, name, defaults) {
     var container = scope.$isolated[namespace],
         parentScope, opts;
 
@@ -89,21 +90,19 @@ export function _parentScope(scope, namespace, name, defaults) {
     // parent scope not available
     if (!parentScope) {
         if (scope.$parent && scope.$parent !== scope) {
-            parentScope = _parentScope(scope.$parent, namespace, name, defaults);
+            parentScope = _parentScope(Class, scope.$parent, namespace, name, defaults);
             parentScope = model(parentScope, scope);
         }
         else {
-            //parentScope = scope.$new(true).$extend(defaults);
-            //parentScope.$self = scope.$self;
             parentScope = scope.$new().$extend(defaults);
             parentScope.$name = name ? namespace + '.' + name : namespace;
             opts = scope[namespace];
-            if (name) {
-                if (opts && isObject(opts[name])) parentScope.$extend(popKey(opts, name));
+            var key = namespace;
+            if (name && opts) {
+                key = name;
+                opts = opts[name];
             }
-            else {
-                if (isObject(opts)) parentScope.$extend(popKey(scope, namespace));
-            }
+            if (isObject(opts)) Class.$extendScope(parentScope, popKey(opts, key));
         }
 
         if (name)

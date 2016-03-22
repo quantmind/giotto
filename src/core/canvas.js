@@ -1,5 +1,5 @@
 import {Paper, Layer} from './paper';
-import {orderedMap} from '../utils/index';
+import {orderedMap} from 'd3-quant';
 import * as canvas from 'd3-canvas-transition';
 
 

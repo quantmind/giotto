@@ -64,25 +64,6 @@ test("Test canvas size percentage", (t) => {
     t.end();
 });
 
-test("Test margins", (t) => {
-    var gt = d3.giotto();
-    var paper = gt.new({
-        width: 600,
-        height: 400,
-        factor: 1,
-        margin: {
-            right: 30
-        }
-    });
-    t.equal(paper.factor, 1, 'paper factor is 1');
-    t.equal(paper.factor, paper.$scope.$factor);
-    t.equal(paper.marginLeft, 20);
-    t.equal(paper.marginRight, 30);
-    t.equal(paper.marginTop, 20);
-    t.equal(paper.marginBottom, 20);
-    t.end();
-});
-
 test("Test canvas layers", (t) => {
     var gt = d3.giotto();
     var paper = gt.new();
@@ -120,7 +101,8 @@ test("Test paper options", (t) => {
     var gt = d3.giotto({
         papers: {
             foo: {
-                background: '#ccc'
+                background: '#ccc',
+                y: 'volume'
             },
             bla: {
                 background: '#000'
@@ -129,6 +111,17 @@ test("Test paper options", (t) => {
     });
     var paper = gt.new({name: 'foo'});
     t.equal(paper.name, 'foo');
+    t.equal(paper.$scope.y, 'volume');
+
+    var papers = gt.removeAll();
+    t.equal(papers.length, 1);
+    t.equal(papers[0].name, 'foo');
+    t.equal(gt.papers.length, 0);
+
+    paper = gt.new({name: 'foo'});
+    t.equal(paper.name, 'foo');
+    t.equal(paper.$scope.y, 'volume');
+
     t.end();
 });
 

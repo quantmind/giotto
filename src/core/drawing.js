@@ -89,11 +89,11 @@ export class StackedDrawing extends Drawing {
 
 export function paperDraw (Class, defaultOptions) {
     var name = Class.name.toLowerCase();
-    defaultOptions = extend({}, defaultDrawing, defaultOptions);
+    defaultOptions = extend({marks: name}, defaultDrawing, defaultOptions);
 
     Paper.prototype[name] = function (options) {
         // default options from giotto
-        var root = _parentScope(this.$scope, name, null, defaultOptions),
+        var root = _parentScope(Class, this.$scope, name, null, defaultOptions),
             draw = new Class(root.$new().$extend(options));
 
         // add the draw to paper draws

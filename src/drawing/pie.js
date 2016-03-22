@@ -22,7 +22,7 @@ class Pie extends Drawing {
             group = layer.group(this),
             rscale = this.scale(scope.rscale || 'r'),
             cscale = scope.colorscale || 'color',
-            value = scope.value || 'y',
+            value = scope.y || 'y',
             innerRadius = this.scaled(this.accessor(scope.innerRadius), rscale),
             outerRadius = this.scaled(this.accessor(scope.outerRadius), rscale),
             cornerRadius = this.scaled(this.accessor(scope.cornerRadius), rscale),

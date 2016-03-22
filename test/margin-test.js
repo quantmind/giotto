@@ -58,28 +58,42 @@ test("Test margin plugin", (t) => {
 });
 
 
-test("Test scale override", (t) => {
-    var gt = d3.giotto(),
-        paper = gt.new(),
-        color = paper.$scope.$scales.get('color');
-    t.ok(color instanceof d3.Plugin);
-    t.equal(color.$scope.range, 'category10');
-
-    global.myRange = function () {
-        return ['#ccc', '#ddd'];
-    };
-
-    paper = d3.giotto({
-        scales: {
-            color: {
-                range: 'myRange()'
-            }
+test("Test margins", (t) => {
+    var gt = d3.giotto();
+    var paper = gt.new({
+        width: 600,
+        height: 400,
+        factor: 1,
+        margin: {
+            right: 30
         }
-    }).new();
+    });
+    t.equal(paper.factor, 1, 'paper factor is 1');
+    t.equal(paper.factor, paper.$scope.$factor);
+    t.equal(paper.marginLeft, 20);
+    t.equal(paper.marginRight, 30);
+    t.equal(paper.marginTop, 20);
+    t.equal(paper.marginBottom, 20);
+    t.end();
+});
 
-    color = paper.$scope.$scales.get('color');
-    t.equal(color.$scope.range, 'myRange()');
 
-    delete global.myRange;
+test("Test margins override", (t) => {
+    var gt = d3.giotto({margin: 60});
+    t.equal(gt.$scope.margin, 60);
+    var paper = gt.new();
+    t.equal(paper.$scope.$margin.left, 60);
+    t.equal(paper.$scope.$margin.right, 60);
+    t.equal(paper.$scope.$margin.top, 60);
+    t.equal(paper.$scope.$margin.bottom, 60);
+    //var paper2 = gt.new({
+    //    margin: {
+    //        left: 100
+    //    }
+    //});
+    //t.equal(paper2.$scope.$margin.left, 60);
+    //t.equal(paper2.$scope.$margin.right, 100);
+    //t.equal(paper2.$scope.$margin.top, 60);
+    //t.equal(paper2.$scope.$margin.bottom, 60);
     t.end();
 });

@@ -29,9 +29,14 @@ var logger = {
 
 
 function consoleLog(level) {
+    var Console;
 
-    var Console = window.console || {},
-        logFn = Console[level] || Console.log || noop,
+    try {
+        Console = window.console || {};
+    } catch (e) {
+        Console = {};
+    }
+    var logFn = Console[level] || Console.log || noop,
         hasApply = false;
 
     try {

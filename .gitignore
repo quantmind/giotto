@@ -9,12 +9,12 @@ scss/bootswatch
 scss/highlight
 
 # giottojs
-giottojs/docs/_build/
-giottojs/media/lux
-giottojs/media/giottojs/*.js
-giottojs/media/giottojs/*.css
-giottojs/media/tests.config.js
-giottojs/media/*.json
+../dynts/giottojs/docs/_build/
+../dynts/giottojs/media/lux
+../dynts/giottojs/media/giottojs/*.js
+../dynts/giottojs/media/giottojs/*.css
+../dynts/giottojs/media/tests.config.js
+../dynts/giottojs/media/*.json
 
 .idea
 .project

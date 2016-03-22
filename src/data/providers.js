@@ -52,6 +52,7 @@ class DataProvider extends data.DataBase {
 data.providers = map();
 data.$eval = null;
 data.Provider = DataProvider;
+data.addProvider = addProvider;
 
 
 class Values extends DataProvider {
@@ -86,7 +87,6 @@ class Eval extends DataProvider {
 
 data.providers.set('eval', Eval);
 
-
 export function evalString (str, safe) {
     if (isString(str)) {
         if (!data.$eval) {
@@ -104,4 +104,18 @@ export function evalString (str, safe) {
         }
     }
     return str;
+}
+
+
+function addProvider (name, f) {
+
+    class NewProvider extends data.Provider {
+
+        load (expr, opts) {
+            f.call(this, expr, opts);
+        }
+    }
+
+    data.providers.set(name, NewProvider);
+    return NewProvider;
 }

@@ -1,6 +1,7 @@
 import {Plugin} from '../core/plugin';
 import {extend} from 'd3-quant';
 import {slugify, capfirst} from '../utils/index';
+import {evalString} from '../data/index';
 import * as d3c from 'd3-canvas-transition';
 
 const
@@ -61,6 +62,8 @@ class Axis extends Plugin {
         var ax = d3c['axis'+capfirst(location)](scale);
         scope.$axis = ax.tickPadding(scope.tickPadding).tickSize(-scope.tickSize);
         if (scope.tickSizeOuter) scope.$axis.tickSizeOuter(-scope.tickSizeOuter);
+
+        if (scope.tickFormat) scope.$axis.tickFormat(evalString(scope.tickFormat));
 
         group = group
             .enter()

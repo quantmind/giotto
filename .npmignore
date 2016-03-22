@@ -1,5 +1,5 @@
 build/
-giottojs/
+../dynts/giottojs/
 scss/
 release.py
 manage.py

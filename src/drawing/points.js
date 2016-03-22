@@ -30,8 +30,8 @@ class Points extends Drawing {
             data = serie.data(),
             scope = this.$scope,
             merge = layer.transition('update'),
-            x = this.scaled(this.accessor(scope.x), scope.scalex || 'x'),
-            y = this.scaled(this.accessor(scope.y), scope.scaley || 'y'),
+            x = this.scaled(this.accessor(scope.x || 'x'), scope.scalex || 'x'),
+            y = this.scaled(this.accessor(scope.y || 'y'), scope.scaley || 'y'),
             size = this.accessor(scope.size),
             fill = this.color(scope.fill, serie),
             group = layer.group(this);
@@ -72,8 +72,6 @@ paperDraw(Points, {
     fillOpacity: 1,
     colorOpacity: 1,
     lineWidth: 2,
-    x: 'x',
-    y: 'y',
     size: 60,
     active: {
         fill: 'darker',

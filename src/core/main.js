@@ -138,7 +138,7 @@ export class Giotto extends GiottoBase {
         if (index >= 0) {
             papers.splice(index, 1);
             paper.destroy();
-            return paper.element.node();
+            return paper;
         }
     }
 
@@ -214,8 +214,8 @@ contextMenu.init = function (scope) {
         },
         callback: function () {
             scope.$defaultPaperType = convert();
-            gt.removeAll().forEach(function (element) {
-                gt.new(element);
+            gt.removeAll().forEach(function (paper) {
+                gt.new(paper.element, {name: paper.name});
             });
             gt.draw();
         }

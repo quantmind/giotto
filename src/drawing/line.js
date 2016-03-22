@@ -18,8 +18,8 @@ class Line extends Drawing {
         var data = series[0].data(),
             scope = this.$scope,
             ys = this.$scope.scaley || 'y',
-            x = this.scaled(this.accessor(scope.x), this.$scope.scalex || 'x'),
-            y = this.scaled(this.accessor(scope.y), ys),
+            x = this.scaled(this.accessor(scope.x || 'x'), this.$scope.scalex || 'x'),
+            y = this.scaled(this.accessor(scope.y || 'y'), ys),
             //y0 = this.paper.scale(ys).domain()[0],
             //line0 = layer.pen(d3.line().x(x).y(y0)),
             line = d3.line().x(x).y(y).curve(this.curve()),
@@ -72,7 +72,5 @@ class Line extends Drawing {
 paperDraw(Line, {
     curve: 'cardinalOpen',
     lineWidth: 1,
-    colorOpacity: 1,
-    x: 'x',
-    y: 'y'
+    colorOpacity: 1
 });

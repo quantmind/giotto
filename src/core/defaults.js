@@ -43,6 +43,7 @@ export function model(parentScope, sibling) {
     if (sibling) {
         scope.$self = sibling.$self;
         scope.$$paper = sibling.$$paper;
+        scope.$extend(sibling);
     }
     return scope;
 }
@@ -140,13 +141,11 @@ export class PaperBase extends GiottoBase {
     }
 
     get domWidth () {
-        var scope = this.paper.$scope;
-        return scope.$size[0];
+        return this.width;
     }
 
     get domHeight () {
-        var scope = this.paper.$scope;
-        return scope.$size[1];
+        return this.height;
     }
 
     get size () {
@@ -216,3 +215,8 @@ function pc (margin, size) {
         margin = round(0.01*parseFloat(margin)*size, 5);
     return margin;
 }
+
+
+PaperBase.$extendScope = function (scope, value) {
+    scope.$extend(value);
+};

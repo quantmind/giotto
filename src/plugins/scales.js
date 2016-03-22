@@ -51,28 +51,50 @@ class Scale extends Plugin {
         if (isString(domain)) domain = {from: domain};
         else if (!domain) domain = {};
         scope.domain = domain;
-        domain = null;
 
         if (isNumber(scope.domain.min) && isNumber(scope.domain.max))
-            domain = [scope.domain.min, scope.domain.max];
-        else {
-            let bits, name, field;
-            if (scope.domain.from) bits = scope.domain.from.split('.');
-            else bits = [''];
-            if (bits.length > 1) {
-                name = bits.slice(0, bits.length-1).join('.');
-                field = bits[bits.length-1];
-            } else {
-                name = bits[0];
-                field = this.name.split('.')[1];
-            }
+            return [scope.domain.min, scope.domain.max];
 
-            var serie = this.data.getOne(name);
-            if (serie) {
-                domain = serie.range(field);
-                if (isNumber(scope.domain.min)) domain[0] = scope.domain.min;
-                else if (isNumber(scope.domain.max)) domain[0] = scope.domain.max;
+        let bits, name, field, serie;
+        const scaleName = this.name.split('.')[1];
+
+        domain = null;
+        if (scope.domain.from) bits = scope.domain.from.split('.');
+        else bits = [''];
+        if (bits.length > 1) {
+            name = bits.slice(0, bits.length-1).join('.');
+            field = bits[bits.length-1];
+        } else
+            name = bits[0];
+
+        // No serie name, pick the serie from the first draw of the paper
+        if (!name) {
+            var draws = this.paper.draws;
+
+            for (let i=0; i<draws.length; ++i) {
+                var draw = draws[i],
+                    series = draw.getSeries() || [],
+                    fieldName = field || draw.$scope[scaleName] || scaleName;
+                for (let j=0; j<series.length; ++j) {
+                    if (series[j].hasField(fieldName)) {
+                        serie = series[j];
+                        field = fieldName;
+                        break;
+                    }
+                }
+                if (serie) break;
             }
+        }
+
+        if (!serie) serie = this.data.getOne(name);
+        //
+        if (serie) {
+            if (!field) field = this.$scope[scaleName] || scaleName;
+            if (scope.$currentScaleType === 'time') serie.timeField(field);
+            domain = serie.range(field);
+            if (isNumber(scope.domain.min)) domain[0] = scope.domain.min;
+            else if (isNumber(scope.domain.max)) domain[0] = scope.domain.max;
+            scope.$from = serie.name + '.' + field;
         }
 
         return domain;
