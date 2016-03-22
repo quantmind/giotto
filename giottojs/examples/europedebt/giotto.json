@@ -1,0 +1,305 @@
+{
+    "scales": {
+        "color": {
+            "range": "d3.colorbrewer.YlOrBr[9].slice().reverse()",
+            "domain": {
+                "from": "countrydebt.year.2013.debt"
+            }
+        }
+    },
+    "tooltip": true,
+    "pie": {
+        "innerRadius": 0.7,
+        "cornerRadius": 0.05,
+        "padAngle": 0.5,
+        "fillOpacity": 0.7,
+        "active": {
+            "fillOpacity": 1
+        },
+        "labels": {
+            "position": "outside"
+        },
+        "formatY": "'€ ' + d3.format(',.0f')(d) + 'M'"
+    },
+    "draw": {
+        "marks": "pie",
+        "from": "countrydebt.year.2013",
+        "label": "country",
+        "value": "debt"
+    },
+    "data": {
+        "name": "countrydebt",
+        "fields": [
+            "year",
+            "country",
+            "debt"
+        ],
+        "transform": {
+            "type": "filter",
+            "dimension": "year",
+            "filter": [2013]
+        },
+        "values": [
+            [
+                2012,
+                "Belgium",
+                342980.3
+            ],
+            [
+                2013,
+                "Belgium",
+                351255.9
+            ],
+            [
+                2012,
+                "Bulgaria",
+                7172.1
+            ],
+            [
+                2013,
+                "Bulgaria",
+                7416.3
+            ],
+            [
+                2012,
+                "Czech Republic",
+                66335.7
+            ],
+            [
+                2013,
+                "Czech Republic",
+                61236.6
+            ],
+            [
+                2012,
+                "Denmark",
+                93842.9
+            ],
+            [
+                2013,
+                "Denmark",
+                92733.2
+            ],
+            [
+                2012,
+                "Germany",
+                1369103.5
+            ],
+            [
+                2013,
+                "Germany",
+                1372828.8
+            ],
+            [
+                2012,
+                "Estonia",
+                1228.2
+            ],
+            [
+                2013,
+                "Estonia",
+                1310.5
+            ],
+            [
+                2012,
+                "Ireland",
+                191779.3
+            ],
+            [
+                2013,
+                "Ireland",
+                202337.1
+            ],
+            [
+                2012,
+                "Spain",
+                760195.2
+            ],
+            [
+                2013,
+                "Spain",
+                836192.7
+            ],
+            [
+                2012,
+                "France",
+                1522936.9
+            ],
+            [
+                2013,
+                "France",
+                1595410.5
+            ],
+            [
+                2012,
+                "Croatia",
+                23737.5
+            ],
+            [
+                2013,
+                "Croatia",
+                28215.9
+            ],
+            [
+                2012,
+                "Italy",
+                1882380.0
+            ],
+            [
+                2013,
+                "Italy",
+                1970530.3
+            ],
+            [
+                2012,
+                "Latvia",
+                8808.8
+            ],
+            [
+                2013,
+                "Latvia",
+                8626.8
+            ],
+            [
+                2012,
+                "Lithuania",
+                12335.1
+            ],
+            [
+                2013,
+                "Lithuania",
+                12640.6
+            ],
+            [
+                2012,
+                "Luxembourg",
+                8593.3
+            ],
+            [
+                2013,
+                "Luxembourg",
+                9769.9
+            ],
+            [
+                2012,
+                "Hungary",
+                73102.3
+            ],
+            [
+                2013,
+                "Hungary",
+                76213.1
+            ],
+            [
+                2012,
+                "Malta",
+                4867.1
+            ],
+            [
+                2013,
+                "Malta",
+                5238.8
+            ],
+            [
+                2012,
+                "Netherlands",
+                387007.0
+            ],
+            [
+                2013,
+                "Netherlands",
+                404294.0
+            ],
+            [
+                2012,
+                "Austria",
+                208874.3
+            ],
+            [
+                2013,
+                "Austria",
+                214382.0
+            ],
+            [
+                2012,
+                "Poland",
+                207248.8
+            ],
+            [
+                2013,
+                "Poland",
+                214904.7
+            ],
+            [
+                2012,
+                "Portugal",
+                204193.8
+            ],
+            [
+                2013,
+                "Portugal",
+                213973.4
+            ],
+            [
+                2012,
+                "Romania",
+                48383.4
+            ],
+            [
+                2013,
+                "Romania",
+                52402.0
+            ],
+            [
+                2012,
+                "Slovenia",
+                18618.0
+            ],
+            [
+                2013,
+                "Slovenia",
+                24752.9
+            ],
+            [
+                2012,
+                "Slovakia",
+                37280.8
+            ],
+            [
+                2013,
+                "Slovakia",
+                39878.2
+            ],
+            [
+                2012,
+                "Finland",
+                93900.0
+            ],
+            [
+                2013,
+                "Finland",
+                98905.0
+            ],
+            [
+                2012,
+                "Sweden",
+                130857.7
+            ],
+            [
+                2013,
+                "Sweden",
+                140075.6
+            ],
+            [
+                2012,
+                "United Kingdom",
+                1680297.8
+            ],
+            [
+                2013,
+                "United Kingdom",
+                1732269.4
+            ]
+        ]
+    }
+}

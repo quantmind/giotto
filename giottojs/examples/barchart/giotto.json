@@ -1,0 +1,11 @@
+{
+    "height": "80%",
+    "tooltip": true,
+    "yaxis": {
+        "format": ",.3g"
+    },
+    "draw": ["bar", "line"],
+    "data": {
+        "function": "examples.simpleBarChart"
+    }
+}

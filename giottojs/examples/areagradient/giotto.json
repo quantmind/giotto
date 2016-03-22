@@ -1,0 +1,15 @@
+{
+    "height": "60%",
+    "min_height": 250,
+    "grid": true,
+    "tooltip": true,
+    "line": {
+        "area": true,
+        "lineWidth": 1,
+        "fillOpacity": 0.7,
+        "gradient": true
+    },
+    "data": {
+        "function": "examples.randomPath"
+    }
+}
