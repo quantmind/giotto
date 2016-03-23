@@ -25,7 +25,7 @@ class Line extends Drawing {
             line = d3.line().x(x).y(y).curve(this.curve()),
             merge = layer.transition('update'),
             group = layer.group(this),
-            color = scope.color || this.paper.$scope.$colors.pick(),
+            color = this.color('color'),
             path = group.selectAll('path.line').data([data]),
             width = layer.dim(scope.lineWidth);
 
@@ -70,6 +70,7 @@ class Line extends Drawing {
 
 
 paperDraw(Line, {
+    color: true,
     curve: 'cardinalOpen',
     lineWidth: 1,
     colorOpacity: 1

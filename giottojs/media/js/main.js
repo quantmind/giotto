@@ -6,6 +6,7 @@ require([
     'js/colorbrewer',
     'js/data',
     'js/quandl',
+    'js/eurostat',
     'lux/forms/main',
     'lux/nav/main',
     'lux/page/main',

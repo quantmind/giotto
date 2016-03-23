@@ -6,6 +6,8 @@ import {evalString} from '../data/index';
 import * as d3 from 'd3-scale';
 
 
+const defaultBandPadding = 0.1;
+
 /**
  * A Scale is associated with a given paper
  */
@@ -32,14 +34,19 @@ class Scale extends Plugin {
 
         // range information
         var range = rangeFunctions.get(scope.range);
-        if (range) scale.range(range(this.paper));
+        if (range) {
+            var rangename = 'range'+capfirst(scope.$currentScaleType);
+            if (this[rangename]) this[rangename](scale, range(this.paper));
+            else scale.range(range(this.paper));
+        }
         else scale.range(evalString(scope.range));
 
         // domain information
         var domain = this.domain();
-        if (domain) {
-            scale.domain(domain);
-            if (scope.nice) scale.nice();
+        if (domain) scale.domain(domain);
+        if (scope.nice) {
+            if (scale.nice) scale.nice();
+            else if (scale.round) scale.round(true);
         }
 
         return scale;
@@ -90,14 +97,35 @@ class Scale extends Plugin {
         //
         if (serie) {
             if (!field) field = this.$scope[scaleName] || scaleName;
-            if (scope.$currentScaleType === 'time') serie.timeField(field);
-            domain = serie.range(field);
+            var domainName = 'domain' + capfirst(scope.$currentScaleType);
+
+            if (this[domainName]) domain = this[domainName](serie, field);
+            else domain = serie.range(field);
+
             if (isNumber(scope.domain.min)) domain[0] = scope.domain.min;
             else if (isNumber(scope.domain.max)) domain[0] = scope.domain.max;
             scope.$from = serie.name + '.' + field;
         }
 
         return domain;
+    }
+
+    rangeBand (scale, range) {
+        var padding = this.$scope.padding === undefined ? defaultBandPadding : +this.$scope.padding;
+        scale.range(range).padding(padding);
+        if (this.$scope.paddingOuter)
+            scale.paddingOuter(padding);
+        if (this.$scope.align)
+            scale.align(this.$scope.align);
+    }
+
+    domainBand (serie, field) {
+        return serie.column(field);
+    }
+
+    domainTime (serie, field) {
+        serie.timeField(field);
+        return serie.range(field);
     }
 }
 
@@ -148,24 +176,24 @@ Plugin.register(Scale, true, {
 
 rangeFunctions.set('width', function (paper) {
     return [0, paper.innerWidth];
-});
+}).get('width').continuous = true;
 
 rangeFunctions.set('-width', function (paper) {
     return [paper.innerWidth, 0];
-});
+}).get('-width').continuous = true;
 
 rangeFunctions.set('height', function (paper) {
     return [paper.innerHeight, 0];
-});
+}).get('height').continuous = true;
 
 rangeFunctions.set('-height', function (paper) {
     return [0, paper.innerHeight];
-});
+}).get('-height').continuous = true;
 
 rangeFunctions.set('radius', function (paper) {
     var radius = 0.5*Math.min(paper.innerHeight, paper.innerWidth);
     return [0, radius];
-});
+}).get('radius').continuous = true;
 
 rangeFunctions.set('category10', function () {
     return d3.scaleCategory10();

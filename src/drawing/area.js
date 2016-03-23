@@ -1,5 +1,5 @@
 import {stackOrderNone, stackOffsetNone} from 'd3-shape';
-import {StackedDrawing, paperDraw} from '../core/drawing';
+import {Drawing, paperDraw} from '../core/drawing';
 
 
 /**
@@ -10,7 +10,7 @@ import {StackedDrawing, paperDraw} from '../core/drawing';
  * (set background to false)
  * http://bl.ocks.org/mbostock/3887051
  */
-class Area extends StackedDrawing {
+class Area extends Drawing {
 
     /**
      * Draw points on a layer of a paper (usually the drawing layer)

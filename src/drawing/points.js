@@ -33,7 +33,7 @@ class Points extends Drawing {
             x = this.scaled(this.accessor(scope.x || 'x'), scope.scalex || 'x'),
             y = this.scaled(this.accessor(scope.y || 'y'), scope.scaley || 'y'),
             size = this.accessor(scope.size),
-            fill = this.color(scope.fill, serie),
+            fill = this.color('fill', serie),
             group = layer.group(this);
 
         var sym = symbol().size(size),
@@ -57,11 +57,6 @@ class Points extends Drawing {
             .exit()
             //.transition(this.exitTransition())
             .remove();
-    }
-
-    color (color, serie) {
-        if (color === true) color = this.paper.$scope.$colors.pick();
-        return this.accessor(color, serie.fields);
     }
 }
 

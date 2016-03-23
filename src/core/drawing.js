@@ -1,4 +1,3 @@
-import {stack} from 'd3-shape';
 import {extend, isArray, isFunction,
         isNumber, indexValue, constantValue} from 'd3-quant';
 import {PaperBase} from './defaults';
@@ -70,20 +69,16 @@ export class Drawing extends PaperBase {
         return key;
     }
 
-    _draw () {}
-}
-
-export class StackedDrawing extends Drawing {
-
-    draw () {
-        var data = this.data();
-        var options = this.options;
-        this.st = stack()
-                    .keys(data.fields)
-                    .order(options.stackOrder)
-                    .offset(options.stackOffset);
-
+    color (name, serie) {
+        var color = this.$scope[name];
+        if (color === true) {
+            color = this.paper.$scope.$colors.pick();
+            this.$scope[name] = color;
+        }
+        return serie ? this.accessor(color, serie.fields) : color;
     }
+
+    _draw () {}
 }
 
 

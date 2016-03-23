@@ -1,11 +1,23 @@
 {
-    "height": "80%",
     "tooltip": true,
-    "yaxis": {
-        "format": ",.3g"
+    "scales": {
+        "x": {
+            "type": "band"
+        }
     },
-    "draw": ["bar", "line"],
+    "axes": {
+        "x": true,
+        "y": {
+            "format": ",.3g"
+        }
+    },
+    "margin": 40,
+    "draw": ["bars", {
+        "marks":"points",
+        "lineWidth": 3
+    }],
     "data": {
-        "function": "examples.simpleBarChart"
+        "fields": ["x", "y"],
+        "eval": "d3.examples.simpleBarChart()"
     }
 }

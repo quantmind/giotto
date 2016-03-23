@@ -1,6 +1,6 @@
 import {default as scopeFactory} from './scope';
 import {map} from 'd3-collection';
-import {round, isFunction, isString} from 'd3-quant';
+import {round, isFunction, isString, constantValue} from 'd3-quant';
 
 
 export const constants = {
@@ -194,8 +194,12 @@ export class PaperBase extends GiottoBase {
     }
 
     translate (x, y) {
-        if (isFunction(x)) {
+        var xf = isFunction(x),
+            yf = isFunction(y);
+        if (xf || yf) {
             var self = this;
+            if (!xf) x = constantValue(x);
+            else if (!yf) y = constantValue(y);
             return function (d) {
                 return self._translate(x(d), y(d));
             };
