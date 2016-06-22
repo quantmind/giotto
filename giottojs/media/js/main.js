@@ -10,6 +10,7 @@ require([
     'lux/forms/main',
     'lux/nav/main',
     'lux/page/main',
+    'lux/pagination/main',
     'lux/components/highlight',
     'angular-sanitize'
 ], function(lux, angular, d3, crossfilter, colorbrewer) {
@@ -31,6 +32,7 @@ require([
         'lux.form',
         'lux.router',
         'lux.highlight',
+        'lux.pagination',
         'giotto',
         'giottojs.data'])
         .constant('giottojsNavigation', {

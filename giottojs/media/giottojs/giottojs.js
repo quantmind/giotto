@@ -3856,110 +3856,118 @@ define('lux/services/pagination',['angular',
         'lux/services/main'], function (angular) {
     'use strict';
 
-    angular.module('lux.pagination', ['lux.services'])
-        .factory('luxPaginationFactory', ['$lux', function($lux) {
+    angular.module('lux.services.pagination', ['lux.services'])
 
-            /**
-            * LuxPagination constructor requires three args
-            * @param scope - the angular $scope of component's directive
-            * @param target {object} - containing name and url, e.g.
-            * {name: "groups_url", url: "http://127.0.0.1:6050"}
-            * @param recursive {boolean}- set to true if you want to recursively
-            * request all data from the endpoint
-            */
+        .factory('luxPagination', ['$lux', function ($lux) {
 
-            function LuxPagination(scope, target, recursive) {
-                this.scope = scope;
-                this.target = target;
-                this.orgUrl = this.target.url;
-                this.api = $lux.api(this.target);
 
-                if (recursive === true) this.recursive = true;
+            function luxPagination (scope, target, recursive) {
+                return new LuxPagination($lux, scope, target, recursive);
             }
 
-            LuxPagination.prototype.getData = function(params, cb) {
-                // getData runs $lux.api.get() followed by the component's
-                // callback on the returned data or error.
-                // it's up to the component to handle the error.
+            luxPagination.prototype = LuxPagination.prototype;
 
-                this.params = params ? params : null;
-                if (cb) this.cb = cb;
-
-                this.api.get(null, this.params).then(function(data) {
-
-                    // removes search from parameters so this.params is
-                    // clean for next generic loadMore or new search. Also
-                    // adds searched flag.
-                    if (this.searchField) {
-                        data.searched = true;
-                        delete this.params[this.searchField];
-                    }
-
-                    this.cb(data);
-                    this.updateUrls(data);
-
-                }.bind(this), function(error) {
-                    this.cb(error);
-                }.bind(this));
-
-            };
-
-            LuxPagination.prototype.updateUrls = function(data) {
-                // updateUrls creates an object containing the most
-                // recent last and next links from the API
-
-                if (data && data.data && data.data.last) {
-                    this.urls = {
-                        last: data.data.last,
-                        next: data.data.next ? data.data.next : false
-                    };
-                    // If the recursive param was set to true this will
-                    // request data using the 'next' link; if not it will emitEvent
-                    // so the component knows there's more data available
-                    if (this.recursive) this.loadMore();
-                    else this.emitEvent();
-                }
-
-            };
-
-            LuxPagination.prototype.emitEvent = function() {
-                // emit event if more data available, the component can
-                // listen for it and choose how to deal with it
-                this.scope.$emit('moreData');
-            };
-
-            LuxPagination.prototype.loadMore = function() {
-                // loadMore applies new urls from updateUrls to the
-                // target object and makes another getData request.
-
-                if (!this.urls.next && !this.urls.last) throw 'Updated URLs not set.';
-
-                if (this.urls.next === false) {
-                    this.target.url = this.urls.last;
-                } else if (this.urls.next) {
-                    this.target.url = this.urls.next;
-                }
-
-                // Call API with updated target URL
-                this.getData(this.params);
-
-            };
-
-            LuxPagination.prototype.search = function(query, searchField) {
-                this.searchField = searchField;
-                this.params = this.params || {};
-                this.params[this.searchField] = query;
-                // Set current target URL to the original target URL to reset any
-                // existing limits/offsets so full endpoint is searched
-                this.target.url = this.orgUrl;
-
-                this.getData(this.params);
-            };
-
-            return LuxPagination;
+            return luxPagination;
 
         }]);
 
+
+    /**
+    * LuxPagination constructor requires three args
+    * @param scope - the angular $scope of component's directive
+    * @param target {object} - containing name and url, e.g.
+    * {name: "groups_url", url: "http://127.0.0.1:6050"}
+    * @param recursive {boolean}- set to true if you want to recursively
+    * request all data from the endpoint
+    */
+    function LuxPagination($lux, scope, target, recursive) {
+        this.scope = scope;
+        this.target = target;
+        this.orgUrl = this.target.url;
+        this.$lux = $lux;
+        this.api = $lux.api(this.target);
+        this.recursive = recursive === true ? true : false;
+    }
+
+
+    LuxPagination.prototype.getData = function(params, cb) {
+        // getData runs $lux.api.get() followed by the component's
+        // callback on the returned data or error.
+        // it's up to the component to handle the error.
+
+        this.params = params ? params : null;
+        if (cb) this.cb = cb;
+
+        this.api.get(null, this.params).then(function(data) {
+
+            // removes search from parameters so this.params is
+            // clean for next generic loadMore or new search. Also
+            // adds searched flag.
+            if (this.searchField) {
+                data.searched = true;
+                delete this.params[this.searchField];
+            }
+
+            this.cb(data);
+            this.updateUrls(data);
+
+        }.bind(this), function(error) {
+            this.cb(error);
+        }.bind(this));
+
+    };
+
+    LuxPagination.prototype.updateUrls = function(data) {
+        // updateUrls creates an object containing the most
+        // recent last and next links from the API
+
+        if (data && data.data && data.data.last) {
+            this.urls = {
+                last: data.data.last,
+                next: data.data.next ? data.data.next : false
+            };
+            // If the recursive param was set to true this will
+            // request data using the 'next' link; if not it will emitEvent
+            // so the component knows there's more data available
+            if (this.recursive) this.loadMore();
+            else this.emitEvent();
+        }
+
+    };
+
+    LuxPagination.prototype.emitEvent = function() {
+        // emit event if more data available, the component can
+        // listen for it and choose how to deal with it
+        this.scope.$emit('moreData');
+    };
+
+    LuxPagination.prototype.loadMore = function() {
+        // loadMore applies new urls from updateUrls to the
+        // target object and makes another getData request.
+
+        if (!this.urls.next && !this.urls.last) throw 'Updated URLs not set.';
+
+        if (this.urls.next === false) {
+            this.target.url = this.urls.last;
+        } else if (this.urls.next) {
+            this.target.url = this.urls.next;
+        }
+
+        // Call API with updated target URL
+        this.getData(this.params);
+
+    };
+
+    LuxPagination.prototype.search = function(query, searchField) {
+        this.searchField = searchField;
+        this.params = this.params || {};
+        this.params[this.searchField] = query;
+        // Set current target URL to the original target URL to reset any
+        // existing limits/offsets so full endpoint is searched
+        this.target.url = this.orgUrl;
+
+        this.getData(this.params);
+    };
 });
 
 define('lux/forms/utils',['angular',
@@ -3967,7 +3975,7 @@ define('lux/forms/utils',['angular',
         'lux/services/pagination'], function (angular, lux) {
     'use strict';
 
-    angular.module('lux.form.utils', ['lux.pagination'])
+    angular.module('lux.form.utils', ['lux.services.pagination'])
 
         .constant('lazyLoadOffset', 40) // API will be called this number of pixels
                                         // before bottom of UIselect list
@@ -5891,6 +5899,454 @@ define('lux/page/main',['angular',
     return lux;
 });
 
+define('lux/pagination/templates',['angular'], function (angular) {
+    "use strict";
+
+    angular.module('lux.pagination.templates', [])
+        .run(["$templateCache", function ($templateCache) {
+
+            $templateCache.put("lux/pagination/templates/horizontal.tpl.html",
+                     "<ul class=\"pagination pagination-sm\">\n" +
+         "    <li ng-class=\"pagination.prevPageDisabled()\">\n" +
+         "        <a ng-click=\"pagination.gotoPage(1)\">&laquo;</a>\n" +
+         "    </li>\n" +
+         "    <li ng-class=\"pagination.prevPageDisabled()\">\n" +
+         "        <a ng-click=\"pagination.prevPage()\">&lsaquo;</a>\n" +
+         "    </li>\n" +
+         "    <li ng-repeat=\"pageNumber in pagination.pages track by pagination.tracker(pageNumber, $index)\"\n" +
+         "        ng-class=\"{active: pageNumber == pagination.current, disabled : pageNumber == '...' }\"\n" +
+         "        ng-click=\"pagination.gotoPage(pageNumber)\">\n" +
+         "        <a>{{pageNumber}}</a>\n" +
+         "    </li>\n" +
+         "\n" +
+         "    <li ng-class=\"pagination.nextPageDisabled()\">\n" +
+         "        <a ng-click=\"pagination.nextPage()\">&rsaquo;</a>\n" +
+         "    </li>\n" +
+         "    <li ng-class=\"pagination.nextPageDisabled()\">\n" +
+         "        <a ng-click=\"pagination.gotoPage(pagination.last)\">&raquo;</a>\n" +
+         "    </li>\n" +
+         "</ul>\n" +
+         "\n"
+            );
+
+            $templateCache.put("lux/pagination/templates/infinite.tpl.html",
+                     "<div class=\"pagination infinite\" infinite-scroll-distance=\"pagination.scrollDistance\" infinite-scroll='pagination.nextPage()' infinite-scroll-disabled='pagination.paused()'>\n" +
+         "    <div class=\"loading\" ng-show='pagination.busy'>\n" +
+         "        <i class=\"fa fa-spinner\"></i> Loading {{pagination.displayLoadingName}}...\n" +
+         "    </div>\n" +
+         "    <button class=\"btn btn-default btn-sm show-more\"\n" +
+         "            ng-click=\"pagination.loadMore()\"\n" +
+         "            ng-hide=\"pagination.isLoadMoreHidden()\">\n" +
+         "        Load more\n" +
+         "    </button>\n" +
+         "</div>\n" +
+         "\n"
+            );
+
+        }]);
+
+});
+
+define('lux/pagination/horizontal',['angular',
+        'lux/main'], function(angular) {
+    'use strict';
+
+    /**
+     * Horizontal pagination module
+     *
+     *   Usage:
+     *      <pagination data-url="/users" data-limit="6">
+     *          <ul>
+     *              <li ng-repeat="item in pagination.items">
+     *                 <span>{{item}}</span>
+     *              </li>
+     *          </ul>
+     *      </pagination>
+     */
+    angular.module('lux.pagination.horizontal', [])
+        /**
+         * Default opitons
+         */
+        .constant('horizontalDefaults', {
+            'limit': 5,
+            'templateUrl': 'lux/pagination/templates/horizontal.tpl.html'
+        })
+        /**
+         * Factory to handle horizontal pagination
+         *
+         * @param $lux
+         * @param horizontalDefaults
+         */
+        .factory('HorizontalPagination', ['$lux', 'horizontalDefaults', function($lux, horizontalDefaults) {
+            var HorizontalPagination = function(config) {
+                this.items = [];
+                this.total = 0;
+                this.current = 1;
+                this.last = 1;
+                this.pages = [];
+                this.maxRange = 8;
+                this.luxApi = $lux.api(config.API_URL);
+                angular.extend(this, horizontalDefaults, config);
+            };
+
+            /**
+             * Given the position in the sequence of pagination links [i], figure out what page number corresponds to that position
+             *
+             * @param i
+             * @param currentPage
+             * @param paginationRange
+             * @param totalPages
+             * @return {*}
+             */
+            HorizontalPagination.prototype.calculatePageNumber = function(i, currentPage, paginationRange, totalPages) {
+                var halfWay = Math.ceil(paginationRange/2);
+
+                if (i === paginationRange)
+                    return totalPages;
+
+                if (i === 1)
+                    return i;
+
+                if (paginationRange < totalPages) {
+                    if (totalPages - halfWay < currentPage)
+                        return totalPages - paginationRange + i;
+
+                    if (halfWay < currentPage)
+                        return currentPage - halfWay + i;
+                }
+                return i;
+            };
+
+            /**
+             * Generate an array of page number (or the '...' string). It is used in an ng-repeat to generate the links for pages.
+             *
+             * @param currentPage
+             * @param collectionLength
+             * @param rowsPerPage
+             * @param paginationRange
+             * @returns {Array}
+             */
+            HorizontalPagination.prototype.generatePages = function(currentPage, collectionLength, rowsPerPage, paginationRange) {
+                var pages = [];
+                var totalPages = Math.ceil(collectionLength / rowsPerPage);
+                var halfWay = Math.ceil(paginationRange / 2);
+                var ellipsesNeeded = paginationRange < totalPages;
+                var position;
+
+                if (currentPage <= halfWay)
+                    position = 'start';
+                else if (totalPages - halfWay < currentPage)
+                    position = 'end';
+                else
+                    position = 'middle';
+
+                var i = 1;
+                while (i <= totalPages && i <= paginationRange) {
+                    var pageNumber = this.calculatePageNumber(i, currentPage, paginationRange, totalPages);
+                    var openingEllipsesNeeded = (i === 2 && (position === 'middle' || position === 'end'));
+                    var closingEllipsesNeeded = (i === paginationRange - 1 && (position === 'middle' || position === 'start'));
+
+                    if (ellipsesNeeded && (openingEllipsesNeeded || closingEllipsesNeeded))
+                        pages.push('...');
+                    else
+                        pages.push(pageNumber);
+
+                    ++i;
+                }
+                return pages;
+            };
+
+            /**
+             * Custom "track by" function which allows for duplicate "..." entries on long lists
+             *
+             * @param id
+             * @param index
+             * @returns {string}
+             */
+            HorizontalPagination.prototype.tracker = function(id, index) {
+                return id + '_' + index;
+            };
+
+            /**
+             * Called as the first function to fetch initial items from API
+             */
+            HorizontalPagination.prototype.init = function() {
+                this.getItems();
+            };
+
+            /**
+             * Called when page number was changed to get more data
+             */
+            HorizontalPagination.prototype.getItems = function() {
+                var offset = parseInt(this.limit * (this.current - 1));
+                this.items = [];
+
+                this.luxApi.get({path: this.targetUrl}, {limit: parseInt(this.limit), offset: offset}).then(function(resp) {
+                    this.total = resp.data.total;
+                    this.last = this.getPageNumbers();
+
+                    var items = resp.data.result;
+                    for (var i = 0; i < items.length; i++)
+                        this.items.push(items[i]);
+
+                    this.pages = this.generatePages(this.current, this.total, this.limit, this.maxRange);
+
+                }.bind(this));
+            };
+
+            /**
+             * Calculates total number of pages
+             *
+             * @returns {number}
+             */
+            HorizontalPagination.prototype.getPageNumbers = function() {
+                return Math.ceil(this.total/this.limit);
+            };
+
+            /**
+             * Called when we change page number
+             *
+             * @param pageNumber
+             */
+            HorizontalPagination.prototype.gotoPage = function(pageNumber) {
+                if (pageNumber === this.current) return;
+
+                if (pageNumber >= 1 && pageNumber <= this.getPageNumbers()) {
+                    this.current = pageNumber;
+                    this.getItems();
+                }
+            };
+
+            /**
+             * Called when we go to the next page
+             */
+            HorizontalPagination.prototype.nextPage = function() {
+                if (this.current < this.getPageNumbers()) {
+                    ++this.current;
+                    this.getItems();
+                }
+            };
+
+            /**
+             * Called when we go to the previous page
+             */
+            HorizontalPagination.prototype.prevPage = function() {
+                if (this.current > 1) {
+                    --this.current;
+                    this.getItems();
+                }
+            };
+
+            /**
+             * Checks if the next page is disabled
+             *
+             * @returns {boolean}
+             */
+            HorizontalPagination.prototype.nextPageDisabled = function() {
+                return this.current === this.getPageNumbers() ? 'disabled' : '';
+            };
+
+            /**
+             * Checks if the previous page is disabled
+             *
+             * @returns {boolean}
+             */
+            HorizontalPagination.prototype.prevPageDisabled = function() {
+                return this.current === 1 ? 'disabled' : '';
+            };
+
+            return HorizontalPagination;
+        }]);
+});
+
+define('lux/pagination/infinite',['angular',
+        'lux/main'], function(angular) {
+    'use strict';
+
+    /**
+     * Infinite pagination module
+     *
+     *   Usage:
+     *      <pagination data-type="infinite"
+     *                  data-scroll-distance="1"
+     *                  data-load-more-button="true"
+                        data-display-loading-name="datasets"
+     *                  data-url="/users"
+     *                  data-limit="6">
+     *          <ul>
+     *              <li ng-repeat="item in pagination.items">
+     *                 <span>{{item}}</span>
+     *              </li>
+     *          </ul>
+     *      </pagination>
+     */
+    angular.module('lux.pagination.infinite', ['infinite-scroll'])
+        /**
+         * Default options
+         */
+        .constant('infiniteDefaults', {
+            'loadMoreButton': {
+                enabled: true,
+                clicked: false
+            },
+            'limit': 5,
+            'scrollDistance': 0,
+            'templateUrl': 'lux/pagination/templates/infinite.tpl.html'
+        })
+        //
+        .value('THROTTLE_MILLISECONDS', 400)
+        /**
+         * Factory to handle infinite pagination
+         *
+         * @param $lux
+         * @param infiniteDefaults
+         */
+        .factory('InfinitePagination', ['$lux', 'infiniteDefaults', function($lux, infiniteDefaults) {
+            var InfinitePagination = function(config) {
+                this.items = [];
+                this.busy = false;
+                this.offset = 0;
+                this.total = null;
+                this.luxApi = $lux.api(config.API_URL);
+                angular.extend(this, infiniteDefaults, config);
+                if (!this.scrollDistance) {
+                    this.scrollDistance = infiniteDefaults.scrollDistance;
+                }
+            };
+
+            /**
+             * Called as the first function to fetch initial items from API
+             */
+            InfinitePagination.prototype.init = function() {
+                this.nextPage();
+            };
+
+            /**
+             * Called when click load more button
+             */
+            InfinitePagination.prototype.loadMore = function() {
+                this.loadMoreButton.clicked = true;
+                this.nextPage();
+                this.loadMoreButton.clicked = false;
+            };
+
+            /**
+             * Checking whether data was downloaded
+             *
+             * @returns {boolean}
+             */
+            InfinitePagination.prototype.isLoadDone = function() {
+                return (this.total && this.items.length === this.total);
+            };
+
+            InfinitePagination.prototype.isLoadMoreHidden = function() {
+                return !this.loadMoreButton.enabled || this.loadMoreButton.clicked || this.isLoadDone();
+            };
+
+            /**
+             * Prevents to do more API calls at the same time
+             *
+             * @returns {boolean}
+             */
+            InfinitePagination.prototype.paused = function() {
+                return this.busy || this.isLoadDone();
+            };
+
+            /**
+             * Called when more data is being loaded
+             */
+            InfinitePagination.prototype.nextPage = function() {
+                if (this.paused())
+                    return;
+
+                if (this.loadMoreButton.enabled) {
+                    var isFirstLoad = (this.total === null);
+
+                    if (!isFirstLoad && !this.loadMoreButton.clicked)
+                        return;
+                }
+
+                this.busy = true;
+
+                this.luxApi.get({path: this.targetUrl}, {limit: parseInt(this.limit), offset: parseInt(this.items.length)}).then(function(resp) {
+                    this.total = resp.data.total;
+
+                    var items = resp.data.result;
+                    for (var i = 0; i < items.length; i++)
+                        this.items.push(items[i]);
+
+                    this.busy = false;
+                }.bind(this));
+            };
+
+            return InfinitePagination;
+        }]);
+});
+
+define('lux/pagination/main',['angular',
+        'lux/services/pagination',
+        'lux/pagination/templates',
+        'lux/pagination/horizontal',
+        'lux/pagination/infinite',
+        'angular-infinite-scroll'], function(angular) {
+    'use strict';
+
+    /**
+     * Pagination module
+     *
+     */
+    angular.module('lux.pagination', ['lux.pagination.templates', 'lux.pagination.horizontal', 'lux.pagination.infinite'])
+        /**
+         * Directive to handle pagination. It gets data from API via $lux service.
+         * Allows to use two types of pagination: horizontal (classic) and infinite (scroll)
+         *
+         * @params $compile
+         * @params $templateCache
+         * @params $injector
+         */
+        .directive('luxPagination', ['$compile', '$templateCache', '$injector', function($compile, $templateCache, $injector) {
+            return {
+                restrict: 'E',
+                transclude: true,
+                scope: false,
+                link: function(scope, element, attrs, ctrl, transcludeFn) {
+                    var template,
+                        PaginationService,
+                        config = {
+                            targetUrl: attrs.url,
+                            limit: attrs.limit,
+                            loadMoreButton: {
+                                enabled: (attrs.loadMoreButton === 'true') || false
+                            },
+                            // displayLoadingName is displayed as `Loading <displayLoadingName> ...`
+                            displayLoadingName: (attrs.displayLoadingName) || 'data',
+                            scrollDistance: (attrs.scrollDistance) || false,
+                            API_URL: scope.API_URL
+                        };
+
+                    if (attrs.limit)
+                        config.limit = attrs.limit;
+
+                    if (attrs.type === 'infinite')
+                        PaginationService = $injector.get('InfinitePagination');
+                    else
+                        PaginationService = $injector.get('HorizontalPagination');
+
+                    scope.pagination = new PaginationService(config);
+                    scope.pagination.init();
+                    template = $templateCache.get(scope.pagination.templateUrl);
+
+                    // First we append transcluded content
+                    var transContent = transcludeFn();
+                    element.append(transContent);
+
+                    // Then we can add pagination template
+                    element.append($compile(template)(scope));
+                }
+            };
+        }]);
+});
+
 define('lux/components/highlight',['angular',
         'lux/main'], function (angular, lux) {
     'use strict';
@@ -5956,6 +6412,7 @@ require([
     'lux/forms/main',
     'lux/nav/main',
     'lux/page/main',
+    'lux/pagination/main',
     'lux/components/highlight',
     'angular-sanitize'
 ], function(lux, angular, d3, crossfilter, colorbrewer) {
@@ -5977,6 +6434,7 @@ require([
         'lux.form',
         'lux.router',
         'lux.highlight',
+        'lux.pagination',
         'giotto',
         'giottojs.data'])
         .constant('giottojsNavigation', {

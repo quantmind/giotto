@@ -26,8 +26,6 @@ DEFAULT_CONTENT_TYPE = 'text/html'
 SERVE_STATIC_FILES = True
 FAVICON = 'giottojs/favicon.ico'
 EXTENSIONS = ['lux.extensions.base',
-              'lux.extensions.ui',
-              'lux.extensions.angular',
               'lux.extensions.sitemap',
               'lux.extensions.rest',
               'lux.extensions.content',

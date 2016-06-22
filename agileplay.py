@@ -1,6 +1,5 @@
-from agile import AgileManager
+from agile.app import AgileManager
 
 
 if __name__ == '__main__':
-    AgileManager(description='Release manager for giotto.js & giottojs.org',
-                 config='release.py').start()
+    AgileManager(description='Release manager for giotto.js').start()
