@@ -60,8 +60,8 @@
                         "ln -s {{ d3_canvas_path }} {{repo_path }}/node_modules/d3-canvas-transition"]
         },
         "giotto-dev": {
-            "command": ["npm run-script build",
-                       "cp build/giotto.js giottojs/media/giottojs/giotto.js"]
+            "command": ["npm test",
+                        "cp build/giotto.js giottojs/media/giottojs/giotto.js"]
         },
         "giotto": {
             "command": ["npm test",
@@ -128,8 +128,8 @@
         "giottojs": {
             "files": [
                 "giottojs/media/js/*.js",
-                "../lux/lux/media/js/*.js",
-                "../lux/lux/media/js/**/*.js"
+                "../lux/lux/js/*.js",
+                "../lux/lux/js/**/*.js"
             ],
             "command": "giottojs-dev"
         },

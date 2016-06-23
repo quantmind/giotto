@@ -4,7 +4,7 @@ import {GiottoBase} from '../core/defaults';
 
 
 function data (scope) {
-    return new data.Data(scope)
+    return new data.Data(scope);
 }
 
 export default data;
@@ -71,7 +71,7 @@ class Data extends GiottoBase {
                 current = self.get(name);
             if (current) current.update(d.data);
             else self.set(name, data);
-        })
+        });
     }
 
     load (options) {

@@ -196,18 +196,18 @@ rangeFunctions.set('radius', function (paper) {
 }).get('radius').continuous = true;
 
 rangeFunctions.set('category10', function () {
-    return d3.scaleCategory10();
+    return d3.scaleOrdinal(d3.schemeCategory10);
 });
 
 rangeFunctions.set('category20', function () {
-    return d3.scaleCategory20();
+    return d3.scaleOrdinal(d3.schemeCategory20);
 });
 
 rangeFunctions.set('category20b', function () {
-    return d3.scaleCategory20b();
+    return d3.scaleOrdinal(d3.schemeCategory20b);
 });
 
 rangeFunctions.set('category20c', function () {
-    return d3.scaleCategory20c();
+    return d3.scaleOrdinal(d3.schemeCategory20c);
 });
 

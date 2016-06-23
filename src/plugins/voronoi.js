@@ -12,4 +12,4 @@ gradient.voronoi = function () {
         voronoi = d3_voronoi.voronoi().extent([[x1, y1], [x2, y2]]);
 
     context.path(voronoi);
-}
+};

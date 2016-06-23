@@ -18,7 +18,7 @@ export const prefix = "$";
 /**
  * A Scope class
  *
- * Design hints from angular js
+ * Design hints from AngularJs
  */
 export class Scope {
 

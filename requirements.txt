@@ -1,4 +1,0 @@
-lux
-pulsar-agile
-flake8
-coverage

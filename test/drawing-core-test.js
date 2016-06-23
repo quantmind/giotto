@@ -41,4 +41,4 @@ test("Test accessor override", (t) => {
     t.equal(points.$scope.x, 'date');
     t.equal(points.$scope.y, 'price');
     t.end();
-})
+});

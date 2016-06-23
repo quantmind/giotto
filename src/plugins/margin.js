@@ -16,7 +16,7 @@ class Margin extends Plugin {
                 right: value,
                 top: value,
                 bottom: value
-            }
+            };
         }
         super(paper, value, defaults);
     }

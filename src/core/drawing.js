@@ -2,7 +2,7 @@ import {extend, isArray, isFunction,
         isNumber, indexValue, constantValue} from 'd3-quant';
 import {PaperBase} from './defaults';
 import {Paper} from './paper';
-import {evalString} from '../data/index'
+import {evalString} from '../data/index';
 import {_parentScope} from './plugin';
 
 
@@ -115,7 +115,7 @@ export function paperBound (name) {
             this.paper.scheduleRedraw();
         }
         return this;
-    }
+    };
 }
 
 

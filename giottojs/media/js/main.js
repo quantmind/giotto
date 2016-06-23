@@ -7,13 +7,8 @@ require([
     'js/data',
     'js/quandl',
     'js/eurostat',
-    'lux/forms/main',
-    'lux/nav/main',
-    'lux/page/main',
-    'lux/pagination/main',
-    'lux/components/highlight',
     'angular-sanitize'
-], function(lux, angular, d3, crossfilter, colorbrewer) {
+], function(angular, d3, crossfilter, colorbrewer) {
     'use strict';
 
     //

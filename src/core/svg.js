@@ -29,7 +29,7 @@ class SvgLayer extends Layer {
 Layer.type.svg = SvgLayer;
 SvgLayer.getFactor = function () {
     return 1;
-}
+};
 
 
 export class Svg extends Paper {

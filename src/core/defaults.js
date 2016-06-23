@@ -158,7 +158,7 @@ export class PaperBase extends GiottoBase {
     }
 
     get height () {
-        return this.paper.$scope.$size[1]
+        return this.paper.$scope.$size[1];
     }
 
     get innerWidth () {

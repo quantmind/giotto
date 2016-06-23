@@ -18,7 +18,7 @@ class Font extends Plugin {
             key = fontProperties[i];
             v = font[key] || this.$scope[key];
             if (v)
-                selection.style('font-' + key, v)
+                selection.style('font-' + key, v);
         }
         return selection;
     }

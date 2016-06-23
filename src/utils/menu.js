@@ -86,4 +86,4 @@ var contextMenu = function (callback) {
     if (!menu) menu = new ContextMenu();
     menu.register(callback);
     return menu;
-}
+};

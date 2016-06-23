@@ -100,7 +100,7 @@ export function angularModule (angular) {
             if (!gt) {
                 scope.giottoQueue = gt = [];
                 gt.push([element[0], {}]);
-                giottoPapers(scope, options, giottoDefaults)
+                giottoPapers(scope, options, giottoDefaults);
             } else
                 gt.push([element[0], options]);
         };
