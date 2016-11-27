@@ -1,18 +1,17 @@
 module.exports = function(config) {
 
-    var configuration = {
+    var options = {
 
-        browsers: ['PhantomJS', 'Firefox', 'Chrome'],
+        browsers: ['Chrome', 'PhantomJS', 'Firefox'],
 
         phantomjsLauncher: {
             exitOnResourceError: true
         },
-        basePath: '',
+        basePath: '../',
         frameworks: ['browserify', 'tap'],
 
         files: [
-            'test/*-test.js',
-            {pattern: 'test/*.json', included: false}
+            'test/test-*.js'
         ],
 
         preprocessors: {
@@ -37,9 +36,9 @@ module.exports = function(config) {
         // define reporters, port, logLevel, browsers etc.
     };
 
-    if(process.env.TRAVIS){
-        configuration.browsers = ['PhantomJS', 'Firefox', 'ChromeNoSandbox'];
+    if(process.env.TRAVIS || process.env.CIRCLECI) {
+        options.browsers[0] = 'ChromeNoSandbox';
     }
 
-    config.set(configuration);
+    config.set(options);
 };

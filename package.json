@@ -52,9 +52,9 @@
         "babelify": "7.3",
         "babel-eslint": "7.1",
         "babel-preset-es2015-rollup": "1.2",
+        "bootstrap": "twbs/bootstrap#v4.0.0-alpha.5",
         "browserify": "13.1",
         "eslint": "3.11",
-        "tape": "4.6",
         "karma": "1.3",
         "karma-babel-preprocessor": "6.0",
         "karma-browserify": "5.1",
@@ -66,24 +66,23 @@
         "package-preamble": "0.0",
         "phantomjs-prebuilt": "2.1",
         "publish": "0.6",
-        "watchify": "3.7",
         "node-sass": "3.13",
-        "bootstrap-sass": "^3.3.6",
-        "crossfilter": "1.3",
         "requirejs": "2.3",
         "rollup": "0.36",
         "rollup-plugin-json": "2.0",
         "rollup-plugin-babel": "2.6",
         "rollup-plugin-node-resolve": "2.0",
-        "markdown": "0.5",
-        "uglify-js": "2.7"
+        "tape": "4.6",
+        "uglify-js": "2.7",
+        "watchify": "3.7"
     },
     "scripts": {
         "rollup": "rollup -c --banner \"$(preamble)\"",
-        "test": "eslint index.js src test && karma start test/karma.config.js --single-run",
+        "test": "eslint index.js src test && karma start test/karma.conf.js --single-run",
         "minify": "uglifyjs --preamble \"$(preamble)\" build/giotto.js -c -m -o build/giotto.min.js",
         "prepublish": "npm run-script rollup && npm run-script minify",
         "postpublish": "VERSION=`node -e 'console.log(require(\"./package.json\").version)'`; git push && git tag -am \"Release $VERSION.\" v${VERSION} && git push --tags && mkdir -p ../giottojs.org/latest && mkdir -p ../giottojs.org/giotto/${VERSION} && cp build/* ../giottojs.org/giotto/${VERSION}/ && cp build/* ../giottojs.org/latest/ && cd ../giottojs.org && git add giotto/${VERSION} latest && git commit -a -m \"giotto ${VERSION}\" && git push",
+        "css": "node-sass scss/giottojs-default.scss ../giottojs.org/giottojs-default.css --include-path node_modules --output-style compressed",
         "release": "publish"
     }
 }
