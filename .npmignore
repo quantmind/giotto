@@ -1,5 +1,4 @@
-build/
-../dynts/giottojs/
-scss/
-release.py
-manage.py
+scss
+test
+circle.yml
+rollup.config.js
