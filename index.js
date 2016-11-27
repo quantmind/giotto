@@ -1,26 +1,30 @@
-export {all} from './src/core/main';
-export {default as scopeFactory} from './src/core/scope';
-export {Paper} from './src/core/paper';
-export {data} from './src/data/index';
-export {Plugin} from './src/core/plugin';
-export {default as gradient} from './src/core/gradient';
+export * from 'd3-array';
+export * from 'd3-collection';
+export * from 'd3-random';
+export * from 'd3-ease';
+export * from 'd3-polygon';
+export * from 'd3-path';
+export * from 'd3-quadtree';
+export * from 'd3-shape';
+export * from 'd3-color';
+export * from 'd3-interpolate';
+export * from 'd3-dispatch';
+export * from 'd3-dsv';
+export * from 'd3-timer';
+export * from 'd3-time';
+export * from 'd3-format';
+export * from 'd3-time-format';
+export * from 'd3-scale';
+export * from 'd3-selection';
+export * from 'd3-transition';
+export * from 'd3-axis';
+export * from 'd3-hierarchy';
+export * from 'd3-force';
+export * from 'd3-drag';
+export * from 'd3-voronoi';
+export * from 'd3-zoom';
+export * from 'd3-brush';
+export * from 'd3-chord';
+export * from 'd3-geo';
+export * from 'd3-view';
 export {version} from './package.json';
-export {constants} from './src/core/defaults';
-export {theme} from './src/core/theme';
-export {angularModule} from './src/integrations/angular';
-
-import * as utils from './src/utils/index';
-
-export {array, time, quant, collection, request,
-        format, timeFormat} from './src/integrations/d3';
-
-import {version} from './package.json';
-import giotto from './src/core/main';
-//
-import './src/drawing/index';
-import './src/plugins/index';
-
-giotto.version = version;
-
-export {giotto};
-export {utils};
