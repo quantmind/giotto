@@ -46,7 +46,7 @@
         "d3-voronoi": "1.1",
         "d3-zoom": "1.1",
         "d3-canvas-transition": "0.2",
-        "d3-view": "../d3-view"
+        "d3-view": "0.1"
     },
     "devDependencies": {
         "babelify": "7.3",
