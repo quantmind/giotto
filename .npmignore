@@ -2,3 +2,6 @@ scss
 test
 circle.yml
 rollup.config.js
+.eslintrc
+.idea
+*.log

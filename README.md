@@ -10,7 +10,17 @@ D3 based visualization library.
 [![Dependency Status](https://david-dm.org/quantmind/giotto.svg)](https://david-dm.org/quantmind/giotto)
 [![devDependency Status](https://david-dm.org/quantmind/giotto/dev-status.svg)](https://david-dm.org/quantmind/giotto#info=devDependencies)
 
-
+If you use npm, ``npm install giotto``.
+The released bundle supports anonymous AMD, CommonJS, and vanilla environments.
+You can load directly from [giottojs.org](https://giottojs.org),
+or [unpkg](https://unpkg.com/giotto/). For example:
+```html
+<script src="https://giottojs.org/latest/giotto.js"></script>
+```    
+For the minified version:
+```
+<script src="https://giottojs.org/latest/giotto.js"></script>
+```
 # Acknowledgement
 
 This library is built on top of several [d3](https://github.com/d3) libraries
