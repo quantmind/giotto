@@ -19,7 +19,7 @@ export * from 'd3-selection';
 export * from 'd3-transition';
 export * from 'd3-axis';
 export * from 'd3-hierarchy';
-export * from 'd3-force';
+//export * from 'd3-force';
 export * from 'd3-drag';
 export * from 'd3-voronoi';
 export * from 'd3-zoom';

@@ -80,7 +80,8 @@
         "rollup": "rollup -c --banner \"$(preamble)\"",
         "test": "eslint index.js src test && karma start test/karma.conf.js --single-run",
         "minify": "uglifyjs --preamble \"$(preamble)\" build/giotto.js -c -m -o build/giotto.min.js",
-        "prepublish": "npm run-script rollup && npm run-script minify",
+        "build": "npm run-script rollup && npm run-script minify",
+        "prepublish": "npm run-script build",
         "postpublish": "VERSION=`node -e 'console.log(require(\"./package.json\").version)'`; git push && git tag -am \"Release $VERSION.\" v${VERSION} && git push --tags && mkdir -p ../giottojs.org/latest && mkdir -p ../giottojs.org/giotto/${VERSION} && cp build/* ../giottojs.org/giotto/${VERSION}/ && cp build/* ../giottojs.org/latest/ && cd ../giottojs.org && git add giotto/${VERSION} latest && git commit -a -m \"giotto ${VERSION}\" && git push",
         "css": "node-sass scss/giottojs-default.scss ../giottojs.org/giottojs-default.css --include-path node_modules --output-style compressed",
         "release": "publish"
