@@ -1,5 +1,5 @@
 {
-    "version": "0.1.2",
+    "version": "0.1.3",
     "name": "giotto",
     "description": "GiottoJS - Visualization Library",
     "homepage": "https://github.com/quantmind/giotto",
@@ -46,7 +46,7 @@
         "d3-voronoi": "1.1",
         "d3-zoom": "1.1",
         "d3-canvas-transition": "0.2",
-        "d3-view": "0.1"
+        "d3-view": "../d3-view"
     },
     "devDependencies": {
         "babelify": "7.3",
@@ -80,12 +80,13 @@
         "rollup": "rollup -c --banner \"$(preamble)\"",
         "test": "eslint index.js src test && karma start test/karma.conf.js --single-run",
         "minify": "uglifyjs --preamble \"$(preamble)\" build/giotto.js -c -m -o build/giotto.min.js",
-        "build": "npm run-script rollup && npm run-script minify",
-        "prepublish": "npm run-script build",
+        "build": "npm run-script rollup && npm run-script minify && cp build/giotto.js ../giottojs.org/giotto-dev.js",
+        "prepublish": "npm run-script rollup && npm run-script minify",
         "postpublish": "VERSION=`node -e 'console.log(require(\"./package.json\").version)'`; git push && git tag -am \"Release $VERSION.\" v${VERSION} && git push --tags && mkdir -p ../giottojs.org/latest && mkdir -p ../giottojs.org/giotto/${VERSION} && cp build/* ../giottojs.org/giotto/${VERSION}/ && cp build/* ../giottojs.org/latest/ && cd ../giottojs.org && git add giotto/${VERSION} latest && git commit -a -m \"giotto ${VERSION}\" && git push",
         "sitecss": "node-sass scss/giottojs-default.scss ../giottojs.org/giottojs-default.css --include-path node_modules --output-style compressed",
         "sitejs": "eslint rollup.site.js site && rollup -c rollup.site.js && uglifyjs ../giottojs.org/giottojs.js -c -m -o ../giottojs.org/giottojs.min.js",
         "giottojs": "npm run-script sitejs && npm run-script sitecss",
+        "update-giottojs": "npm run-script giottojs && cd ../giottojs.org && git commit -a -m \"new site assets\" && git push",
         "release": "publish"
     }
 }

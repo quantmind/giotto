@@ -1,0 +1,15 @@
+@for $i from 1 through 9 {
+    $w: 100 * $i;
+
+    .mw#{$w} {
+        max-width: #{$w}px;
+    }
+}
+
+@for $i from 1 through 9 {
+    $w: 10 * $i;
+
+    .pt#{$w} {
+        padding-top: #{$w}px;
+    }
+}

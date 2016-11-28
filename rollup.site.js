@@ -14,6 +14,8 @@ export default {
     ],
     dest: '../giottojs.org/giottojs.js',
     globals: {
-        "giotto": "giotto"
+        "d3-view": "giotto",
+        "d3-let": "giotto",
+        "d3-transition": "giotto"
     }
 };
