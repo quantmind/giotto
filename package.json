@@ -86,7 +86,6 @@
         "sitecss": "node-sass scss/giottojs-default.scss ../giottojs.org/giottojs-default.css --include-path node_modules --output-style compressed",
         "sitejs": "eslint rollup.site.js site && rollup -c rollup.site.js && uglifyjs ../giottojs.org/giottojs.js -c -m -o ../giottojs.org/giottojs.min.js",
         "giottojs": "npm run-script sitejs && npm run-script sitecss",
-        "update-giottojs": "npm run-script giottojs && cd ../giottojs.org && git commit -a -m \"new site assets\" && git push",
         "release": "publish"
     }
 }
