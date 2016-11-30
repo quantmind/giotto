@@ -8,7 +8,14 @@ export default function () {
                 href: '/',
                 image: '/giotto-banner.svg'
             },
-            theme: 'navbar-dark bg-inverse'
+            theme: 'navbar-dark bg-inverse',
+            items: [
+                {
+                    href: '/examples',
+                    title: 'examples',
+                    'class': 'float-xs-right'
+                }
+            ]
         }
     };
 

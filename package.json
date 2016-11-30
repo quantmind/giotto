@@ -46,7 +46,8 @@
         "d3-voronoi": "1.1",
         "d3-zoom": "1.1",
         "d3-canvas-transition": "0.2",
-        "d3-view": "0.1"
+        "d3-view": "0.1",
+        "d3-fluid": "0.1"
     },
     "devDependencies": {
         "babelify": "7.3",
@@ -55,6 +56,7 @@
         "bootstrap": "twbs/bootstrap#v4.0.0-alpha.5",
         "browserify": "13.1",
         "eslint": "3.11",
+        "highlightjs": "9.8",
         "karma": "1.3",
         "karma-babel-preprocessor": "6.0",
         "karma-browserify": "5.1",
@@ -84,7 +86,7 @@
         "prepublish": "npm run-script rollup && npm run-script minify",
         "postpublish": "VERSION=`node -e 'console.log(require(\"./package.json\").version)'`; git push && git tag -am \"Release $VERSION.\" v${VERSION} && git push --tags && mkdir -p ../giottojs.org/latest && mkdir -p ../giottojs.org/giotto/${VERSION} && cp build/* ../giottojs.org/giotto/${VERSION}/ && cp build/* ../giottojs.org/latest/ && cd ../giottojs.org && git add giotto/${VERSION} latest && git commit -a -m \"giotto ${VERSION}\" && git push",
         "sitecss": "node-sass scss/giottojs-default.scss ../giottojs.org/giottojs-default.css --include-path node_modules --output-style compressed",
-        "sitejs": "eslint rollup.site.js site && rollup -c rollup.site.js && uglifyjs ../giottojs.org/giottojs.js -c -m -o ../giottojs.org/giottojs.min.js",
+        "sitejs": "eslint rollup.site.js site && rollup -c rollup.site.js && uglifyjs ../giottojs.org/giottojs.js -c -m -o ../giottojs.org/giottojs.min.js && cp node_modules/highlightjs/highlight.pack.min.js ../giottojs.org/highlight.js && cp node_modules/requirejs/require.js ../giottojs.org/require.js",
         "giottojs": "npm run-script sitejs && npm run-script sitecss",
         "release": "publish"
     }

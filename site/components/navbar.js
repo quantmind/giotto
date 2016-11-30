@@ -6,7 +6,7 @@ const navbarTpl = `<nav class="navbar" d3-class="[theme, ['navbar-fixed-top', fi
         <img d3-if="brand.image" d3-attr-src="brand.image" d3-attr-alt="brand.title">
     </a>
     <ul class="nav navbar-nav">
-        <li d3-for="item in items" class="nav-item" d3-active>
+        <li d3-for="item in items" class="nav-item" d3-class="item.class" d3-active>
             <a class="nav-link"
                 d3-attr-href="item.href || '#'"
                 d3-html="item.title"

@@ -1,0 +1,74 @@
+{
+    "shell": {
+        "d3-view": {
+            "command": "npm run-script build",
+            "chdir": "../d3-view",
+            "interactive": true
+        },
+        "d3-fluid": {
+            "command": "npm run-script build",
+            "chdir": "../d3-fluid",
+            "interactive": true
+        },
+        "giotto": {
+            "command": "npm run-script build",
+            "interactive": true
+        },
+        "giottojs_js": {
+            "command": "npm run-script sitejs",
+            "interactive": true
+        },
+        "giottojs_css": {
+            "command": "npm run-script sitecss",
+            "interactive": true
+        }
+    },
+    "watch": {
+        "d3-view": {
+            "files": [
+                "../d3-view/index.js",
+                "../d3-view/src/**/*.js"
+            ],
+            "command": [
+                "shell:d3-view",
+                "shell:giotto"
+            ]
+        },
+        "d3-fluid": {
+            "files": [
+                "../d3-fluid/index.js",
+                "../d3-fluid/src/*.js",
+                "../d3-fluid/src/**/*.js"
+            ],
+            "command": [
+                "shell:d3-fluid",
+                "shell:giotto"
+            ]
+        },
+        "giotto": {
+            "description": "Build giotto d3 bundle",
+            "files": [
+                "index.js",
+                "rollup.config.js"
+            ],
+            "command": "shell:giotto"
+        },
+        "giottojs_js": {
+            "description": "Build giottojs.org css files",
+            "files": [
+                "rollup.site.js",
+                "site/*.js",
+                "site/**/*.js"
+            ],
+            "command": "shell:giottojs_js"
+        },
+        "giottojs_css": {
+            "description": "Build giottojs.org js file",
+            "files": [
+                "scss/*.scss",
+                "scss/**/*.scss"
+            ],
+            "command": "shell:giottojs_css"
+        }
+    }
+}

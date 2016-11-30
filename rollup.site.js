@@ -5,6 +5,7 @@ export default {
     entry: 'site/index.js',
     format: 'umd',
     moduleName: 'giottojs',
+    moduleId: 'giottojs',
     plugins: [
         json(),
         babel({
@@ -13,9 +14,10 @@ export default {
         })
     ],
     dest: '../giottojs.org/giottojs.js',
-    globals: {
-        "d3-view": "giotto",
-        "d3-let": "giotto",
-        "d3-transition": "giotto"
+    paths: {
+        'd3-view': 'd3',
+        'd3-let': 'd3',
+        'd3-selection': 'd3',
+        'd3-transition': 'd3'
     }
 };

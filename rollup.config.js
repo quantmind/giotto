@@ -5,7 +5,8 @@ import nodeResolve from 'rollup-plugin-node-resolve';
 export default {
     entry: 'index.js',
     format: 'umd',
-    moduleName: 'giotto',
+    moduleName: 'd3',
+    moduleId: 'd3',
     plugins: [
         json(),
         babel({
