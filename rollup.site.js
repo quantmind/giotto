@@ -19,5 +19,6 @@ export default {
         'd3-let': 'd3',
         'd3-selection': 'd3',
         'd3-transition': 'd3'
-    }
+    },
+    footer: "require(['giottojs']);"
 };

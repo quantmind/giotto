@@ -4,6 +4,8 @@ import components from './components/index';
 import directives from './directives/index';
 import modelApp from './model';
 
+export {directives, components};
+
 
 viewReady(start);
 

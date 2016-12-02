@@ -58,7 +58,8 @@
             "files": [
                 "rollup.site.js",
                 "site/*.js",
-                "site/**/*.js"
+                "site/**/*.js",
+                "../giottojs.org/examples/**/*.js"
             ],
             "command": "shell:giottojs_js"
         },
